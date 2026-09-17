@@ -1,0 +1,10 @@
+#!/bin/sh
+# Core C++ command line interpreter. Builds the executable when needed and runs
+# it, so that lake never has to be invoked by hand. File arguments are resolved
+# from the caller's working directory.
+DIR=$(cd "$(dirname "$0")/.." && pwd)
+BIN="$DIR/.lake/build/bin/corecpp"
+if [ ! -x "$BIN" ] || [ -n "$(find "$DIR/CoreCpp" "$DIR/Main.lean" -newer "$BIN" 2>/dev/null)" ]; then
+  (cd "$DIR" && lake build corecpp >/dev/null) || { echo "corecpp: build failed" >&2; exit 1; }
+fi
+exec "$BIN" "$@"

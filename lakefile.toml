@@ -1,0 +1,9 @@
+name = "corecpp"
+defaultTargets = ["CoreCpp", "corecpp"]
+
+[[lean_lib]]
+name = "CoreCpp"
+
+[[lean_exe]]
+name = "corecpp"
+root = "Main"
