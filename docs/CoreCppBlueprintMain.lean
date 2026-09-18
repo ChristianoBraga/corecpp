@@ -30,4 +30,7 @@ def main (args : List String) : IO UInt32 :=
     (%doc CoreCppBlueprint.Blueprint)
     args
     (extensionImpls := by exact extension_impls%)
-    (config := { extraCss := {katexZoomFixCss}, extraJs := {katexZoomFixJs} })
+    (config := { extraCss := {katexZoomFixCss}, extraJs := {katexZoomFixJs},
+                 logo := some "logo.svg",
+                 logoLink := some "https://github.com/ChristianoBraga/corecpp",
+                 extraFilesHtml := [("logo.svg", "logo.svg")] })

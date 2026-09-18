@@ -1,5 +1,7 @@
 # Core C++
 
+<img src="docs/logo.svg" alt="Core C++ logo, a C inside a C followed by ++" width="176">
+
 Core C++ is a well behaved subset of C++17 used as the core language of the
 course 09022, Linguagens de Programação, at IME (Instituto Militar de
 Engenharia, 5th year of Engenharia de Computação). Every concept of the course
