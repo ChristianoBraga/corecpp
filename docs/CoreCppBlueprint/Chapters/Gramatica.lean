@@ -25,25 +25,7 @@ UD I, syntax, tokens and the parser.
 :::definition "lex_tokens" (parent := "ud1") (lean := "CoreCpp.Token, CoreCpp.keywords, CoreCpp.symbols3, CoreCpp.symbols2, CoreCpp.symbols1")
 Tokens fall in five classes. Reserved words, among them `int`, `bool`, `void`, `if`, `else`, `while`, `for`, `return`, `true`, `false`, `auto`, `class`, `new`, `delete`, `nullptr`, `this`, `virtual`, `override`, `namespace`, `template`, `typename` and `operator`. Type identifiers, `TypeId`, with an uppercase initial. Variable identifiers, `VarId`, with a lowercase initial, naming variables, fields, functions and methods. Decimal integer literals, `IntLit`. Operators and punctuation, with `[=]` as a single token by the longest match rule. There is no token `>>`, so `Pilha<Pilha<int>>` closes with two tokens `>`.
 
-```
-Token     ::= Keyword | TypeId | VarId | IntLit | Symbol
-Keyword   ::= 'int' | 'bool' | 'void' | 'class' | 'public' | 'private' | 'new' | 'delete'
-            | 'nullptr' | 'this' | 'virtual' | 'override' | 'namespace' | 'template'
-            | 'typename' | 'auto' | 'if' | 'else' | 'while' | 'for' | 'return'
-            | 'true' | 'false' | 'operator' | 'std::function' | 'std::vector'
-TypeId    ::= Upper IdentChar*
-VarId     ::= ( Lower | '_' ) IdentChar*                    -- and not a Keyword
-IntLit    ::= Digit Digit*
-Symbol    ::= '[=]'
-            | '==' | '!=' | '<=' | '>=' | '&&' | '||' | '->' | '::'
-            | '+' | '-' | '*' | '/' | '%' | '<' | '>' | '!' | '?' | ':' | '='
-            | '(' | ')' | '{' | '}' | '[' | ']' | ',' | ';' | '.' | '&' | '~'
-IdentChar ::= Upper | Lower | Digit | '_'
-Upper     ::= 'A' | ... | 'Z'
-Lower     ::= 'a' | ... | 'z'
-Digit     ::= '0' | ... | '9'
-Skip      ::= WhiteSpace | '//' NotNewline* Newline
-```
+$$`\begin{array}{lcl} \textit{Token} & ::= & \textit{Keyword}\ \mid\ \textit{TypeId}\ \mid\ \textit{VarId}\ \mid\ \textit{IntLit}\ \mid\ \textit{Symbol} \\ \textit{Keyword} & ::= & \mathtt{int}\ \mid\ \mathtt{bool}\ \mid\ \mathtt{void}\ \mid\ \mathtt{class}\ \mid\ \mathtt{public}\ \mid\ \mathtt{private}\ \mid\ \mathtt{new}\ \mid\ \mathtt{delete} \\  & \mid & \mathtt{nullptr}\ \mid\ \mathtt{this}\ \mid\ \mathtt{virtual}\ \mid\ \mathtt{override}\ \mid\ \mathtt{namespace}\ \mid\ \mathtt{template} \\  & \mid & \mathtt{typename}\ \mid\ \mathtt{auto}\ \mid\ \mathtt{if}\ \mid\ \mathtt{else}\ \mid\ \mathtt{while}\ \mid\ \mathtt{for}\ \mid\ \mathtt{return} \\  & \mid & \mathtt{true}\ \mid\ \mathtt{false}\ \mid\ \mathtt{operator}\ \mid\ \mathtt{std::function}\ \mid\ \mathtt{std::vector} \\ \textit{TypeId} & ::= & \textit{Upper}\ \textit{IdentChar}^{*} \\ \textit{VarId} & ::= & \big(\ \textit{Lower}\ \mid\ \mathtt{\_}\ \big)\ \textit{IdentChar}^{*} \\ \textit{IntLit} & ::= & \textit{Digit}\ \textit{Digit}^{*} \\ \textit{Symbol} & ::= & \mathtt{[=]} \\  & \mid & \mathtt{==}\ \mid\ \mathtt{!=}\ \mid\ \mathtt{<=}\ \mid\ \mathtt{>=}\ \mid\ \mathtt{\&\&}\ \mid\ \mathtt{||}\ \mid\ \mathtt{->}\ \mid\ \mathtt{::} \\  & \mid & \mathtt{+}\ \mid\ \mathtt{-}\ \mid\ \mathtt{*}\ \mid\ \mathtt{/}\ \mid\ \mathtt{\%}\ \mid\ \mathtt{<}\ \mid\ \mathtt{>}\ \mid\ \mathtt{!}\ \mid\ \mathtt{?}\ \mid\ \mathtt{:}\ \mid\ \mathtt{=} \\  & \mid & \mathtt{(}\ \mid\ \mathtt{)}\ \mid\ \mathtt{\{}\ \mid\ \mathtt{\}}\ \mid\ \mathtt{[}\ \mid\ \mathtt{]}\ \mid\ \mathtt{,}\ \mid\ \mathtt{;}\ \mid\ \mathtt{.}\ \mid\ \mathtt{\&}\ \mid\ \mathtt{\sim} \\ \textit{IdentChar} & ::= & \textit{Upper}\ \mid\ \textit{Lower}\ \mid\ \textit{Digit}\ \mid\ \mathtt{\_} \\ \textit{Upper} & ::= & \mathtt{A}\ \mid\ \ldots\ \mid\ \mathtt{Z} \\ \textit{Lower} & ::= & \mathtt{a}\ \mid\ \ldots\ \mid\ \mathtt{z} \\ \textit{Digit} & ::= & \mathtt{0}\ \mid\ \ldots\ \mid\ \mathtt{9} \\ \textit{Skip} & ::= & \textit{WhiteSpace}\ \mid\ \mathtt{//}\ \textit{NotNewline}^{*}\ \textit{Newline} \end{array}`
 
 The input is the longest sequence of `Token` and `Skip` that covers it, `Skip` is discarded, and each token is the longest match at its position. The symbols of three characters are tried before those of two and of one.
 :::
@@ -59,64 +41,9 @@ The lexer maps a string to an array of tokens ended by `eof`. It discards white 
 # Grammar
 
 :::definition "gram_full" (parent := "ud1")
-The grammar of Core C++, in EBNF, from section 4 of the language design. The nonterminals are named as the parser functions. The postfix `X*` repeats `X` zero or more times, the postfix `X?` makes `X` optional, parentheses group, the bar separates alternatives and terminals stand between single quotes. The grammar is written without left recursion and left factored.
+The grammar of Core C++, in EBNF, from section 4 of the language design. The nonterminals are named as the parser functions. The superscript $`X^{*}` repeats $`X` zero or more times, the superscript $`X^{?}` makes $`X` optional, large parentheses group, the bar separates alternatives and terminals are in typewriter font. The grammar is written without left recursion and left factored.
 
-```
-Program       ::= Declaration*
-Declaration   ::= 'namespace' TypeId '{' Declaration* '}'
-                | 'template' '<' 'typename' TypeId '>' Class
-                | Class
-                | Function
-
-Class         ::= 'class' TypeId ( ':' 'public' ClassType )? '{' Section* '}' ';'
-Section       ::= ( 'public' | 'private' ) ':' Member*
-Member        ::= 'virtual' ( Type VarId Params Block | '~' TypeId '(' ')' Block )
-                | '~' TypeId '(' ')' Block
-                | ( BasicType | 'std::function' '<' Type '(' ( Type ( ',' Type )* )? ')' '>' | 'std::vector' '<' Type '>' '*'? ) '&'? MemberRest
-                | TypeId ( Params Block | ClassTypeRest '*'? '&'? MemberRest )
-MemberRest    ::= VarId ( ';' | Params 'override'? Block )
-                | 'operator' Op Params Block
-Op            ::= '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '<' | '<=' | '>' | '>=' | '[' ']'
-
-Function      ::= Type VarId Params Block
-Params        ::= '(' ( Param ( ',' Param )* )? ')'
-Param         ::= Type VarId
-
-Type          ::= ( BasicType | ( ClassType | 'std::vector' '<' Type '>' ) '*'? | 'std::function' '<' Type '(' ( Type ( ',' Type )* )? ')' '>' ) '&'?
-BasicType     ::= 'int' | 'bool' | 'void'
-ClassType     ::= TypeId ClassTypeRest
-ClassTypeRest ::= ( '::' TypeId )* ( '<' Type ( ',' Type )* '>' )?
-
-Block         ::= '{' Statement* '}'
-Statement     ::= Block
-                | 'if' '(' Expr ')' Block ( 'else' Block )?
-                | 'while' '(' Expr ')' Block
-                | 'for' '(' ForInit ';' Expr ';' ExprStatement ')' Block
-                | 'return' ArgExpr? ';'
-                | 'delete' Expr ';'
-                | LocalDecl ';'
-                | ExprStatement ';'
-LocalDecl     ::= 'auto' VarId '=' Expr
-                | Type VarId '=' ArgExpr
-ForInit       ::= LocalDecl | ExprStatement
-ExprStatement ::= Expr ( '=' Expr )?
-
-Expr          ::= OrExpr ( '?' Expr ':' Expr )?
-OrExpr        ::= AndExpr ( '||' AndExpr )*
-AndExpr       ::= EqExpr ( '&&' EqExpr )*
-EqExpr        ::= RelExpr ( ( '==' | '!=' ) RelExpr )*
-RelExpr       ::= AddExpr ( ( '<' | '<=' | '>' | '>=' ) AddExpr )*
-AddExpr       ::= MulExpr ( ( '+' | '-' ) MulExpr )*
-MulExpr       ::= UnaryExpr ( ( '*' | '/' | '%' ) UnaryExpr )*
-UnaryExpr     ::= ( '!' | '-' | '*' ) UnaryExpr | PostfixExpr
-PostfixExpr   ::= Primary ( '[' Expr ']' | '.' VarId Args? | '->' VarId Args? | Args )*
-Primary       ::= IntLit | 'true' | 'false' | 'nullptr' | 'this' | VarId
-                | '(' Expr ')'
-                | 'new' ( ClassType | 'std::vector' '<' Type '>' ) Args
-Args          ::= '(' ( ArgExpr ( ',' ArgExpr )* )? ')'
-ArgExpr       ::= Lambda | Expr
-Lambda        ::= '[=]' Params '->' Type Block
-```
+$$`\begin{array}{lcl} \textit{Program} & ::= & \textit{Declaration}^{*} \\ \textit{Declaration} & ::= & \mathtt{namespace}\ \textit{TypeId}\ \mathtt{\{}\ \textit{Declaration}^{*}\ \mathtt{\}} \\  & \mid & \mathtt{template}\ \mathtt{<}\ \mathtt{typename}\ \textit{TypeId}\ \mathtt{>}\ \textit{Class} \\  & \mid & \textit{Class} \\  & \mid & \textit{Function} \\ \textit{Class} & ::= & \mathtt{class}\ \textit{TypeId}\ \big(\ \mathtt{:}\ \mathtt{public}\ \textit{ClassType}\ \big)^{?}\ \mathtt{\{}\ \textit{Section}^{*}\ \mathtt{\}}\ \mathtt{;} \\ \textit{Section} & ::= & \big(\ \mathtt{public}\ \mid\ \mathtt{private}\ \big)\ \mathtt{:}\ \textit{Member}^{*} \\ \textit{Member} & ::= & \mathtt{virtual}\ \big(\ \textit{Type}\ \textit{VarId}\ \textit{Params}\ \textit{Block}\ \mid\ \mathtt{\sim}\ \textit{TypeId}\ \mathtt{(}\ \mathtt{)}\ \textit{Block}\ \big) \\  & \mid & \mathtt{\sim}\ \textit{TypeId}\ \mathtt{(}\ \mathtt{)}\ \textit{Block} \\  & \mid & \big(\ \textit{BasicType}\ \mid\ \mathtt{std::function}\ \mathtt{<}\ \textit{Type}\ \mathtt{(}\ \big(\ \textit{Type}\ \big(\ \mathtt{,}\ \textit{Type}\ \big)^{*}\ \big)^{?}\ \mathtt{)}\ \mathtt{>}\ \mid\ \mathtt{std::vector}\ \mathtt{<}\ \textit{Type}\ \mathtt{>}\ \mathtt{*}^{?}\ \big)\ \mathtt{\&}^{?}\ \textit{MemberRest} \\  & \mid & \textit{TypeId}\ \big(\ \textit{Params}\ \textit{Block}\ \mid\ \textit{ClassTypeRest}\ \mathtt{*}^{?}\ \mathtt{\&}^{?}\ \textit{MemberRest}\ \big) \\ \textit{MemberRest} & ::= & \textit{VarId}\ \big(\ \mathtt{;}\ \mid\ \textit{Params}\ \mathtt{override}^{?}\ \textit{Block}\ \big) \\  & \mid & \mathtt{operator}\ \textit{Op}\ \textit{Params}\ \textit{Block} \\ \textit{Op} & ::= & \mathtt{+}\ \mid\ \mathtt{-}\ \mid\ \mathtt{*}\ \mid\ \mathtt{/}\ \mid\ \mathtt{\%}\ \mid\ \mathtt{==}\ \mid\ \mathtt{!=}\ \mid\ \mathtt{<}\ \mid\ \mathtt{<=}\ \mid\ \mathtt{>}\ \mid\ \mathtt{>=}\ \mid\ \mathtt{[}\ \mathtt{]} \\ \textit{Function} & ::= & \textit{Type}\ \textit{VarId}\ \textit{Params}\ \textit{Block} \\ \textit{Params} & ::= & \mathtt{(}\ \big(\ \textit{Param}\ \big(\ \mathtt{,}\ \textit{Param}\ \big)^{*}\ \big)^{?}\ \mathtt{)} \\ \textit{Param} & ::= & \textit{Type}\ \textit{VarId} \\ \textit{Type} & ::= & \big(\ \textit{BasicType}\ \mid\ \big(\ \textit{ClassType}\ \mid\ \mathtt{std::vector}\ \mathtt{<}\ \textit{Type}\ \mathtt{>}\ \big)\ \mathtt{*}^{?}\ \mid\ \mathtt{std::function}\ \mathtt{<}\ \textit{Type}\ \mathtt{(}\ \big(\ \textit{Type}\ \big(\ \mathtt{,}\ \textit{Type}\ \big)^{*}\ \big)^{?}\ \mathtt{)}\ \mathtt{>}\ \big)\ \mathtt{\&}^{?} \\ \textit{BasicType} & ::= & \mathtt{int}\ \mid\ \mathtt{bool}\ \mid\ \mathtt{void} \\ \textit{ClassType} & ::= & \textit{TypeId}\ \textit{ClassTypeRest} \\ \textit{ClassTypeRest} & ::= & \big(\ \mathtt{::}\ \textit{TypeId}\ \big)^{*}\ \big(\ \mathtt{<}\ \textit{Type}\ \big(\ \mathtt{,}\ \textit{Type}\ \big)^{*}\ \mathtt{>}\ \big)^{?} \\ \textit{Block} & ::= & \mathtt{\{}\ \textit{Statement}^{*}\ \mathtt{\}} \\ \textit{Statement} & ::= & \textit{Block} \\  & \mid & \mathtt{if}\ \mathtt{(}\ \textit{Expr}\ \mathtt{)}\ \textit{Block}\ \big(\ \mathtt{else}\ \textit{Block}\ \big)^{?} \\  & \mid & \mathtt{while}\ \mathtt{(}\ \textit{Expr}\ \mathtt{)}\ \textit{Block} \\  & \mid & \mathtt{for}\ \mathtt{(}\ \textit{ForInit}\ \mathtt{;}\ \textit{Expr}\ \mathtt{;}\ \textit{ExprStatement}\ \mathtt{)}\ \textit{Block} \\  & \mid & \mathtt{return}\ \textit{ArgExpr}^{?}\ \mathtt{;} \\  & \mid & \mathtt{delete}\ \textit{Expr}\ \mathtt{;} \\  & \mid & \textit{LocalDecl}\ \mathtt{;} \\  & \mid & \textit{ExprStatement}\ \mathtt{;} \\ \textit{LocalDecl} & ::= & \mathtt{auto}\ \textit{VarId}\ \mathtt{=}\ \textit{Expr} \\  & \mid & \textit{Type}\ \textit{VarId}\ \mathtt{=}\ \textit{ArgExpr} \\ \textit{ForInit} & ::= & \textit{LocalDecl}\ \mid\ \textit{ExprStatement} \\ \textit{ExprStatement} & ::= & \textit{Expr}\ \big(\ \mathtt{=}\ \textit{Expr}\ \big)^{?} \\ \textit{Expr} & ::= & \textit{OrExpr}\ \big(\ \mathtt{?}\ \textit{Expr}\ \mathtt{:}\ \textit{Expr}\ \big)^{?} \\ \textit{OrExpr} & ::= & \textit{AndExpr}\ \big(\ \mathtt{||}\ \textit{AndExpr}\ \big)^{*} \\ \textit{AndExpr} & ::= & \textit{EqExpr}\ \big(\ \mathtt{\&\&}\ \textit{EqExpr}\ \big)^{*} \\ \textit{EqExpr} & ::= & \textit{RelExpr}\ \big(\ \big(\ \mathtt{==}\ \mid\ \mathtt{!=}\ \big)\ \textit{RelExpr}\ \big)^{*} \\ \textit{RelExpr} & ::= & \textit{AddExpr}\ \big(\ \big(\ \mathtt{<}\ \mid\ \mathtt{<=}\ \mid\ \mathtt{>}\ \mid\ \mathtt{>=}\ \big)\ \textit{AddExpr}\ \big)^{*} \\ \textit{AddExpr} & ::= & \textit{MulExpr}\ \big(\ \big(\ \mathtt{+}\ \mid\ \mathtt{-}\ \big)\ \textit{MulExpr}\ \big)^{*} \\ \textit{MulExpr} & ::= & \textit{UnaryExpr}\ \big(\ \big(\ \mathtt{*}\ \mid\ \mathtt{/}\ \mid\ \mathtt{\%}\ \big)\ \textit{UnaryExpr}\ \big)^{*} \\ \textit{UnaryExpr} & ::= & \big(\ \mathtt{!}\ \mid\ \mathtt{-}\ \mid\ \mathtt{*}\ \big)\ \textit{UnaryExpr}\ \mid\ \textit{PostfixExpr} \\ \textit{PostfixExpr} & ::= & \textit{Primary}\ \big(\ \mathtt{[}\ \textit{Expr}\ \mathtt{]}\ \mid\ \mathtt{.}\ \textit{VarId}\ \textit{Args}^{?}\ \mid\ \mathtt{->}\ \textit{VarId}\ \textit{Args}^{?}\ \mid\ \textit{Args}\ \big)^{*} \\ \textit{Primary} & ::= & \textit{IntLit}\ \mid\ \mathtt{true}\ \mid\ \mathtt{false}\ \mid\ \mathtt{nullptr}\ \mid\ \mathtt{this}\ \mid\ \textit{VarId} \\  & \mid & \mathtt{(}\ \textit{Expr}\ \mathtt{)} \\  & \mid & \mathtt{new}\ \big(\ \textit{ClassType}\ \mid\ \mathtt{std::vector}\ \mathtt{<}\ \textit{Type}\ \mathtt{>}\ \big)\ \textit{Args} \\ \textit{Args} & ::= & \mathtt{(}\ \big(\ \textit{ArgExpr}\ \big(\ \mathtt{,}\ \textit{ArgExpr}\ \big)^{*}\ \big)^{?}\ \mathtt{)} \\ \textit{ArgExpr} & ::= & \textit{Lambda}\ \mid\ \textit{Expr} \\ \textit{Lambda} & ::= & \mathtt{[=]}\ \textit{Params}\ \mathtt{->}\ \textit{Type}\ \textit{Block} \end{array}`
 
 A statement is a command or an expression followed by `;`. Assignment is a command, and `ExprStatement` joins the two forms that start with an expression to keep the grammar LL(1). In the abstract syntax the commands form the type `Cmd`, and the expression statement is the command `exprStmt`, which evaluates and discards the value. The left side of an assignment must denote a location, a check made by the type checker. A lambda expression is an `ArgExpr` and not a `Primary`, so it occurs only as argument, as initialiser of a declaration and as `return` expression.
 :::
