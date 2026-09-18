@@ -8,7 +8,7 @@ syllabus with its natural semantics rules on the board, and uses Lean 4 as the
 programming language in which the semantics is coded. The course proposal
 is `../.claude/proposta-curso.md` and the language design, with the grammar and
 the discrepancy table, is `../.claude/core-cpp-design.md`. Both are in
-Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, private.
+Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public since 2026-09-18.
 
 ## Conventions
 
