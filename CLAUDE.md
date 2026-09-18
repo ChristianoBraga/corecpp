@@ -39,6 +39,16 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, private.
   The wrapper rebuilds when sources change. It lives in `bin/` because the
   macOS filesystem does not distinguish `corecpp` from `CoreCpp`.
 - `Test.lean`, `#eval` tests. Run with `lake env lean Test.lean`.
+- `docs/`, the Verso Blueprint package with the semantic rules and pointers to
+  the code, written in English because the rendered interface of Verso is
+  English only. It requires `leanprover/verso-blueprint` at `v4.32.0` and `corecpp`
+  from `..`. The package is named `CoreCppBlueprint`, equal to the library,
+  because `vbp` builds `+<package>:olean`. One chapter per UD under
+  `docs/CoreCppBlueprint/Chapters/`, one `:::definition` node per construction
+  with the typing and evaluation rules in KaTeX and `(lean := ...)` naming the
+  implementing functions. Only definitions, theorems and types are accepted as
+  `lean` targets, never constructors. Build with `lake exe vbp build` inside
+  `docs/`, preview with `--serve`, output in `docs/_out/site/html-multi/`.
 - `examples/*.cpp`, one per concept, all compile with `g++ -std=c++17`, with the
   expected result in the header comment.
 - Toolchain `leanprover/lean4:v4.32.2`, no dependencies. `lake build` works. The
