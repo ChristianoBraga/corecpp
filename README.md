@@ -3,9 +3,10 @@
 Core C++ is a well behaved subset of C++17 used as the core language of the
 course 09022, Linguagens de Programação, at IME (Instituto Militar de
 Engenharia, 5th year of Engenharia de Computação). Every concept of the course
-is presented as an extension of Core C++, with typing and evaluation rules in
-natural semantics on the board, and this repository holds the Lean 4
-implementation of those rules.
+is introduced as a construction of Core C++, added to the implemented core in
+the order of the syllabus, with its typing and evaluation rules in natural
+semantics on the board. This repository holds the Lean 4 implementation of
+those rules.
 
 Every Core C++ program compiles with `g++ -std=c++17`. The subset has an LL(1)
 grammar, a deterministic semantics and no undefined behaviour. Everything

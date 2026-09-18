@@ -2,9 +2,10 @@
 
 Core C++ is a well behaved subset of C++17 used as the core language of the
 course 09022 Linguagens de Programação at IME (5th year, Engenharia de
-Computação). The course follows Watt's structure, teaches every concept as an
-extension of Core C++ with natural semantics rules on the board, and uses Lean 4
-as the programming language in which the semantics is coded. The course proposal
+Computação). The course follows Watt's structure, introduces every concept as
+a construction of Core C++, added to the implemented core in the order of the
+syllabus with its natural semantics rules on the board, and uses Lean 4 as the
+programming language in which the semantics is coded. The course proposal
 is `../.claude/proposta-curso.md` and the language design, with the grammar and
 the discrepancy table, is `../.claude/core-cpp-design.md`. Both are in
 Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, private.
