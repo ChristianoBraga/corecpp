@@ -70,7 +70,9 @@ $ bin/corecpp trace examples/assignment_order.cpp
 
 ## Blueprint
 
-The directory [`docs/`](docs/) holds a
+The blueprint is published at
+[christianobraga.github.io/corecpp](https://christianobraga.github.io/corecpp/).
+The directory [`docs/`](docs/) holds its source, a
 [Verso Blueprint](https://github.com/leanprover/verso-blueprint) of the
 semantics. It states every typing and evaluation rule, one node per
 construction and one chapter per unit of the syllabus, links each node to the
@@ -84,7 +86,9 @@ lake exe vbp build          # writes _out/site/html-multi/
 lake exe vbp build --serve  # serves the site locally
 ```
 
-The entry page is `docs/_out/site/html-multi/index.html`.
+The entry page is `docs/_out/site/html-multi/index.html`. The published copy
+lives on the branch `gh-pages`, the contents of that directory plus an empty
+`.nojekyll`, served by GitHub Pages.
 
 ## Language decisions
 

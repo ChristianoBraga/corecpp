@@ -49,7 +49,11 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
   with the typing and evaluation rules in KaTeX and `(lean := ...)` naming the
   implementing functions. Only definitions, theorems and types are accepted as
   `lean` targets, never constructors. Build with `lake exe vbp build` inside
-  `docs/`, preview with `--serve`, output in `docs/_out/site/html-multi/`.
+  `docs/`, preview with `--serve`, output in `docs/_out/site/html-multi/`. The
+  site is published at https://christianobraga.github.io/corecpp/ from the
+  orphan branch `gh-pages`, which holds a copy of that directory and an empty
+  `.nojekyll`. After regenerating, copy the directory into a `gh-pages`
+  worktree, commit and push.
 - `examples/*.cpp`, one per concept, all compile with `g++ -std=c++17`, with the
   expected result in the header comment.
 - Toolchain `leanprover/lean4:v4.32.2`, no dependencies. `lake build` works. The
