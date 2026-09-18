@@ -8,15 +8,16 @@ import CoreCpp.Pretty
 One function per judgment, with the corresponding rule in the comment of each
 case. The judgments are
 
-* ⟨e, ρ, σ⟩ ⇓ ⟨v, σ'⟩, expression evaluation,
-* ⟨e, ρ, σ⟩ ⇓ₗ ⟨ℓ, σ'⟩, location denotation,
-* ⟨c, ρ, σ⟩ ⇓ ⟨r, ρ', σ'⟩, command execution,
+* ρ, σ ⊢ e ⇒ v, σ', expression evaluation,
+* ρ, σ ⊢ e ⇒ₗ ℓ, σ', location denotation,
+* ρ, σ ⊢ c ⇒ r, ρ', σ', command execution,
 
-and all three admit `error` in place of the result, with propagation. The
-evaluation order is left to right where C++17 leaves it unspecified, and the
-C++17 order where it is fixed, right operand before left in assignment and
-function before arguments in a call. The store enters expressions because a
-call inside an expression may change it.
+in the sequent style of Kahn (1987), the hypotheses ρ and σ left of ⊢, the
+subject right of it and the result after ⇒. All three admit `error` in place
+of the result, with propagation. The evaluation order is left to right where
+C++17 leaves it unspecified, and the C++17 order where it is fixed, right
+operand before left in assignment and function before arguments in a call. The
+store enters expressions because a call inside an expression may change it.
 
 The evaluator runs in the monad `M`, which carries the derivation trace. When
 tracing is enabled, every rule application records its conclusion, the full
@@ -45,8 +46,8 @@ abbrev M := ExceptT Error (StateM TState)
 namespace Eval
 
 /-- Runs `k` one level deeper and records the conclusion of the rule `rule`,
-`conf arrow render a`, or the error, at the current depth. -/
-def traced (rule conf : String) (render : α → String) (k : M α) (arrow : String := "⇓") : M α := do
+`conf arrow render a` in sequent notation, or the error, at the current depth. -/
+def traced (rule conf : String) (render : α → String) (k : M α) (arrow : String := "⇒") : M α := do
   modify fun s => { s with depth := s.depth + 1 }
   let res : Except Error α ← tryCatch (do let a ← k; pure (.ok a)) (fun e => pure (.error e))
   modify fun s => { s with depth := s.depth - 1 }
@@ -60,25 +61,25 @@ def traced (rule conf : String) (render : α → String) (k : M α) (arrow : Str
   | .ok a    => pure a
   | .error e => throw e
 
-def confE (e : Expr) (ρ : Env) (σ : Store) : String := s!"⟨{e}, {ρ.toString}, {σ.toString}⟩"
-def confC (c : Cmd) (ρ : Env) (σ : Store) : String := s!"⟨{c}, {ρ.toString}, {σ.toString}⟩"
-def showV (r : Val × Store) : String := s!"⟨{r.1}, {r.2.toString}⟩"
-def showL (r : Loc × Store) : String := s!"⟨{Loc.toString r.1}, {r.2.toString}⟩"
-def showR (r : Ctrl × Env × Store) : String := s!"⟨{r.1}, {r.2.1.toString}, {r.2.2.toString}⟩"
+def confE (e : Expr) (ρ : Env) (σ : Store) : String := s!"{ρ.toString}, {σ.toString} ⊢ {e}"
+def confC (c : Cmd) (ρ : Env) (σ : Store) : String := s!"{ρ.toString}, {σ.toString} ⊢ {c}"
+def showV (r : Val × Store) : String := s!"{r.1}, {r.2.toString}"
+def showL (r : Loc × Store) : String := s!"{Loc.toString r.1}, {r.2.toString}"
+def showR (r : Ctrl × Env × Store) : String := s!"{r.1}, {r.2.1.toString}, {r.2.2.toString}"
 
 /-- Range check for `int`.
 
     n ∈ [−2³¹, 2³¹ − 1]              n ∉ [−2³¹, 2³¹ − 1]
     ──────────────────              ──────────────────────
-    int32 n ⇓ int n                 int32 n ⇓ error (overflow)              -/
+    int32 n = int n                 int32 n = error (overflow)              -/
 def int32 (n : Int) : M Val :=
   if Int32.inRange n then pure (.int n) else throw .overflow
 
 /-- Unary operators.
 
-    ⟨e, ρ, σ⟩ ⇓ ⟨bool b, σ'⟩                 ⟨e, ρ, σ⟩ ⇓ ⟨int n, σ'⟩
-    ─────────────────────────── (Not)        ─────────────────────────── (Neg)
-    ⟨!e, ρ, σ⟩ ⇓ ⟨bool ¬b, σ'⟩               ⟨−e, ρ, σ⟩ ⇓ ⟨int32 (−n), σ'⟩       -/
+    ρ, σ ⊢ e ⇒ bool b, σ'                    ρ, σ ⊢ e ⇒ int n, σ'
+    ──────────────────────── (Not)           ────────────────────────── (Neg)
+    ρ, σ ⊢ !e ⇒ bool ¬b, σ'                  ρ, σ ⊢ −e ⇒ int32 (−n), σ'          -/
 def unop : UnOp → Val → M Val
   | .not, .bool b => pure (.bool !b)
   | .neg, .int n  => int32 (-n)
@@ -86,21 +87,21 @@ def unop : UnOp → Val → M Val
 
 /-- Arithmetic and relational binary operators, on already evaluated values.
 
-    ⟨e₁, ρ, σ⟩ ⇓ ⟨int n₁, σ₁⟩    ⟨e₂, ρ, σ₁⟩ ⇓ ⟨int n₂, σ₂⟩
-    ────────────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})
-    ⟨e₁ ⊕ e₂, ρ, σ⟩ ⇓ ⟨int32 (n₁ ⊕ n₂), σ₂⟩
+    ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂
+    ──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})
+    ρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂
 
-    ⟨e₁, ρ, σ⟩ ⇓ ⟨int n₁, σ₁⟩    ⟨e₂, ρ, σ₁⟩ ⇓ ⟨int n₂, σ₂⟩    n₂ ≠ 0
-    ────────────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})
-    ⟨e₁ ⊘ e₂, ρ, σ⟩ ⇓ ⟨int32 (n₁ ⊘ n₂), σ₂⟩          division truncates toward zero, as in C++
+    ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0
+    ──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})
+    ρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++
 
-    ⟨e₁, ρ, σ⟩ ⇓ ⟨int n₁, σ₁⟩    ⟨e₂, ρ, σ₁⟩ ⇓ ⟨int 0, σ₂⟩
-    ────────────────────────────────────────────────────── (DivZero)
-    ⟨e₁ ⊘ e₂, ρ, σ⟩ ⇓ error (division by zero)
+    ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int 0, σ₂
+    ──────────────────────────────────────────────── (DivZero)
+    ρ, σ ⊢ e₁ ⊘ e₂ ⇒ error (division by zero)
 
-    ⟨e₁, ρ, σ⟩ ⇓ ⟨v₁, σ₁⟩    ⟨e₂, ρ, σ₁⟩ ⇓ ⟨v₂, σ₂⟩
-    ───────────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, <, <=, >, >=})
-    ⟨e₁ ⋈ e₂, ρ, σ⟩ ⇓ ⟨bool (v₁ ⋈ v₂), σ₂⟩
+    ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂
+    ─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, <, <=, >, >=})
+    ρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂
 
     The left operand is evaluated before the right one, the Core C++ choice
     where C++17 does not specify the order.                                        -/
@@ -132,63 +133,64 @@ def expectBool (what : String) : Val → M Bool
 
 mutual
 
-/-- ⟨e, ρ, σ⟩ ⇓ ⟨v, σ'⟩ -/
+/-- ρ, σ ⊢ e ⇒ v, σ' -/
 partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × Store) :=
   match e with
-  /-  ──────────────────────── (Lit)
-      ⟨n, ρ, σ⟩ ⇓ ⟨int n, σ⟩                                                    -/
+  /-  ───────────────────── (Lit)
+      ρ, σ ⊢ n ⇒ int32 n, σ                                                     -/
   | .intLit n => traced "Lit" (confE e ρ σ) showV do return (← int32 n, σ)
-  /-  ──────────────────────── (BoolLit)
-      ⟨b, ρ, σ⟩ ⇓ ⟨bool b, σ⟩                                                   -/
+  /-  ────────────────────── (BoolLit)
+      ρ, σ ⊢ b ⇒ bool b, σ                                                      -/
   | .boolLit b => traced "BoolLit" (confE e ρ σ) showV do return (.bool b, σ)
-  /-  ρ(x) = ℓ    ℓ ∈ dom σ
-      ──────────────────────── (Var)       reading x is reading σ(ρ(x))
-      ⟨x, ρ, σ⟩ ⇓ ⟨σ(ℓ), σ⟩                                                    -/
+  /-  ρ, σ ⊢ x ⇒ₗ ℓ, σ    ℓ ∈ dom σ
+      ──────────────────────────────── (Var)       reading x is reading σ(ρ(x))
+      ρ, σ ⊢ x ⇒ σ(ℓ), σ                                                        -/
   | .var x => traced "Var" (confE e ρ σ) showV do
     let (l, σ) ← lval fs ρ σ (.var x)
     match σ.read l with
     | some v => return (v, σ)
     | none   => throw (.danglingLocation l)
-  /-  ⟨e, ρ, σ⟩ ⇓ ⟨v, σ'⟩    op v = v'
-      ─────────────────────────────── (Unary)                                   -/
+  /-  ρ, σ ⊢ e ⇒ v, σ'    op v = v'
+      ─────────────────────────────── (Unary)
+      ρ, σ ⊢ op e ⇒ v', σ'                                                      -/
   | .unop op e₁ => traced "Unary" (confE e ρ σ) showV do
     let (v, σ) ← expr fs ρ σ e₁
     return (← unop op v, σ)
-  /-  ⟨e₁, ρ, σ⟩ ⇓ ⟨bool false, σ₁⟩                   ⟨e₁, ρ, σ⟩ ⇓ ⟨bool true, σ₁⟩   ⟨e₂, ρ, σ₁⟩ ⇓ ⟨v, σ₂⟩
-      ────────────────────────────────── (And-False)   ───────────────────────────────────────────────── (And-True)
-      ⟨e₁ && e₂, ρ, σ⟩ ⇓ ⟨bool false, σ₁⟩               ⟨e₁ && e₂, ρ, σ⟩ ⇓ ⟨v, σ₂⟩
+  /-  ρ, σ ⊢ e₁ ⇒ bool false, σ₁                     ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂
+      ─────────────────────────────── (And-False)    ────────────────────────────────────────────── (And-True)
+      ρ, σ ⊢ e₁ && e₂ ⇒ bool false, σ₁               ρ, σ ⊢ e₁ && e₂ ⇒ v, σ₂
       short circuit, e₂ is evaluated only if e₁ is true                          -/
   | .binop .and e₁ e₂ => traced "And" (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
     if ← expectBool "left operand of &&" v₁ then expr fs ρ σ₁ e₂ else return (.bool false, σ₁)
-  /-  ⟨e₁, ρ, σ⟩ ⇓ ⟨bool true, σ₁⟩                    ⟨e₁, ρ, σ⟩ ⇓ ⟨bool false, σ₁⟩   ⟨e₂, ρ, σ₁⟩ ⇓ ⟨v, σ₂⟩
-      ────────────────────────────────── (Or-True)     ────────────────────────────────────────────────── (Or-False)
-      ⟨e₁ || e₂, ρ, σ⟩ ⇓ ⟨bool true, σ₁⟩                ⟨e₁ || e₂, ρ, σ⟩ ⇓ ⟨v, σ₂⟩                          -/
+  /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁                      ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂
+      ─────────────────────────────── (Or-True)      ─────────────────────────────────────────────── (Or-False)
+      ρ, σ ⊢ e₁ || e₂ ⇒ bool true, σ₁                ρ, σ ⊢ e₁ || e₂ ⇒ v, σ₂                             -/
   | .binop .or e₁ e₂ => traced "Or" (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
     if ← expectBool "left operand of ||" v₁ then return (.bool true, σ₁) else expr fs ρ σ₁ e₂
-  /-  ⟨e₁, ρ, σ⟩ ⇓ ⟨v₁, σ₁⟩    ⟨e₂, ρ, σ₁⟩ ⇓ ⟨v₂, σ₂⟩    v₁ ⊕ v₂ = v
-      ─────────────────────────────────────────────────────────── (Binary)
-      ⟨e₁ ⊕ e₂, ρ, σ⟩ ⇓ ⟨v, σ₂⟩          left before right                     -/
+  /-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂    v₁ ⊕ v₂ = v
+      ──────────────────────────────────────────────────────── (Binary)
+      ρ, σ ⊢ e₁ ⊕ e₂ ⇒ v, σ₂          left before right                        -/
   | .binop op e₁ e₂ => traced "Binary" (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
     let (v₂, σ₂) ← expr fs ρ σ₁ e₂
     return (← binop op v₁ v₂, σ₂)
-  /-  ⟨e₁, ρ, σ⟩ ⇓ ⟨bool true, σ₁⟩   ⟨e₂, ρ, σ₁⟩ ⇓ ⟨v, σ₂⟩        ⟨e₁, ρ, σ⟩ ⇓ ⟨bool false, σ₁⟩   ⟨e₃, ρ, σ₁⟩ ⇓ ⟨v, σ₂⟩
-      ──────────────────────────────────────────────── (Cond-T)   ──────────────────────────────────────────────── (Cond-F)
-      ⟨e₁ ? e₂ : e₃, ρ, σ⟩ ⇓ ⟨v, σ₂⟩                               ⟨e₁ ? e₂ : e₃, ρ, σ⟩ ⇓ ⟨v, σ₂⟩                  -/
+  /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂        ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₃ ⇒ v, σ₂
+      ────────────────────────────────────────────── (Cond-T)   ─────────────────────────────────────────────── (Cond-F)
+      ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                                ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                     -/
   | .cond e₁ e₂ e₃ => traced "Cond" (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
     if ← expectBool "condition" v₁ then expr fs ρ σ₁ e₂ else expr fs ρ σ₁ e₃
   /-  f ↦ (τ f (τ₁ x₁, …, τₖ xₖ) { c }) in the program
-      ⟨e₁, ρ, σ⟩ ⇓ ⟨v₁, σ₁⟩  …  ⟨eₖ, ρ, σₖ₋₁⟩ ⇓ ⟨vₖ, σₖ⟩              arguments left to right
+      ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right
       (ℓᵢ, σ'ᵢ) = alloc σ'ᵢ₋₁ vᵢ,  σ'₀ = σₖ                          call by value, fresh location with a copy
       ρ_f = [x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                                    the function environment holds only the parameters
-      ⟨c, ρ_f, σ'ₖ⟩ ⇓ ⟨ret v, ρ', σ''⟩
+      ρ_f, σ'ₖ ⊢ c ⇒ ret v, ρ', σ''
       ──────────────────────────────────────────────────────────── (Call)
-      ⟨f(e₁, …, eₖ), ρ, σ⟩ ⇓ ⟨v, σ'' ∖ {ℓ₁, …, ℓₖ}⟩                   the return frees the parameters
+      ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'' ∖ {ℓ₁, …, ℓₖ}                      the return frees the parameters
 
-      With ⟨c, ρ_f, σ'ₖ⟩ ⇓ ⟨normal, ρ', σ''⟩ the result is ⟨void, σ'' ∖ {ℓᵢ}⟩ if τ = void,
+      With ρ_f, σ'ₖ ⊢ c ⇒ normal, ρ', σ'' the result is void, σ'' ∖ {ℓᵢ} if τ = void,
       and error (missing return) otherwise.                                                          -/
   | .call f es => traced "Call" (confE e ρ σ) showV do
     let some fn := fs.lookup f | throw (.undeclaredFunction f)
@@ -213,47 +215,47 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
     | .normal, .void => return (.void, σ''')
     | .normal, _     => throw (.missingReturn f)
 
-/-- ⟨e, ρ, σ⟩ ⇓ₗ ⟨ℓ, σ'⟩, the expressions that denote a location. In this subset,
+/-- ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. In this subset,
 only the variable.
 
     ρ(x) = ℓ
-    ─────────────────────── (LocVar)
-    ⟨x, ρ, σ⟩ ⇓ₗ ⟨ℓ, σ⟩                                                        -/
+    ──────────────────── (LocVar)
+    ρ, σ ⊢ x ⇒ₗ ℓ, σ                                                            -/
 partial def lval (_fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × Store) :=
   match e with
-  | .var x => traced "LocVar" (confE e ρ σ) showL (arrow := "⇓ₗ") do
+  | .var x => traced "LocVar" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     match ρ.lookup x with
     | some l => return (l, σ)
     | none   => throw (.undeclaredVariable x)
   | _ => throw (.typeError s!"expression does not denote a location: {e}")
 
-/-- ⟨c, ρ, σ⟩ ⇓ ⟨r, ρ', σ'⟩ -/
+/-- ρ, σ ⊢ c ⇒ r, ρ', σ' -/
 partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env × Store) :=
   match c with
-  /-  ⟨c₁ … cₙ, ρ, σ⟩ ⇓ ⟨r, ρ', σ'⟩
-      ────────────────────────────────────────────── (Block)
-      ⟨{ c₁ … cₙ }, ρ, σ⟩ ⇓ ⟨r, ρ, σ' ∖ (ρ' ∖ ρ)⟩
+  /-  ρ, σ ⊢ c₁ … cₙ ⇒ r, ρ', σ'
+      ──────────────────────────────────────────── (Block)
+      ρ, σ ⊢ { c₁ … cₙ } ⇒ r, ρ, σ' ∖ (ρ' ∖ ρ)
       the block discards the extension of ρ and removes from σ the locations it declared -/
   | .block cs => traced "Block" (confC c ρ σ) showR do
     let (r, ρ', σ') ← cmds fs ρ σ cs
     return (r, ρ, σ'.free (fresh ρ ρ'))
-  /-  ⟨e, ρ, σ⟩ ⇓ ⟨bool true, σ₁⟩   ⟨{c₁}, ρ, σ₁⟩ ⇓ ⟨r, ρ, σ₂⟩        ⟨e, ρ, σ⟩ ⇓ ⟨bool false, σ₁⟩   ⟨{c₂}, ρ, σ₁⟩ ⇓ ⟨r, ρ, σ₂⟩
-      ─────────────────────────────────────────────────── (If-T)     ─────────────────────────────────────────────────── (If-F)
-      ⟨if (e) {c₁} else {c₂}, ρ, σ⟩ ⇓ ⟨r, ρ, σ₂⟩                       ⟨if (e) {c₁} else {c₂}, ρ, σ⟩ ⇓ ⟨r, ρ, σ₂⟩          -/
+  /-  ρ, σ ⊢ e ⇒ bool true, σ₁    ρ, σ₁ ⊢ {c₁} ⇒ r, ρ, σ₂          ρ, σ ⊢ e ⇒ bool false, σ₁    ρ, σ₁ ⊢ {c₂} ⇒ r, ρ, σ₂
+      ────────────────────────────────────────────────── (If-T)     ─────────────────────────────────────────────────── (If-F)
+      ρ, σ ⊢ if (e) {c₁} else {c₂} ⇒ r, ρ, σ₂                        ρ, σ ⊢ if (e) {c₁} else {c₂} ⇒ r, ρ, σ₂             -/
   | .ite e t f => traced "If" (confC c ρ σ) showR do
     let (v, σ₁) ← expr fs ρ σ e
     if ← expectBool "condition of if" v then cmd fs ρ σ₁ (.block t) else cmd fs ρ σ₁ (.block f)
-  /-  ⟨e, ρ, σ⟩ ⇓ ⟨bool false, σ₁⟩
-      ────────────────────────────────────── (While-F)
-      ⟨while (e) {c}, ρ, σ⟩ ⇓ ⟨normal, ρ, σ₁⟩
+  /-  ρ, σ ⊢ e ⇒ bool false, σ₁
+      ──────────────────────────────────────── (While-F)
+      ρ, σ ⊢ while (e) {c} ⇒ normal, ρ, σ₁
 
-      ⟨e, ρ, σ⟩ ⇓ ⟨bool true, σ₁⟩   ⟨{c}, ρ, σ₁⟩ ⇓ ⟨normal, ρ, σ₂⟩   ⟨while (e) {c}, ρ, σ₂⟩ ⇓ ⟨r, ρ, σ₃⟩
-      ─────────────────────────────────────────────────────────────────────────────────────── (While-T)
-      ⟨while (e) {c}, ρ, σ⟩ ⇓ ⟨r, ρ, σ₃⟩
+      ρ, σ ⊢ e ⇒ bool true, σ₁    ρ, σ₁ ⊢ {c} ⇒ normal, ρ, σ₂    ρ, σ₂ ⊢ while (e) {c} ⇒ r, ρ, σ₃
+      ────────────────────────────────────────────────────────────────────────────────────── (While-T)
+      ρ, σ ⊢ while (e) {c} ⇒ r, ρ, σ₃
 
-      ⟨e, ρ, σ⟩ ⇓ ⟨bool true, σ₁⟩   ⟨{c}, ρ, σ₁⟩ ⇓ ⟨ret v, ρ, σ₂⟩
-      ──────────────────────────────────────────────────────── (While-Ret)   the return interrupts the loop
-      ⟨while (e) {c}, ρ, σ⟩ ⇓ ⟨ret v, ρ, σ₂⟩
+      ρ, σ ⊢ e ⇒ bool true, σ₁    ρ, σ₁ ⊢ {c} ⇒ ret v, ρ, σ₂
+      ────────────────────────────────────────────────────── (While-Ret)   the return interrupts the loop
+      ρ, σ ⊢ while (e) {c} ⇒ ret v, ρ, σ₂
 
       The divergence of while (true) {} has no derivation, a limitation of
       inductive big-step semantics.                                                                 -/
@@ -265,9 +267,9 @@ partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env
       | .normal => cmd fs ρ σ₂ (.while e b)
       | .ret _  => return (r, ρ, σ₂)
     else return (.normal, ρ, σ₁)
-  /-  ⟨c₀, ρ, σ⟩ ⇓ ⟨normal, ρ₀, σ₀⟩   ⟨while (e) { {c} cₛ }, ρ₀, σ₀⟩ ⇓ ⟨r, ρ₀, σ₁⟩
-      ─────────────────────────────────────────────────────────────────────── (For)
-      ⟨for (c₀; e; cₛ) {c}, ρ, σ⟩ ⇓ ⟨r, ρ, σ₁ ∖ (ρ₀ ∖ ρ)⟩
+  /-  ρ, σ ⊢ c₀ ⇒ normal, ρ₀, σ₀    ρ₀, σ₀ ⊢ while (e) { {c} cₛ } ⇒ r, ρ₀, σ₁
+      ────────────────────────────────────────────────────────────────────── (For)
+      ρ, σ ⊢ for (c₀; e; cₛ) {c} ⇒ r, ρ, σ₁ ∖ (ρ₀ ∖ ρ)
       the variable of c₀ has the loop as its scope, the body is its own block, and
       the step cₛ runs after the body, outside the body's scope                                       -/
   | .for c₀ e cₛ b => traced "For" (confC c ρ σ) showR do
@@ -277,16 +279,16 @@ partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env
     | .normal =>
       let (r, _, σ₁) ← cmd fs ρ₀ σ₀ (.while e [.block b, cₛ])
       return (r, ρ, σ₁.free (fresh ρ ρ₀))
-  /-  ⟨e, ρ, σ⟩ ⇓ ⟨v, σ'⟩
-      ────────────────────────────────── (Return)      ────────────────────────────────── (ReturnVoid)
-      ⟨return e, ρ, σ⟩ ⇓ ⟨ret v, ρ, σ'⟩                ⟨return, ρ, σ⟩ ⇓ ⟨ret void, ρ, σ⟩              -/
+  /-  ρ, σ ⊢ e ⇒ v, σ'
+      ─────────────────────────────── (Return)         ────────────────────────────────── (ReturnVoid)
+      ρ, σ ⊢ return e ⇒ ret v, ρ, σ'                   ρ, σ ⊢ return ⇒ ret void, ρ, σ                 -/
   | .ret none => traced "ReturnVoid" (confC c ρ σ) showR do return (.ret .void, ρ, σ)
   | .ret (some e) => traced "Return" (confC c ρ σ) showR do
     let (v, σ') ← expr fs ρ σ e
     return (.ret v, ρ, σ')
-  /-  ⟨e, ρ, σ⟩ ⇓ ⟨v, σ'⟩    (ℓ, σ'') = alloc σ' v    ℓ ∉ dom σ'
-      ─────────────────────────────────────────────────────────── (Decl)
-      ⟨τ x = e, ρ, σ⟩ ⇓ ⟨normal, ρ[x ↦ ℓ], σ''⟩
+  /-  ρ, σ ⊢ e ⇒ v, σ'    (ℓ, σ'') = alloc σ' v    ℓ ∉ dom σ'
+      ──────────────────────────────────────────────────────── (Decl)
+      ρ, σ ⊢ τ x = e ⇒ normal, ρ[x ↦ ℓ], σ''
       the declaration allocates a fresh location and extends ρ for the following commands -/
   | .decl _ x e => traced "Decl" (confC c ρ σ) showR do
     let (v, σ') ← expr fs ρ σ e
@@ -297,34 +299,34 @@ partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env
     let (v, σ') ← expr fs ρ σ e
     let (l, σ'') := σ'.alloc v
     return (.normal, ρ.extend x l, σ'')
-  /-  ⟨e₂, ρ, σ⟩ ⇓ ⟨v, σ₁⟩    ⟨e₁, ρ, σ₁⟩ ⇓ₗ ⟨ℓ, σ₂⟩    ℓ ∈ dom σ₂
-      ───────────────────────────────────────────────────────── (Assign)
-      ⟨e₁ = e₂, ρ, σ⟩ ⇓ ⟨normal, ρ, σ₂[ℓ ↦ v]⟩
+  /-  ρ, σ ⊢ e₂ ⇒ v, σ₁    ρ, σ₁ ⊢ e₁ ⇒ₗ ℓ, σ₂    ℓ ∈ dom σ₂
+      ──────────────────────────────────────────────────────── (Assign)
+      ρ, σ ⊢ e₁ = e₂ ⇒ normal, ρ, σ₂[ℓ ↦ v]
       right operand before left, the order C++17 fixes for assignment            -/
   | .assign e₁ e₂ => traced "Assign" (confC c ρ σ) showR do
     let (v, σ₁) ← expr fs ρ σ e₂
     let (l, σ₂) ← lval fs ρ σ₁ e₁
     if (σ₂.read l).isNone then throw (.danglingLocation l)
     return (.normal, ρ, σ₂.write l v)
-  /-  ⟨e, ρ, σ⟩ ⇓ ⟨v, σ'⟩
-      ──────────────────────────────── (ExprStmt)      the value is discarded
-      ⟨e;, ρ, σ⟩ ⇓ ⟨normal, ρ, σ'⟩                                              -/
+  /-  ρ, σ ⊢ e ⇒ v, σ'
+      ──────────────────────────── (ExprStmt)      the value is discarded
+      ρ, σ ⊢ e; ⇒ normal, ρ, σ'                                                 -/
   | .exprStmt e => traced "ExprStmt" (confC c ρ σ) showR do
     let (_, σ') ← expr fs ρ σ e
     return (.normal, ρ, σ')
 
 /-- Command sequences.
 
-    ─────────────────────────────── (Seq-Empty)
-    ⟨ε, ρ, σ⟩ ⇓ ⟨normal, ρ, σ⟩
+    ────────────────────────── (Seq-Empty)
+    ρ, σ ⊢ ε ⇒ normal, ρ, σ
 
-    ⟨c, ρ, σ⟩ ⇓ ⟨normal, ρ₁, σ₁⟩    ⟨cs, ρ₁, σ₁⟩ ⇓ ⟨r, ρ₂, σ₂⟩
-    ───────────────────────────────────────────────────────── (Seq)   ρ₁ carries the binding of c to the rest
-    ⟨c cs, ρ, σ⟩ ⇓ ⟨r, ρ₂, σ₂⟩
+    ρ, σ ⊢ c ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ cs ⇒ r, ρ₂, σ₂
+    ──────────────────────────────────────────────────── (Seq)   ρ₁ carries the binding of c to the rest
+    ρ, σ ⊢ c cs ⇒ r, ρ₂, σ₂
 
-    ⟨c, ρ, σ⟩ ⇓ ⟨ret v, ρ₁, σ₁⟩
-    ─────────────────────────────────── (Seq-Ret)   the return interrupts the sequence
-    ⟨c cs, ρ, σ⟩ ⇓ ⟨ret v, ρ₁, σ₁⟩                                                            -/
+    ρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁
+    ───────────────────────────── (Seq-Ret)   the return interrupts the sequence
+    ρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁                                                                -/
 partial def cmds (fs : FunEnv) (ρ : Env) (σ : Store) : List Cmd → M (Ctrl × Env × Store)
   | [] => return (.normal, ρ, σ)
   | c :: cs => do
@@ -340,9 +342,9 @@ end Eval
 /-- Program execution. The initial store is empty, because there are no global
 variables, and the result is the value returned by `main()`.
 
-    main ↦ (int main() { c })    ⟨main(), [], ∅⟩ ⇓ ⟨v, σ⟩
-    ──────────────────────────────────────────────────── (Program)
-    program ⇓ v                                                                   -/
+    main ↦ (int main() { c })    [], ∅ ⊢ main() ⇒ v, σ
+    ─────────────────────────────────────────────────── (Program)
+    p ⇒ v                                                                         -/
 def runWith (trace : Bool) (p : Program) : Except Error Val × Array TraceEntry :=
   let (r, s) := (Eval.expr p [] {} (.call "main" [])).run.run { enabled := trace }
   (r.map (·.1), s.log)

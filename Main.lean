@@ -49,8 +49,8 @@ def exitCode : Except Error Val → UInt32
 
 def report (r : Except Error Val) : IO UInt32 := do
   match r with
-  | .ok v    => IO.println s!"main() ⇓ {v}"
-  | .error e => IO.eprintln s!"main() ⇓ error ({e})"
+  | .ok v    => IO.println s!"main() ⇒ {v}"
+  | .error e => IO.eprintln s!"main() ⇒ error ({e})"
   return exitCode r
 
 def dispatch (cmd path : String) : IO UInt32 := do
