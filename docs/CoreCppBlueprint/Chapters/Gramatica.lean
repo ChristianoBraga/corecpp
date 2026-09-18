@@ -130,23 +130,7 @@ The grammar is LL(1). Two left factorings make it so. In `Member`, a token `Type
 :::definition "gram_ast" (parent := "ud1") (lean := "CoreCpp.Ty, CoreCpp.UnOp, CoreCpp.BinOp, CoreCpp.Expr, CoreCpp.Cmd, CoreCpp.Param, CoreCpp.Fun, CoreCpp.Program") (uses := "gram_full")
 The abstract syntax has one inductive type per class of nonterminals. `Expr` has literals, variable, unary and binary operators, conditional and call. `Cmd` has block, `if`, `while`, `for`, `return`, declaration with a type or with `auto`, assignment and expression statement. A `Fun` has a return type, a name, parameters and a body, and a `Program` is a list of functions. The abstract grammar of the implemented subset follows, with one alternative per constructor of `Syntax.lean` and in the same order, the constructor named in the right column.
 
-$$`\begin{array}{lcll}
-\tau & ::= & \mathtt{int} \mid \mathtt{bool} \mid \mathtt{void} & \textsf{Ty} \\
-\ominus & ::= & \mathtt{!} \mid \mathtt{-} & \textsf{UnOp} \\
-\oplus & ::= & \mathtt{+} \mid \mathtt{-} \mid \mathtt{*} \mid \mathtt{/} \mid \mathtt{\%} \mid \mathtt{==} \mid \mathtt{!=} \mid \mathtt{<} \mid \mathtt{<=} \mid \mathtt{>} \mid \mathtt{>=} \mid \mathtt{\&\&} \mid \mathtt{||} & \textsf{BinOp} \\
-e & ::= & n \mid b \mid x \mid \ominus\, e \mid e_1 \oplus e_2 \mid e_1\ \mathtt{?}\ e_2\ \mathtt{:}\ e_3 \mid f(e_1, \ldots, e_k) & \textsf{Expr} \\
-c & ::= & \{\, c_1 \ldots c_n \,\} & \textsf{Cmd.block} \\
-  & \mid & \mathtt{if}\ (e)\ \{\, c_1 \ldots c_n \,\}\ \mathtt{else}\ \{\, c'_1 \ldots c'_m \,\} & \textsf{Cmd.ite} \\
-  & \mid & \mathtt{while}\ (e)\ \{\, c_1 \ldots c_n \,\} & \textsf{Cmd.while} \\
-  & \mid & \mathtt{for}\ (c_0;\ e;\ c_s)\ \{\, c_1 \ldots c_n \,\} & \textsf{Cmd.for} \\
-  & \mid & \mathtt{return} \mid \mathtt{return}\ e & \textsf{Cmd.ret} \\
-  & \mid & \tau\ x = e \mid \mathtt{auto}\ x = e & \textsf{Cmd.decl, Cmd.declAuto} \\
-  & \mid & e_1 = e_2 & \textsf{Cmd.assign} \\
-  & \mid & e; & \textsf{Cmd.exprStmt} \\
-p & ::= & \tau\ x & \textsf{Param} \\
-F & ::= & \tau\ f(p_1, \ldots, p_k)\ \{\, c_1 \ldots c_n \,\} & \textsf{Fun} \\
-P & ::= & F_1 \ldots F_n & \textsf{Program}
-\end{array}`
+$$`\begin{array}{lcll} \tau & ::= & \mathtt{int} \mid \mathtt{bool} \mid \mathtt{void} & \textsf{Ty} \\ \ominus & ::= & \mathtt{!} \mid \mathtt{-} & \textsf{UnOp} \\ \oplus & ::= & \mathtt{+} \mid \mathtt{-} \mid \mathtt{*} \mid \mathtt{/} \mid \mathtt{\%} \mid \mathtt{==} \mid \mathtt{!=} \mid \mathtt{<} \mid \mathtt{<=} \mid \mathtt{>} \mid \mathtt{>=} \mid \mathtt{\&\&} \mid \mathtt{||} & \textsf{BinOp} \\ e & ::= & n \mid b \mid x \mid \ominus\, e \mid e_1 \oplus e_2 \mid e_1\ \mathtt{?}\ e_2\ \mathtt{:}\ e_3 \mid f(e_1, \ldots, e_k) & \textsf{Expr} \\ c & ::= & \{\, c_1 \ldots c_n \,\} & \textsf{Cmd.block} \\ & \mid & \mathtt{if}\ (e)\ \{\, c_1 \ldots c_n \,\}\ \mathtt{else}\ \{\, c'_1 \ldots c'_m \,\} & \textsf{Cmd.ite} \\ & \mid & \mathtt{while}\ (e)\ \{\, c_1 \ldots c_n \,\} & \textsf{Cmd.while} \\ & \mid & \mathtt{for}\ (c_0;\ e;\ c_s)\ \{\, c_1 \ldots c_n \,\} & \textsf{Cmd.for} \\ & \mid & \mathtt{return} \mid \mathtt{return}\ e & \textsf{Cmd.ret} \\ & \mid & \tau\ x = e \mid \mathtt{auto}\ x = e & \textsf{Cmd.decl, Cmd.declAuto} \\ & \mid & e_1 = e_2 & \textsf{Cmd.assign} \\ & \mid & e; & \textsf{Cmd.exprStmt} \\ p & ::= & \tau\ x & \textsf{Param} \\ F & ::= & \tau\ f(p_1, \ldots, p_k)\ \{\, c_1 \ldots c_n \,\} & \textsf{Fun} \\ P & ::= & F_1 \ldots F_n & \textsf{Program}\end{array}`
 
 Here $`n` is an integer, $`b` a boolean, $`x` a variable identifier and $`f` a function identifier. The abstract syntax has no parentheses and no precedence, because the tree fixes the structure.
 :::
