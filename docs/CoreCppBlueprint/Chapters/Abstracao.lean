@@ -26,7 +26,7 @@ Let $`f \mapsto \tau\ f(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \{c\}` be in the prog
 
 $$`\dfrac{\Gamma \vdash e_i : \tau_i \quad (1 \le i \le k)}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Call)}`
 
-$$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k,\ \sigma_0 = \sigma) \qquad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma'_{i-1}, v_i) \quad (\sigma'_0 = \sigma_k) \qquad [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma''}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus \{\ell_1, \ldots, \ell_k\}}\;\textsf{(Call)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k,\ \sigma_0 = \sigma) \\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma'_{i-1}, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma_k) \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus \{\ell_1, \ldots, \ell_k\}}\;\textsf{(Call)}`
 
 When the body ends with $`\mathsf{normal}`, the result is $`\mathsf{void}` if $`\tau = \mathsf{void}` and `error` otherwise. A missing `return` in a non `void` function is an evaluation `error`, not a type error.
 :::
@@ -36,9 +36,13 @@ When the body ends with $`\mathsf{normal}`, the result is $`\mathsf{void}` if $`
 :::definition "fun_return" (parent := "ud4") (lean := "CoreCpp.Typing.cmd, CoreCpp.Eval.cmd") (uses := "judg_ty_cmd, judg_ev_cmd, dom_ctrl")
 The `return` yields the control $`\mathsf{ret}\,v`, which `Seq-Ret` and `While-Ret` propagate up to the call. The type of the expression is the return type $`\tau_r` of the enclosing function.
 
-$$`\dfrac{\tau_r = \mathsf{void}}{\Gamma \vdash \mathtt{return} \dashv \Gamma}\;\textsf{(T-RetVoid)} \qquad \dfrac{\Gamma \vdash e : \tau_r \qquad \tau_r \neq \mathsf{void}}{\Gamma \vdash \mathtt{return}\ e \dashv \Gamma}\;\textsf{(T-Ret)}`
+$$`\dfrac{\tau_r = \mathsf{void}}{\Gamma \vdash \mathtt{return} \dashv \Gamma}\;\textsf{(T-RetVoid)}`
 
-$$`\dfrac{}{\rho, \sigma \vdash \mathtt{return} \Rightarrow \mathsf{ret}\,\mathsf{void}, \rho, \sigma}\;\textsf{(ReturnVoid)} \qquad \dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash \mathtt{return}\ e \Rightarrow \mathsf{ret}\,v, \rho, \sigma'}\;\textsf{(Return)}`
+$$`\dfrac{\Gamma \vdash e : \tau_r \qquad \tau_r \neq \mathsf{void}}{\Gamma \vdash \mathtt{return}\ e \dashv \Gamma}\;\textsf{(T-Ret)}`
+
+$$`\dfrac{}{\rho, \sigma \vdash \mathtt{return} \Rightarrow \mathsf{ret}\,\mathsf{void}, \rho, \sigma}\;\textsf{(ReturnVoid)}`
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash \mathtt{return}\ e \Rightarrow \mathsf{ret}\,v, \rho, \sigma'}\;\textsf{(Return)}`
 :::
 
 # Function and program
@@ -52,7 +56,9 @@ $$`\dfrac{[x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k] \vdash c \dashv \Gamm
 :::definition "program" (parent := "ud4") (lean := "CoreCpp.Program, CoreCpp.check, CoreCpp.runWith, CoreCpp.run") (uses := "fun_decl, fun_call")
 A program is a list of functions with distinct names and a function `int main()`. The initial store is empty, because there are no global variables, and the result is the value of `main()`.
 
-$$`\dfrac{\text{distinct names} \qquad \vdash f_i \ \text{for each } i \qquad \mathtt{main} \mapsto \mathtt{int\ main()}\ \{c\}}{\vdash p}\;\textsf{(T-Program)} \qquad \dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow v, \sigma}{p \Rightarrow v}\;\textsf{(Program)}`
+$$`\dfrac{\begin{array}{c} \text{distinct names} \qquad \vdash f_i \ \text{for each } i \\ \mathtt{main} \mapsto \mathtt{int\ main()}\ \{c\} \end{array}}{\vdash p}\;\textsf{(T-Program)}`
+
+$$`\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow v, \sigma}{p \Rightarrow v}\;\textsf{(Program)}`
 :::
 
 # Properties
