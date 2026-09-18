@@ -24,6 +24,28 @@ UD I, syntax, tokens and the parser.
 
 :::definition "lex_tokens" (parent := "ud1") (lean := "CoreCpp.Token, CoreCpp.keywords, CoreCpp.symbols3, CoreCpp.symbols2, CoreCpp.symbols1")
 Tokens fall in five classes. Reserved words, among them `int`, `bool`, `void`, `if`, `else`, `while`, `for`, `return`, `true`, `false`, `auto`, `class`, `new`, `delete`, `nullptr`, `this`, `virtual`, `override`, `namespace`, `template`, `typename` and `operator`. Type identifiers, `TypeId`, with an uppercase initial. Variable identifiers, `VarId`, with a lowercase initial, naming variables, fields, functions and methods. Decimal integer literals, `IntLit`. Operators and punctuation, with `[=]` as a single token by the longest match rule. There is no token `>>`, so `Pilha<Pilha<int>>` closes with two tokens `>`.
+
+```
+Token     ::= Keyword | TypeId | VarId | IntLit | Symbol
+Keyword   ::= 'int' | 'bool' | 'void' | 'class' | 'public' | 'private' | 'new' | 'delete'
+            | 'nullptr' | 'this' | 'virtual' | 'override' | 'namespace' | 'template'
+            | 'typename' | 'auto' | 'if' | 'else' | 'while' | 'for' | 'return'
+            | 'true' | 'false' | 'operator' | 'std::function' | 'std::vector'
+TypeId    ::= Upper IdentChar*
+VarId     ::= ( Lower | '_' ) IdentChar*                    -- and not a Keyword
+IntLit    ::= Digit Digit*
+Symbol    ::= '[=]'
+            | '==' | '!=' | '<=' | '>=' | '&&' | '||' | '->' | '::'
+            | '+' | '-' | '*' | '/' | '%' | '<' | '>' | '!' | '?' | ':' | '='
+            | '(' | ')' | '{' | '}' | '[' | ']' | ',' | ';' | '.' | '&' | '~'
+IdentChar ::= Upper | Lower | Digit | '_'
+Upper     ::= 'A' | ... | 'Z'
+Lower     ::= 'a' | ... | 'z'
+Digit     ::= '0' | ... | '9'
+Skip      ::= WhiteSpace | '//' NotNewline* Newline
+```
+
+The input is the longest sequence of `Token` and `Skip` that covers it, `Skip` is discarded, and each token is the longest match at its position. The symbols of three characters are tried before those of two and of one.
 :::
 
 :::definition "lex_conventions" (parent := "ud1") (lean := "CoreCpp.Lexer.identifier") (uses := "lex_tokens")
@@ -106,7 +128,27 @@ The grammar is LL(1). Two left factorings make it so. In `Member`, a token `Type
 # Abstract syntax and parser
 
 :::definition "gram_ast" (parent := "ud1") (lean := "CoreCpp.Ty, CoreCpp.UnOp, CoreCpp.BinOp, CoreCpp.Expr, CoreCpp.Cmd, CoreCpp.Param, CoreCpp.Fun, CoreCpp.Program") (uses := "gram_full")
-The abstract syntax has one inductive type per class of nonterminals. `Expr` has literals, variable, unary and binary operators, conditional and call. `Cmd` has block, `if`, `while`, `for`, `return`, declaration with a type or with `auto`, assignment and expression statement. A `Fun` has a return type, a name, parameters and a body, and a `Program` is a list of functions.
+The abstract syntax has one inductive type per class of nonterminals. `Expr` has literals, variable, unary and binary operators, conditional and call. `Cmd` has block, `if`, `while`, `for`, `return`, declaration with a type or with `auto`, assignment and expression statement. A `Fun` has a return type, a name, parameters and a body, and a `Program` is a list of functions. The abstract grammar of the implemented subset follows, with one alternative per constructor of `Syntax.lean` and in the same order.
+
+```
+τ  ::= int | bool | void                                          Ty
+⊖  ::= ! | -                                                      UnOp
+⊕  ::= + | - | * | / | % | == | != | < | <= | > | >= | && | ||    BinOp
+e  ::= n | b | x | ⊖ e | e₁ ⊕ e₂ | e₁ ? e₂ : e₃ | f(e₁, ..., eₖ)   Expr
+c  ::= { c₁ ... cₙ }                                              Cmd.block
+     | if (e) { c₁ ... cₙ } else { c'₁ ... c'ₘ }                  Cmd.ite
+     | while (e) { c₁ ... cₙ }                                    Cmd.while
+     | for (c₀; e; cₛ) { c₁ ... cₙ }                              Cmd.for
+     | return | return e                                          Cmd.ret
+     | τ x = e | auto x = e                                       Cmd.decl, Cmd.declAuto
+     | e₁ = e₂                                                    Cmd.assign
+     | e;                                                         Cmd.exprStmt
+p  ::= τ x                                                        Param
+F  ::= τ f(p₁, ..., pₖ) { c₁ ... cₙ }                              Fun
+P  ::= F₁ ... Fₙ                                                  Program
+```
+
+Here $`n` is an integer, $`b` a boolean, $`x` a variable identifier and $`f` a function identifier. The abstract syntax has no parentheses and no precedence, because the tree fixes the structure.
 :::
 
 :::definition "parse_expr" (parent := "ud1") (lean := "CoreCpp.expr, CoreCpp.orExpr, CoreCpp.andExpr, CoreCpp.eqExpr, CoreCpp.relExpr, CoreCpp.addExpr, CoreCpp.mulExpr, CoreCpp.unaryExpr, CoreCpp.postfixExpr, CoreCpp.primary, CoreCpp.args") (uses := "gram_full, gram_ast, lex_automaton")
