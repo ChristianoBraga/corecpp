@@ -12,7 +12,7 @@ open Informal
 
 set_option verso.blueprint.foldCodeBlocks true
 
-#doc (Manual) "UD I, lexicon and grammar" =>
+#doc (Manual) "UD I, lexer and grammar" =>
 
 Core C++ has an LL(1) grammar over tokens. Three lexical and syntactic conventions remove the ambiguities of C++. Type identifiers start with an uppercase letter and variable identifiers with a lowercase one, which decides in the lexer whether `<` opens a template argument or compares. Template instantiation occurs only in type position. Methods are defined inside the class. The lexer is a hand written finite automaton with the longest match rule, and the parser is recursive descent with one function per nonterminal.
 
@@ -20,7 +20,7 @@ Core C++ has an LL(1) grammar over tokens. Three lexical and syntactic conventio
 UD I, syntax, tokens and the parser.
 :::
 
-# Lexicon
+# Lexer
 
 :::definition "lex_tokens" (parent := "ud1") (lean := "CoreCpp.Token, CoreCpp.keywords, CoreCpp.symbols3, CoreCpp.symbols2, CoreCpp.symbols1")
 Tokens fall in five classes. Reserved words, among them `int`, `bool`, `void`, `if`, `else`, `while`, `for`, `return`, `true`, `false`, `auto`, `class`, `new`, `delete`, `nullptr`, `this`, `virtual`, `override`, `namespace`, `template`, `typename` and `operator`. Type identifiers, `TypeId`, with an uppercase initial. Variable identifiers, `VarId`, with a lowercase initial, naming variables, fields, functions and methods. Decimal integer literals, `IntLit`. Operators and punctuation, with `[=]` as a single token by the longest match rule. There is no token `>>`, so `Pilha<Pilha<int>>` closes with two tokens `>`.
