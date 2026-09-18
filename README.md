@@ -1,0 +1,118 @@
+# Core C++
+
+Core C++ is a well behaved subset of C++17 used as the core language of the
+course 09022, Linguagens de Programação, at IME (Instituto Militar de
+Engenharia, 5th year of Engenharia de Computação). Every concept of the course
+is presented as an extension of Core C++, with typing and evaluation rules in
+natural semantics on the board, and this repository holds the Lean 4
+implementation of those rules.
+
+Every Core C++ program compiles with `g++ -std=c++17`. The subset has an LL(1)
+grammar, a deterministic semantics and no undefined behaviour. Everything
+C++17 leaves undefined is rejected statically or is the runtime result
+`error`, which is not a value of the language.
+
+## Contents
+
+| Module | Role |
+|---|---|
+| `CoreCpp/Token.lean`, `CoreCpp/Lexer.lean` | Tokens and the hand written lexer |
+| `CoreCpp/Syntax.lean`, `CoreCpp/Parser.lean` | Abstract syntax and the recursive descent parser, one function per nonterminal |
+| `CoreCpp/Semantics.lean` | Locations, values, environment ρ, store σ, `error` and control results |
+| `CoreCpp/Typing.lean` | Static semantics, Γ ⊢ e : τ and Γ ⊢ c ⊣ Γ' |
+| `CoreCpp/Eval.lean` | Evaluator in natural semantics, one function per judgment, each rule in the comment of the case that implements it |
+| `CoreCpp/Pretty.lean` | Printing of syntax and semantic domains |
+| `Main.lean`, `bin/corecpp` | Command line interpreter |
+| `Test.lean` | Tests, run with `lake env lean Test.lean` |
+| `examples/` | One program per concept, all accepted by `g++`, expected result in the header comment |
+| `docs/` | The blueprint of the semantics, see below |
+
+The judgments follow the sequent style of Kahn (1987). The hypotheses ρ and σ
+stand left of ⊢, the subject right of it and the result after ⇒.
+
+```
+ρ, σ ⊢ e ⇒ v, σ'          expression evaluation
+ρ, σ ⊢ e ⇒ₗ ℓ, σ'         location denotation
+ρ, σ ⊢ c ⇒ r, ρ', σ'      command execution
+```
+
+## Usage
+
+The toolchain is `leanprover/lean4:v4.32.2`, installed through `elan`. The
+interpreter has no dependencies.
+
+```
+lake build
+lake env lean Test.lean
+bin/corecpp [ast|check|run|trace] <file.cpp | ->
+```
+
+The mode `run` is the default. The exit code of `run` and `trace` is the value
+of `main` modulo 256, so the following behaves like compiling with `g++` and
+running the result.
+
+```
+echo 'int main() { return 42; }' | bin/corecpp -; echo $?
+```
+
+The mode `ast` prints the abstract syntax tree, `check` type checks, and
+`trace` prints the derivation tree in post order, one judgment instance per
+line with the name of the rule, indented by depth.
+
+```
+$ bin/corecpp trace examples/assignment_order.cpp
+    [], {} ⊢ 1 ⇒ 1, {}   (Lit)
+  [], {} ⊢ int x = 1; ⇒ normal, [x ↦ ℓ0], {ℓ0 ↦ 1}   (Decl)
+  ...
+[], {} ⊢ main() ⇒ 42, {ℓ0 ↦ 42}   (Call)
+```
+
+## Blueprint
+
+The directory [`docs/`](docs/) holds a
+[Verso Blueprint](https://github.com/leanprover/verso-blueprint) of the
+semantics. It states every typing and evaluation rule, one node per
+construction and one chapter per unit of the syllabus, links each node to the
+Lean declarations that implement it, and renders a dependency graph and a
+progress summary. The planned constructions without rules yet appear as
+pending nodes.
+
+```
+cd docs
+lake exe vbp build          # writes _out/site/html-multi/
+lake exe vbp build --serve  # serves the site locally
+```
+
+The entry page is `docs/_out/site/html-multi/index.html`.
+
+## Language decisions
+
+- `int` is 32 bit two's complement and overflow is `error`. The basic types are
+  `int`, `bool` and `void`.
+- Where C++17 leaves the evaluation order unspecified, Core C++ evaluates left
+  to right. Orders C++17 fixes are kept, the right operand before the left in
+  assignment.
+- No global variables, every local declaration has an initialiser, braces are
+  mandatory.
+- Every object is created with `new`, reached by pointer or reference and never
+  copied. Destructors run only on `delete`.
+- Lambdas capture only by copy, `[=]`, and occur only where C++ converts them
+  to a known `std::function`.
+- Divergence has no derivation. The inductive big step semantics does not
+  describe non terminating executions, a limitation stated in the course
+  (Leroy and Grall, Coinductive big-step operational semantics).
+
+## Status
+
+Implemented and tested on 2026-09-18. Basic types, expressions, commands,
+first order functions with call by value, type checker, evaluator with trace,
+command line interpreter, examples and the blueprint. Not yet implemented.
+References, lambdas and `std::function`, classes, `new`, `delete`,
+`std::vector`, namespaces, templates, operator overloading.
+
+## References
+
+- Gilles Kahn, Natural Semantics, STACS 1987, LNCS 247, Springer.
+- David A. Watt, Programming Language Concepts and Paradigms, Prentice Hall, 1990.
+- Xavier Leroy and Hervé Grall, Coinductive big-step operational semantics, Information and Computation 207 (2009).
+- ISO/IEC 14882:2017, Programming Languages, C++.
