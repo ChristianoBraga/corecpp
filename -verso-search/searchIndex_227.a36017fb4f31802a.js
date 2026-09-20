@@ -1,1 +1,0 @@
-window.docContents[227].resolve({"/Blueprint-Summary/#Core-C_________-natural-semantics--Blueprint-Summary":{"contents":"\n\n","context":"Core C++, natural semantics","header":"Blueprint Summary","id":"/Blueprint-Summary/#Core-C_________-natural-semantics--Blueprint-Summary"}});

@@ -1,0 +1,1 @@
+window.docContents[243].resolve({"/Planned-constructions/UD-III/#Core-C______--Planned-constructions--UD-III":{"contents":"The local reference int& y = x binds a second name to the same location, without allocating.\n\n","context":"Core C++\u0009Planned constructions","header":"6.1. UD III","id":"/Planned-constructions/UD-III/#Core-C______--Planned-constructions--UD-III"}});

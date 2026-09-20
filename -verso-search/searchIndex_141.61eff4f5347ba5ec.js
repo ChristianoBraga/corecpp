@@ -1,1 +1,0 @@
-window.docContents[141].resolve({"/Blueprint-Summary/#Core-C_________-sem___ntica-natural--Blueprint-Summary":{"contents":"\n\n","context":"Core C++, semântica natural","header":"Blueprint Summary","id":"/Blueprint-Summary/#Core-C_________-sem___ntica-natural--Blueprint-Summary"}});
