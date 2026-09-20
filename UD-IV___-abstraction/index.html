@@ -5389,7 +5389,7 @@ window.onload = async () => {
             <div class="split-toc">
               <div class="title">
                 <label for="--verso-manual-toc-Core-C______--UD-IV___-abstraction" class="toggle-split-toc"><input type="checkbox" class="toggle-split-toc" id="--verso-manual-toc-Core-C______--UD-IV___-abstraction" checked="checked"></label><span class="number">5.</span> <span class="current"><a href="UD-IV___-abstraction/#Core-C______--UD-IV___-abstraction">UD IV, abstraction</a></span></div>
-              <table><tr class="numbered"><td class="num">5.1.</td><td><a href="UD-IV___-abstraction/Call/#Core-C______--UD-IV___-abstraction--Call">Call</a></td></tr><tr class="numbered"><td class="num">5.2.</td><td><a href="UD-IV___-abstraction/Return/#Core-C______--UD-IV___-abstraction--Return">Return</a></td></tr><tr class="numbered"><td class="num">5.3.</td><td><a href="UD-IV___-abstraction/Function-and-program/#Core-C______--UD-IV___-abstraction--Function-and-program">Function and program</a></td></tr><tr class="numbered"><td class="num">5.4.</td><td><a href="UD-IV___-abstraction/Properties/#Core-C______--UD-IV___-abstraction--Properties">Properties</a></td></tr></table></div>
+              <table><tr class="numbered"><td class="num">5.1.</td><td><a href="UD-IV___-abstraction/Call/#Core-C______--UD-IV___-abstraction--Call">Call</a></td></tr><tr class="numbered"><td class="num">5.2.</td><td><a href="UD-IV___-abstraction/Parameters-by-reference/#Core-C______--UD-IV___-abstraction--Parameters-by-reference">Parameters by reference</a></td></tr><tr class="numbered"><td class="num">5.3.</td><td><a href="UD-IV___-abstraction/Lambdas-and-function-values/#Core-C______--UD-IV___-abstraction--Lambdas-and-function-values">Lambdas and function values</a></td></tr><tr class="numbered"><td class="num">5.4.</td><td><a href="UD-IV___-abstraction/Return/#Core-C______--UD-IV___-abstraction--Return">Return</a></td></tr><tr class="numbered"><td class="num">5.5.</td><td><a href="UD-IV___-abstraction/Function-and-program/#Core-C______--UD-IV___-abstraction--Function-and-program">Function and program</a></td></tr><tr class="numbered"><td class="num">5.6.</td><td><a href="UD-IV___-abstraction/Properties/#Core-C______--UD-IV___-abstraction--Properties">Properties</a></td></tr></table></div>
             </div>
           </div>
         <div class="last"></div>
@@ -5402,16 +5402,20 @@ window.onload = async () => {
             <h1>
               5. UD IV, abstraction<span class="permalink-widget inline"><a href="find/?domain=Verso.Genre.Manual.section&amp;name=Core-C______--UD-IV___-abstraction" title="Permalink">🔗</a></span></h1>
             <p>
-              First order functions with call by value, <code>return</code> as a control result, and the program. The call evaluates the arguments left to right, allocates a fresh location with a copy for each parameter and removes those locations from <code class="bp_math inline">\sigma</code> on return.</p>
+              Functions with parameters by value and by reference, <code>return</code> as a control result, lambdas with capture by copy, function values of type <code>std::function</code>, and the program. The call evaluates the arguments left to right, allocates a fresh location with a copy for each parameter by value, binds each parameter by reference to the location of its argument, and removes the copies from <code class="bp_math inline">\sigma</code> on return. The specification of the fragment is <code>LP/.claude/spec-ud4.md</code>.</p>
             <ol class="section-toc">
               <li>
                 <a href="UD-IV___-abstraction/Call/#Core-C______--UD-IV___-abstraction--Call"><span class="number">5.1.</span> Call</a></li>
               <li>
-                <a href="UD-IV___-abstraction/Return/#Core-C______--UD-IV___-abstraction--Return"><span class="number">5.2.</span> Return</a></li>
+                <a href="UD-IV___-abstraction/Parameters-by-reference/#Core-C______--UD-IV___-abstraction--Parameters-by-reference"><span class="number">5.2.</span> Parameters by reference</a></li>
               <li>
-                <a href="UD-IV___-abstraction/Function-and-program/#Core-C______--UD-IV___-abstraction--Function-and-program"><span class="number">5.3.</span> Function and program</a></li>
+                <a href="UD-IV___-abstraction/Lambdas-and-function-values/#Core-C______--UD-IV___-abstraction--Lambdas-and-function-values"><span class="number">5.3.</span> Lambdas and function values</a></li>
               <li>
-                <a href="UD-IV___-abstraction/Properties/#Core-C______--UD-IV___-abstraction--Properties"><span class="number">5.4.</span> Properties</a></li>
+                <a href="UD-IV___-abstraction/Return/#Core-C______--UD-IV___-abstraction--Return"><span class="number">5.4.</span> Return</a></li>
+              <li>
+                <a href="UD-IV___-abstraction/Function-and-program/#Core-C______--UD-IV___-abstraction--Function-and-program"><span class="number">5.5.</span> Function and program</a></li>
+              <li>
+                <a href="UD-IV___-abstraction/Properties/#Core-C______--UD-IV___-abstraction--Properties"><span class="number">5.6.</span> Properties</a></li>
               </ol>
             </section>
           <nav class="prev-next-buttons">
