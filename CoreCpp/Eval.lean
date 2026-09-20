@@ -262,7 +262,8 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
       ρ_f = [x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                                            only the parameters, the by value ones owned
       ρ_f, σ'ₖ ⊢ c ⇒ ret v, ρ', σ''
       ──────────────────────────────────────────────────────────────────── (Call)
-      ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'' ∖ {ℓᵢ | pᵢ by value}                       the return frees the copies, never the referents
+      ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_f))         the return frees the copies and the locals
+                                                                                of the body, never the referents
 
       With ρ_f, σ'ₖ ⊢ c ⇒ normal, ρ', σ'' the result is void, σ'' ∖ {ℓᵢ} if τ = void,
       and error (missing return) otherwise.
@@ -293,8 +294,8 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
           σ := σ''
           ρf := ρf.extend p.name l
           owned := l :: owned
-      let (r, _, σ'') ← cmds fs ρf σ fn.body
-      let σ''' := σ''.free owned
+      let (r, ρ', σ'') ← cmds fs ρf σ fn.body
+      let σ''' := σ''.free (owned ++ fresh ρf ρ')
       match r, fn.ret with
       | .ret v, _      => return (v, σ''')
       | .normal, .void => return (.void, σ''')
@@ -325,7 +326,7 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
     ρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                the closure environment, nothing else is visible
     ρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''
     ─────────────────────────────────────────────────────────────── (Apply)
-    apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ {ℓ'ⱼ, ℓᵢ}
+    apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))          the copies, the parameters and the locals leave
 
     With normal in place of ret v the result is void if τ = void and error
     (missing return) otherwise. A value that is not a closure is error.        -/
@@ -350,8 +351,8 @@ partial def applyClosure (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (es : L
     σ := σ'
     ρc := ρc.extend p.name l
     ls := l :: ls
-  let (res, _, σ'') ← cmds fs ρc σ b
-  let σ''' := σ''.free ls
+  let (res, ρ'', σ'') ← cmds fs ρc σ b
+  let σ''' := σ''.free (ls ++ fresh ρc ρ'')
   match res, r with
   | .ret v, _      => return (v, σ''')
   | .normal, .void => return (.void, σ''')
@@ -538,7 +539,8 @@ variables, and the result is the value returned by `main()`.
     p ⇒ v
 
     The objects created with new stay in σ until the end of the program,
-    there is no delete in this subset.                                                                         -/
+    there is no delete in this subset. The locals of main leave σ with the
+    return of the call, so the final store holds objects only.                                                                         -/
 def runWith (trace : Bool) (p : Program) : Except Error Val × Array TraceEntry :=
   let (r, s) := (Eval.expr p [] {} (.call "main" [])).run.run { enabled := trace }
   (r.map (·.1), s.log)

@@ -67,7 +67,7 @@ $ bin/corecpp trace examples/assignment_order.cpp
     [], {} ⊢ 1 ⇒ 1, {}   (Lit)
   [], {} ⊢ int x = 1; ⇒ normal, [x ↦ ℓ0], {ℓ0 ↦ 1}   (Decl)
   ...
-[], {} ⊢ main() ⇒ 42, {ℓ0 ↦ 42}   (Call)
+[], {} ⊢ main() ⇒ 42, {}   (Call)
 ```
 
 ## Blueprint

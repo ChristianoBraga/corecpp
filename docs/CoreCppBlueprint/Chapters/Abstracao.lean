@@ -28,9 +28,9 @@ Each argument is checked at the type of its parameter by the judgment $`\Gamma \
 
 $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Call)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k,\ \sigma_0 = \sigma) \\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma'_{i-1}, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma_k) \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus \{\ell_1, \ldots, \ell_k\}}\;\textsf{(Call)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k,\ \sigma_0 = \sigma) \\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma'_{i-1}, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma_k) \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup (\rho' \setminus \rho_f))}\;\textsf{(Call)}`
 
-When the body ends with $`\mathsf{normal}`, the result is $`\mathsf{void}` if $`\tau = \mathsf{void}` and `error` otherwise. A missing `return` in a non `void` function is an evaluation `error`, not a type error. The rule above is the case in which every parameter is by value, and {bpref "param_ref"}[] gives the case of a parameter by reference.
+The return frees the copies of the arguments and the locals the body declared, $`\rho' \setminus \rho_f` read as the owned bindings the body added, so after a call the store holds only what existed before it and the objects created with `new`. When the body ends with $`\mathsf{normal}`, the result is $`\mathsf{void}` if $`\tau = \mathsf{void}` and `error` otherwise. A missing `return` in a non `void` function is an evaluation `error`, not a type error. The rule above is the case in which every parameter is by value, and {bpref "param_ref"}[] gives the case of a parameter by reference.
 :::
 
 # Parameters by reference
@@ -40,7 +40,7 @@ A parameter $`\tau_j\&\ x_j` receives the location of its argument, which must d
 
 $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \ \text{for each } p_i = \tau_i \qquad \Gamma \vdash_{\ell} e_j : \tau_j \ \text{for each } p_j = \tau_j\&}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Call)}`
 
-$$`\dfrac{\begin{array}{c} \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus \{\ell_i \mid p_i \text{ by value}\}}\;\textsf{(Call)}`
+$$`\dfrac{\begin{array}{c} \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup (\rho' \setminus \rho_f))}\;\textsf{(Call)}`
 
 Two reference parameters bound to the same argument alias each other, and a write through one is read through the other, as in C++.
 :::
@@ -68,7 +68,7 @@ A call through a function value evaluates the function expression to a closure, 
 
 $$`\dfrac{\Gamma \vdash e : \mathtt{std{:}{:}function}\langle \tau(\tau_1, \ldots, \tau_k) \rangle \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash e(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallFn)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma_0 \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad (\ell'_j, \cdot) = \mathrm{alloc}(w_j) \qquad (\ell_i, \cdot) = \mathrm{alloc}(v_i) \\ [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma' \vdash c \Rightarrow \mathsf{ret}\,v, \rho'', \sigma'' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus \{\ell'_j, \ell_i\}}\;\textsf{(CallFn)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma_0 \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad (\ell'_j, \cdot) = \mathrm{alloc}(w_j) \qquad (\ell_i, \cdot) = \mathrm{alloc}(v_i) \\ [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma' \vdash c \Rightarrow \mathsf{ret}\,v, \rho'', \sigma'' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell'_j, \ell_i\} \cup (\rho'' \setminus \rho_c))}\;\textsf{(CallFn)}`
 
 With $`\mathsf{normal}` in place of $`\mathsf{ret}\,v` the result is $`\mathsf{void}` if $`\tau = \mathsf{void}` and `error` otherwise. Nothing of the environment of the call is visible inside the body, only the copies and the parameters.
 :::
