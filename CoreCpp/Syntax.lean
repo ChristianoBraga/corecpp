@@ -151,13 +151,20 @@ structure Fun where
 /-- Visibility of a member. Members before any section label are private, as
 in C++. -/
 inductive Vis where
-  | pub | priv
+  /-- A public member, visible to every expression. -/
+  | pub
+  /-- A private member, visible only inside a member body of the class that
+  declares it. -/
+  | priv
   deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- A field of a class. -/
 structure Field where
+  /-- The type of the field. -/
   ty   : Ty
+  /-- The name of the field. -/
   name : String
+  /-- The visibility of the field. -/
   vis  : Vis := .pub
   deriving Repr, BEq, Inhabited
 
@@ -165,26 +172,38 @@ structure Field where
 makes the call dispatch by the class tag of the receiver, and `isOverride`
 marks `override`, required on a method that redefines a `virtual` one. -/
 structure Method where
+  /-- The name of the method. -/
   name       : String
+  /-- The result type. -/
   ret        : Ty
+  /-- The parameters. -/
   params     : List Param
+  /-- The body, run with `this` bound to the receiver. -/
   body       : List Cmd
+  /-- The visibility of the method. -/
   vis        : Vis := .pub
+  /-- Whether the method is declared `virtual`. -/
   isVirtual  : Bool := false
+  /-- Whether the method is declared `override`. -/
   isOverride : Bool := false
   deriving Repr, BEq, Inhabited
 
 /-- The constructor of a class, named after the class and run by `new` after
 the fields are allocated. -/
 structure Ctor where
+  /-- The parameters of the constructor. -/
   params : List Param
+  /-- The body, run by `new C(args)` after the fields are allocated. -/
   body   : List Cmd
   deriving Repr, BEq, Inhabited
 
 /-- The destructor of a class, `~C()`, run by `delete` before the locations of
 the object leave the store. -/
 structure Dtor where
+  /-- The body, run by `delete` before the object leaves the store. -/
   body      : List Cmd
+  /-- Whether the destructor is declared `virtual`, which makes `delete`
+  through a pointer to the base well defined. -/
   isVirtual : Bool := false
   deriving Repr, BEq, Inhabited
 
@@ -192,11 +211,17 @@ structure Dtor where
 constructor and at most one destructor. Names are qualified by their
 namespace, `N::C`. -/
 structure ClassDecl where
+  /-- The name of the class, qualified by its namespace when it has one. -/
   name    : String
+  /-- The base class, when the class derives from one. -/
   base    : Option String := none
+  /-- The fields declared by the class itself. -/
   fields  : List Field
+  /-- The methods declared by the class itself. -/
   methods : List Method := []
+  /-- The constructor, when the class declares one. -/
   ctor    : Option Ctor := none
+  /-- The destructor, when the class declares one. -/
   dtor    : Option Dtor := none
   deriving Repr, BEq, Inhabited
 

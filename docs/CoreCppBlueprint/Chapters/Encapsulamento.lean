@@ -2,6 +2,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 import CoreCpp.Syntax
+import CoreCpp.Parser
 import CoreCpp.Typing
 import CoreCpp.Eval
 
