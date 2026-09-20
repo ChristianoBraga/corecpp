@@ -7,8 +7,9 @@ import CoreCpp.Syntax
 
 Recursive descent, one function per nonterminal, over the `Array Token`
 produced by the lexer. Each function reads the next token and chooses the
-production by it. The subset covers basic, class, pointer and vector types,
-expressions, commands, classes with fields and functions.
+production by it. The subset covers basic, class, pointer, vector and function
+types, expressions, lambdas in their three positions, commands, classes with
+fields and functions with parameters by value and by reference.
 -/
 
 namespace CoreCpp
@@ -69,11 +70,12 @@ def basicType : P Ty := do
 /-- The tokens that open a `Type`, and therefore a declaration. No expression
 starts with one of them. -/
 def isTypeStart : Token → Bool
-  | .kw "int" | .kw "bool" | .kw "void" | .kw "std::vector" | .typeId _ => true
+  | .kw "int" | .kw "bool" | .kw "void" | .kw "std::vector" | .kw "std::function" | .typeId _ => true
   | _ => false
 
-/-- `Type ::= BasicType | ClassType '*'? | 'std::vector' '<' Type '>' '*'?`,
-with `ClassType ::= TypeId` in this subset. -/
+/-- `Type ::= BasicType | ClassType '*'? | 'std::vector' '<' Type '>' '*'?
+| 'std::function' '<' Type '(' ( Type ( ',' Type )* )? ')' '>'`, with
+`ClassType ::= TypeId` in this subset. -/
 partial def type : P Ty := do
   match ← peek with
   | .typeId c =>
@@ -84,6 +86,18 @@ partial def type : P Ty := do
     let t ← type
     expectSym ">"
     if ← acceptSym "*" then return .ptr (.vec t) else return .vec t
+  | .kw "std::function" =>
+    advance; expectSym "<"
+    let r ← type
+    expectSym "("
+    let mut ps : List Ty := []
+    if !(← acceptSym ")") then
+      ps := [← type]
+      while ← acceptSym "," do
+        ps := ps ++ [← type]
+      expectSym ")"
+    expectSym ">"
+    return .fn r ps
   | _ => basicType
 
 mutual
@@ -165,13 +179,16 @@ partial def unaryExpr : P Expr := do
   | .sym "*" => advance; return .deref (← unaryExpr)
   | _ => postfixExpr
 
-/-- `PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId | '->' VarId | Args )*`,
-where `Args` follows only a variable, the function call. -/
+/-- `PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId | '->' VarId | Args )*`.
+`Args` after a variable is the call `f(…)`, of the function named `f` or of the
+function value bound to `f`, and after any other postfix expression it is the
+call of a function value, `callFn`. -/
 partial def postfixExpr : P Expr := do
   let mut e ← primary
   repeat
     match e, ← peek with
     | .var f, .sym "(" => e := .call f (← args)
+    | _, .sym "(" => e := .callFn e (← args)
     | _, .sym "[" => advance; let i ← expr; expectSym "]"; e := .index e i
     | _, .sym "." => advance; let f ← varId; e := .field e f
     | _, .sym "->" => advance; let f ← varId; e := .arrow e f
@@ -206,29 +223,61 @@ partial def primary : P Expr := do
     | _ => fail "expected class or std::vector after new"
   | _ => fail "expected primary expression"
 
-/-- `Args ::= '(' ( Expr ( ',' Expr )* )? ')'` -/
+/-- `Args ::= '(' ( ArgExpr ( ',' ArgExpr )* )? ')'` -/
 partial def args : P (List Expr) := do
   expectSym "("
   if ← acceptSym ")" then return []
-  let mut acc := [← expr]
+  let mut acc := [← argExpr]
   while ← acceptSym "," do
-    acc := acc ++ [← expr]
+    acc := acc ++ [← argExpr]
   expectSym ")"
   return acc
 
-end
+/-- `ArgExpr ::= Lambda | Expr`. The lambda is an argument expression and not
+a primary, so it occurs only as argument, as initialiser of a declaration and
+as the expression of `return`. -/
+partial def argExpr : P Expr := do
+  if (← peek) == .sym "[=]" then lambda else expr
+
+/-- `Lambda ::= '[=]' Params '->' Type Block`. The parameters are by value. -/
+partial def lambda : P Expr := do
+  expectSym "[=]"
+  let ps ← params
+  if ps.any (·.byRef) then fail "lambda parameters are by value in this subset"
+  expectSym "->"
+  let r ← type
+  let b ← block
+  return .lambda ps r b
+
+/-- `Param ::= Type '&'? VarId`. With `&` the parameter is by reference. -/
+partial def param : P Param := do
+  let t ← type
+  let isRef ← acceptSym "&"
+  let x ← varId
+  return ⟨t, x, isRef⟩
+
+/-- `Params ::= '(' ( Param ( ',' Param )* )? ')'` -/
+partial def params : P (List Param) := do
+  expectSym "("
+  if ← acceptSym ")" then return []
+  let mut acc := [← param]
+  while ← acceptSym "," do
+    acc := acc ++ [← param]
+  expectSym ")"
+  return acc
 
 /-- `ExprStatement ::= Expr ( '=' Expr )?`, an assignment command or an expression as statement. -/
-def exprStatement : P Cmd := do
+partial def exprStatement : P Cmd := do
   let l ← expr
   if ← acceptSym "=" then
     let r ← expr
     return .assign l r
   else return .exprStmt l
 
-/-- `LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' Expr`. With `&`
-the declaration is a local reference, UD III. -/
-def localDecl : P Cmd := do
+/-- `LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With
+`&` the declaration is a local reference, UD III. A lambda initialises only a
+typed declaration, never an `auto` one. -/
+partial def localDecl : P Cmd := do
   if ← accept (.kw "auto") then
     let x ← varId
     expectSym "="
@@ -238,16 +287,14 @@ def localDecl : P Cmd := do
     let isRef ← acceptSym "&"
     let x ← varId
     expectSym "="
-    let e ← expr
+    let e ← argExpr
     return if isRef then .declRef t x e else .decl t x e
 
 /-- `ForInit ::= LocalDecl | ExprStatement` -/
-def forInit : P Cmd := do
+partial def forInit : P Cmd := do
   match ← peek with
   | .kw "auto" => localDecl
   | t => if isTypeStart t then localDecl else exprStatement
-
-mutual
 
 /-- `Block ::= '{' Statement* '}'` -/
 partial def block : P (List Cmd) := do
@@ -287,7 +334,7 @@ partial def statement : P Cmd := do
   | .kw "return" =>
     advance
     if ← acceptSym ";" then return .ret none
-    let e ← expr
+    let e ← argExpr
     expectSym ";"
     return .ret (some e)
   | .kw "auto" =>
@@ -305,22 +352,6 @@ partial def statement : P Cmd := do
       return s
 
 end
-
-/-- `Param ::= Type VarId` -/
-def param : P Param := do
-  let t ← type
-  let x ← varId
-  return ⟨t, x⟩
-
-/-- `Params ::= '(' ( Param ( ',' Param )* )? ')'` -/
-def params : P (List Param) := do
-  expectSym "("
-  if ← acceptSym ")" then return []
-  let mut acc := [← param]
-  while ← acceptSym "," do
-    acc := acc ++ [← param]
-  expectSym ")"
-  return acc
 
 /-- `Function ::= Type VarId Params Block` -/
 def function : P Fun := do

@@ -182,3 +182,68 @@ int main() { Cont* c = new Cont(); return prox(c) + 10 * prox(c); }"
   let p ← parseProgram "int main() { int x = 1; int& y = x; y = 2; return x; }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
+
+/-! ## UD IV, reference parameters, lambdas and std::function -/
+
+-- swap by reference, the parameters alias the arguments
+#eval prog "void troca(int& a, int& b) { int t = a; a = b; b = t; }
+int main() { int x = 1; int y = 2; troca(x, y); return x * 10 + y; }"
+
+-- a reference parameter bound to a field and to a vector element
+#eval prog "class P { public: int a; };
+void inc(int& r) { r = r + 1; }
+int main() { P* p = new P(); inc(p->a); inc(p->a);
+  std::vector<int>* v = new std::vector<int>(2); inc((*v)[1]);
+  return p->a * 10 + (*v)[1]; }"
+
+-- a lambda returned by a function and applied through a std::function parameter
+#eval prog "std::function<int(int)> multiplicador(int k) {
+  return [=](int x) -> int { return k * x; };
+}
+int aplica(std::function<int(int)> f, int v) { return f(v); }
+int main() { return aplica(multiplicador(3), 14); }"
+
+-- a counter through a captured pointer, the object outlives its block
+#eval prog "class Caixa { public: int valor; };
+std::function<int()> contador() {
+  Caixa* c = new Caixa();
+  c->valor = 0;
+  return [=]() -> int { c->valor = c->valor + 1; return c->valor; };
+}
+int main() { std::function<int()> k = contador(); int primeiro = k(); return k() + k() + primeiro; }"
+
+-- the capture is a copy taken at the lambda, later writes to n are not seen
+#eval prog "int main() { int n = 5;
+  std::function<int(int)> soma = [=](int x) -> int { return x + n; };
+  n = 100; return soma(1); }"
+
+-- a lambda passed directly as an argument
+#eval prog "int duasVezes(std::function<int(int)> f, int x) { return f(f(x)); }
+int main() { return duasVezes([=](int x) -> int { return x * x; }, 3); }"
+
+-- a function value copied into another variable and called through it
+#eval prog "int main() { std::function<int(int, int)> g = [=](int a, int b) -> int { return a - b; };
+  std::function<int(int, int)> h = g; return h(10, 3); }"
+
+-- a captured variable is read only inside the lambda
+#eval (parseProgram "int main() { int n = 1; std::function<int()> f = [=]() -> int { n = 2; return n; }; return f(); }").map check
+-- and cannot be aliased by a reference either
+#eval (parseProgram "int main() { int n = 1; std::function<int()> f = [=]() -> int { int& r = n; r = 3; return n; }; return f(); }").map check
+-- a lambda is not an auto initialiser, by the grammar
+#eval parseProgram "int main() { auto f = [=](int x) -> int { return x; }; return f(1); }"
+-- a lambda is not an operand, by the grammar
+#eval parseProgram "int main() { return 1 + [=]() -> int { return 1; }; }"
+-- the argument of a reference parameter denotes a location
+#eval (parseProgram "void inc(int& r) { r = r + 1; } int main() { inc(5); return 0; }").map check
+-- only function values are called
+#eval (parseProgram "int main() { int x = 1; return x(2); }").map check
+-- the lambda has exactly the parameter types of the std::function
+#eval (parseProgram "int main() { std::function<int(int)> f = [=](bool b) -> int { return 1; }; return f(1); }").map check
+-- no field of function type in this subset
+#eval (parseProgram "class C { public: std::function<int()> f; }; int main() { return 0; }").map check
+
+-- the trace of a call through a closure
+#eval do
+  let p ← parseProgram "int main() { int n = 2; std::function<int(int)> f = [=](int x) -> int { return x + n; }; return f(40); }"
+  let (r, log) := runWith true p
+  return (r, renderTrace log)

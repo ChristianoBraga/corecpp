@@ -12,6 +12,8 @@ Locations ℓ, values v, environment ρ, store σ, control results r and the
 * An object is a record of locations with a class tag, stored at its own
   location. A pointer value is the location of an object. A vector is an
   object whose record is the list of the locations of its elements.
+* A closure is the value of a lambda expression, its parameters, its body
+  and the read only copies of the variables it captured.
 -/
 
 namespace CoreCpp
@@ -22,8 +24,9 @@ abbrev Loc := Nat
 /-- Values. `int` is a 32-bit two's complement integer, stored as an `Int` with
 the range invariant checked at every operation. `loc` is a pointer to the
 object stored at ℓ, `null` the value of `nullptr`, `obj` an object with its
-class tag and one location per field, and `vec` a vector with one location
-per element. -/
+class tag and one location per field, `vec` a vector with one location per
+element, and `closure ps τ c cap` the value of `[=](ps) -> τ { c }`, with the
+values the lambda captured by copy, one per free variable of the body. -/
 inductive Val where
   | int  (n : Int)
   | bool (b : Bool)
@@ -32,6 +35,7 @@ inductive Val where
   | null
   | obj  (tag : String) (fields : List (String × Loc))
   | vec  (elems : List Loc)
+  | closure (params : List Param) (ret : Ty) (body : List Cmd) (captured : List (String × Val))
   deriving Repr, BEq, Inhabited
 
 /-- Bounds of `int`. -/
@@ -61,6 +65,7 @@ inductive Error where
   | arity (f : String)
   | typeError (msg : String)     -- for programs that skipped the type checker
   | missingReturn (f : String)
+  | notCallable (v : Val)
   deriving Repr, BEq, Inhabited
 
 /-- A binding of ρ. `owned` records whether the declaration that created the

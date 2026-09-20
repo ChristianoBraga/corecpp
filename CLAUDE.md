@@ -97,14 +97,18 @@ UD II fragment, classes with public fields only, `new C()`, pointers to classes
 as the recursive type, `nullptr`, `->`, `.`, `*` and `[]` as location denoting
 expressions, `std::vector<τ>` created with `new`, objects as records of
 locations with a class tag, `error` on null dereference, out of bounds and
-negative size, and the UD III fragment, local references `τ& y = e` as a second
+negative size, the UD III fragment, local references `τ& y = e` as a second
 name for an existing location, with owned and aliased bindings in ρ so that
-block exit frees only the locations the block allocated, twenty three
-examples. The specifications of the fragments are `../.claude/spec-ud2.md` and
-`../.claude/spec-ud3.md`. Not yet implemented: `T&` parameters, lambdas and
-`std::function`, methods, constructors, destructors, `delete`, `this`,
-`virtual`, namespaces, templates, operator overloading, `auto` beyond local
-declarations. Next step by the course order is UD IV, reference parameters and
-lambdas.
+block exit frees only the locations the block allocated, and the UD IV
+fragment, reference parameters `τ& x` bound to the location of the argument,
+lambdas `[=]` in their three positions checked against the expected
+`std::function` type, closures as values with read only copies of the captured
+variables, calls through function values, and effects through captured
+pointers, thirty examples. The specifications of the fragments are
+`../.claude/spec-ud2.md`, `spec-ud3.md` and `spec-ud4.md`. Not yet
+implemented: methods, constructors, destructors, `delete`, `this`, `virtual`,
+namespaces, templates, operator overloading, `auto` beyond local declarations,
+fields and vector elements of function type. Next step by the course order is
+UD V, classes with methods.
 
 Worklog and memory of the course live under `../.claude/`.

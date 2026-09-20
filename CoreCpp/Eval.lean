@@ -17,9 +17,12 @@ subject right of it and the result after ⇒. All three admit `error` in place
 of the result, with propagation. The evaluation order is left to right where
 C++17 leaves it unspecified, and the C++17 order where it is fixed, right
 operand before left in assignment and function before arguments in a call. The
-store enters expressions because a call inside an expression may change it. Objects live in the store as records
-of locations with a class tag, pointers are locations, and the location
-judgment reaches fields and vector elements.
+store enters expressions because a call inside an expression may change it.
+Objects live in the store as records of locations with a class tag, pointers
+are locations, and the location judgment reaches fields and vector elements. A
+reference parameter binds its name to the location of the argument, a lambda
+evaluates to a closure with copies of the variables it uses, and a call through
+a function value allocates the copies and the parameters afresh.
 
 The evaluator runs in the monad `M`, which carries the derivation trace. When
 tracing is enabled, every rule application records its conclusion, the full
@@ -158,6 +161,18 @@ def pointee (v : Val) : M Loc :=
   | .null  => throw .nullDereference
   | v      => throw (.typeError s!"{v} is not a pointer")
 
+
+/-- The free variables of a lambda body that the enclosing environment binds,
+each with its current value, the captures of `[=]`. Reading a captured
+variable whose location left the store is error. -/
+def captures (ρ : Env) (σ : Store) (ps : List Param) (b : List Cmd) : M (List (String × Val)) := do
+  let names := ((b.flatMap Cmd.vars).filter fun x => !(ps.any (·.name == x))).eraseDups
+  let mut cap : List (String × Val) := []
+  for x in names do
+    if let some l := ρ.lookup x then
+      cap := cap ++ [(x, ← readLoc σ l)]
+  return cap
+
 mutual
 
 /-- ρ, σ ⊢ e ⇒ v, σ' -/
@@ -240,38 +255,107 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
   | .cond e₁ e₂ e₃ => traced "Cond" (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
     if ← expectBool "condition" v₁ then expr fs ρ σ₁ e₂ else expr fs ρ σ₁ e₃
-  /-  f ↦ (τ f (τ₁ x₁, …, τₖ xₖ) { c }) in the program
-      ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right
-      (ℓᵢ, σ'ᵢ) = alloc σ'ᵢ₋₁ vᵢ,  σ'₀ = σₖ                          call by value, fresh location with a copy
-      ρ_f = [x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                                    the function environment holds only the parameters
+  /-  f ∉ ρ    f ↦ (τ f (p₁ x₁, …, pₖ xₖ) { c }) in the program
+      for each i, left to right, with σ'₀ = σ,
+        pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ      call by value, a fresh location with a copy
+        pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ₗ ℓᵢ, σ'ᵢ                               call by reference, the location of the argument
+      ρ_f = [x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                                            only the parameters, the by value ones owned
       ρ_f, σ'ₖ ⊢ c ⇒ ret v, ρ', σ''
-      ──────────────────────────────────────────────────────────── (Call)
-      ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'' ∖ {ℓ₁, …, ℓₖ}                      the return frees the parameters
+      ──────────────────────────────────────────────────────────────────── (Call)
+      ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'' ∖ {ℓᵢ | pᵢ by value}                       the return frees the copies, never the referents
 
       With ρ_f, σ'ₖ ⊢ c ⇒ normal, ρ', σ'' the result is void, σ'' ∖ {ℓᵢ} if τ = void,
-      and error (missing return) otherwise.                                                          -/
-  | .call f es => traced "Call" (confE e ρ σ) showV do
-    let some fn := fs.lookup f | throw (.undeclaredFunction f)
-    if fn.params.length != es.length then throw (.arity f)
-    let mut σ := σ
-    let mut vs : List Val := []
-    for a in es do
-      let (v, σ') ← expr fs ρ σ a
-      σ := σ'
-      vs := vs ++ [v]
-    let mut ρf : Env := []
-    let mut ls : List Loc := []
-    for (p, v) in fn.params.zip vs do
-      let (l, σ') := σ.alloc v
-      σ := σ'
-      ρf := ρf.extend p.name l
-      ls := l :: ls
-    let (r, _, σ'') ← cmds fs ρf σ fn.body
-    let σ''' := σ''.free ls
-    match r, fn.ret with
-    | .ret v, _      => return (v, σ''')
-    | .normal, .void => return (.void, σ''')
-    | .normal, _     => throw (.missingReturn f)
+      and error (missing return) otherwise.
+
+      ρ(f) = ℓ    σ(ℓ) = closure(…)    ρ, σ ⊢ ℓ(e₁, …, eₖ) as in CallFn
+      ───────────────────────────────────────────────────────────── (CallFn)     a variable f bound to a
+      ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'                                                 function value hides the
+                                                                                  function named f      -/
+  | .call f es =>
+    match ρ.lookup f with
+    | some _ => traced "CallFn" (confE e ρ σ) showV do
+      let (v, σ₁) ← expr fs ρ σ (.var f)
+      applyClosure fs ρ σ₁ v es
+    | none => traced "Call" (confE e ρ σ) showV do
+      let some fn := fs.lookup f | throw (.undeclaredFunction f)
+      if fn.params.length != es.length then throw (.arity f)
+      let mut σ := σ
+      let mut ρf : Env := []
+      let mut owned : List Loc := []
+      for (p, a) in fn.params.zip es do
+        if p.byRef then
+          let (l, σ') ← lval fs ρ σ a
+          σ := σ'
+          ρf := ρf.alias p.name l
+        else
+          let (v, σ') ← expr fs ρ σ a
+          let (l, σ'') := σ'.alloc v
+          σ := σ''
+          ρf := ρf.extend p.name l
+          owned := l :: owned
+      let (r, _, σ'') ← cmds fs ρf σ fn.body
+      let σ''' := σ''.free owned
+      match r, fn.ret with
+      | .ret v, _      => return (v, σ''')
+      | .normal, .void => return (.void, σ''')
+      | .normal, _     => throw (.missingReturn f)
+  /-  ρ, σ ⊢ e ⇒ closure(…), σ₀    the application as below
+      ──────────────────────────────────────────────── (CallFn)
+      ρ, σ ⊢ e(e₁, …, eₖ) ⇒ v, σ'                                                -/
+  | .callFn fe es => traced "CallFn" (confE e ρ σ) showV do
+    let (v, σ₁) ← expr fs ρ σ fe
+    applyClosure fs ρ σ₁ v es
+  /-  {y₁, …, yₘ} = the free variables of c bound in ρ, minus the xᵢ
+      ρ(yⱼ) = ℓⱼ    ℓⱼ ∈ dom σ    wⱼ = σ(ℓⱼ)                             copies, taken at the lambda, read only
+      ────────────────────────────────────────────────────────────────── (Lambda)
+      ρ, σ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ⇒ closure(x⃗, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ]), σ
+
+      The closure holds values, not locations. A captured pointer still reaches
+      its object in σ, so an effect through it is visible outside, while a
+      captured int or bool is a copy that the body cannot change.              -/
+  | .lambda ps r b => traced "Lambda" (confE e ρ σ) showV do
+    let cap ← captures ρ σ ps b
+    return (.closure ps r b cap, σ)
+
+/-- The application of a closure to arguments.
+
+    v = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])
+    ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right, by value
+    (ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ                        fresh locations for the copies and the parameters
+    ρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                the closure environment, nothing else is visible
+    ρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''
+    ─────────────────────────────────────────────────────────────── (Apply)
+    apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ {ℓ'ⱼ, ℓᵢ}
+
+    With normal in place of ret v the result is void if τ = void and error
+    (missing return) otherwise. A value that is not a closure is error.        -/
+partial def applyClosure (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (es : List Expr) : M (Val × Store) := do
+  let .closure ps r b cap := v | throw (.notCallable v)
+  if ps.length != es.length then throw (.arity "lambda")
+  let mut σ := σ
+  let mut vs : List Val := []
+  for a in es do
+    let (v, σ') ← expr fs ρ σ a
+    σ := σ'
+    vs := vs ++ [v]
+  let mut ρc : Env := []
+  let mut ls : List Loc := []
+  for (y, w) in cap do
+    let (l, σ') := σ.alloc w
+    σ := σ'
+    ρc := ρc.extend y l
+    ls := l :: ls
+  for (p, v) in ps.zip vs do
+    let (l, σ') := σ.alloc v
+    σ := σ'
+    ρc := ρc.extend p.name l
+    ls := l :: ls
+  let (res, _, σ'') ← cmds fs ρc σ b
+  let σ''' := σ''.free ls
+  match res, r with
+  | .ret v, _      => return (v, σ''')
+  | .normal, .void => return (.void, σ''')
+  | .normal, _     => throw (.missingReturn "lambda")
 
 /-- ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, a
 dereferenced pointer, a field of an object, a field through a pointer and an

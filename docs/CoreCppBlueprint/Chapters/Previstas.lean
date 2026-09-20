@@ -14,16 +14,6 @@ Constructions of the Core C++ design without rules or implementation yet. They a
 Constructions planned in `core-cpp-design.md`, not implemented.
 :::
 
-# UD IV
-
-:::definition "param_ref" (parent := "pendentes") (uses := "fun_call, judg_ev_lval")
-A `T&` parameter receives the location of the argument instead of a fresh location with a copy.
-:::
-
-:::definition "lambda" (parent := "pendentes") (uses := "fun_call, dom_env")
-The lambda expression `[=]` evaluates to a closure, a pair of body and environment with read only copies of the basic values and pointers the body uses. It occurs only as initialiser of a `std::function`, argument of a `std::function` parameter or `return` expression.
-:::
-
 # UD V
 
 :::definition "class_new" (parent := "pendentes") (uses := "expr_new")

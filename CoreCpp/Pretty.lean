@@ -24,28 +24,37 @@ def BinOp.prec : BinOp → Nat
   | .or => 1 | .and => 2 | .eq | .ne => 3 | .lt | .le | .gt | .ge => 4
   | .add | .sub => 5 | .mul | .div | .mod => 6
 
-def Ty.toString : Ty → String
+partial def Ty.toString : Ty → String
   | .int => "int" | .bool => "bool" | .void => "void"
   | .cls c => c
   | .ptr t => s!"{t.toString}*"
   | .vec t => s!"std::vector<{t.toString}>"
+  | .fn r ps => s!"std::function<{r.toString}({", ".intercalate (ps.map Ty.toString)})>"
   | .nullT => "nullptr_t"
 
 instance : ToString Ty := ⟨Ty.toString⟩
 
-namespace Expr
+def Param.toString (p : Param) : String :=
+  s!"{p.ty}{if p.byRef then "&" else ""} {p.name}"
+
+instance : ToString Param := ⟨Param.toString⟩
 
 /-- Precedence of an expression, 0 for the conditional, 7 for unary, 8 for
-postfix and atoms. -/
-def prec : Expr → Nat
+postfix and atoms. A lambda is an atom, it never occurs as an operand. -/
+def Expr.prec : Expr → Nat
   | .cond .. => 0
   | .binop op .. => op.prec
   | .unop .. | .deref .. => 7
   | _ => 8
 
-partial def toString (e : Expr) : String :=
+/-- Removes the trailing `;` of a command rendered inside a `for` header. -/
+def Cmd.stripSemi (s : String) : String := if s.endsWith ";" then String.ofList s.toList.dropLast else s
+
+mutual
+
+partial def Expr.toString (e : Expr) : String :=
   let paren (p : Nat) (e : Expr) : String :=
-    if e.prec < p then s!"({toString e})" else toString e
+    if e.prec < p then s!"({Expr.toString e})" else Expr.toString e
   match e with
   | .intLit n  => s!"{n}"
   | .boolLit b => if b then "true" else "false"
@@ -54,44 +63,38 @@ partial def toString (e : Expr) : String :=
   | .unop op e => s!"{op.toString}{paren 7 e}"
   | .binop op l r => s!"{paren op.prec l} {op.toString} {paren (op.prec + 1) r}"
   | .cond c t e => s!"{paren 1 c} ? {paren 1 t} : {paren 0 e}"
-  | .call f as => s!"{f}({", ".intercalate (as.map toString)})"
+  | .call f as => s!"{f}({", ".intercalate (as.map Expr.toString)})"
+  | .callFn f as => s!"{paren 8 f}({", ".intercalate (as.map Expr.toString)})"
   | .newObj c  => s!"new {c}()"
-  | .newVec t n => s!"new std::vector<{t}>({toString n})"
+  | .newVec t n => s!"new std::vector<{t}>({Expr.toString n})"
   | .field e f => s!"{paren 8 e}.{f}"
   | .arrow e f => s!"{paren 8 e}->{f}"
   | .deref e   => s!"*{paren 7 e}"
-  | .index e i => s!"{paren 8 e}[{toString i}]"
+  | .index e i => s!"{paren 8 e}[{Expr.toString i}]"
+  | .lambda ps r b => s!"[=]({", ".intercalate (ps.map Param.toString)}) -> {r} {Cmd.toString (.block b)}"
 
-end Expr
+partial def Cmd.toString : Cmd → String
+  | .block cs => s!"\{ {" ".intercalate (cs.map Cmd.toString)} }"
+  | .ite c t [] => s!"if ({Expr.toString c}) {Cmd.toString (.block t)}"
+  | .ite c t e => s!"if ({Expr.toString c}) {Cmd.toString (.block t)} else {Cmd.toString (.block e)}"
+  | .while c b => s!"while ({Expr.toString c}) {Cmd.toString (.block b)}"
+  | .for i c s b => s!"for ({Cmd.stripSemi (Cmd.toString i)}; {Expr.toString c}; {Cmd.stripSemi (Cmd.toString s)}) {Cmd.toString (.block b)}"
+  | .ret none => "return;"
+  | .ret (some e) => s!"return {Expr.toString e};"
+  | .decl t x e => s!"{t} {x} = {Expr.toString e};"
+  | .declRef t x e => s!"{t}& {x} = {Expr.toString e};"
+  | .declAuto x e => s!"auto {x} = {Expr.toString e};"
+  | .assign l r => s!"{Expr.toString l} = {Expr.toString r};"
+  | .exprStmt e => s!"{Expr.toString e};"
+
+end
 
 instance : ToString Expr := ⟨Expr.toString⟩
-
-namespace Cmd
-
-/-- Removes the trailing `;` of a command rendered inside a `for` header. -/
-def stripSemi (s : String) : String := if s.endsWith ";" then String.ofList s.toList.dropLast else s
-
-partial def toString : Cmd → String
-  | .block cs => s!"\{ {" ".intercalate (cs.map toString)} }"
-  | .ite c t [] => s!"if ({c}) {toString (.block t)}"
-  | .ite c t e => s!"if ({c}) {toString (.block t)} else {toString (.block e)}"
-  | .while c b => s!"while ({c}) {toString (.block b)}"
-  | .for i c s b => s!"for ({stripSemi (toString i)}; {c}; {stripSemi (toString s)}) {toString (.block b)}"
-  | .ret none => "return;"
-  | .ret (some e) => s!"return {e};"
-  | .decl t x e => s!"{t} {x} = {e};"
-  | .declRef t x e => s!"{t}& {x} = {e};"
-  | .declAuto x e => s!"auto {x} = {e};"
-  | .assign l r => s!"{l} = {r};"
-  | .exprStmt e => s!"{e};"
-
-end Cmd
-
 instance : ToString Cmd := ⟨Cmd.toString⟩
 
 def Loc.toString (l : Loc) : String := s!"ℓ{l}"
 
-def Val.toString : Val → String
+partial def Val.toString : Val → String
   | .int n  => s!"{n}"
   | .bool b => if b then "true" else "false"
   | .void   => "void"
@@ -99,6 +102,8 @@ def Val.toString : Val → String
   | .null   => "nullptr"
   | .obj c fs => s!"{c}\{{", ".intercalate (fs.map fun (f, l) => s!"{f} ↦ {Loc.toString l}")}}"
   | .vec ls => s!"vector[{", ".intercalate (ls.map Loc.toString)}]"
+  | .closure ps _ _ cap =>
+    s!"closure({", ".intercalate (ps.map Param.toString)})[{", ".intercalate (cap.map fun (x, v) => s!"{x} ↦ {Val.toString v}")}]"
 
 instance : ToString Val := ⟨Val.toString⟩
 
@@ -126,6 +131,7 @@ def Error.toString : Error → String
   | .arity f               => s!"wrong number of arguments in call to {f}"
   | .typeError msg         => s!"type error at run time, {msg}"
   | .missingReturn f       => s!"function {f} ended without return"
+  | .notCallable v         => s!"call of a value that is not a function, {v}"
 
 instance : ToString Error := ⟨Error.toString⟩
 

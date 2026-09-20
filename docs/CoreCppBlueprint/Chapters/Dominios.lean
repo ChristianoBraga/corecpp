@@ -33,7 +33,7 @@ A location $`\ell` is a natural number. Locations are never reused.
 :::
 
 :::definition "dom_val" (parent := "dominios") (lean := "CoreCpp.Val, CoreCpp.Ty.default") (uses := "dom_int32, dom_loc")
-The values are $`\mathsf{int}\,n`, $`\mathsf{bool}\,b`, $`\mathsf{void}`, the pointer $`\mathsf{loc}\,\ell`, the value $`\mathsf{null}` of `nullptr`, the object $`\mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]`, a record of one location per field with its class tag, and the vector $`\mathsf{vec}\,[\ell_0, \ldots, \ell_{n-1}]`, one location per element. The value $`\mathsf{void}` is the result of a call to a function without return value and is never stored. Objects and vectors live in the store at their own location and are reached only through pointers. The default value of a type, which `new` gives to every field and element, is $`\mathsf{int}\,0`, $`\mathsf{bool}\,\mathtt{false}` or $`\mathsf{null}`.
+The values are $`\mathsf{int}\,n`, $`\mathsf{bool}\,b`, $`\mathsf{void}`, the pointer $`\mathsf{loc}\,\ell`, the value $`\mathsf{null}` of `nullptr`, the object $`\mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]`, a record of one location per field with its class tag, and the vector $`\mathsf{vec}\,[\ell_0, \ldots, \ell_{n-1}]`, one location per element. The value $`\mathsf{void}` is the result of a call to a function without return value and is never stored. UD IV adds the closure, {bpref "dom_closure"}[]. Objects and vectors live in the store at their own location and are reached only through pointers. The default value of a type, which `new` gives to every field and element, is $`\mathsf{int}\,0`, $`\mathsf{bool}\,\mathtt{false}` or $`\mathsf{null}`.
 :::
 
 :::definition "dom_int32" (parent := "dominios") (lean := "CoreCpp.Int32.min, CoreCpp.Int32.max, CoreCpp.Int32.inRange")
@@ -50,6 +50,10 @@ The environment $`\rho` is a finite map from identifiers to locations. The notat
 The store $`\sigma` is a finite map from locations to values. The operation $`\mathrm{alloc}(\sigma, v)` returns a fresh location $`\ell \notin \mathrm{dom}\,\sigma` and the store $`\sigma[\ell \mapsto v]`. The operation $`\sigma \setminus L` removes the locations of $`L` from the domain. Reading or writing outside the domain is `error`.
 :::
 
+:::definition "dom_closure" (parent := "dominios") (lean := "CoreCpp.Val, CoreCpp.Ty.isFn") (uses := "dom_val")
+The value of a lambda is the closure $`\mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m])`, with the parameters, the result type, the body and the captured copies, one value per free variable of the body. The types `std::function<τ(τ₁, …, τₖ)>` have closures as values. A variable or a parameter holds a closure, a field or a vector element does not, because `new` would have to give it a default value and there is no empty function in this subset.
+:::
+
 :::definition "dom_ctrl" (parent := "dominios") (lean := "CoreCpp.Ctrl") (uses := "dom_val")
 The control result $`r` of a command is $`\mathsf{normal}` or $`\mathsf{ret}\,v`. A $`\mathsf{ret}` interrupts sequence, block and loop up to the call that consumes it.
 :::
@@ -58,8 +62,8 @@ The control result $`r` of a command is $`\mathsf{normal}` or $`\mathsf{ret}\,v`
 The result `error` is not a value of the language. It replaces the result of any dynamic judgment and propagates to the whole program. Its causes are division by zero, `int` overflow, the dereference of `nullptr`, an index outside a vector, a negative vector size, a location outside $`\sigma`, an undeclared variable or function, wrong arity and a missing `return` in a non `void` function.
 :::
 
-:::definition "dom_tenv" (parent := "dominios") (lean := "CoreCpp.Ty, CoreCpp.Ty.isObject, CoreCpp.TEnv, CoreCpp.TEnv.lookup")
-The typing context $`\Gamma` is a finite map from identifiers to types. The types are $`\mathsf{int}`, $`\mathsf{bool}`, $`\mathsf{void}`, a class $`C`, a pointer $`\tau*`, a vector $`\mathsf{std{:}{:}vector}\langle\tau\rangle` and the internal type $`\mathsf{nullptr\_t}` of `nullptr`. Class and vector types are object types, they have no values, and no variable, parameter, result or field has one. An expression of object type occurs only as the operand of `.`, `[]` or `*`.
+:::definition "dom_tenv" (parent := "dominios") (lean := "CoreCpp.TEnv, CoreCpp.TBind, CoreCpp.TEnv.lookup, CoreCpp.TEnv.isConst, CoreCpp.TEnv.bind, CoreCpp.TEnv.captured")
+The typing context $`\Gamma` is a finite map from identifiers to types. The types are $`\mathsf{int}`, $`\mathsf{bool}`, $`\mathsf{void}`, a class $`C`, a pointer $`\tau*`, a vector $`\mathsf{std{:}{:}vector}\langle\tau\rangle` and the internal type $`\mathsf{nullptr\_t}` of `nullptr`. Class and vector types are object types, they have no values, and no variable, parameter, result or field has one. An expression of object type occurs only as the operand of `.`, `[]` or `*`. Since UD IV each binding carries a mark, read only or not. The mark is set on every binding of the enclosing scope when the body of a lambda is checked, so that the copies of `[=]` are read and never written.
 :::
 
 :::definition "dom_funenv" (parent := "dominios") (lean := "CoreCpp.Decl, CoreCpp.Program, CoreCpp.Program.funs, CoreCpp.FunEnv, CoreCpp.FunEnv.lookup")
