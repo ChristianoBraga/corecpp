@@ -7,8 +7,8 @@ import CoreCpp.Syntax
 
 Recursive descent, one function per nonterminal, over the `Array Token`
 produced by the lexer. Each function reads the next token and chooses the
-production by it. The subset covers basic types, expressions, commands and
-functions.
+production by it. The subset covers basic, class, pointer and vector types,
+expressions, commands, classes with fields and functions.
 -/
 
 namespace CoreCpp
@@ -49,6 +49,11 @@ def varId : P String := do
   | .varId x => advance; return x
   | _ => fail "expected variable identifier"
 
+def typeId : P String := do
+  match ← peek with
+  | .typeId x => advance; return x
+  | _ => fail "expected type identifier"
+
 end P
 
 open P
@@ -61,9 +66,25 @@ def basicType : P Ty := do
   | .kw "void" => advance; return .void
   | _ => fail "expected basic type"
 
+/-- The tokens that open a `Type`, and therefore a declaration. No expression
+starts with one of them. -/
 def isTypeStart : Token → Bool
-  | .kw "int" | .kw "bool" | .kw "void" => true
+  | .kw "int" | .kw "bool" | .kw "void" | .kw "std::vector" | .typeId _ => true
   | _ => false
+
+/-- `Type ::= BasicType | ClassType '*'? | 'std::vector' '<' Type '>' '*'?`,
+with `ClassType ::= TypeId` in this subset. -/
+partial def type : P Ty := do
+  match ← peek with
+  | .typeId c =>
+    advance
+    if ← acceptSym "*" then return .ptr (.cls c) else return .cls c
+  | .kw "std::vector" =>
+    advance; expectSym "<"
+    let t ← type
+    expectSym ">"
+    if ← acceptSym "*" then return .ptr (.vec t) else return .vec t
+  | _ => basicType
 
 mutual
 
@@ -136,28 +157,53 @@ partial def mulExpr : P Expr := do
     | _ => break
   return l
 
-/-- `UnaryExpr ::= ( '!' | '-' ) UnaryExpr | PostfixExpr` -/
+/-- `UnaryExpr ::= ( '!' | '-' | '*' ) UnaryExpr | PostfixExpr` -/
 partial def unaryExpr : P Expr := do
   match ← peek with
   | .sym "!" => advance; return .unop .not (← unaryExpr)
   | .sym "-" => advance; return .unop .neg (← unaryExpr)
+  | .sym "*" => advance; return .deref (← unaryExpr)
   | _ => postfixExpr
 
-/-- `PostfixExpr ::= Primary Args?`, in this subset only the function call. -/
+/-- `PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId | '->' VarId | Args )*`,
+where `Args` follows only a variable, the function call. -/
 partial def postfixExpr : P Expr := do
-  let p ← primary
-  match p, ← peek with
-  | .var f, .sym "(" => return .call f (← args)
-  | _, _ => return p
+  let mut e ← primary
+  repeat
+    match e, ← peek with
+    | .var f, .sym "(" => e := .call f (← args)
+    | _, .sym "[" => advance; let i ← expr; expectSym "]"; e := .index e i
+    | _, .sym "." => advance; let f ← varId; e := .field e f
+    | _, .sym "->" => advance; let f ← varId; e := .arrow e f
+    | _, _ => break
+  return e
 
-/-- `Primary ::= IntLit | 'true' | 'false' | VarId | '(' Expr ')'` -/
+/-- `Primary ::= IntLit | 'true' | 'false' | 'nullptr' | VarId | '(' Expr ')'
+| 'new' ( ClassType | 'std::vector' '<' Type '>' ) Args` -/
 partial def primary : P Expr := do
   match ← peek with
   | .intLit n  => advance; return .intLit n
   | .kw "true"  => advance; return .boolLit true
   | .kw "false" => advance; return .boolLit false
+  | .kw "nullptr" => advance; return .nullptr
   | .varId x   => advance; return .var x
   | .sym "("   => advance; let e ← expr; expectSym ")"; return e
+  | .kw "new"  =>
+    advance
+    match ← peek with
+    | .typeId c =>
+      advance
+      let as ← args
+      if !as.isEmpty then fail "constructor arguments are not part of this subset"
+      return .newObj c
+    | .kw "std::vector" =>
+      advance; expectSym "<"
+      let t ← type
+      expectSym ">"
+      match ← args with
+      | [n] => return .newVec t n
+      | _ => fail "new std::vector takes exactly one argument, the size"
+    | _ => fail "expected class or std::vector after new"
   | _ => fail "expected primary expression"
 
 /-- `Args ::= '(' ( Expr ( ',' Expr )* )? ')'` -/
@@ -187,7 +233,7 @@ def localDecl : P Cmd := do
     expectSym "="
     return .declAuto x (← expr)
   else
-    let t ← basicType
+    let t ← type
     let x ← varId
     expectSym "="
     return .decl t x (← expr)
@@ -259,7 +305,7 @@ end
 
 /-- `Param ::= Type VarId` -/
 def param : P Param := do
-  let t ← basicType
+  let t ← type
   let x ← varId
   return ⟨t, x⟩
 
@@ -275,17 +321,40 @@ def params : P (List Param) := do
 
 /-- `Function ::= Type VarId Params Block` -/
 def function : P Fun := do
-  let t ← basicType
+  let t ← type
   let f ← varId
   let ps ← params
   let b ← block
   return ⟨t, f, ps, b⟩
 
-/-- `Program ::= Function*` -/
+/-- `Class ::= 'class' TypeId '{' ( 'public' ':' )? Field* '}' ';'` with
+`Field ::= Type VarId ';'`, the subset of UD II. -/
+partial def classDecl : P ClassDecl := do
+  expect (.kw "class")
+  let name ← typeId
+  expectSym "{"
+  if ← accept (.kw "public") then expectSym ":"
+  let mut fields : List (Ty × String) := []
+  while (← peek) != .sym "}" do
+    if (← peek) == .eof then fail "unclosed class"
+    let t ← type
+    let f ← varId
+    expectSym ";"
+    fields := fields ++ [(t, f)]
+  expectSym "}"
+  expectSym ";"
+  return ⟨name, fields⟩
+
+/-- `Declaration ::= Class | Function` -/
+def declaration : P Decl := do
+  if (← peek) == .kw "class" then return .cls (← classDecl)
+  else return .fn (← function)
+
+/-- `Program ::= Declaration*` -/
 partial def program : P Program := do
-  let mut acc : List Fun := []
+  let mut acc : List Decl := []
   while (← peek) != .eof do
-    acc := acc ++ [← function]
+    acc := acc ++ [← declaration]
   return acc
 
 /-- Runs a parser on a string, requiring the whole input to be consumed. -/

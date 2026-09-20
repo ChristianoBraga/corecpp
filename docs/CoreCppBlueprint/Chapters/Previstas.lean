@@ -22,10 +22,6 @@ The local reference `int& y = x` binds a second name to the same location, witho
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \tau\&\ y = e \Rightarrow \mathsf{normal}, \rho[y \mapsto \ell], \sigma'}\;\textsf{(DeclRef)}`
 :::
 
-:::definition "lval_ext" (parent := "pendentes") (uses := "judg_ev_lval")
-The judgment $`\Rightarrow_{\ell}` extends to `v[i]`, `o.field`, `p->field` and `*p`. An index out of bounds and the dereference of `nullptr` are `error`.
-:::
-
 # UD IV
 
 :::definition "param_ref" (parent := "pendentes") (uses := "fun_call, judg_ev_lval")
@@ -38,8 +34,8 @@ The lambda expression `[=]` evaluates to a closure, a pair of body and environme
 
 # UD V
 
-:::definition "class_new" (parent := "pendentes") (uses := "dom_store, dom_val")
-An object is a record of locations with a class tag. The `new` allocates the locations of the fields and calls the constructor. Vectors are objects like any other.
+:::definition "class_new" (parent := "pendentes") (uses := "expr_new")
+Constructors, `private` sections and methods. The `new C(args)` of UD V allocates the fields as the `new C()` of UD II does and then runs the constructor body with `this` bound to the object.
 :::
 
 :::definition "method_dispatch" (parent := "pendentes") (uses := "class_new, fun_call")

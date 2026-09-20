@@ -26,16 +26,21 @@ def BinOp.prec : BinOp → Nat
 
 def Ty.toString : Ty → String
   | .int => "int" | .bool => "bool" | .void => "void"
+  | .cls c => c
+  | .ptr t => s!"{t.toString}*"
+  | .vec t => s!"std::vector<{t.toString}>"
+  | .nullT => "nullptr_t"
 
 instance : ToString Ty := ⟨Ty.toString⟩
 
 namespace Expr
 
-/-- Precedence of an expression, 0 for the conditional, 7 for unary, 8 for atoms. -/
+/-- Precedence of an expression, 0 for the conditional, 7 for unary, 8 for
+postfix and atoms. -/
 def prec : Expr → Nat
   | .cond .. => 0
   | .binop op .. => op.prec
-  | .unop .. => 7
+  | .unop .. | .deref .. => 7
   | _ => 8
 
 partial def toString (e : Expr) : String :=
@@ -44,11 +49,18 @@ partial def toString (e : Expr) : String :=
   match e with
   | .intLit n  => s!"{n}"
   | .boolLit b => if b then "true" else "false"
+  | .nullptr   => "nullptr"
   | .var x     => x
   | .unop op e => s!"{op.toString}{paren 7 e}"
   | .binop op l r => s!"{paren op.prec l} {op.toString} {paren (op.prec + 1) r}"
   | .cond c t e => s!"{paren 1 c} ? {paren 1 t} : {paren 0 e}"
   | .call f as => s!"{f}({", ".intercalate (as.map toString)})"
+  | .newObj c  => s!"new {c}()"
+  | .newVec t n => s!"new std::vector<{t}>({toString n})"
+  | .field e f => s!"{paren 8 e}.{f}"
+  | .arrow e f => s!"{paren 8 e}->{f}"
+  | .deref e   => s!"*{paren 7 e}"
+  | .index e i => s!"{paren 8 e}[{toString i}]"
 
 end Expr
 
@@ -76,14 +88,18 @@ end Cmd
 
 instance : ToString Cmd := ⟨Cmd.toString⟩
 
+def Loc.toString (l : Loc) : String := s!"ℓ{l}"
+
 def Val.toString : Val → String
   | .int n  => s!"{n}"
   | .bool b => if b then "true" else "false"
   | .void   => "void"
+  | .loc l  => Loc.toString l
+  | .null   => "nullptr"
+  | .obj c fs => s!"{c}\{{", ".intercalate (fs.map fun (f, l) => s!"{f} ↦ {Loc.toString l}")}}"
+  | .vec ls => s!"vector[{", ".intercalate (ls.map Loc.toString)}]"
 
 instance : ToString Val := ⟨Val.toString⟩
-
-def Loc.toString (l : Loc) : String := s!"ℓ{l}"
 
 def Env.toString (ρ : Env) : String :=
   "[" ++ ", ".intercalate (ρ.reverse.map fun (x, l) => s!"{x} ↦ {Loc.toString l}") ++ "]"
@@ -100,6 +116,9 @@ instance : ToString Ctrl := ⟨Ctrl.toString⟩
 def Error.toString : Error → String
   | .divisionByZero        => "division by zero"
   | .overflow              => "int overflow"
+  | .nullDereference       => "dereference of nullptr"
+  | .outOfBounds i n       => s!"index {i} outside a vector of size {n}"
+  | .negativeSize n        => s!"vector of negative size {n}"
   | .danglingLocation l    => s!"access to a location outside the store, {Loc.toString l}"
   | .undeclaredVariable x  => s!"undeclared variable {x}"
   | .undeclaredFunction f  => s!"undeclared function {f}"

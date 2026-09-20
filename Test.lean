@@ -85,3 +85,60 @@ int main() { return factorial(5); }"
   let p ← parseProgram "int main() { int x = 1; x = x + 41; return x; }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
+
+/-! ## UD II, classes with fields, pointers, nullptr and vectors -/
+
+-- a linked list summed through pointers
+#eval prog "class No { public: int valor; No* prox; };
+int soma(No* p) { return p == nullptr ? 0 : p->valor + soma(p->prox); }
+int main() {
+  No* lista = new No();
+  lista->valor = 1;
+  lista->prox = new No();
+  lista->prox->valor = 2;
+  return soma(lista);
+}"
+
+-- a vector created with new, indexed through the pointer
+#eval prog "int main() {
+  std::vector<int>* v = new std::vector<int>(3);
+  (*v)[0] = 1; (*v)[1] = 2; (*v)[2] = 3;
+  int s = 0;
+  for (int i = 0; i < 3; i = i + 1) { s = s + (*v)[i]; }
+  return s;
+}"
+
+-- two pointers to the same object, one write seen through both
+#eval prog "class P { public: int x; };
+int main() { P* a = new P(); P* b = a; b->x = 7; return a->x + (a == b ? 10 : 0); }"
+
+-- new gives every field its default value
+#eval prog "class R { public: int n; bool ok; R* prox; };
+int main() { R* r = new R(); return r->n + (r->ok ? 10 : 1) + (r->prox == nullptr ? 100 : 0); }"
+
+-- dereferencing nullptr is an error
+#eval prog "class No { public: int valor; No* prox; };
+int main() { No* p = nullptr; return p->valor; }"
+
+-- an index outside the vector is an error
+#eval prog "int main() { std::vector<int>* v = new std::vector<int>(2); return (*v)[2]; }"
+
+-- a negative size is an error
+#eval prog "int main() { std::vector<int>* v = new std::vector<int>(0 - 1); return 0; }"
+
+-- objects never live in variables, only behind pointers
+#eval (parseProgram "class P { public: int x; }; int main() { P a = new P(); return 0; }").map check
+-- an unknown field
+#eval (parseProgram "class P { public: int x; }; int main() { P* a = new P(); return a->y; }").map check
+-- nullptr has no type of its own for a variable
+#eval (parseProgram "int main() { auto p = nullptr; return 0; }").map check
+-- a field of class type would be an object by value
+#eval (parseProgram "class Q { public: int y; }; class P { public: Q q; }; int main() { return 0; }").map check
+-- pointers admit equality and nothing else
+#eval (parseProgram "class P { public: int x; }; int main() { P* a = new P(); return a + 1; }").map check
+
+-- the trace of a field update
+#eval do
+  let p ← parseProgram "class P { public: int x; }; int main() { P* a = new P(); a->x = 3; return a->x; }"
+  let (r, log) := runWith true p
+  return (r, renderTrace log)

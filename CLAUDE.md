@@ -89,13 +89,19 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
 - Inductive big step semantics. Divergence has no derivation and the course
   states this limitation (Leroy and Grall).
 
-## Status on 2026-09-17
+## Status on 2026-09-20
 
 Implemented and tested: basic types, expressions, commands, first order
-functions with call by value, type checker, evaluator with trace, CLI, ten
-examples. Not yet implemented: `T&` parameters and local references, lambdas
-and `std::function`, classes, `new`, `delete`, `std::vector`, namespaces,
-templates, operator overloading, `auto` beyond local declarations. Next step
-by the course order is UD III references, then UD IV lambdas.
+functions with call by value, type checker, evaluator with trace, CLI, and the
+UD II fragment, classes with public fields only, `new C()`, pointers to classes
+as the recursive type, `nullptr`, `->`, `.`, `*` and `[]` as location denoting
+expressions, `std::vector<τ>` created with `new`, objects as records of
+locations with a class tag, `error` on null dereference, out of bounds and
+negative size, eighteen examples. The specification of the fragment is
+`../.claude/spec-ud2.md`. Not yet implemented: `T&` parameters and local
+references, lambdas and `std::function`, methods, constructors, destructors,
+`delete`, `this`, `virtual`, namespaces, templates, operator overloading,
+`auto` beyond local declarations. Next step by the course order is UD III
+references, then UD IV lambdas.
 
 Worklog and memory of the course live under `../.claude/`.

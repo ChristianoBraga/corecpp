@@ -17,7 +17,9 @@ subject right of it and the result after ⇒. All three admit `error` in place
 of the result, with propagation. The evaluation order is left to right where
 C++17 leaves it unspecified, and the C++17 order where it is fixed, right
 operand before left in assignment and function before arguments in a call. The
-store enters expressions because a call inside an expression may change it.
+store enters expressions because a call inside an expression may change it. Objects live in the store as records
+of locations with a class tag, pointers are locations, and the location
+judgment reaches fields and vector elements.
 
 The evaluator runs in the monad `M`, which carries the derivation trace. When
 tracing is enabled, every rule application records its conclusion, the full
@@ -103,6 +105,9 @@ def unop : UnOp → Val → M Val
     ─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, <, <=, >, >=})
     ρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂
 
+    Two pointers are equal when they are the same location. nullptr equals
+    only nullptr. There is no order on pointers.
+
     The left operand is evaluated before the right one, the Core C++ choice
     where C++17 does not specify the order.                                        -/
 def binop : BinOp → Val → Val → M Val
@@ -121,6 +126,12 @@ def binop : BinOp → Val → Val → M Val
   | .ge,  .int a, .int b => pure (.bool (a ≥ b))
   | .eq,  .bool a, .bool b => pure (.bool (a == b))
   | .ne,  .bool a, .bool b => pure (.bool (a != b))
+  | .eq,  .loc a, .loc b => pure (.bool (a == b))
+  | .ne,  .loc a, .loc b => pure (.bool (a != b))
+  | .eq,  .null, .null => pure (.bool true)
+  | .ne,  .null, .null => pure (.bool false)
+  | .eq,  .loc _, .null | .eq, .null, .loc _ => pure (.bool false)
+  | .ne,  .loc _, .null | .ne, .null, .loc _ => pure (.bool true)
   | op, v₁, v₂ => throw (.typeError s!"operator {op.toString} on {v₁} and {v₂}")
 
 /-- Locations allocated by a block, ρ' ∖ ρ, for scope exit. -/
@@ -130,6 +141,20 @@ def fresh (ρ ρ' : Env) : List Loc :=
 def expectBool (what : String) : Val → M Bool
   | .bool b => pure b
   | v => throw (.typeError s!"{what} is not boolean, got {v}")
+
+/-- σ(ℓ), or error when ℓ ∉ dom σ. -/
+def readLoc (σ : Store) (l : Loc) : M Val :=
+  match σ.read l with
+  | some v => pure v
+  | none   => throw (.danglingLocation l)
+
+/-- A pointer value as a live location. nullptr is error, the dereference
+that C++ leaves undefined. -/
+def pointee (v : Val) : M Loc :=
+  match v with
+  | .loc l => pure l
+  | .null  => throw .nullDereference
+  | v      => throw (.typeError s!"{v} is not a pointer")
 
 mutual
 
@@ -142,14 +167,45 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
   /-  ────────────────────── (BoolLit)
       ρ, σ ⊢ b ⇒ bool b, σ                                                      -/
   | .boolLit b => traced "BoolLit" (confE e ρ σ) showV do return (.bool b, σ)
+  /-  ──────────────────────────── (Null)
+      ρ, σ ⊢ nullptr ⇒ null, σ                                                  -/
+  | .nullptr => traced "Null" (confE e ρ σ) showV do return (.null, σ)
   /-  ρ, σ ⊢ x ⇒ₗ ℓ, σ    ℓ ∈ dom σ
       ──────────────────────────────── (Var)       reading x is reading σ(ρ(x))
       ρ, σ ⊢ x ⇒ σ(ℓ), σ                                                        -/
   | .var x => traced "Var" (confE e ρ σ) showV do
     let (l, σ) ← lval fs ρ σ (.var x)
-    match σ.read l with
-    | some v => return (v, σ)
-    | none   => throw (.danglingLocation l)
+    return (← readLoc σ l, σ)
+  /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'    ℓ ∈ dom σ'
+      ────────────────────────────────── (Read)     e one of *e', e'.f, e'->f, e'[i]
+      ρ, σ ⊢ e ⇒ σ'(ℓ), σ'                          reading a location is reading its content -/
+  | .deref _ | .field .. | .arrow .. | .index .. => traced "Read" (confE e ρ σ) showV do
+    let (l, σ') ← lval fs ρ σ e
+    return (← readLoc σ' l, σ')
+  /-  C ↦ class C { τ₁ f₁; …; τₙ fₙ; }
+      (ℓᵢ, σᵢ) = alloc σᵢ₋₁ (default τᵢ),  σ₀ = σ        one location per field, with its default value
+      (ℓ, σ') = alloc σₙ (obj C [f₁ ↦ ℓ₁, …, fₙ ↦ ℓₙ])   the record, tagged with the class
+      ──────────────────────────────────────────────── (New)
+      ρ, σ ⊢ new C() ⇒ loc ℓ, σ'                                                 -/
+  | .newObj c => traced "New" (confE e ρ σ) showV do
+    let some cd := fs.lookupClass c | throw (.typeError s!"unknown class {c}")
+    let (ls, σ₁) := σ.allocMany (cd.fields.map fun (t, _) => t.default)
+    let (l, σ₂) := σ₁.alloc (.obj c ((cd.fields.map (·.2)).zip ls))
+    return (.loc l, σ₂)
+  /-  ρ, σ ⊢ n ⇒ int k, σ₁    k ≥ 0
+      (ℓᵢ, σ'ᵢ) = alloc σ'ᵢ₋₁ (default τ) for 1 ≤ i ≤ k,  σ'₀ = σ₁    one location per element
+      (ℓ, σ₂) = alloc σ'ₖ (vec [ℓ₁, …, ℓₖ])
+      ─────────────────────────────────────────────────────────── (NewVec)
+      ρ, σ ⊢ new std::vector<τ>(n) ⇒ loc ℓ, σ₂
+
+      With k < 0 the result is error (negative size).                               -/
+  | .newVec t n => traced "NewVec" (confE e ρ σ) showV do
+    let (v, σ₁) ← expr fs ρ σ n
+    let .int k := v | throw (.typeError s!"vector size {v} is not an int")
+    if k < 0 then throw (.negativeSize k)
+    let (ls, σ₂) := σ₁.allocMany (List.replicate k.toNat t.default)
+    let (l, σ₃) := σ₂.alloc (.vec ls)
+    return (.loc l, σ₃)
   /-  ρ, σ ⊢ e ⇒ v, σ'    op v = v'
       ─────────────────────────────── (Unary)
       ρ, σ ⊢ op e ⇒ v', σ'                                                      -/
@@ -215,19 +271,58 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
     | .normal, .void => return (.void, σ''')
     | .normal, _     => throw (.missingReturn f)
 
-/-- ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. In this subset,
-only the variable.
+/-- ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, a
+dereferenced pointer, a field of an object, a field through a pointer and an
+element of a vector.
 
-    ρ(x) = ℓ
-    ──────────────────── (LocVar)
-    ρ, σ ⊢ x ⇒ₗ ℓ, σ                                                            -/
-partial def lval (_fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × Store) :=
+    ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'
+    ──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error
+    ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'
+
+    ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+    ─────────────────────────────────────────────── (LocField)
+    ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'
+
+    ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+    ────────────────────────────────────────────────── (LocArrow)    e->f is (*e).f
+    ρ, σ ⊢ e->f ⇒ₗ ℓ_f, σ'
+
+    ρ, σ ⊢ e ⇒ₗ ℓ, σ₁    σ₁(ℓ) = vec [ℓ₀, …, ℓₙ₋₁]    ρ, σ₁ ⊢ i ⇒ int k, σ₂    0 ≤ k < n
+    ──────────────────────────────────────────────────────────────────────────────── (LocIndex)
+    ρ, σ ⊢ e[i] ⇒ₗ ℓₖ, σ₂
+
+    With k outside [0, n) the result is error (out of bounds), where C++
+    leaves it undefined.                                                            -/
+partial def lval (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × Store) :=
   match e with
   | .var x => traced "LocVar" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     match ρ.lookup x with
     | some l => return (l, σ)
     | none   => throw (.undeclaredVariable x)
+  | .deref e₁ => traced "LocDeref" (confE e ρ σ) showL (arrow := "⇒ₗ") do
+    let (v, σ') ← expr fs ρ σ e₁
+    return (← pointee v, σ')
+  | .field e₁ f => traced "LocField" (confE e ρ σ) showL (arrow := "⇒ₗ") do
+    let (l, σ') ← lval fs ρ σ e₁
+    fieldLoc σ' l f
+  | .arrow e₁ f => traced "LocArrow" (confE e ρ σ) showL (arrow := "⇒ₗ") do
+    let (v, σ') ← expr fs ρ σ e₁
+    fieldLoc σ' (← pointee v) f
+  | .index e₁ i => traced "LocIndex" (confE e ρ σ) showL (arrow := "⇒ₗ") do
+    let (l, σ₁) ← lval fs ρ σ e₁
+    let .vec ls ← readLoc σ₁ l | throw (.typeError s!"{e₁} is not a vector")
+    let (v, σ₂) ← expr fs ρ σ₁ i
+    let .int k := v | throw (.typeError s!"index {v} is not an int")
+    if k < 0 || k ≥ ls.length then throw (.outOfBounds k ls.length)
+    return (ls[k.toNat]!, σ₂)
   | _ => throw (.typeError s!"expression does not denote a location: {e}")
+
+/-- The location of field f of the object stored at ℓ. -/
+partial def fieldLoc (σ : Store) (l : Loc) (f : String) : M (Loc × Store) := do
+  let .obj c fs ← readLoc σ l | throw (.typeError s!"{Loc.toString l} does not hold an object")
+  match fs.lookup f with
+  | some lf => return (lf, σ)
+  | none    => throw (.typeError s!"class {c} has no field {f}")
 
 /-- ρ, σ ⊢ c ⇒ r, ρ', σ' -/
 partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env × Store) :=
@@ -344,7 +439,10 @@ variables, and the result is the value returned by `main()`.
 
     main ↦ (int main() { c })    [], ∅ ⊢ main() ⇒ v, σ
     ─────────────────────────────────────────────────── (Program)
-    p ⇒ v                                                                         -/
+    p ⇒ v
+
+    The objects created with new stay in σ until the end of the program,
+    there is no delete in this subset.                                                                         -/
 def runWith (trace : Bool) (p : Program) : Except Error Val × Array TraceEntry :=
   let (r, s) := (Eval.expr p [] {} (.call "main" [])).run.run { enabled := trace }
   (r.map (·.1), s.log)
