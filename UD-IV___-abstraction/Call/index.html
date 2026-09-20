@@ -5540,9 +5540,9 @@ window.onload = async () => {
                 <p>
                   <code class="bp_math display">\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Call)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k,\ \sigma_0 = \sigma) \\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma'_{i-1}, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma_k) \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus \{\ell_1, \ldots, \ell_k\}}\;\textsf{(Call)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k,\ \sigma_0 = \sigma) \\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma'_{i-1}, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma_k) \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup (\rho' \setminus \rho_f))}\;\textsf{(Call)}</code></p>
                 <p>
-                  When the body ends with <code class="bp_math inline">\mathsf{normal}</code>, the result is <code class="bp_math inline">\mathsf{void}</code> if <code class="bp_math inline">\tau = \mathsf{void}</code> and <code>error</code> otherwise. A missing <code>return</code> in a non <code>void</code> function is an evaluation <code>error</code>, not a type error. The rule above is the case in which every parameter is by value, and <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-param-005Fref-statement" data-bp-preview-title="Definition 5.2.1" data-bp-preview-key="param_ref--statement"><a href="UD-IV___-abstraction/Parameters-by-reference/#--informal-preview-param_ref--statement" title="param_ref">Definition 5.2.1</a></span></span> gives the case of a parameter by reference.</p>
+                  The return frees the copies of the arguments and the locals the body declared, <code class="bp_math inline">\rho' \setminus \rho_f</code> read as the owned bindings the body added, so after a call the store holds only what existed before it and the objects created with <code>new</code>. When the body ends with <code class="bp_math inline">\mathsf{normal}</code>, the result is <code class="bp_math inline">\mathsf{void}</code> if <code class="bp_math inline">\tau = \mathsf{void}</code> and <code>error</code> otherwise. A missing <code>return</code> in a non <code>void</code> function is an evaluation <code>error</code>, not a type error. The rule above is the case in which every parameter is by value, and <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-param-005Fref-statement" data-bp-preview-title="Definition 5.2.1" data-bp-preview-key="param_ref--statement"><a href="UD-IV___-abstraction/Parameters-by-reference/#--informal-preview-param_ref--statement" title="param_ref">Definition 5.2.1</a></span></span> gives the case of a parameter by reference.</p>
                 </div>
               </div>
             <div class="bp_wrapper bp_code_panel_wrapper">
@@ -5570,7 +5570,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/aac33074d662047a8a1bae882e163e77694caa3b/CoreCpp/Typing.lean#L151-L287">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/04c68f7e016e9c05d8024e610b99a693dfecdc47/CoreCpp/Typing.lean#L151-L287">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5593,7 +5593,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/aac33074d662047a8a1bae882e163e77694caa3b/CoreCpp/Eval.lean#L178-L318">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/04c68f7e016e9c05d8024e610b99a693dfecdc47/CoreCpp/Eval.lean#L178-L319">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5618,7 +5618,7 @@ window.onload = async () => {
                       <div class="declaration decl structure" data-decl="CoreCpp.Fun" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(4 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/aac33074d662047a8a1bae882e163e77694caa3b/CoreCpp/Syntax.lean#L129-L134">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(4 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/04c68f7e016e9c05d8024e610b99a693dfecdc47/CoreCpp/Syntax.lean#L129-L134">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5654,7 +5654,7 @@ window.onload = async () => {
                       <div class="declaration decl structure" data-decl="CoreCpp.Param" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(3 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/aac33074d662047a8a1bae882e163e77694caa3b/CoreCpp/Syntax.lean#L48-L54">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(3 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/04c68f7e016e9c05d8024e610b99a693dfecdc47/CoreCpp/Syntax.lean#L48-L54">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
