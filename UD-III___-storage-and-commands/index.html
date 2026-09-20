@@ -5389,7 +5389,7 @@ window.onload = async () => {
             <div class="split-toc">
               <div class="title">
                 <label for="--verso-manual-toc-Core-C______--UD-III___-storage-and-commands" class="toggle-split-toc"><input type="checkbox" class="toggle-split-toc" id="--verso-manual-toc-Core-C______--UD-III___-storage-and-commands" checked="checked"></label><span class="number">4.</span> <span class="current"><a href="UD-III___-storage-and-commands/#Core-C______--UD-III___-storage-and-commands">UD III, storage and commands</a></span></div>
-              <table><tr class="numbered"><td class="num">4.1.</td><td><a href="UD-III___-storage-and-commands/Declaration/#Core-C______--UD-III___-storage-and-commands--Declaration">Declaration</a></td></tr><tr class="numbered"><td class="num">4.2.</td><td><a href="UD-III___-storage-and-commands/Assignment/#Core-C______--UD-III___-storage-and-commands--Assignment">Assignment</a></td></tr><tr class="numbered"><td class="num">4.3.</td><td><a href="UD-III___-storage-and-commands/Sequence-and-block/#Core-C______--UD-III___-storage-and-commands--Sequence-and-block">Sequence and block</a></td></tr><tr class="numbered"><td class="num">4.4.</td><td><a href="UD-III___-storage-and-commands/Conditional/#Core-C______--UD-III___-storage-and-commands--Conditional">Conditional</a></td></tr><tr class="numbered"><td class="num">4.5.</td><td><a href="UD-III___-storage-and-commands/Loops/#Core-C______--UD-III___-storage-and-commands--Loops">Loops</a></td></tr><tr class="numbered"><td class="num">4.6.</td><td><a href="UD-III___-storage-and-commands/Expression-statement/#Core-C______--UD-III___-storage-and-commands--Expression-statement">Expression statement</a></td></tr></table></div>
+              <table><tr class="numbered"><td class="num">4.1.</td><td><a href="UD-III___-storage-and-commands/Declaration/#Core-C______--UD-III___-storage-and-commands--Declaration">Declaration</a></td></tr><tr class="numbered"><td class="num">4.2.</td><td><a href="UD-III___-storage-and-commands/Local-reference/#Core-C______--UD-III___-storage-and-commands--Local-reference">Local reference</a></td></tr><tr class="numbered"><td class="num">4.3.</td><td><a href="UD-III___-storage-and-commands/Assignment/#Core-C______--UD-III___-storage-and-commands--Assignment">Assignment</a></td></tr><tr class="numbered"><td class="num">4.4.</td><td><a href="UD-III___-storage-and-commands/Sequence-and-block/#Core-C______--UD-III___-storage-and-commands--Sequence-and-block">Sequence and block</a></td></tr><tr class="numbered"><td class="num">4.5.</td><td><a href="UD-III___-storage-and-commands/Conditional/#Core-C______--UD-III___-storage-and-commands--Conditional">Conditional</a></td></tr><tr class="numbered"><td class="num">4.6.</td><td><a href="UD-III___-storage-and-commands/Loops/#Core-C______--UD-III___-storage-and-commands--Loops">Loops</a></td></tr><tr class="numbered"><td class="num">4.7.</td><td><a href="UD-III___-storage-and-commands/Evaluation-order/#Core-C______--UD-III___-storage-and-commands--Evaluation-order">Evaluation order</a></td></tr><tr class="numbered"><td class="num">4.8.</td><td><a href="UD-III___-storage-and-commands/Expression-statement/#Core-C______--UD-III___-storage-and-commands--Expression-statement">Expression statement</a></td></tr></table></div>
             </div>
           </div>
         <div class="last"></div>
@@ -5402,20 +5402,24 @@ window.onload = async () => {
             <h1>
               4. UD III, storage and commands<span class="permalink-widget inline"><a href="find/?domain=Verso.Genre.Manual.section&amp;name=Core-C______--UD-III___-storage-and-commands" title="Permalink">🔗</a></span></h1>
             <p>
-              One typing rule and one evaluation rule per construction of <code>Cmd</code>. The typing rules live in <code>Typing.cmd</code> and the evaluation rules in <code>Eval.cmd</code>. Scope is the restoration of <code class="bp_math inline">\rho</code> at block exit, and lifetime is the removal of the local locations from <code class="bp_math inline">\sigma</code>.</p>
+              One typing rule and one evaluation rule per construction of <code>Cmd</code>. The typing rules live in <code>Typing.cmd</code> and the evaluation rules in <code>Eval.cmd</code>. Scope is the restoration of <code class="bp_math inline">\rho</code> at block exit, and lifetime is the removal of the local locations from <code class="bp_math inline">\sigma</code>. UD III adds the local reference, a second name for an existing location, and fixes the evaluation order of the expressions with effects.</p>
             <ol class="section-toc">
               <li>
                 <a href="UD-III___-storage-and-commands/Declaration/#Core-C______--UD-III___-storage-and-commands--Declaration"><span class="number">4.1.</span> Declaration</a></li>
               <li>
-                <a href="UD-III___-storage-and-commands/Assignment/#Core-C______--UD-III___-storage-and-commands--Assignment"><span class="number">4.2.</span> Assignment</a></li>
+                <a href="UD-III___-storage-and-commands/Local-reference/#Core-C______--UD-III___-storage-and-commands--Local-reference"><span class="number">4.2.</span> Local reference</a></li>
               <li>
-                <a href="UD-III___-storage-and-commands/Sequence-and-block/#Core-C______--UD-III___-storage-and-commands--Sequence-and-block"><span class="number">4.3.</span> Sequence and block</a></li>
+                <a href="UD-III___-storage-and-commands/Assignment/#Core-C______--UD-III___-storage-and-commands--Assignment"><span class="number">4.3.</span> Assignment</a></li>
               <li>
-                <a href="UD-III___-storage-and-commands/Conditional/#Core-C______--UD-III___-storage-and-commands--Conditional"><span class="number">4.4.</span> Conditional</a></li>
+                <a href="UD-III___-storage-and-commands/Sequence-and-block/#Core-C______--UD-III___-storage-and-commands--Sequence-and-block"><span class="number">4.4.</span> Sequence and block</a></li>
               <li>
-                <a href="UD-III___-storage-and-commands/Loops/#Core-C______--UD-III___-storage-and-commands--Loops"><span class="number">4.5.</span> Loops</a></li>
+                <a href="UD-III___-storage-and-commands/Conditional/#Core-C______--UD-III___-storage-and-commands--Conditional"><span class="number">4.5.</span> Conditional</a></li>
               <li>
-                <a href="UD-III___-storage-and-commands/Expression-statement/#Core-C______--UD-III___-storage-and-commands--Expression-statement"><span class="number">4.6.</span> Expression statement</a></li>
+                <a href="UD-III___-storage-and-commands/Loops/#Core-C______--UD-III___-storage-and-commands--Loops"><span class="number">4.6.</span> Loops</a></li>
+              <li>
+                <a href="UD-III___-storage-and-commands/Evaluation-order/#Core-C______--UD-III___-storage-and-commands--Evaluation-order"><span class="number">4.7.</span> Evaluation order</a></li>
+              <li>
+                <a href="UD-III___-storage-and-commands/Expression-statement/#Core-C______--UD-III___-storage-and-commands--Expression-statement"><span class="number">4.8.</span> Expression statement</a></li>
               </ol>
             </section>
           <nav class="prev-next-buttons">
