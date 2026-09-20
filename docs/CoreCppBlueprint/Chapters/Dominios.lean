@@ -33,7 +33,7 @@ A location $`\ell` is a natural number. Locations are never reused.
 :::
 
 :::definition "dom_val" (parent := "dominios") (lean := "CoreCpp.Val, CoreCpp.Ty.default") (uses := "dom_int32, dom_loc")
-The values are $`\mathsf{int}\,n`, $`\mathsf{bool}\,b`, $`\mathsf{void}`, the pointer $`\mathsf{loc}\,\ell`, the value $`\mathsf{null}` of `nullptr`, the object $`\mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]`, a record of one location per field with its class tag, and the vector $`\mathsf{vec}\,[\ell_0, \ldots, \ell_{n-1}]`, one location per element. The value $`\mathsf{void}` is the result of a call to a function without return value and is never stored. UD IV adds the closure, {bpref "dom_closure"}[]. Objects and vectors live in the store at their own location and are reached only through pointers. The default value of a type, which `new` gives to every field and element, is $`\mathsf{int}\,0`, $`\mathsf{bool}\,\mathtt{false}` or $`\mathsf{null}`.
+The values are $`\mathsf{int}\,n`, $`\mathsf{bool}\,b`, $`\mathsf{void}`, the pointer $`\mathsf{loc}\,\ell`, the value $`\mathsf{null}` of `nullptr`, the object $`\mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]`, a record of one location per field with its class tag, and the vector $`\mathsf{vec}\,[\ell_0, \ldots, \ell_{n-1}]`, one location per element. The value $`\mathsf{void}` is the result of a call to a function without return value, and the initial content of a field of function type before the constructor assigns it. UD IV adds the closure, {bpref "dom_closure"}[]. Since UD V the tag of an object is the class it was created with, its fields are those of the whole chain of classes, the root base first, and the tag decides the dispatch of virtual methods and the destructors that `delete` runs. Objects and vectors live in the store at their own location and are reached only through pointers. The default value of a type, which `new` gives to every field and element, is $`\mathsf{int}\,0`, $`\mathsf{bool}\,\mathtt{false}` or $`\mathsf{null}`.
 :::
 
 :::definition "dom_int32" (parent := "dominios") (lean := "CoreCpp.Int32.min, CoreCpp.Int32.max, CoreCpp.Int32.inRange")
@@ -43,7 +43,7 @@ $$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{int}\,n} \qqu
 :::
 
 :::definition "dom_env" (parent := "dominios") (lean := "CoreCpp.Env, CoreCpp.Binding, CoreCpp.Env.lookup, CoreCpp.Env.extend, CoreCpp.Env.alias") (uses := "dom_loc")
-The environment $`\rho` is a finite map from identifiers to locations. The notation $`\rho[x \mapsto \ell]` extends $`\rho`, and the most recent binding prevails. Each binding records whether the declaration that made it allocated the location, as `τ x = e` does, or aliased an existing one, as the reference `τ& y = e` does. Block exit frees only the owned locations.
+The environment $`\rho` is a finite map from identifiers to locations. The notation $`\rho[x \mapsto \ell]` extends $`\rho`, and the most recent binding prevails. Each binding records whether the declaration that made it allocated the location, as `τ x = e` does, or aliased an existing one, as the reference `τ& y = e` does. Block exit frees only the owned locations. Inside a member body, `this` is an alias binding to the location of the receiver, made by the call and never freed by the return.
 :::
 
 :::definition "dom_store" (parent := "dominios") (lean := "CoreCpp.Store, CoreCpp.Store.read, CoreCpp.Store.write, CoreCpp.Store.alloc, CoreCpp.Store.allocMany, CoreCpp.Store.free, CoreCpp.Store.dom") (uses := "dom_loc, dom_val")
@@ -59,10 +59,10 @@ The control result $`r` of a command is $`\mathsf{normal}` or $`\mathsf{ret}\,v`
 :::
 
 :::definition "dom_erro" (parent := "dominios") (lean := "CoreCpp.Error")
-The result `error` is not a value of the language. It replaces the result of any dynamic judgment and propagates to the whole program. Its causes are division by zero, `int` overflow, the dereference of `nullptr`, an index outside a vector, a negative vector size, a location outside $`\sigma`, an undeclared variable or function, wrong arity and a missing `return` in a non `void` function.
+The result `error` is not a value of the language. It replaces the result of any dynamic judgment and propagates to the whole program. Its causes are division by zero, `int` overflow, the dereference of `nullptr`, an index outside a vector, a negative vector size, a location outside $`\sigma`, an undeclared variable or function, wrong arity, a missing `return` in a non `void` function, a second `delete` of the same object, and a `delete` through a pointer to a base class without a virtual destructor.
 :::
 
-:::definition "dom_tenv" (parent := "dominios") (lean := "CoreCpp.TEnv, CoreCpp.TBind, CoreCpp.TEnv.lookup, CoreCpp.TEnv.isConst, CoreCpp.TEnv.bind, CoreCpp.TEnv.captured")
+:::definition "dom_tenv" (parent := "dominios") (lean := "CoreCpp.TEnv, CoreCpp.TBind, CoreCpp.TEnv.lookup, CoreCpp.TEnv.isConst, CoreCpp.TEnv.bind, CoreCpp.TEnv.captured, CoreCpp.TEnv.self")
 The typing context $`\Gamma` is a finite map from identifiers to types. The types are $`\mathsf{int}`, $`\mathsf{bool}`, $`\mathsf{void}`, a class $`C`, a pointer $`\tau*`, a vector $`\mathsf{std{:}{:}vector}\langle\tau\rangle` and the internal type $`\mathsf{nullptr\_t}` of `nullptr`. Class and vector types are object types, they have no values, and no variable, parameter, result or field has one. An expression of object type occurs only as the operand of `.`, `[]` or `*`. Since UD IV each binding carries a mark, read only or not. The mark is set on every binding of the enclosing scope when the body of a lambda is checked, so that the copies of `[=]` are read and never written.
 :::
 
@@ -70,8 +70,8 @@ The typing context $`\Gamma` is a finite map from identifiers to types. The type
 A program is a list of declarations, classes and functions. The functions form a finite map from names to declarations, fixed during the whole evaluation and implicit in the judgments.
 :::
 
-:::definition "dom_classes" (parent := "dominios") (lean := "CoreCpp.ClassDecl, CoreCpp.ClassDecl.fieldType, CoreCpp.Program.classes, CoreCpp.Program.lookupClass")
-The classes of the program form the class table, a finite map from class names to field lists. In this unit a class has public fields only. Both the type checker and `new` consult the table, the first for the type of a field, the second for the fields to allocate.
+:::definition "dom_classes" (parent := "dominios") (lean := "CoreCpp.ClassDecl, CoreCpp.Field, CoreCpp.Method, CoreCpp.Ctor, CoreCpp.Dtor, CoreCpp.Vis, CoreCpp.Program.classes, CoreCpp.Program.lookupClass, CoreCpp.Program.chain, CoreCpp.Program.allFields, CoreCpp.Program.findField, CoreCpp.Program.findMethod, CoreCpp.Program.subclass, CoreCpp.Program.hasVirtualDtor")
+The classes of the program form the class table, a finite map from class names to declarations. A declaration has an optional base, fields and methods with their visibility, at most one constructor and at most one destructor. The table gives, for a class, its chain up to the root base, every field of the chain with the class that declares it, the nearest method of a given name, the subclass relation and whether some class of the chain has a virtual destructor. The type checker consults it for types, visibility and dispatch, and `new` and `delete` for the fields to allocate and to free. Names are qualified by their namespace, `N::C`.
 :::
 
 # Static judgments

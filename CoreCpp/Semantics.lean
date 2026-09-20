@@ -14,6 +14,8 @@ Locations ℓ, values v, environment ρ, store σ, control results r and the
   object whose record is the list of the locations of its elements.
 * A closure is the value of a lambda expression, its parameters, its body
   and the read only copies of the variables it captured.
+* Inside a method, `this` is bound in ρ to the location of the receiver, an
+  alias binding, and `delete` removes the locations of an object from σ.
 -/
 
 namespace CoreCpp
@@ -44,7 +46,10 @@ def Int32.max : Int := 2 ^ 31 - 1
 def Int32.inRange (n : Int) : Bool := Int32.min ≤ n && n ≤ Int32.max
 
 /-- The default value of a type, the one `new` gives to every field and
-element. Object types have no value, their default is never asked. -/
+element before the constructor runs. Object types have no value, their default
+is never asked. A field of function type starts empty, `void`, and a call
+through it before the constructor assigns a lambda is `error`, as the
+`bad_function_call` of C++. -/
 def Ty.default : Ty → Val
   | .int => .int 0
   | .bool => .bool false
@@ -66,6 +71,8 @@ inductive Error where
   | typeError (msg : String)     -- for programs that skipped the type checker
   | missingReturn (f : String)
   | notCallable (v : Val)
+  | deleteWithoutVirtualDtor (static tag : String)
+  | doubleDelete (l : Loc)
   deriving Repr, BEq, Inhabited
 
 /-- A binding of ρ. `owned` records whether the declaration that created the

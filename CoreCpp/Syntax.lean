@@ -2,9 +2,11 @@
 # Core C++ abstract syntax, subset
 
 Basic types, class and pointer types, vectors, function types, expressions,
-lambdas, commands, classes with fields and functions. A statement is a command or an expression
-followed by `;`. Assignment is a command. One tree per nonterminal of the
-grammar in section 4 of the language design.
+lambdas, commands, classes with fields, methods, constructors, destructors and
+single inheritance, and functions. A statement is a command or an expression
+followed by `;`. Assignment and `delete` are commands. One tree per
+nonterminal of the grammar in section 4 of the language design. Namespaces
+are flattened by the parser into qualified class names, `N::C`.
 -/
 
 namespace CoreCpp
@@ -62,7 +64,14 @@ mutual
 grammar admits only as an argument, as the initialiser of a declaration and
 as the expression of `return`. `callFn e args` calls the function value `e`,
 and `call f args` calls the function named `f`, or the function value bound to
-`f` when `f` is a variable in scope. -/
+`f` when `f` is a variable in scope, or the method `f` of `this` inside a
+class. `newObj C args` is `new C(args)`, which allocates the object and runs
+the constructor. `this` is the location of the receiver inside a method.
+`methodCall e arrow m args static` is `e.m(args)` when `arrow` is false and
+`e->m(args)` when it is true. The field `static` is the class of the receiver
+as the type checker sees it, filled by `Typing.annotate` and `none` as the
+parser leaves it, the datum the evaluator needs to tell a dispatched call from
+a static one. -/
 inductive Expr where
   | intLit  (n : Int)
   | boolLit (b : Bool)
@@ -72,8 +81,10 @@ inductive Expr where
   | binop   (op : BinOp) (l r : Expr)
   | cond    (c t e : Expr)
   | call    (f : String) (args : List Expr)
-  | newObj  (c : String)
+  | newObj  (c : String) (args : List Expr)
   | newVec  (t : Ty) (n : Expr)
+  | this
+  | methodCall (recv : Expr) (arrow : Bool) (m : String) (args : List Expr) (static : Option String)
   | field   (e : Expr) (f : String)
   | arrow   (e : Expr) (f : String)
   | deref   (e : Expr)
@@ -84,7 +95,9 @@ inductive Expr where
 
 /-- Commands. A block is a list of commands. `exprStmt` is the statement that
 evaluates an expression and discards its value. `declRef` is the local
-reference `τ& x = e`, a second name for the location `e` denotes. -/
+reference `τ& x = e`, a second name for the location `e` denotes. `delete e
+static` is `delete e;`, with `static` the class of the pointer as the type
+checker sees it, filled by `Typing.annotate`. -/
 inductive Cmd where
   | block    (cs : List Cmd)
   | ite      (c : Expr) (t : List Cmd) (e : List Cmd)
@@ -96,6 +109,7 @@ inductive Cmd where
   | declAuto (x : String) (init : Expr)
   | assign   (lhs rhs : Expr)
   | exprStmt (e : Expr)
+  | delete   (e : Expr) (static : Option String)
   deriving Repr, BEq, Inhabited
 
 end
@@ -107,13 +121,14 @@ lambda. A nested lambda contributes its own free variables, its parameters
 excluded. -/
 partial def Expr.vars : Expr → List String
   | .var x => [x]
+  | .this => ["this"]
   | .unop _ e | .deref e | .field e _ | .arrow e _ | .newVec _ e => e.vars
   | .binop _ a b | .index a b => a.vars ++ b.vars
   | .cond a b c => a.vars ++ b.vars ++ c.vars
-  | .call _ es => es.flatMap Expr.vars
-  | .callFn f es => f.vars ++ es.flatMap Expr.vars
+  | .call _ es | .newObj _ es => es.flatMap Expr.vars
+  | .callFn f es | .methodCall f _ _ es _ => f.vars ++ es.flatMap Expr.vars
   | .lambda ps _ b => (b.flatMap Cmd.vars).filter fun x => !(ps.any (·.name == x))
-  | .intLit _ | .boolLit _ | .nullptr | .newObj _ => []
+  | .intLit _ | .boolLit _ | .nullptr => []
 
 partial def Cmd.vars : Cmd → List String
   | .block cs => cs.flatMap Cmd.vars
@@ -121,7 +136,7 @@ partial def Cmd.vars : Cmd → List String
   | .while c b => c.vars ++ b.flatMap Cmd.vars
   | .for i c s b => i.vars ++ c.vars ++ s.vars ++ b.flatMap Cmd.vars
   | .ret none => []
-  | .ret (some e) | .exprStmt e | .decl _ _ e | .declRef _ _ e | .declAuto _ e => e.vars
+  | .ret (some e) | .exprStmt e | .decl _ _ e | .declRef _ _ e | .declAuto _ e | .delete e _ => e.vars
   | .assign l r => l.vars ++ r.vars
 
 end
@@ -133,11 +148,56 @@ structure Fun where
   body   : List Cmd
   deriving Repr, BEq, Inhabited
 
-/-- A class with public fields only. Methods, constructors and destructors
-come in UD V. -/
+/-- Visibility of a member. Members before any section label are private, as
+in C++. -/
+inductive Vis where
+  | pub | priv
+  deriving Repr, BEq, DecidableEq, Inhabited
+
+/-- A field of a class. -/
+structure Field where
+  ty   : Ty
+  name : String
+  vis  : Vis := .pub
+  deriving Repr, BEq, Inhabited
+
+/-- A method, defined inside the class. `isVirtual` marks `virtual`, which
+makes the call dispatch by the class tag of the receiver, and `isOverride`
+marks `override`, required on a method that redefines a `virtual` one. -/
+structure Method where
+  name       : String
+  ret        : Ty
+  params     : List Param
+  body       : List Cmd
+  vis        : Vis := .pub
+  isVirtual  : Bool := false
+  isOverride : Bool := false
+  deriving Repr, BEq, Inhabited
+
+/-- The constructor of a class, named after the class and run by `new` after
+the fields are allocated. -/
+structure Ctor where
+  params : List Param
+  body   : List Cmd
+  deriving Repr, BEq, Inhabited
+
+/-- The destructor of a class, `~C()`, run by `delete` before the locations of
+the object leave the store. -/
+structure Dtor where
+  body      : List Cmd
+  isVirtual : Bool := false
+  deriving Repr, BEq, Inhabited
+
+/-- A class, with an optional base class, fields, methods, at most one
+constructor and at most one destructor. Names are qualified by their
+namespace, `N::C`. -/
 structure ClassDecl where
-  name   : String
-  fields : List (Ty × String)
+  name    : String
+  base    : Option String := none
+  fields  : List Field
+  methods : List Method := []
+  ctor    : Option Ctor := none
+  dtor    : Option Dtor := none
   deriving Repr, BEq, Inhabited
 
 /-- Top level declarations. -/
@@ -158,7 +218,38 @@ def Program.classes (p : Program) : List ClassDecl :=
 def Program.lookupClass (p : Program) (c : String) : Option ClassDecl :=
   p.classes.find? (·.name == c)
 
-def ClassDecl.fieldType (c : ClassDecl) (f : String) : Option Ty :=
-  (c.fields.find? (·.2 == f)).map (·.1)
+/-- The chain of a class, the class itself, its base, the base of the base
+and so on. A cycle or an unknown base ends the chain, and the type checker
+rejects both. -/
+partial def Program.chain (p : Program) (c : String) (fuel : Nat := 64) : List ClassDecl :=
+  match fuel, p.lookupClass c with
+  | 0, _ | _, none => []
+  | fuel + 1, some cd =>
+    match cd.base with
+    | none => [cd]
+    | some b => cd :: p.chain b fuel
+
+/-- Every field of a class, the fields of the root base first, each with the
+class that declares it. -/
+def Program.allFields (p : Program) (c : String) : List (Field × String) :=
+  (p.chain c).reverse.flatMap fun cd => cd.fields.map fun f => (f, cd.name)
+
+/-- The field f as seen from class c, with the class that declares it. -/
+def Program.findField (p : Program) (c f : String) : Option (Field × String) :=
+  (p.allFields c).find? (·.1.name == f)
+
+/-- The method m as seen from class c, the nearest declaration in the chain,
+with the class that declares it. -/
+def Program.findMethod (p : Program) (c m : String) : Option (Method × String) :=
+  (p.chain c).findSome? fun cd => (cd.methods.find? (·.name == m)).map (·, cd.name)
+
+/-- d is c or derives from c. -/
+def Program.subclass (p : Program) (d c : String) : Bool :=
+  (p.chain d).any (·.name == c)
+
+/-- Some class in the chain of c declares a virtual destructor, so `delete`
+through a pointer to c reaches the destructor of the tag. -/
+def Program.hasVirtualDtor (p : Program) (c : String) : Bool :=
+  (p.chain c).any fun cd => cd.dtor.any (·.isVirtual)
 
 end CoreCpp

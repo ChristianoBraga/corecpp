@@ -65,7 +65,10 @@ partial def Expr.toString (e : Expr) : String :=
   | .cond c t e => s!"{paren 1 c} ? {paren 1 t} : {paren 0 e}"
   | .call f as => s!"{f}({", ".intercalate (as.map Expr.toString)})"
   | .callFn f as => s!"{paren 8 f}({", ".intercalate (as.map Expr.toString)})"
-  | .newObj c  => s!"new {c}()"
+  | .methodCall r arrow m as _ =>
+    s!"{paren 8 r}{if arrow then "->" else "."}{m}({", ".intercalate (as.map Expr.toString)})"
+  | .this => "this"
+  | .newObj c as => s!"new {c}({", ".intercalate (as.map Expr.toString)})"
   | .newVec t n => s!"new std::vector<{t}>({Expr.toString n})"
   | .field e f => s!"{paren 8 e}.{f}"
   | .arrow e f => s!"{paren 8 e}->{f}"
@@ -86,6 +89,7 @@ partial def Cmd.toString : Cmd → String
   | .declAuto x e => s!"auto {x} = {Expr.toString e};"
   | .assign l r => s!"{Expr.toString l} = {Expr.toString r};"
   | .exprStmt e => s!"{Expr.toString e};"
+  | .delete e _ => s!"delete {Expr.toString e};"
 
 end
 
@@ -132,6 +136,8 @@ def Error.toString : Error → String
   | .typeError msg         => s!"type error at run time, {msg}"
   | .missingReturn f       => s!"function {f} ended without return"
   | .notCallable v         => s!"call of a value that is not a function, {v}"
+  | .deleteWithoutVirtualDtor s t => s!"delete through {s}* of an object of class {t} without a virtual destructor"
+  | .doubleDelete l        => s!"delete of a location already freed, {Loc.toString l}"
 
 instance : ToString Error := ⟨Error.toString⟩
 

@@ -1,0 +1,17 @@
+#!/bin/sh
+# Compares the exit code of every example under g++ and under corecpp.
+# Usage: bin/compare [examples/*.cpp]. Prints one line per example.
+cd "$(dirname "$0")/.."
+files=${@:-examples/*.cpp}
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+for f in $files; do
+  name=$(basename "$f" .cpp)
+  printf '#include <functional>\n#include <vector>\n' > "$tmp/$name.cpp"
+  cat "$f" >> "$tmp/$name.cpp"
+  if g++ -std=c++17 -o "$tmp/$name" "$tmp/$name.cpp" 2>"$tmp/$name.err"; then
+    "$tmp/$name" >/dev/null 2>&1; gxx=$?
+  else gxx="reject"; fi
+  bin/corecpp run "$f" >/dev/null 2>&1; core=$?
+  if [ "$gxx" = "$core" ]; then mark="agree"; else mark="DIFFER"; fi
+  printf '%-28s g++ %-7s corecpp %-4s %s\n' "$name" "$gxx" "$core" "$mark"
+done

@@ -22,6 +22,20 @@ type τ", which for every other expression is Γ ⊢ e : τ' with τ' ≈ τ. In
 lambda body the captured variables are read only, recorded by the `const` mark
 of their bindings in Γ.
 
+Classes have sections, fields, methods, a constructor and a destructor, and
+single inheritance. Inside a method the binding `this ↦ C*` of Γ tells the
+current class, so a private member is reachable exactly when `this` has the
+declaring class, and an unqualified field or method name denotes the member
+of `this`. A pointer to a derived class is accepted where a pointer to its
+base is expected, subsumption, the only conversion between class types. A
+derived class redefines a method only when the base declares it `virtual`,
+and then marks it `override`, so the method reached from the static type and
+the one reached from the class tag coincide for every non virtual method.
+
+After checking, `annotate` fills in the static class of every method call and
+every `delete`, the datum the evaluator needs for dispatch and for the
+destructor check, since ρ and σ carry no types.
+
 Not checked here, and left to the evaluator as `missingReturn`, is that every
 path of a non-void function ends in a return.
 -/
@@ -50,6 +64,13 @@ def TEnv.bind (Γ : TEnv) (x : String) (t : Ty) : TEnv := (x, ⟨t, false⟩) ::
 /-- Γ with every binding marked read only, the context of a lambda body. -/
 def TEnv.captured (Γ : TEnv) : TEnv := Γ.map fun (x, b) => (x, { b with const := true })
 
+/-- The current class, the class of `this` when Γ binds it, inside a method,
+a constructor or a destructor. -/
+def TEnv.self (Γ : TEnv) : Option String :=
+  match Γ.lookup "this" with
+  | some (.ptr (.cls c)) => some c
+  | _ => none
+
 inductive TypeError where
   | undeclaredVariable (x : String)
   | undeclaredFunction (f : String)
@@ -75,6 +96,19 @@ inductive TypeError where
   | badOperand (op : String) (t : Ty)
   | returnOutside
   | missingMain
+  | unknownMethod (c m : String)
+  | privateMember (c m : String)
+  | noConstructor (c : String)
+  | baseConstructorParams (c b : String)
+  | redefinesNonVirtual (c m : String)
+  | overrideWithoutVirtual (c m : String)
+  | signatureMismatch (c m : String)
+  | unknownBase (c b : String)
+  | cyclicInheritance (c : String)
+  | duplicateMember (c m : String)
+  | fieldRedeclared (c f : String)
+  | thisOutside
+  | notDeletable (e : Expr) (t : Ty)
   deriving Repr
 
 def TypeError.toString : TypeError → String
@@ -102,6 +136,19 @@ def TypeError.toString : TypeError → String
   | .badOperand op t      => s!"operator {op} applied to {t}"
   | .returnOutside        => "return outside a function"
   | .missingMain          => "no function int main()"
+  | .unknownMethod c m    => s!"class {c} has no method {m}"
+  | .privateMember c m    => s!"{m} is a private member of {c}"
+  | .noConstructor c      => s!"class {c} has no constructor for these arguments"
+  | .baseConstructorParams c b => s!"the base {b} of {c} has a constructor with parameters, and there is no initialiser list"
+  | .redefinesNonVirtual c m => s!"{c} redefines the method {m}, which the base does not declare virtual"
+  | .overrideWithoutVirtual c m => s!"{c} marks {m} override, but no base declares a virtual {m}"
+  | .signatureMismatch c m => s!"the method {m} of {c} has a signature different from the one it overrides"
+  | .unknownBase c b      => s!"class {c} derives from the unknown class {b}"
+  | .cyclicInheritance c  => s!"the inheritance chain of {c} is cyclic"
+  | .duplicateMember c m  => s!"class {c} declares {m} twice"
+  | .fieldRedeclared c f  => s!"class {c} redeclares the field {f} of a base"
+  | .thisOutside          => "this outside a class"
+  | .notDeletable e t     => s!"delete of {e} of type {t}, not a pointer to an object"
 
 instance : ToString TypeError := ⟨TypeError.toString⟩
 
@@ -115,12 +162,18 @@ def value (e : Expr) (t : Ty) : T Ty :=
   else if t.isObject then .error (.objectValue e t)
   else .ok t
 
-/-- τ₁ ≈ τ₂, equal types, or nullptr against a pointer type. The only implicit
-conversion besides the lambda to `std::function`. -/
-def compat : Ty → Ty → Bool
+/-- τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal
+types, nullptr against a pointer type, or, by subsumption, a pointer to a
+derived class where a pointer to its base is expected. These and the lambda
+to `std::function` are the only implicit conversions. -/
+def compat (p : Program) : Ty → Ty → Bool
   | .nullT, .ptr _ => true
   | .ptr _, .nullT => true
+  | .ptr (.cls d), .ptr (.cls b) => d == b || p.subclass d b
   | t₁, t₂ => t₁ == t₂
+
+/-- τ₁ ≈ τ₂ in either direction, for comparison and for the branches of `?:`. -/
+def related (p : Program) (t₁ t₂ : Ty) : Bool := compat p t₁ t₂ || compat p t₂ t₁
 
 /-- Requires that a variable, parameter or result type has values. -/
 def storable (context : String) (t : Ty) : T Unit :=
@@ -155,12 +208,23 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
   | .intLit _  => .ok .int
   | .boolLit _ => .ok .bool
   | .nullptr   => .ok .nullT
-  /-  Γ(x) = τ
-      ─────────── (T-Var)                                                          -/
+  /-  Γ(x) = τ                     x ∉ Γ    Γ(this) = C*    Γ ⊢ this->x : τ
+      ─────────── (T-Var)          ─────────────────────────────────────── (T-VarField)
+      Γ ⊢ x : τ                    Γ ⊢ x : τ                                   -/
   | .var x =>
     match Γ.lookup x with
     | some t => .ok t
-    | none   => .error (.undeclaredVariable x)
+    | none   =>
+      match Γ.self with
+      | some c => if (p.findField c x).isSome then fieldType p Γ c x else .error (.undeclaredVariable x)
+      | none => .error (.undeclaredVariable x)
+  /-  Γ(this) = C*
+      ──────────────── (T-This)      only inside a method, a constructor or a destructor
+      Γ ⊢ this : C*                                                                -/
+  | .this =>
+    match Γ.lookup "this" with
+    | some t => .ok t
+    | none => .error .thisOutside
   /-  Γ ⊢ e : bool                 Γ ⊢ e : int
       ────────────── (T-Not)       ────────────── (T-Neg)                           -/
   | .unop .not e => do
@@ -189,7 +253,7 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
         ──────────────────────────────────────────────────────────────────── (T-Eq, ⋈ ∈ {==, !=})
         Γ ⊢ e₁ ⋈ e₂ : bool                                                         -/
     | .eq | .ne =>
-      if compat t₁ t₂ && t₁ != .void && !t₁.isObject && !t₁.isFn then .ok .bool
+      if related p t₁ t₂ && t₁ != .void && !t₁.isObject && !t₁.isFn then .ok .bool
       else .error (.mismatch s!"operands of {op.toString}" t₁ t₂)
     /-  Γ ⊢ e₁ : int    Γ ⊢ e₂ : int
         ──────────────────────────── (T-Rel, ⋈ ∈ {<, <=, >, >=})
@@ -206,7 +270,8 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
     let t₂ ← value e₂ (← expr p Γ e₂)
     let t₃ ← value e₃ (← expr p Γ e₃)
     if t₂ == t₃ then .ok t₂
-    else if compat t₂ t₃ then .ok (if t₂ == .nullT then t₃ else t₂)
+    else if compat p t₂ t₃ then .ok t₃
+    else if compat p t₃ t₂ then .ok t₂
     else .error (.mismatch "branches of ?:" t₂ t₃)
   /-  Γ(f) = std::function<τ(τ₁, …, τₖ)>    Γ ⊢ eᵢ ◁ τᵢ for each i
       ─────────────────────────────────────────────────────────── (T-CallFn)     a variable f bound to a
@@ -220,17 +285,18 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
     match Γ.lookup f with
     | some t => callValue p Γ (.var f) t es
     | none =>
-      let some fn := FunEnv.lookup p f | throw (.undeclaredFunction f)
-      if fn.params.length != es.length then throw (.arity f fn.params.length es.length)
-      for (q, e) in fn.params.zip es do
-        if q.byRef then
-          let t ← match lval p Γ e with
-            | .ok t => pure t
-            | .error _ => throw (.refArgument f q.name e)
-          if t != q.ty then throw (.mismatch s!"argument {q.name} of {f}" q.ty t)
-        else
-          accept p Γ s!"argument {q.name} of {f}" e q.ty
-      return fn.ret
+      match FunEnv.lookup p f with
+      | some fn =>
+        if fn.params.length != es.length then throw (.arity f fn.params.length es.length)
+        checkArgs p Γ f fn.params es
+        return fn.ret
+      | none =>
+        /-  f ∉ Γ    f not a function    Γ(this) = C*    Γ ⊢ this->f(e₁, …, eₖ) : τ
+            ──────────────────────────────────────────────────────────────────── (T-CallThis)
+            Γ ⊢ f(e₁, …, eₖ) : τ                                                        -/
+        match Γ.self with
+        | some c => if (p.findMethod c f).isSome then methodCall p Γ .this true f es else throw (.undeclaredFunction f)
+        | none => throw (.undeclaredFunction f)
   /-  Γ ⊢ e : std::function<τ(τ₁, …, τₖ)>    Γ ⊢ eᵢ ◁ τᵢ for each i
       ─────────────────────────────────────────────────────────── (T-CallFn)
       Γ ⊢ e(e₁, …, eₖ) : τ                                                         -/
@@ -240,11 +306,30 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
   /-  A lambda has no type of its own. Outside its three positions it is an
       error, see `lambdaAt` for Γ ⊢ [=](…) -> τ { c } ◁ std::function<…>.        -/
   | e@(.lambda ..) => .error (.lambdaPosition e)
-  /-  C ↦ class C { τ₁ f₁; …; τₙ fₙ; }
-      ────────────────────────────────── (T-New)
-      Γ ⊢ new C() : C*                                                             -/
-  | .newObj c =>
-    if (p.lookupClass c).isSome then .ok (.ptr (.cls c)) else .error (.unknownClass c)
+  /-  C ↦ class C { … C(p₁ x₁, …, pₖ xₖ) { c } … }    arguments as in T-Call
+      ──────────────────────────────────────────────────────────────── (T-New)
+      Γ ⊢ new C(e₁, …, eₖ) : C*
+
+      A class without a constructor is created by new C() alone.                    -/
+  | .newObj c es => do
+    let some cd := p.lookupClass c | throw (.unknownClass c)
+    match cd.ctor with
+    | none => if es.isEmpty then pure () else throw (.noConstructor c)
+    | some k =>
+      if k.params.length != es.length then throw (.noConstructor c)
+      checkArgs p Γ c k.params es
+    return .ptr (.cls c)
+  /-  Γ ⊢ e : C    C has τ m(p₁ x₁, …, pₖ xₖ), visible from Γ    arguments as in T-Call
+      ────────────────────────────────────────────────────────────────────────── (T-Method)
+      Γ ⊢ e.m(e₁, …, eₖ) : τ
+
+      Γ ⊢ e : C*    C has τ m(…), visible from Γ    arguments as in T-Call
+      ──────────────────────────────────────────────────────────────── (T-MethodArrow)
+      Γ ⊢ e->m(e₁, …, eₖ) : τ
+
+      A private method is visible only when Γ(this) is the class that
+      declares it. The method is the nearest one in the chain of C.              -/
+  | .methodCall recv arrow m es _ => methodCall p Γ recv arrow m es
   /-  Γ ⊢ n : int    τ has values    τ not a function type
       ──────────────────────────────────────────────────── (T-NewVec)
       Γ ⊢ new std::vector<τ>(n) : std::vector<τ>*                                  -/
@@ -261,14 +346,14 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
   | .field e f => do
     let t ← expr p Γ e
     let .cls c := t | throw (.notObject e t)
-    fieldType p c f
+    fieldType p Γ c f
   /-  Γ ⊢ e : C*    C ↦ class C { … τ f; … }
       ────────────────────────────────────── (T-Arrow)      e->f abbreviates (*e).f
       Γ ⊢ e->f : τ                                                                 -/
   | .arrow e f => do
     let t ← expr p Γ e
     let .ptr (.cls c) := t | throw (.notPointer e t)
-    fieldType p c f
+    fieldType p Γ c f
   /-  Γ ⊢ e : τ*
       ──────────── (T-Deref)
       Γ ⊢ *e : τ                                                                   -/
@@ -306,7 +391,7 @@ partial def accept (p : Program) (Γ : TEnv) (context : String) (e : Expr) (τ :
   | .lambda ps r b => lambdaAt p Γ ps r b τ
   | _ =>
     let t ← value e (← expr p Γ e)
-    if !compat t τ then throw (.mismatch context τ t)
+    if !compat p t τ then throw (.mismatch context τ t)
 
 /-- Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ◁ std::function<τ(τ₁, …, τₖ)>.
 
@@ -331,11 +416,45 @@ partial def lambdaAt (p : Program) (Γ : TEnv) (ps : List Param) (r : Ty) (b : L
   let Γ' := ps.reverse.foldl (fun Γ q => Γ.bind q.name q.ty) Γ.captured
   let _ ← cmds p r Γ' b
 
-/-- The type of field f of class C, or the error. -/
-partial def fieldType (p : Program) (c f : String) : T Ty := do
-  let some cd := p.lookupClass c | throw (.unknownClass c)
-  let some t := cd.fieldType f | throw (.unknownField c f)
-  return t
+/-- The arguments of a call against the parameters, by value with ◁ and by
+reference with ⊢ₗ, shared by T-Call, T-New and T-Method. -/
+partial def checkArgs (p : Program) (Γ : TEnv) (f : String) (ps : List Param) (es : List Expr) : T Unit := do
+  for (q, e) in ps.zip es do
+    if q.byRef then
+      let t ← match lval p Γ e with
+        | .ok t => pure t
+        | .error _ => throw (.refArgument f q.name e)
+      if t != q.ty then throw (.mismatch s!"argument {q.name} of {f}" q.ty t)
+    else
+      accept p Γ s!"argument {q.name} of {f}" e q.ty
+
+/-- The rules T-Method and T-MethodArrow, see `expr`. -/
+partial def methodCall (p : Program) (Γ : TEnv) (recv : Expr) (arrow : Bool) (m : String) (es : List Expr) : T Ty := do
+  let t ← expr p Γ recv
+  let c ← if arrow then
+      match t with
+      | .ptr (.cls c) => pure c
+      | _ => throw (.notPointer recv t)
+    else
+      match t with
+      | .cls c => pure c
+      | _ => throw (.notObject recv t)
+  let some (md, k) := p.findMethod c m | throw (.unknownMethod c m)
+  if md.vis == .priv && Γ.self != some k then throw (.privateMember k m)
+  if md.params.length != es.length then throw (.arity m md.params.length es.length)
+  checkArgs p Γ m md.params es
+  return md.ret
+
+/-- The type of field f of class C as seen from Γ, or the error. A private
+field is visible only when Γ(this) is the class that declares it.
+
+    C has τ f declared in K    f public or Γ(this) = K*
+    ──────────────────────────────────────────────────── (Visible)                -/
+partial def fieldType (p : Program) (Γ : TEnv) (c f : String) : T Ty := do
+  if (p.lookupClass c).isNone then throw (.unknownClass c)
+  let some (fd, k) := p.findField c f | throw (.unknownField c f)
+  if fd.vis == .priv && Γ.self != some k then throw (.privateMember k f)
+  return fd.ty
 
 /-- The expressions that denote a location, with their type. A variable, a
 dereferenced pointer, a field of an object, a field through a pointer and an
@@ -353,7 +472,10 @@ partial def lval (p : Program) (Γ : TEnv) : Expr → T Ty
   | .var x =>
     match Γ.lookup x with
     | some t => if Γ.isConst x then .error (.constCapture x) else .ok t
-    | none   => .error (.undeclaredVariable x)
+    | none   =>
+      match Γ.self with
+      | some c => if (p.findField c x).isSome then fieldType p Γ c x else .error (.undeclaredVariable x)
+      | none => .error (.undeclaredVariable x)
   | e@(.deref _) | e@(.field ..) | e@(.arrow ..) | e@(.index ..) => expr p Γ e
   | e => .error (.notLvalue e)
 
@@ -432,7 +554,7 @@ partial def cmd (p : Program) (τᵣ : Ty) (Γ : TEnv) : Cmd → T TEnv
     let t₁ ← lval p Γ e₁
     let _ ← value e₁ t₁
     let t₂ ← value e₂ (← expr p Γ e₂)
-    if !compat t₂ t₁ then throw (.mismatch s!"assignment to {e₁}" t₁ t₂)
+    if !compat p t₂ t₁ then throw (.mismatch s!"assignment to {e₁}" t₁ t₂)
     return Γ
   /-  Γ ⊢ e : τ
       ────────────── (T-ExprStmt)      any τ, void included
@@ -440,6 +562,14 @@ partial def cmd (p : Program) (τᵣ : Ty) (Γ : TEnv) : Cmd → T TEnv
   | .exprStmt e => do
     let _ ← expr p Γ e
     return Γ
+  /-  Γ ⊢ e : C*                    Γ ⊢ e : std::vector<τ>*
+      ──────────────── (T-Delete)   ──────────────────────── (T-DeleteVec)
+      Γ ⊢ delete e ⊣ Γ              Γ ⊢ delete e ⊣ Γ                              -/
+  | .delete e _ => do
+    let t ← expr p Γ e
+    match t with
+    | .ptr (.cls _) | .ptr (.vec _) => return Γ
+    | _ => throw (.notDeletable e t)
 
 /-- Γ ⊢ c₁ … cₙ ⊣ Γₙ, threading the context through the sequence.
 
@@ -471,18 +601,66 @@ def fn (p : Program) (f : Fun) : T Unit := do
   let Γ : TEnv := f.params.reverse.map fun q => (q.name, ⟨q.ty, false⟩)
   let _ ← cmds p f.ret Γ f.body
 
-/-- A class is well formed when each field has a type with values, well
-formed in the program, and not a function type. Fields of class type are
-pointers, never objects.
+/-- The context of a member body, `this` bound to a pointer to the class and
+the parameters as variables. -/
+def memberEnv (c : String) (ps : List Param) : TEnv :=
+  (ps.reverse.map fun q => (q.name, ⟨q.ty, false⟩)) ++ [("this", ⟨.ptr (.cls c), false⟩)]
 
-    τᵢ storable, well formed and not a function type for each i
-    ──────────────────────────────────────────────────────────── (T-Class)
-    ⊢ class C { τ₁ f₁; …; τₙ fₙ; }                                                 -/
+/-- A class is well formed when its base exists and the chain has no cycle,
+its fields have types with values, well formed, and repeat no field of a
+base, its members have distinct names, each method redefines only a method
+the base declares virtual and then carries override, with the same
+signature, the constructor of the base, if any, takes no parameters, and
+every member body is well typed under `this`.
+
+    B exists, chain acyclic    fields storable, well formed, new in the chain
+    for each method m of C. if some base has m then that m is virtual, m is override and the signatures agree
+    for each override m of C. some base has a virtual m
+    B has no constructor or one with no parameters
+    [this ↦ C*, params] ⊢ body ⊣ Γ' for each method, the constructor and the destructor
+    ───────────────────────────────────────────────────────────────────────────────────── (T-Class)
+    ⊢ class C : public B { … }                                                     -/
 def cls (p : Program) (c : ClassDecl) : T Unit := do
-  for (t, f) in c.fields do
-    storable s!"field {f} of {c.name}" t
-    noFunction s!"field {f} of {c.name}" t
-    wellFormed p t
+  if let some b := c.base then
+    if (p.lookupClass b).isNone then throw (.unknownBase c.name b)
+  let chain := p.chain c.name
+  if chain.isEmpty || (chain.map (·.name)).eraseDups.length != chain.length
+     || (chain.getLast?.bind (·.base)).isSome then throw (.cyclicInheritance c.name)
+  let baseFields : List String := match c.base with
+    | some b => (p.allFields b).map fun (f, _) => f.name
+    | none => []
+  let names := c.fields.map (·.name) ++ c.methods.map (·.name)
+  for n in names do
+    if (names.filter (· == n)).length > 1 then throw (.duplicateMember c.name n)
+  for f in c.fields do
+    if baseFields.contains f.name then throw (TypeError.fieldRedeclared c.name f.name)
+    storable s!"field {f.name} of {c.name}" f.ty
+    wellFormed p f.ty
+  for m in c.methods do
+    let inherited := c.base.bind fun b => p.findMethod b m.name
+    match inherited with
+    | some (bm, _) =>
+      if !bm.isVirtual then throw (.redefinesNonVirtual c.name m.name)
+      if !m.isOverride then throw (.overrideWithoutVirtual c.name m.name)
+      if bm.ret != m.ret || bm.params.map (fun q => (q.ty, q.byRef)) != m.params.map (fun q => (q.ty, q.byRef)) then
+        throw (.signatureMismatch c.name m.name)
+    | none => if m.isOverride then throw (.overrideWithoutVirtual c.name m.name)
+    if m.ret != .void then storable s!"result of {c.name}::{m.name}" m.ret
+    wellFormed p m.ret
+    for q in m.params do
+      storable s!"parameter {q.name} of {c.name}::{m.name}" q.ty
+      wellFormed p q.ty
+    let _ ← cmds p m.ret (memberEnv c.name m.params) m.body
+  if let some b := c.base then
+    if let some bd := p.lookupClass b then
+      if bd.ctor.any (!·.params.isEmpty) then throw (.baseConstructorParams c.name b)
+  if let some k := c.ctor then
+    for q in k.params do
+      storable s!"parameter {q.name} of the constructor of {c.name}" q.ty
+      wellFormed p q.ty
+    let _ ← cmds p .void (memberEnv c.name k.params) k.body
+  if let some d := c.dtor then
+    let _ ← cmds p .void (memberEnv c.name []) d.body
 
 end Typing
 
@@ -504,5 +682,98 @@ def check (p : Program) : Except TypeError Unit := do
   match FunEnv.lookup p "main" with
   | some m => if m.ret == .int && m.params.isEmpty then pure () else throw .missingMain
   | none => throw .missingMain
+
+namespace Typing
+
+/-! ## Static classes for the evaluator
+
+The evaluator dispatches a method call by the class tag of the receiver when
+the method is virtual, and otherwise runs the method of the static class of
+the receiver, and `delete` through a pointer needs the static class to check
+that the destructor is virtual when the tag differs. Neither ρ nor σ carries
+types, so `annotate` writes the static class into every `methodCall` and every
+`delete` after the program has been checked. -/
+
+/-- The class a receiver expression has, `C` for `e.m` with `e : C` and for
+`e->m` with `e : C*`, and for `delete e` with `e : C*`. -/
+def staticClass (t : Ty) (arrow : Bool) : Option String :=
+  match arrow, t with
+  | true, .ptr (.cls c) => some c
+  | false, .cls c => some c
+  | _, _ => none
+
+mutual
+
+partial def annExpr (p : Program) (Γ : TEnv) : Expr → T Expr
+  | .unop op e => return .unop op (← annExpr p Γ e)
+  | .binop op a b => return .binop op (← annExpr p Γ a) (← annExpr p Γ b)
+  | .cond a b c => return .cond (← annExpr p Γ a) (← annExpr p Γ b) (← annExpr p Γ c)
+  | .call f es => do
+    let es' ← es.mapM (annExpr p Γ)
+    if (Γ.lookup f).isNone && (FunEnv.lookup p f).isNone then
+      if let some c := Γ.self then
+        if (p.findMethod c f).isSome then return .methodCall .this true f es' (some c)
+    return .call f es'
+  | .callFn f es => return .callFn (← annExpr p Γ f) (← es.mapM (annExpr p Γ))
+  | .newObj c es => return .newObj c (← es.mapM (annExpr p Γ))
+  | .newVec t n => return .newVec t (← annExpr p Γ n)
+  | .field e f => return .field (← annExpr p Γ e) f
+  | .arrow e f => return .arrow (← annExpr p Γ e) f
+  | .deref e => return .deref (← annExpr p Γ e)
+  | .index e i => return .index (← annExpr p Γ e) (← annExpr p Γ i)
+  | .lambda ps r b =>
+    let Γ' := ps.reverse.foldl (fun Γ q => Γ.bind q.name q.ty) Γ.captured
+    return .lambda ps r (← annCmds p r Γ' b)
+  | .methodCall recv arrow m es _ => do
+    let recv' ← annExpr p Γ recv
+    let t ← expr p Γ recv'
+    return .methodCall recv' arrow m (← es.mapM (annExpr p Γ)) (staticClass t arrow)
+  | e => return e
+
+partial def annCmd (p : Program) (τᵣ : Ty) (Γ : TEnv) : Cmd → T Cmd
+  | .block cs => return .block (← annCmds p τᵣ Γ cs)
+  | .ite e t f => return .ite (← annExpr p Γ e) (← annCmds p τᵣ Γ t) (← annCmds p τᵣ Γ f)
+  | .while e b => return .while (← annExpr p Γ e) (← annCmds p τᵣ Γ b)
+  | .for c₀ e cₛ b => do
+    let c₀' ← annCmd p τᵣ Γ c₀
+    let Γ₀ ← cmd p τᵣ Γ c₀'
+    return .for c₀' (← annExpr p Γ₀ e) (← annCmd p τᵣ Γ₀ cₛ) (← annCmds p τᵣ Γ₀ b)
+  | .ret none => return .ret none
+  | .ret (some e) => return .ret (some (← annExpr p Γ e))
+  | .decl t x e => return .decl t x (← annExpr p Γ e)
+  | .declRef t x e => return .declRef t x (← annExpr p Γ e)
+  | .declAuto x e => return .declAuto x (← annExpr p Γ e)
+  | .assign l r => return .assign (← annExpr p Γ l) (← annExpr p Γ r)
+  | .exprStmt e => return .exprStmt (← annExpr p Γ e)
+  | .delete e _ => do
+    let e' ← annExpr p Γ e
+    return .delete e' (staticClass (← expr p Γ e') true)
+
+partial def annCmds (p : Program) (τᵣ : Ty) (Γ : TEnv) : List Cmd → T (List Cmd)
+  | [] => return []
+  | c :: cs => do
+    let c' ← annCmd p τᵣ Γ c
+    let Γ' ← cmd p τᵣ Γ c'
+    return c' :: (← annCmds p τᵣ Γ' cs)
+
+end
+
+/-- The program with the static classes filled in. Fails only on an ill typed
+program, which `check` rejects first. -/
+def annotate (p : Program) : T Program :=
+  p.mapM fun
+    | .fn f => do
+      let Γ : TEnv := f.params.reverse.map fun q => (q.name, ⟨q.ty, false⟩)
+      return .fn { f with body := ← annCmds p f.ret Γ f.body }
+    | .cls c => do
+      let methods ← c.methods.mapM fun m => do
+        return { m with body := ← annCmds p m.ret (memberEnv c.name m.params) m.body }
+      let ctor ← c.ctor.mapM fun k => do
+        return { k with body := ← annCmds p .void (memberEnv c.name k.params) k.body }
+      let dtor ← c.dtor.mapM fun d => do
+        return { d with body := ← annCmds p .void (memberEnv c.name []) d.body }
+      return .cls { c with methods, ctor, dtor }
+
+end Typing
 
 end CoreCpp

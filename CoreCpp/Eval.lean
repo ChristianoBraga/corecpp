@@ -1,6 +1,7 @@
 import CoreCpp.Syntax
 import CoreCpp.Semantics
 import CoreCpp.Pretty
+import CoreCpp.Typing
 
 /-!
 # Core C++ evaluator in natural semantics
@@ -22,7 +23,15 @@ Objects live in the store as records of locations with a class tag, pointers
 are locations, and the location judgment reaches fields and vector elements. A
 reference parameter binds its name to the location of the argument, a lambda
 evaluates to a closure with copies of the variables it uses, and a call through
-a function value allocates the copies and the parameters afresh.
+a function value allocates the copies and the parameters afresh. An object of
+a class with a constructor is created by `new C(args)`, which allocates the
+fields of the whole chain of classes and runs the constructors from the root
+base down, `this` is an alias binding to the location of the receiver inside a
+member body, a method call runs the method of the static class of the
+receiver, or of the class tag when the method is virtual, and `delete` runs
+the destructors from the tag up and removes the locations of the object from
+the store. The static classes come from `Typing.annotate`, applied by
+`runWith` before the evaluation starts.
 
 The evaluator runs in the monad `M`, which carries the derivation trace. When
 tracing is enabled, every rule application records its conclusion, the full
@@ -188,27 +197,71 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
       ρ, σ ⊢ nullptr ⇒ null, σ                                                  -/
   | .nullptr => traced "Null" (confE e ρ σ) showV do return (.null, σ)
   /-  ρ, σ ⊢ x ⇒ₗ ℓ, σ    ℓ ∈ dom σ
-      ──────────────────────────────── (Var)       reading x is reading σ(ρ(x))
-      ρ, σ ⊢ x ⇒ σ(ℓ), σ                                                        -/
+      ──────────────────────────────── (Var)       reading x is reading σ(ρ(x)), or the
+      ρ, σ ⊢ x ⇒ σ(ℓ), σ                           field x of this inside a member body -/
   | .var x => traced "Var" (confE e ρ σ) showV do
     let (l, σ) ← lval fs ρ σ (.var x)
     return (← readLoc σ l, σ)
+  /-  ρ(this) = ℓ
+      ───────────────────────── (This)     this is the location of the receiver, bound
+      ρ, σ ⊢ this ⇒ loc ℓ, σ               by the call of the member, never a variable -/
+  | .this => traced "This" (confE e ρ σ) showV do
+    match ρ.lookup "this" with
+    | some l => return (.loc l, σ)
+    | none => throw (.typeError "this outside a member body")
   /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'    ℓ ∈ dom σ'
       ────────────────────────────────── (Read)     e one of *e', e'.f, e'->f, e'[i]
       ρ, σ ⊢ e ⇒ σ'(ℓ), σ'                          reading a location is reading its content -/
   | .deref _ | .field .. | .arrow .. | .index .. => traced "Read" (confE e ρ σ) showV do
     let (l, σ') ← lval fs ρ σ e
     return (← readLoc σ' l, σ')
-  /-  C ↦ class C { τ₁ f₁; …; τₙ fₙ; }
-      (ℓᵢ, σᵢ) = alloc σᵢ₋₁ (default τᵢ),  σ₀ = σ        one location per field, with its default value
-      (ℓ, σ') = alloc σₙ (obj C [f₁ ↦ ℓ₁, …, fₙ ↦ ℓₙ])   the record, tagged with the class
-      ──────────────────────────────────────────────── (New)
-      ρ, σ ⊢ new C() ⇒ loc ℓ, σ'                                                 -/
-  | .newObj c => traced "New" (confE e ρ σ) showV do
-    let some cd := fs.lookupClass c | throw (.typeError s!"unknown class {c}")
-    let (ls, σ₁) := σ.allocMany (cd.fields.map fun (t, _) => t.default)
-    let (l, σ₂) := σ₁.alloc (.obj c ((cd.fields.map (·.2)).zip ls))
-    return (.loc l, σ₂)
+  /-  C ↦ class C : public B { … C(p₁ x₁, …, pₖ xₖ) { c } … }
+      f₁ … fₙ = the fields of the chain of C, the root base first
+      (ℓᵢ, σᵢ) = alloc σᵢ₋₁ (default τᵢ),  σ₀ = σ            one location per field, with its default value
+      (ℓ, σ') = alloc σₙ (obj C [f₁ ↦ ℓ₁, …, fₙ ↦ ℓₙ])       the record, tagged with the class
+      the constructors of the chain run from the root base down, each with this ↦ ℓ,
+      the one of C with the arguments as in Call, the others with none
+      ────────────────────────────────────────────────────────────────────── (New)
+      ρ, σ ⊢ new C(e₁, …, eₖ) ⇒ loc ℓ, σ''
+
+      A class without a constructor is created by new C() and keeps the
+      default values of its fields.                                                -/
+  | .newObj c es => traced "New" (confE e ρ σ) showV do
+    let chain := fs.chain c
+    if chain.isEmpty then throw (.typeError s!"unknown class {c}")
+    let flds := fs.allFields c
+    let (ls, σ₁) := σ.allocMany (flds.map fun (f, _) => f.ty.default)
+    let (l, σ₂) := σ₁.alloc (.obj c ((flds.map (·.1.name)).zip ls))
+    let mut σ := σ₂
+    for cd in chain.reverse do
+      if let some k := cd.ctor then
+        let args := if cd.name == c then es else []
+        let (_, σ') ← runMember fs ρ σ l k.params k.body args .void s!"constructor of {cd.name}"
+        σ := σ'
+    return (.loc l, σ)
+  /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ₀ for e.m, or ρ, σ ⊢ e ⇒ loc ℓ, σ₀ for e->m    σ₀(ℓ) = obj T […]
+      S = the static class of e, from the type checker
+      m ↦ τ m(p₁ x₁, …, pₖ xₖ) { c } the method m nearest in the chain of S, or of T when that method is virtual
+      arguments as in Call, this ↦ ℓ as an alias binding
+      [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ], σ'ₖ ⊢ c ⇒ ret v, ρ', σ''
+      ────────────────────────────────────────────────────────────────────────── (MethodCall)
+      ρ, σ ⊢ e.m(e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))
+
+      Dispatch. A virtual method is chosen by the class tag T of the object,
+      the one nearest T in the chain, so a call through a base pointer reaches
+      the override of the derived class. A non virtual method is chosen by
+      the static class S, and since Core C++ lets a derived class redefine a
+      method only when the base declares it virtual, the two choices agree.
+      With normal in place of ret v the result is void if τ = void and error
+      (missing return) otherwise.                                                  -/
+  | .methodCall recv arrow m es static => traced "MethodCall" (confE e ρ σ) showV do
+    let (l, σ₀) ← if arrow then do
+        let (v, σ') ← expr fs ρ σ recv
+        pure (← pointee v, σ')
+      else lval fs ρ σ recv
+    let .obj tag _ ← readLoc σ₀ l | throw (.typeError s!"{recv} does not denote an object")
+    let (md, k) ← resolve fs (static.getD tag) tag m
+    runMember fs ρ σ₀ l md.params md.body es md.ret s!"{k}::{m}"
   /-  ρ, σ ⊢ n ⇒ int k, σ₁    k ≥ 0
       (ℓᵢ, σ'ᵢ) = alloc σ'ᵢ₋₁ (default τ) for 1 ≤ i ≤ k,  σ'₀ = σ₁    one location per element
       (ℓ, σ₂) = alloc σ'ₖ (vec [ℓ₁, …, ℓₖ])
@@ -277,7 +330,12 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
     | some _ => traced "CallFn" (confE e ρ σ) showV do
       let (v, σ₁) ← expr fs ρ σ (.var f)
       applyClosure fs ρ σ₁ v es
-    | none => traced "Call" (confE e ρ σ) showV do
+    | none =>
+      if (fs.lookup f).isNone && (ρ.lookup "this").isSome then
+        -- an unqualified method name inside a member body is this->f(…),
+        -- the form Typing.annotate produces; this case serves unannotated programs
+        expr fs ρ σ (.methodCall .this true f es none)
+      else traced "Call" (confE e ρ σ) showV do
       let some fn := fs.lookup f | throw (.undeclaredFunction f)
       if fn.params.length != es.length then throw (.arity f)
       let mut σ := σ
@@ -317,6 +375,51 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
   | .lambda ps r b => traced "Lambda" (confE e ρ σ) showV do
     let cap ← captures ρ σ ps b
     return (.closure ps r b cap, σ)
+
+/-- The method m of class s, the nearest in the chain of s, dispatched by the
+tag t when that method is virtual. Returns the method and the class that
+declares it. -/
+partial def resolve (fs : FunEnv) (s t m : String) : M (Method × String) := do
+  let some (md, k) := fs.findMethod s m | throw (.typeError s!"class {s} has no method {m}")
+  if md.isVirtual then
+    let some (md', k') := fs.findMethod t m | throw (.typeError s!"class {t} has no method {m}")
+    return (md', k')
+  else return (md, k)
+
+/-- The call of a member body, a method, a constructor or a destructor, with
+this bound to the location ℓ of the receiver and the arguments bound as in
+Call, by value with a fresh copy and by reference with an alias. The return
+frees the copies and the locals of the body, never the receiver.
+
+    for each i, left to right, with σ'₀ = σ,
+      pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ
+      pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ₗ ℓᵢ, σ'ᵢ
+    ρ_m = [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]    ρ_m, σ'ₖ ⊢ c ⇒ r, ρ', σ''
+    ────────────────────────────────────────────────────────────── (Member)
+    member ℓ (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))          -/
+partial def runMember (fs : FunEnv) (ρ : Env) (σ : Store) (l : Loc) (ps : List Param) (body : List Cmd)
+    (es : List Expr) (ret : Ty) (who : String) : M (Val × Store) := do
+  if ps.length != es.length then throw (.arity who)
+  let mut σ := σ
+  let mut ρm : Env := Env.alias [] "this" l
+  let mut owned : List Loc := []
+  for (q, a) in ps.zip es do
+    if q.byRef then
+      let (l', σ') ← lval fs ρ σ a
+      σ := σ'
+      ρm := ρm.alias q.name l'
+    else
+      let (v, σ') ← expr fs ρ σ a
+      let (l', σ'') := σ'.alloc v
+      σ := σ''
+      ρm := ρm.extend q.name l'
+      owned := l' :: owned
+  let (r, ρ', σ'') ← cmds fs ρm σ body
+  let σ''' := σ''.free (owned ++ fresh ρm ρ')
+  match r, ret with
+  | .ret v, _      => return (v, σ''')
+  | .normal, .void => return (.void, σ''')
+  | .normal, _     => throw (.missingReturn who)
 
 /-- The application of a closure to arguments.
 
@@ -382,10 +485,16 @@ element of a vector.
     leaves it undefined.                                                            -/
 partial def lval (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × Store) :=
   match e with
+  /-  ρ(x) = ℓ                      x ∉ ρ    ρ(this) = ℓ    σ(ℓ) = obj C [… x ↦ ℓ_x …]
+      ──────────────── (LocVar)     ─────────────────────────────────────────── (LocVarField)
+      ρ, σ ⊢ x ⇒ₗ ℓ, σ              ρ, σ ⊢ x ⇒ₗ ℓ_x, σ        an unqualified field of this -/
   | .var x => traced "LocVar" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     match ρ.lookup x with
     | some l => return (l, σ)
-    | none   => throw (.undeclaredVariable x)
+    | none   =>
+      match ρ.lookup "this" with
+      | some lt => fieldLoc σ lt x
+      | none => throw (.undeclaredVariable x)
   | .deref e₁ => traced "LocDeref" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     let (v, σ') ← expr fs ρ σ e₁
     return (← pointee v, σ')
@@ -506,6 +615,38 @@ partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env
   | .exprStmt e => traced "ExprStmt" (confC c ρ σ) showR do
     let (_, σ') ← expr fs ρ σ e
     return (.normal, ρ, σ')
+  /-  ρ, σ ⊢ e ⇒ loc ℓ, σ₀    σ₀(ℓ) = obj T [f₁ ↦ ℓ₁, …, fₙ ↦ ℓₙ]    S = the static class of e
+      S = T or the chain of S has a virtual destructor
+      the destructors of the chain of T run from T up to the root, each with this ↦ ℓ, giving σ₁
+      ───────────────────────────────────────────────────────────────────────────── (Delete)
+      ρ, σ ⊢ delete e ⇒ normal, ρ, σ₁ ∖ {ℓ, ℓ₁, …, ℓₙ}
+
+      ρ, σ ⊢ e ⇒ loc ℓ, σ₀    σ₀(ℓ) = vec [ℓ₁, …, ℓₙ]         ρ, σ ⊢ e ⇒ null, σ₀
+      ─────────────────────────────────────────────── (DeleteVec)   ────────────────────────────── (DeleteNull)
+      ρ, σ ⊢ delete e ⇒ normal, ρ, σ₀ ∖ {ℓ, ℓ₁, …, ℓₙ}              ρ, σ ⊢ delete e ⇒ normal, ρ, σ₀
+
+      With ℓ ∉ dom σ₀ the result is error (double delete), and with S ≠ T and no
+      virtual destructor in the chain of S it is error, the two cases C++17
+      leaves undefined. delete nullptr does nothing, as in C++.                  -/
+  | .delete e static => traced "Delete" (confC c ρ σ) showR do
+    let (v, σ₀) ← expr fs ρ σ e
+    match v with
+    | .null => return (.normal, ρ, σ₀)
+    | .loc l =>
+      match σ₀.read l with
+      | none => throw (.doubleDelete l)
+      | some (.vec ls) => return (.normal, ρ, σ₀.free (l :: ls))
+      | some (.obj tag flds) =>
+        let s := static.getD tag
+        if s != tag && !fs.hasVirtualDtor s then throw (.deleteWithoutVirtualDtor s tag)
+        let mut σ := σ₀
+        for cd in fs.chain tag do
+          if let some d := cd.dtor then
+            let (_, σ') ← runMember fs ρ σ l [] d.body [] .void s!"destructor of {cd.name}"
+            σ := σ'
+        return (.normal, ρ, σ.free (l :: flds.map (·.2)))
+      | some w => throw (.typeError s!"delete of {w}, not an object")
+    | w => throw (.typeError s!"delete of {w}, not a pointer")
 
 /-- Command sequences.
 
@@ -538,10 +679,13 @@ variables, and the result is the value returned by `main()`.
     ─────────────────────────────────────────────────── (Program)
     p ⇒ v
 
-    The objects created with new stay in σ until the end of the program,
-    there is no delete in this subset. The locals of main leave σ with the
-    return of the call, so the final store holds objects only.                                                                         -/
+    The objects created with new stay in σ until delete or the end of the
+    program. The locals of main leave σ with the return of the call, so the
+    final store holds objects only. The program is annotated with the static
+    classes of method calls and deletes before it runs, when it is well typed,
+    and otherwise runs as parsed, with every dispatch by the class tag.        -/
 def runWith (trace : Bool) (p : Program) : Except Error Val × Array TraceEntry :=
+  let p := (Typing.annotate p).toOption.getD p
   let (r, s) := (Eval.expr p [] {} (.call "main" [])).run.run { enabled := trace }
   (r.map (·.1), s.log)
 

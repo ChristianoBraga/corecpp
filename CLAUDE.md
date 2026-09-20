@@ -39,7 +39,9 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
 - `Main.lean`, the executable. `bin/corecpp [ast|check|run|trace] <file | ->`.
   The wrapper rebuilds when sources change. It lives in `bin/` because the
   macOS filesystem does not distinguish `corecpp` from `CoreCpp`.
-- `Test.lean`, `#eval` tests. Run with `lake env lean Test.lean`.
+- `Test.lean`, `#eval` tests. Run with `lake env lean Test.lean`. `bin/compare`
+  compiles every example with `g++ -std=c++17` and compares the exit codes
+  with `bin/corecpp run`.
 - `docs/`, the Verso Blueprint package with the semantic rules and pointers to
   the code, written in English because the rendered interface of Verso is
   English only. It requires `leanprover/verso-blueprint` at `v4.32.0` and `corecpp`
@@ -93,22 +95,26 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
 
 Implemented and tested: basic types, expressions, commands, first order
 functions with call by value, type checker, evaluator with trace, CLI, the
-UD II fragment, classes with public fields only, `new C()`, pointers to classes
-as the recursive type, `nullptr`, `->`, `.`, `*` and `[]` as location denoting
+UD II fragment, classes with fields, `new`, pointers to classes as the
+recursive type, `nullptr`, `->`, `.`, `*` and `[]` as location denoting
 expressions, `std::vector<τ>` created with `new`, objects as records of
 locations with a class tag, `error` on null dereference, out of bounds and
-negative size, the UD III fragment, local references `τ& y = e` as a second
-name for an existing location, with owned and aliased bindings in ρ so that
-block exit frees only the locations the block allocated, and the UD IV
-fragment, reference parameters `τ& x` bound to the location of the argument,
-lambdas `[=]` in their three positions checked against the expected
-`std::function` type, closures as values with read only copies of the captured
-variables, calls through function values, and effects through captured
-pointers, thirty examples. The specifications of the fragments are
-`../.claude/spec-ud2.md`, `spec-ud3.md` and `spec-ud4.md`. Not yet
-implemented: methods, constructors, destructors, `delete`, `this`, `virtual`,
-namespaces, templates, operator overloading, `auto` beyond local declarations,
-fields and vector elements of function type. Next step by the course order is
-UD V, classes with methods.
+negative size, the UD III fragment, local references `τ& y = e` with owned and
+aliased bindings in ρ, the UD IV fragment, reference parameters, lambdas `[=]`
+in their three positions, closures, calls through function values, and the
+UD V fragment, classes with `public` and `private` sections, methods,
+constructors run by `new C(args)`, destructors run by `delete`, `this` as an
+alias binding, method calls with dispatch by the class tag for `virtual`
+methods and by the static class otherwise, `override`, single inheritance,
+subsumption of `D*` to `B*`, `delete` with `error` on double delete and on
+delete through a base pointer without a virtual destructor, and namespaces
+flattened into `N::C` names. A derived class redefines only `virtual`
+methods, so static and dynamic dispatch agree. `Typing.annotate` writes the
+static class of every method call and `delete` into the tree and `runWith`
+applies it before evaluating. Thirty seven examples, `bin/compare` runs each
+under `g++` and `corecpp` and reports the exit codes. The specifications of
+the fragments are `../.claude/spec-ud2.md` to `spec-ud5.md`. Not yet
+implemented: templates, function and operator overloading, `auto` beyond
+local declarations. Next step by the course order is UD VI, type systems.
 
 Worklog and memory of the course live under `../.claude/`.

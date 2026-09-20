@@ -8,8 +8,18 @@ import CoreCpp.Syntax
 Recursive descent, one function per nonterminal, over the `Array Token`
 produced by the lexer. Each function reads the next token and chooses the
 production by it. The subset covers basic, class, pointer, vector and function
-types, expressions, lambdas in their three positions, commands, classes with
-fields and functions with parameters by value and by reference.
+types, expressions, lambdas in their three positions, commands, `delete`,
+classes with sections, fields, methods, constructors, destructors and single
+inheritance, namespaces and functions with parameters by value and by
+reference. Two left factorings keep the grammar LL(1). In `Member` a `TypeId`
+opens a constructor when `(` follows it and a type otherwise, and in
+`Statement` a type token opens a declaration and any other token an
+expression statement.
+
+A namespace is flattened at parse time. Inside `namespace N { … }` every class
+declared is named `N::C`, and every unqualified class name mentioned in a type
+or in `new` is read as `N::C`. A class of an enclosing scope is reached only
+by its qualified name.
 -/
 
 namespace CoreCpp
@@ -17,6 +27,8 @@ namespace CoreCpp
 structure PState where
   toks : Array Token
   pos  : Nat := 0
+  /-- The prefix of the enclosing namespaces, `N::M::`, empty at top level. -/
+  ns   : String := ""
 
 abbrev P := StateT PState (Except String)
 
@@ -26,7 +38,18 @@ def peek : P Token := do
   let s ← get
   return s.toks.getD s.pos .eof
 
+/-- The token k positions ahead, `eof` past the end. -/
+def peekAt (k : Nat) : P Token := do
+  let s ← get
+  return s.toks.getD (s.pos + k) .eof
+
 def advance : P Unit := modify fun s => { s with pos := s.pos + 1 }
+
+/-- A class name as written, qualified by the enclosing namespaces when it
+carries no `::` of its own. -/
+def qualify (n : String) : P String := do
+  let s ← get
+  return if (n.splitOn "::").length > 1 then n else s.ns ++ n
 
 def fail (msg : String) : P α := do
   let t ← peek
@@ -73,13 +96,21 @@ def isTypeStart : Token → Bool
   | .kw "int" | .kw "bool" | .kw "void" | .kw "std::vector" | .kw "std::function" | .typeId _ => true
   | _ => false
 
+/-- `ClassType ::= TypeId ( '::' TypeId )*`, a class name possibly qualified
+by namespaces. -/
+partial def classType : P String := do
+  let mut n ← typeId
+  while (← peek) == .sym "::" && (match ← peekAt 1 with | .typeId _ => true | _ => false) do
+    advance
+    n := n ++ "::" ++ (← typeId)
+  qualify n
+
 /-- `Type ::= BasicType | ClassType '*'? | 'std::vector' '<' Type '>' '*'?
-| 'std::function' '<' Type '(' ( Type ( ',' Type )* )? ')' '>'`, with
-`ClassType ::= TypeId` in this subset. -/
+| 'std::function' '<' Type '(' ( Type ( ',' Type )* )? ')' '>'`. -/
 partial def type : P Ty := do
   match ← peek with
-  | .typeId c =>
-    advance
+  | .typeId _ =>
+    let c ← classType
     if ← acceptSym "*" then return .ptr (.cls c) else return .cls c
   | .kw "std::vector" =>
     advance; expectSym "<"
@@ -179,10 +210,11 @@ partial def unaryExpr : P Expr := do
   | .sym "*" => advance; return .deref (← unaryExpr)
   | _ => postfixExpr
 
-/-- `PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId | '->' VarId | Args )*`.
-`Args` after a variable is the call `f(…)`, of the function named `f` or of the
-function value bound to `f`, and after any other postfix expression it is the
-call of a function value, `callFn`. -/
+/-- `PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId Args? | '->' VarId Args? | Args )*`.
+`Args` after a variable is the call `f(…)`, of the function named `f`, of the
+function value bound to `f` or of the method `f` of `this`, and after any other
+postfix expression it is the call of a function value, `callFn`. `.m(…)` and
+`->m(…)` are method calls, with the static class left for the type checker. -/
 partial def postfixExpr : P Expr := do
   let mut e ← primary
   repeat
@@ -190,12 +222,16 @@ partial def postfixExpr : P Expr := do
     | .var f, .sym "(" => e := .call f (← args)
     | _, .sym "(" => e := .callFn e (← args)
     | _, .sym "[" => advance; let i ← expr; expectSym "]"; e := .index e i
-    | _, .sym "." => advance; let f ← varId; e := .field e f
-    | _, .sym "->" => advance; let f ← varId; e := .arrow e f
+    | _, .sym "." =>
+      advance; let f ← varId
+      if (← peek) == .sym "(" then e := .methodCall e false f (← args) none else e := .field e f
+    | _, .sym "->" =>
+      advance; let f ← varId
+      if (← peek) == .sym "(" then e := .methodCall e true f (← args) none else e := .arrow e f
     | _, _ => break
   return e
 
-/-- `Primary ::= IntLit | 'true' | 'false' | 'nullptr' | VarId | '(' Expr ')'
+/-- `Primary ::= IntLit | 'true' | 'false' | 'nullptr' | 'this' | VarId | '(' Expr ')'
 | 'new' ( ClassType | 'std::vector' '<' Type '>' ) Args` -/
 partial def primary : P Expr := do
   match ← peek with
@@ -203,16 +239,15 @@ partial def primary : P Expr := do
   | .kw "true"  => advance; return .boolLit true
   | .kw "false" => advance; return .boolLit false
   | .kw "nullptr" => advance; return .nullptr
+  | .kw "this" => advance; return .this
   | .varId x   => advance; return .var x
   | .sym "("   => advance; let e ← expr; expectSym ")"; return e
   | .kw "new"  =>
     advance
     match ← peek with
-    | .typeId c =>
-      advance
-      let as ← args
-      if !as.isEmpty then fail "constructor arguments are not part of this subset"
-      return .newObj c
+    | .typeId _ =>
+      let c ← classType
+      return .newObj c (← args)
     | .kw "std::vector" =>
       advance; expectSym "<"
       let t ← type
@@ -337,6 +372,11 @@ partial def statement : P Cmd := do
     let e ← argExpr
     expectSym ";"
     return .ret (some e)
+  | .kw "delete" =>
+    advance
+    let e ← expr
+    expectSym ";"
+    return .delete e none
   | .kw "auto" =>
     let d ← localDecl
     expectSym ";"
@@ -361,34 +401,130 @@ def function : P Fun := do
   let b ← block
   return ⟨t, f, ps, b⟩
 
-/-- `Class ::= 'class' TypeId '{' ( 'public' ':' )? Field* '}' ';'` with
-`Field ::= Type VarId ';'`, the subset of UD II. -/
+/-- The members of a class as the parser reads them, one constructor at a time. -/
+inductive MemberItem where
+  | field  (f : Field)
+  | method (m : Method)
+  | ctor   (c : Ctor)
+  | dtor   (d : Dtor)
+
+/-- `Member ::= 'virtual' ( Type VarId Params 'override'? Block | '~' TypeId '(' ')' Block )
+| '~' TypeId '(' ')' Block | TypeId Params Block | Type VarId ( ';' | Params 'override'? Block )`.
+The first factoring of the design. A `TypeId` followed by `(` opens the
+constructor, which must be named after the class, and a `TypeId` followed by
+anything else opens a type. -/
+partial def member (cls : String) (vis : Vis) : P MemberItem := do
+  let destructor (isVirtual : Bool) : P MemberItem := do
+    expectSym "~"
+    let n ← typeId
+    if (← qualify n) != cls then fail s!"destructor named {n} in class {cls}"
+    expectSym "("; expectSym ")"
+    let b ← block
+    return .dtor ⟨b, isVirtual⟩
+  let methodRest (isVirtual : Bool) : P MemberItem := do
+    let t ← type
+    let name ← varId
+    let ps ← params
+    let ovr ← accept (.kw "override")
+    let b ← block
+    return .method ⟨name, t, ps, b, vis, isVirtual, ovr⟩
+  match ← peek with
+  | .kw "virtual" =>
+    advance
+    if (← peek) == .sym "~" then destructor true else methodRest true
+  | .sym "~" => destructor false
+  | .typeId n =>
+    if (← peekAt 1) == .sym "(" then
+      advance
+      if (← qualify n) != cls then fail s!"constructor named {n} in class {cls}"
+      let ps ← params
+      let b ← block
+      return .ctor ⟨ps, b⟩
+    else
+      let t ← type
+      let name ← varId
+      if ← acceptSym ";" then return .field ⟨t, name, vis⟩
+      let ps ← params
+      let ovr ← accept (.kw "override")
+      let b ← block
+      return .method ⟨name, t, ps, b, vis, false, ovr⟩
+  | _ =>
+    let t ← type
+    let name ← varId
+    if ← acceptSym ";" then return .field ⟨t, name, vis⟩
+    let ps ← params
+    let ovr ← accept (.kw "override")
+    let b ← block
+    return .method ⟨name, t, ps, b, vis, false, ovr⟩
+
+/-- `Class ::= 'class' TypeId ( ':' 'public' ClassType )? '{' Section* '}' ';'` with
+`Section ::= ( 'public' | 'private' ) ':' Member*`. Members before any section
+label are private, as in C++. -/
 partial def classDecl : P ClassDecl := do
   expect (.kw "class")
-  let name ← typeId
+  let name ← qualify (← typeId)
+  let base ← if ← acceptSym ":" then
+      expect (.kw "public")
+      pure (some (← classType))
+    else pure none
   expectSym "{"
-  if ← accept (.kw "public") then expectSym ":"
-  let mut fields : List (Ty × String) := []
+  let mut vis : Vis := .priv
+  let mut fields : List Field := []
+  let mut methods : List Method := []
+  let mut ctor : Option Ctor := none
+  let mut dtor : Option Dtor := none
   while (← peek) != .sym "}" do
-    if (← peek) == .eof then fail "unclosed class"
-    let t ← type
-    let f ← varId
-    expectSym ";"
-    fields := fields ++ [(t, f)]
+    match ← peek with
+    | .eof => fail "unclosed class"
+    | .kw "public" => advance; expectSym ":"; vis := .pub
+    | .kw "private" => advance; expectSym ":"; vis := .priv
+    | _ =>
+      match ← member name vis with
+      | .field f => fields := fields ++ [f]
+      | .method m => methods := methods ++ [m]
+      | .ctor c =>
+        if ctor.isSome then fail s!"class {name} has two constructors"
+        if vis != .pub then fail s!"the constructor of {name} must be public"
+        ctor := some c
+      | .dtor d =>
+        if dtor.isSome then fail s!"class {name} has two destructors"
+        dtor := some d
   expectSym "}"
   expectSym ";"
-  return ⟨name, fields⟩
+  return ⟨name, base, fields, methods, ctor, dtor⟩
 
-/-- `Declaration ::= Class | Function` -/
-def declaration : P Decl := do
-  if (← peek) == .kw "class" then return .cls (← classDecl)
-  else return .fn (← function)
+mutual
+
+/-- `Declaration ::= 'namespace' TypeId '{' Declaration* '}' | Class | Function`.
+A namespace holds classes and namespaces. Its declarations are flattened into
+the program with qualified names. -/
+partial def declaration : P (List Decl) := do
+  match ← peek with
+  | .kw "class" => return [.cls (← classDecl)]
+  | .kw "namespace" =>
+    advance
+    let n ← typeId
+    expectSym "{"
+    let outer := (← get).ns
+    modify fun s => { s with ns := outer ++ n ++ "::" }
+    let mut acc : List Decl := []
+    while (← peek) != .sym "}" do
+      if (← peek) == .eof then fail "unclosed namespace"
+      if (← peek) != .kw "class" && (← peek) != .kw "namespace" then
+        fail "a namespace holds classes and namespaces in this subset"
+      acc := acc ++ (← declaration)
+    expectSym "}"
+    modify fun s => { s with ns := outer }
+    return acc
+  | _ => return [.fn (← function)]
+
+end
 
 /-- `Program ::= Declaration*` -/
 partial def program : P Program := do
   let mut acc : List Decl := []
   while (← peek) != .eof do
-    acc := acc ++ [← declaration]
+    acc := acc ++ (← declaration)
   return acc
 
 /-- Runs a parser on a string, requiring the whole input to be consumed. -/

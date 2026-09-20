@@ -8,6 +8,7 @@ import CoreCppBlueprint.Chapters.Dominios
 import CoreCppBlueprint.Chapters.Expressoes
 import CoreCppBlueprint.Chapters.Comandos
 import CoreCppBlueprint.Chapters.Abstracao
+import CoreCppBlueprint.Chapters.Encapsulamento
 import CoreCppBlueprint.Chapters.Previstas
 
 open Verso.Genre
@@ -23,6 +24,7 @@ Core C++ is a subset of C++17 with an LL(1) grammar and no undefined behaviour, 
 {include 0 CoreCppBlueprint.Chapters.Expressoes}
 {include 0 CoreCppBlueprint.Chapters.Comandos}
 {include 0 CoreCppBlueprint.Chapters.Abstracao}
+{include 0 CoreCppBlueprint.Chapters.Encapsulamento}
 {include 0 CoreCppBlueprint.Chapters.Previstas}
 
 {blueprint_graph}
