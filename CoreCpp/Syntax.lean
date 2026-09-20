@@ -60,7 +60,8 @@ inductive Expr where
   deriving Repr, BEq, Inhabited
 
 /-- Commands. A block is a list of commands. `exprStmt` is the statement that
-evaluates an expression and discards its value. -/
+evaluates an expression and discards its value. `declRef` is the local
+reference `τ& x = e`, a second name for the location `e` denotes. -/
 inductive Cmd where
   | block    (cs : List Cmd)
   | ite      (c : Expr) (t : List Cmd) (e : List Cmd)
@@ -68,6 +69,7 @@ inductive Cmd where
   | for      (init : Cmd) (c : Expr) (step : Cmd) (body : List Cmd)
   | ret      (e : Option Expr)
   | decl     (ty : Ty) (x : String) (init : Expr)
+  | declRef  (ty : Ty) (x : String) (init : Expr)
   | declAuto (x : String) (init : Expr)
   | assign   (lhs rhs : Expr)
   | exprStmt (e : Expr)

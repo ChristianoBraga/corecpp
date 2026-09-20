@@ -226,7 +226,8 @@ def exprStatement : P Cmd := do
     return .assign l r
   else return .exprStmt l
 
-/-- `LocalDecl ::= 'auto' VarId '=' Expr | Type VarId '=' Expr` -/
+/-- `LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' Expr`. With `&`
+the declaration is a local reference, UD III. -/
 def localDecl : P Cmd := do
   if ← accept (.kw "auto") then
     let x ← varId
@@ -234,9 +235,11 @@ def localDecl : P Cmd := do
     return .declAuto x (← expr)
   else
     let t ← type
+    let isRef ← acceptSym "&"
     let x ← varId
     expectSym "="
-    return .decl t x (← expr)
+    let e ← expr
+    return if isRef then .declRef t x e else .decl t x e
 
 /-- `ForInit ::= LocalDecl | ExprStatement` -/
 def forInit : P Cmd := do

@@ -63,15 +63,27 @@ inductive Error where
   | missingReturn (f : String)
   deriving Repr, BEq, Inhabited
 
+/-- A binding of ρ. `owned` records whether the declaration that created the
+binding allocated the location, as `τ x = e` does, or aliased an existing one,
+as the reference `τ& y = e` does. Block exit frees only owned locations, so an
+alias never removes the location of the variable it names. -/
+structure Binding where
+  loc   : Loc
+  owned : Bool := true
+  deriving Repr, BEq, Inhabited
+
 /-- Environment ρ, a finite map from identifiers to locations. The most recent
 entry wins, which realises shadowing by inner blocks. -/
-abbrev Env := List (String × Loc)
+abbrev Env := List (String × Binding)
 
 def Env.lookup (ρ : Env) (x : String) : Option Loc :=
-  (ρ.find? (·.1 == x)).map (·.2)
+  (ρ.find? (·.1 == x)).map (·.2.loc)
 
-/-- ρ[x ↦ ℓ] -/
-def Env.extend (ρ : Env) (x : String) (l : Loc) : Env := (x, l) :: ρ
+/-- ρ[x ↦ ℓ], a binding to a location the declaration allocated. -/
+def Env.extend (ρ : Env) (x : String) (l : Loc) : Env := (x, ⟨l, true⟩) :: ρ
+
+/-- ρ[x ↦ ℓ] for a reference, a binding to a location that already exists. -/
+def Env.alias (ρ : Env) (x : String) (l : Loc) : Env := (x, ⟨l, false⟩) :: ρ
 
 /-- Store σ with the location counter. `next` is the next free location. -/
 structure Store where

@@ -295,6 +295,15 @@ partial def cmd (p : Program) (τᵣ : Ty) (Γ : TEnv) : Cmd → T TEnv
     let te ← value e (← expr p Γ e)
     if !compat te t then throw (.mismatch s!"initialiser of {x}" t te)
     return (x, t) :: Γ
+  /-  Γ ⊢ₗ e : τ    τ has values    τ well formed
+      ───────────────────────────────────────────── (T-DeclRef)      the initialiser denotes a location
+      Γ ⊢ τ& x = e ⊣ Γ[x ↦ τ]                                        and x has the type of its referent -/
+  | .declRef t x e => do
+    storable s!"reference {x}" t
+    wellFormed p t
+    let te ← value e (← lval p Γ e)
+    if te != t then throw (.mismatch s!"referent of {x}" t te)
+    return (x, t) :: Γ
   /-  Γ ⊢ e : τ    τ has values    τ ≠ nullptr_t
       ─────────────────────────────────────────── (T-Auto)
       Γ ⊢ auto x = e ⊣ Γ[x ↦ τ]                                                    -/

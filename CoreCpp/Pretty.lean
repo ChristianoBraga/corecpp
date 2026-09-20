@@ -80,6 +80,7 @@ partial def toString : Cmd → String
   | .ret none => "return;"
   | .ret (some e) => s!"return {e};"
   | .decl t x e => s!"{t} {x} = {e};"
+  | .declRef t x e => s!"{t}& {x} = {e};"
   | .declAuto x e => s!"auto {x} = {e};"
   | .assign l r => s!"{l} = {r};"
   | .exprStmt e => s!"{e};"
@@ -102,7 +103,7 @@ def Val.toString : Val → String
 instance : ToString Val := ⟨Val.toString⟩
 
 def Env.toString (ρ : Env) : String :=
-  "[" ++ ", ".intercalate (ρ.reverse.map fun (x, l) => s!"{x} ↦ {Loc.toString l}") ++ "]"
+  "[" ++ ", ".intercalate (ρ.reverse.map fun (x, b) => s!"{x} ↦ {Loc.toString b.loc}") ++ "]"
 
 def Store.toString (σ : Store) : String :=
   "{" ++ ", ".intercalate (σ.mem.reverse.map fun (l, v) => s!"{Loc.toString l} ↦ {v}") ++ "}"

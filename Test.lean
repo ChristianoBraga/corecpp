@@ -142,3 +142,43 @@ int main() { No* p = nullptr; return p->valor; }"
   let p ← parseProgram "class P { public: int x; }; int main() { P* a = new P(); a->x = 3; return a->x; }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
+
+/-! ## UD III, local references and evaluation order -/
+
+-- a reference is a second name for the same location
+#eval prog "int main() { int x = 1; int& y = x; y = y + 41; return x; }"
+
+-- the reference leaves with its block, the variable stays
+#eval prog "int main() { int x = 1; { int& y = x; y = 5; } return x + 1; }"
+
+-- references to a field and to a vector element
+#eval prog "class P { public: int a; int b; };
+int main() {
+  P* p = new P(); int& a = p->a; a = 7;
+  std::vector<int>* v = new std::vector<int>(3); int& e = (*v)[1]; e = 9;
+  return p->a * 10 + (*v)[1];
+}"
+
+-- a reference to a pointer variable
+#eval prog "class P { public: int a; };
+int main() { P* p = nullptr; P*& q = p; q = new P(); q->a = 3; return p->a; }"
+
+-- a reference made inside a block to a field of an object that escapes the block
+#eval prog "class P { public: int a; };
+int main() { P* keep = nullptr; { P* p = new P(); int& r = p->a; r = 4; keep = p; } return keep->a; }"
+
+-- calls with effects inside an expression, left operand first
+#eval prog "class Cont { public: int n; };
+int prox(Cont* c) { c->n = c->n + 1; return c->n; }
+int main() { Cont* c = new Cont(); return prox(c) + 10 * prox(c); }"
+
+-- the initialiser of a reference must denote a location
+#eval (parseProgram "int main() { int& r = 5; return r; }").map check
+-- the referent has the declared type
+#eval (parseProgram "int main() { int x = 1; bool& b = x; return 0; }").map check
+
+-- the trace of an aliasing write
+#eval do
+  let p ← parseProgram "int main() { int x = 1; int& y = x; y = 2; return x; }"
+  let (r, log) := runWith true p
+  return (r, renderTrace log)

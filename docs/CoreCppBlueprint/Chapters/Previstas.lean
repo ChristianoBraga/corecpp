@@ -14,14 +14,6 @@ Constructions of the Core C++ design without rules or implementation yet. They a
 Constructions planned in `core-cpp-design.md`, not implemented.
 :::
 
-# UD III
-
-:::definition "ref_local" (parent := "pendentes") (uses := "cmd_decl, judg_ev_lval")
-The local reference `int& y = x` binds a second name to the same location, without allocating.
-
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \tau\&\ y = e \Rightarrow \mathsf{normal}, \rho[y \mapsto \ell], \sigma'}\;\textsf{(DeclRef)}`
-:::
-
 # UD IV
 
 :::definition "param_ref" (parent := "pendentes") (uses := "fun_call, judg_ev_lval")

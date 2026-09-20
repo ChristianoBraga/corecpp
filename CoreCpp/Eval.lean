@@ -134,9 +134,11 @@ def binop : BinOp → Val → Val → M Val
   | .ne,  .loc _, .null | .ne, .null, .loc _ => pure (.bool true)
   | op, v₁, v₂ => throw (.typeError s!"operator {op.toString} on {v₁} and {v₂}")
 
-/-- Locations allocated by a block, ρ' ∖ ρ, for scope exit. -/
+/-- Locations a block allocated, the owned bindings of ρ' ∖ ρ, for scope exit.
+The bindings a reference declaration added alias locations that exist before
+or outside the block, and those locations stay in σ. -/
 def fresh (ρ ρ' : Env) : List Loc :=
-  (ρ'.take (ρ'.length - ρ.length)).map (·.2)
+  ((ρ'.take (ρ'.length - ρ.length)).filter (·.2.owned)).map (·.2.loc)
 
 def expectBool (what : String) : Val → M Bool
   | .bool b => pure b
@@ -330,7 +332,9 @@ partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env
   /-  ρ, σ ⊢ c₁ … cₙ ⇒ r, ρ', σ'
       ──────────────────────────────────────────── (Block)
       ρ, σ ⊢ { c₁ … cₙ } ⇒ r, ρ, σ' ∖ (ρ' ∖ ρ)
-      the block discards the extension of ρ and removes from σ the locations it declared -/
+      the block discards the extension of ρ and removes from σ the locations it
+      allocated, ρ' ∖ ρ read as the owned bindings, so an alias made by a
+      reference declaration never frees the location it names -/
   | .block cs => traced "Block" (confC c ρ σ) showR do
     let (r, ρ', σ') ← cmds fs ρ σ cs
     return (r, ρ, σ'.free (fresh ρ ρ'))
@@ -389,6 +393,14 @@ partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env
     let (v, σ') ← expr fs ρ σ e
     let (l, σ'') := σ'.alloc v
     return (.normal, ρ.extend x l, σ'')
+  /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'
+      ───────────────────────────────────────────── (DeclRef)
+      ρ, σ ⊢ τ& x = e ⇒ normal, ρ[x ↦ ℓ], σ'
+      a reference binds a second name to an existing location, nothing is
+      allocated and the binding is not owned, so block exit leaves ℓ in σ      -/
+  | .declRef _ x e => traced "DeclRef" (confC c ρ σ) showR do
+    let (l, σ') ← lval fs ρ σ e
+    return (.normal, ρ.alias x l, σ')
   /-  The rule for auto is Decl, with τ the type of v.                            -/
   | .declAuto x e => traced "Decl" (confC c ρ σ) showR do
     let (v, σ') ← expr fs ρ σ e
