@@ -95,25 +95,21 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
 
 ## Status on 2026-09-21
 
-Implemented and tested: basic types, expressions, commands, first order
-functions with call by value, type checker, evaluator with trace, CLI, the
-UD II fragment, classes with fields, `new`, pointers to classes as the
-recursive type, `nullptr`, `->`, `.`, `*` and `[]` as location denoting
-expressions, `std::vector<τ>` created with `new`, objects as records of
-locations with a class tag, `error` on null dereference, out of bounds and
-negative size, the UD III fragment, local references `τ& y = e` with owned and
-aliased bindings in ρ, the UD IV fragment, reference parameters, lambdas `[=]`
-in their three positions, closures, calls through function values, the
-UD V fragment, classes with `public` and `private` sections, methods,
-constructors run by `new C(args)`, destructors run by `delete`, `this` as an
-alias binding, dispatch by the class tag on `virtual`, `override`, single
-inheritance, subsumption and namespaces, and the UD VI fragment, overloading
-of functions and methods by argument type, operator members `operator⊕` and
-`operator[]`, members that return `τ&`, class templates instantiated by
-substitution, and `auto` over pointers and instantiations.
+The seven units are implemented and tested. Basic types, expressions,
+commands, first order functions, classes with fields, pointers, `nullptr`,
+`std::vector`, local references, reference parameters, lambdas `[=]` and
+`std::function`, classes with methods, constructors, destructors, `delete`,
+`this`, `virtual`, single inheritance and namespaces, overloading, operator
+members, class templates and `auto`. Unit VII adds no construction. It reads
+the imperative, object oriented and functional paradigms as fragments of the
+core, `CoreCpp/Fragment.lean` with the predicate per fragment, and gives the
+logic paradigm a language of its own, `CoreCpp/Logic.lean` with terms,
+unification and SLD resolution. `bin/corecpp fragment <name> <file>` checks a
+fragment and `bin/corecpp prolog <file.pl>` runs a logic program.
 
-Not yet implemented, and out of the subset by the design: function templates,
-partial specialisation, overloaded constructors, unary and assignment
-operators, name hiding, and `auto` beyond local declarations.
+Not implemented, and outside the design. Function templates, partial
+specialisation, objects by value, copy constructors, RAII, exceptions,
+multiple inheritance, the preprocessor and separate compilation. Negation and
+the cut in the logic language.
 
 Worklog and memory of the course live under `../.claude/`.

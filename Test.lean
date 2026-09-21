@@ -422,3 +422,88 @@ bool dobro(bool b) { return b; }
 int main() { Ponto* a = new Ponto(); a->x = dobro(3); Ponto* c = *a + *a; return c->x; }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
+
+/-! ## UD VII, the fragments of the paradigms -/
+
+def impProg : String :=
+  "int mdc(int a, int b) {
+    while (b != 0) { int t = b; b = a % b; a = t; }
+    return a;
+  }
+  int main() { int x = mdc(48, 18); int& y = x; y = y + 1; return y; }"
+
+def ooProg : String :=
+  "class Conta {
+   public:
+     int saldo;
+     virtual int taxa() { return 2; }
+     void deposita(int v) { saldo = saldo + v; }
+     virtual ~Conta() { }
+   };
+   int main() { Conta* c = new Conta(); c->deposita(5); int s = c->saldo; delete c; return s; }"
+
+def funProg : String :=
+  "std::function<int(int)> escala(int k) { return [=](int x) -> int { return k * x; }; }
+   int main() { std::function<int(int)> t = escala(3); return t(4); }"
+
+-- the imperative program lies in the three fragments that admit it
+#eval (parseProgram impProg).map (fragment .imperative)
+#eval (parseProgram impProg).map (fragment .oo)
+#eval (parseProgram impProg).map (fragment .functional)
+
+-- classes leave the imperative and the functional fragments
+#eval (parseProgram ooProg).map (fragment .oo)
+#eval (parseProgram ooProg).map (fragment .imperative)
+#eval (parseProgram ooProg).map (fragment .functional)
+
+-- lambdas and function values leave the imperative and the object oriented ones
+#eval (parseProgram funProg).map (fragment .functional)
+#eval (parseProgram funProg).map (fragment .oo)
+
+-- a program with both a class and a lambda lies in no fragment
+#eval (parseProgram "class C { public: int v; };
+std::function<int(int)> f() { return [=](int x) -> int { return x; }; }
+int main() { C* c = new C(); return f()(c->v); }").map fun p =>
+  (fragment .imperative p, fragment .oo p, fragment .functional p)
+
+/-! ## UD VII, the logic language -/
+
+open Logic
+
+def appendProg : String :=
+  "append([], L, L).
+   append([H|T], L, [H|R]) :- append(T, L, R).
+   ?- append([1, 2], [3, 4], R)."
+
+def factProg : String :=
+  "fatorial(0, 1).
+   fatorial(N, F) :- N > 0, M is N - 1, fatorial(M, G), F is N * G.
+   ?- fatorial(5, F)."
+
+-- unification, with the occurs check
+#eval unify [] (.var "X") (.fn "f" [.num 1])
+#eval unify [] (.fn "f" [.var "X", .num 2]) (.fn "f" [.num 1, .var "Y"])
+#eval unify [] (.var "X") (.fn "f" [.var "X"])
+#eval unify [] (.fn "f" [.num 1]) (.fn "g" [.num 1])
+
+-- the parser of the logic language
+#eval Logic.parse "p(a, B). q(X) :- p(X, X). ?- q(Z)."
+#eval Logic.parse "p(a)"
+
+-- concatenation answers three questions with the same clauses
+#eval (Logic.parse appendProg).map fun (cs, qs) => qs.map fun q => Logic.query cs q
+#eval match Logic.parse "append([], L, L).
+  append([H|T], L, [H|R]) :- append(T, L, R).
+  ?- append(X, Y, [1, 2])." with
+  | .ok (cs, qs) => IO.println ("\n".intercalate (qs.map fun q => Logic.answersToString q (Logic.query cs q)))
+  | .error e => IO.println e
+
+-- arithmetic through the built in is
+#eval match Logic.parse factProg with
+  | .ok (cs, qs) => IO.println ("\n".intercalate (qs.map fun q => Logic.answersToString q (Logic.query cs q)))
+  | .error e => IO.println e
+
+-- a query with no answer, and a left recursive program that the depth bound stops
+#eval (Logic.parse "p(1). ?- p(2).").map fun (cs, qs) => qs.map fun q => Logic.query cs q
+#eval (Logic.parse "q(X) :- q(X). ?- q(1).").map fun (cs, qs) =>
+  qs.map fun q => (Logic.query cs q (depth := 50)).length

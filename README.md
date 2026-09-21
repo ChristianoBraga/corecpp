@@ -25,9 +25,13 @@ C++17 leaves undefined is rejected statically or is the runtime result
 | `CoreCpp/Typing.lean` | Static semantics, Γ ⊢ e : τ and Γ ⊢ c ⊣ Γ' |
 | `CoreCpp/Eval.lean` | Evaluator in natural semantics, one function per judgment, each rule in the comment of the case that implements it |
 | `CoreCpp/Pretty.lean` | Printing of syntax and semantic domains |
+| `CoreCpp/Templates.lean` | Expansion of class templates by substitution, before checking |
+| `CoreCpp/Fragment.lean` | The fragment of each paradigm, a predicate over the abstract syntax |
+| `CoreCpp/Logic.lean` | A small logic language, terms, unification and SLD resolution |
 | `Main.lean`, `bin/corecpp` | Command line interpreter |
 | `Test.lean` | Tests, run with `lake env lean Test.lean` |
 | `examples/` | One program per concept, all accepted by `g++`, expected result in the header comment |
+| `examples/logic/` | Programs of the logic language, run with `bin/corecpp prolog` |
 | `docs/` | The blueprint of the semantics, see below |
 
 The judgments follow the sequent style of Kahn (1987). The hypotheses ρ and σ
@@ -48,6 +52,8 @@ interpreter has no dependencies.
 lake build
 lake env lean Test.lean
 bin/corecpp [ast|check|run|trace] <file.cpp | ->
+bin/corecpp fragment [imperative|oo|functional] <file.cpp | ->
+bin/corecpp prolog <file.pl | ->
 ```
 
 The mode `run` is the default. The exit code of `run` and `trace` is the value
@@ -60,7 +66,10 @@ echo 'int main() { return 42; }' | bin/corecpp -; echo $?
 
 The mode `ast` prints the abstract syntax tree, `check` type checks, and
 `trace` prints the derivation tree in post order, one judgment instance per
-line with the name of the rule, indented by depth.
+line with the name of the rule, indented by depth. The mode `fragment` says
+whether a program lies in the fragment of a paradigm, and names the offending
+construction when it does not. The mode `prolog` reads a logic program and
+answers its queries.
 
 ```
 $ bin/corecpp trace examples/assignment_order.cpp
@@ -111,15 +120,25 @@ lives on the branch `gh-pages`, the contents of that directory plus an empty
 
 ## Status
 
-Implemented and tested on 2026-09-18. Basic types, expressions, commands,
-first order functions with call by value, type checker, evaluator with trace,
-command line interpreter, examples and the blueprint. Not yet implemented.
-References, lambdas and `std::function`, classes, `new`, `delete`,
-`std::vector`, namespaces, templates, operator overloading.
+The seven units of the course are implemented and tested. Basic types,
+expressions and commands, first order functions with call by value and by
+reference, classes with fields and with methods, constructors, destructors,
+`new`, `delete`, `this`, `virtual`, single inheritance, namespaces, pointers,
+`nullptr`, `std::vector`, local references, lambdas `[=]` and
+`std::function`, overloading, operator members, class templates and `auto`.
+Unit VII adds no construction, and gives instead the fragment of each
+paradigm and a small logic language.
+
+Outside the design, and therefore not implemented. Function templates,
+partial specialisation, objects by value, copy constructors, RAII,
+exceptions, multiple inheritance, the preprocessor and separate compilation.
+In the logic language, negation, the cut, assert and retract.
 
 ## References
 
 - Gilles Kahn, Natural Semantics, STACS 1987, LNCS 247, Springer.
 - David A. Watt, Programming Language Concepts and Paradigms, Prentice Hall, 1990.
 - Xavier Leroy and Hervé Grall, Coinductive big-step operational semantics, Information and Computation 207 (2009).
+- J. A. Robinson, A Machine-Oriented Logic Based on the Resolution Principle, Journal of the ACM 12 (1965).
+- Robert Kowalski, Predicate Logic as Programming Language, IFIP Congress (1974).
 - ISO/IEC 14882:2017, Programming Languages, C++.
