@@ -5502,7 +5502,7 @@ window.onload = async () => {
                 </div>
               <div class="bp_content bp_kind_definition_content definition_thmcontent">
                 <p>
-                  Tokens fall in five classes. Reserved words, among them <code>int</code>, <code>bool</code>, <code>void</code>, <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>return</code>, <code>true</code>, <code>false</code>, <code>auto</code>, <code>class</code>, <code>new</code>, <code>delete</code>, <code>nullptr</code>, <code>this</code>, <code>virtual</code>, <code>override</code>, <code>namespace</code>, <code>template</code>, <code>typename</code> and <code>operator</code>. Type identifiers, <code>TypeId</code>, with an uppercase initial. Variable identifiers, <code>VarId</code>, with a lowercase initial, naming variables, fields, functions and methods. Decimal integer literals, <code>IntLit</code>. Operators and punctuation, with <code>[=]</code> as a single token by the longest match rule. There is no token <code>&gt;&gt;</code>, so <code>Pilha&lt;Pilha&lt;int&gt;&gt;</code> closes with two tokens <code>&gt;</code>.</p>
+                  Tokens fall in five classes. Reserved words, among them <code>int</code>, <code>bool</code>, <code>void</code>, <code>if</code>, <code>else</code>, <code>while</code>, <code>for</code>, <code>return</code>, <code>true</code>, <code>false</code>, <code>auto</code>, <code>class</code>, <code>new</code>, <code>delete</code>, <code>nullptr</code>, <code>this</code>, <code>virtual</code>, <code>override</code>, <code>namespace</code>, <code>template</code>, <code>typename</code> and <code>operator</code>. Type identifiers, <code>TypeId</code>, with an uppercase initial. Variable identifiers, <code>VarId</code>, with a lowercase initial, naming variables, fields, functions and methods. Decimal integer literals, <code>IntLit</code>. Operators and punctuation, with <code>[=]</code> as a single token by the longest match rule. There is no token <code>&gt;&gt;</code>, so <code>Stack&lt;Stack&lt;int&gt;&gt;</code> closes with two tokens <code>&gt;</code>.</p>
                 <p>
                   <code class="bp_math display">\begin{array}{lcl} \textit{Token} & ::= & \textit{Keyword}\ \mid\ \textit{TypeId}\ \mid\ \textit{VarId}\ \mid\ \textit{IntLit}\ \mid\ \textit{Symbol} \\ \textit{Keyword} & ::= & \texttt{int}\ \mid\ \texttt{bool}\ \mid\ \texttt{void}\ \mid\ \texttt{class}\ \mid\ \texttt{public}\ \mid\ \texttt{private}\ \mid\ \texttt{new}\ \mid\ \texttt{delete} \\  & \mid & \texttt{nullptr}\ \mid\ \texttt{this}\ \mid\ \texttt{virtual}\ \mid\ \texttt{override}\ \mid\ \texttt{namespace}\ \mid\ \texttt{template} \\  & \mid & \texttt{typename}\ \mid\ \texttt{auto}\ \mid\ \texttt{if}\ \mid\ \texttt{else}\ \mid\ \texttt{while}\ \mid\ \texttt{for}\ \mid\ \texttt{return} \\  & \mid & \texttt{true}\ \mid\ \texttt{false}\ \mid\ \texttt{operator}\ \mid\ \texttt{std::function}\ \mid\ \texttt{std::vector} \\ \textit{TypeId} & ::= & \textit{Upper}\ \textit{IdentChar}^{*} \\ \textit{VarId} & ::= & \big(\ \textit{Lower}\ \mid\ \texttt{\_}\ \big)\ \textit{IdentChar}^{*} \\ \textit{IntLit} & ::= & \textit{Digit}\ \textit{Digit}^{*} \\ \textit{Symbol} & ::= & \texttt{[=]} \\  & \mid & \texttt{==}\ \mid\ \texttt{!=}\ \mid\ \texttt{&lt;=}\ \mid\ \texttt{&gt;=}\ \mid\ \texttt{\&\&}\ \mid\ \texttt{||}\ \mid\ \texttt{-&gt;}\ \mid\ \texttt{::} \\  & \mid & \texttt{+}\ \mid\ \texttt{-}\ \mid\ \texttt{*}\ \mid\ \texttt{/}\ \mid\ \texttt{\%}\ \mid\ \texttt{&lt;}\ \mid\ \texttt{&gt;}\ \mid\ \texttt{!}\ \mid\ \texttt{?}\ \mid\ \texttt{:}\ \mid\ \texttt{=} \\  & \mid & \texttt{(}\ \mid\ \texttt{)}\ \mid\ \texttt{\{}\ \mid\ \texttt{\}}\ \mid\ \texttt{[}\ \mid\ \texttt{]}\ \mid\ \texttt{,}\ \mid\ \texttt{;}\ \mid\ \texttt{.}\ \mid\ \texttt{\&}\ \mid\ \texttt{\textasciitilde} \\ \textit{IdentChar} & ::= & \textit{Upper}\ \mid\ \textit{Lower}\ \mid\ \textit{Digit}\ \mid\ \texttt{\_} \\ \textit{Upper} & ::= & \texttt{A}\ \mid\ \ldots\ \mid\ \texttt{Z} \\ \textit{Lower} & ::= & \texttt{a}\ \mid\ \ldots\ \mid\ \texttt{z} \\ \textit{Digit} & ::= & \texttt{0}\ \mid\ \ldots\ \mid\ \texttt{9} \\ \textit{Skip} & ::= & \textit{WhiteSpace}\ \mid\ \texttt{//}\ \textit{NotNewline}^{*}\ \textit{Newline} \end{array}</code></p>
                 <p>
@@ -5536,7 +5536,7 @@ window.onload = async () => {
                       <div class="declaration decl inductive" data-decl="CoreCpp.Token" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(6 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Token.lean#L11-L18">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(6 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Token.lean#L11-L18">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5578,7 +5578,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.keywords" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Token.lean#L30-L35">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Token.lean#L30-L35">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5598,7 +5598,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.symbols3" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Token.lean#L37-L38">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Token.lean#L37-L38">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5618,7 +5618,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.symbols2" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Token.lean#L39">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Token.lean#L39">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5637,7 +5637,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.symbols1" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Token.lean#L40-L42">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Token.lean#L40-L42">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5730,7 +5730,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Lexer.identifier" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Lexer.lean#L27-L31">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Lexer.lean#L27-L31">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5875,7 +5875,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.lex" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Lexer.lean#L76-L78">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Lexer.lean#L76-L78">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5896,7 +5896,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Lexer.run" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Lexer.lean#L45-L72">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Lexer.lean#L45-L72">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5918,7 +5918,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Lexer.takeWhile" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Lexer.lean#L15-L22">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Lexer.lean#L15-L22">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5941,7 +5941,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Lexer.matchSymbol" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Lexer.lean#L33-L37">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Lexer.lean#L33-L37">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5964,7 +5964,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Lexer.skipLine" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/d4c4540ee5e847ab72343e470b57070612374881/CoreCpp/Lexer.lean#L39-L43">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Lexer.lean#L39-L43">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

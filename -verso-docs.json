@@ -186,7 +186,7 @@
  "331":
  "<code>CoreCpp.Frag.imperative : CoreCpp.Frag</code><span class=\"sep\"></span><code class=\"docstring\">Basic types, variables, assignment, commands, first order functions. </code>",
  "330":
- "<code>CoreCpp.Templates.substName (param repl n : String) : String</code><span class=\"sep\"></span><code class=\"docstring\">Substitutes the type parameter in a mangled class name, `[T := int]` on\n`No&lt;T&gt;` giving `No&lt;int&gt;`. The parameter may also be the whole name. </code>",
+ "<code>CoreCpp.Templates.substName (param repl n : String) : String</code><span class=\"sep\"></span><code class=\"docstring\">Substitutes the type parameter in a mangled class name, `[T := int]` on\n`Node&lt;T&gt;` giving `Node&lt;int&gt;`. The parameter may also be the whole name. </code>",
  "33": "<code>CoreCpp.Ty.int : CoreCpp.Ty</code>",
  "329":
  "<code>CoreCpp.Templates.substTy (param : String) (τ : CoreCpp.Ty) : CoreCpp.Ty → CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">`[T := τ]` on a type. </code>",
@@ -529,7 +529,7 @@
  "153":
  "<code>CoreCpp.function : CoreCpp.P CoreCpp.Fun</code><span class=\"sep\"></span><code class=\"docstring\">`Function ::= Type VarId Params Block` </code>",
  "152":
- "<code>CoreCpp.classType : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">`ClassType ::= TypeId ( '::' TypeId )* ( '&lt;' Type '&gt;' )?`, a class name\npossibly qualified by namespaces and possibly instantiating a class template.\nThe instantiation is named by the chain the design prints for the type, so\n`Pilha&lt;int&gt;` in the source and the expanded class have the same name, and\n`Templates.instantiate` adds the class before the program is checked. </code>",
+ "<code>CoreCpp.classType : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">`ClassType ::= TypeId ( '::' TypeId )* ( '&lt;' Type '&gt;' )?`, a class name\npossibly qualified by namespaces and possibly instantiating a class template.\nThe instantiation is named by the chain the design prints for the type, so\n`Stack&lt;int&gt;` in the source and the expanded class have the same name, and\n`Templates.instantiate` adds the class before the program is checked. </code>",
  "151":
  "<code>CoreCpp.MemberItem : Type</code><span class=\"sep\"></span><code class=\"docstring\">The members of a class as the parser reads them, one constructor at a time. </code>",
  "150":
@@ -706,7 +706,7 @@
  "1000346":
  "<code>CoreCpp.declaration : CoreCpp.P (List CoreCpp.Decl)</code><span class=\"sep\"></span><code class=\"docstring\">`Declaration ::= 'namespace' TypeId '{' Declaration* '}'\n| 'template' '&lt;' 'typename' TypeId '&gt;' Class | Class | Function`.\nA namespace holds classes and namespaces. Its declarations are flattened into\nthe program with qualified names. </code>",
  "1000345":
- "<code>CoreCpp.classType : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">`ClassType ::= TypeId ( '::' TypeId )* ( '&lt;' Type '&gt;' )?`, a class name\npossibly qualified by namespaces and possibly instantiating a class template.\nThe instantiation is named by the chain the design prints for the type, so\n`Pilha&lt;int&gt;` in the source and the expanded class have the same name, and\n`Templates.instantiate` adds the class before the program is checked. </code>",
+ "<code>CoreCpp.classType : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">`ClassType ::= TypeId ( '::' TypeId )* ( '&lt;' Type '&gt;' )?`, a class name\npossibly qualified by namespaces and possibly instantiating a class template.\nThe instantiation is named by the chain the design prints for the type, so\n`Stack&lt;int&gt;` in the source and the expanded class have the same name, and\n`Templates.instantiate` adds the class before the program is checked. </code>",
  "1000344":
  "<code>CoreCpp.classDecl : CoreCpp.P CoreCpp.ClassDecl</code><span class=\"sep\"></span><code class=\"docstring\">`Class ::= 'class' TypeId ( ':' 'public' ClassType )? '{' Section* '}' ';'` with\n`Section ::= ( 'public' | 'private' ) ':' Member*`. Members before any section\nlabel are private, as in C++. </code>",
  "1000343": "<code>CoreCpp.TypeError : Type</code>",
@@ -824,7 +824,7 @@
  "1000274":
  "<code>CoreCpp.Templates.substTy (param : String) (τ : CoreCpp.Ty) : CoreCpp.Ty → CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">`[T := τ]` on a type. </code>",
  "1000273":
- "<code>CoreCpp.Templates.substName (param repl n : String) : String</code><span class=\"sep\"></span><code class=\"docstring\">Substitutes the type parameter in a mangled class name, `[T := int]` on\n`No&lt;T&gt;` giving `No&lt;int&gt;`. The parameter may also be the whole name. </code>",
+ "<code>CoreCpp.Templates.substName (param repl n : String) : String</code><span class=\"sep\"></span><code class=\"docstring\">Substitutes the type parameter in a mangled class name, `[T := int]` on\n`Node&lt;T&gt;` giving `Node&lt;int&gt;`. The parameter may also be the whole name. </code>",
  "1000272":
  "<code>CoreCpp.Templates.substClass (param : String) (τ : CoreCpp.Ty) (c : CoreCpp.ClassDecl) : CoreCpp.ClassDecl</code><span class=\"sep\"></span><code class=\"docstring\">The class of the template instantiated at τ, with the name the source\nwrites for it. </code>",
  "1000271": "<code>optParam Nat 32</code>",

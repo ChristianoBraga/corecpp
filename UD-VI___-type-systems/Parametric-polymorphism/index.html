@@ -5524,7 +5524,7 @@ window.onload = async () => {
                       <div class="declaration decl inductive" data-decl="CoreCpp.Decl" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(3 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/c686a41235a676326dcf22815cf30aed21388d6f/CoreCpp/Syntax.lean#L254-L262">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(3 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Syntax.lean#L254-L262">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5561,7 +5561,7 @@ instantiation the program mentions. </pre><div class="bp_external_decl_section" 
                       <div class="declaration decl def" data-decl="CoreCpp.Program.templates" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/c686a41235a676326dcf22815cf30aed21388d6f/CoreCpp/Syntax.lean#L273-L275">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Syntax.lean#L273-L275">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5584,7 +5584,7 @@ instantiation the program mentions. </pre><div class="bp_external_decl_section" 
                       <div class="declaration decl opaque" data-decl="CoreCpp.classType" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/c686a41235a676326dcf22815cf30aed21388d6f/CoreCpp/Parser.lean#L101-L118">CoreCpp/Parser.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Parser.lean#L101-L118">CoreCpp/Parser.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5598,7 +5598,7 @@ instantiation the program mentions. </pre><div class="bp_external_decl_section" 
     <pre class="docstring">`ClassType ::= TypeId ( '::' TypeId )* ( '&lt;' Type '&gt;' )?`, a class name
 possibly qualified by namespaces and possibly instantiating a class template.
 The instantiation is named by the chain the design prints for the type, so
-`Pilha&lt;int&gt;` in the source and the expanded class have the same name, and
+`Stack&lt;int&gt;` in the source and the expanded class have the same name, and
 `Templates.instantiate` adds the class before the program is checked. </pre></div>
   </div>
 </div>
@@ -5670,7 +5670,7 @@ The instantiation is named by the chain the design prints for the type, so
                 <p>
                   <code class="bp_math display">\dfrac{p \text{ has } \mathtt{template{&lt;}typename\ T{&gt;}\ class}\ C \qquad C{&lt;}\tau{&gt;} \text{ mentioned in } p \qquad C{&lt;}\tau{&gt;} \notin \text{class table of } p}{p \longrightarrow p, \mathtt{class}\ C{&lt;}\tau{&gt;}\ \{ \ldots [T := \tau] \ldots \}}\;\textsf{(Inst)}</code></p>
                 <p>
-                  The substitution replaces the type <code>T</code> in every field, parameter, result, local declaration, vector element and class name the body mentions, and it rewrites the name of a mentioned class in its own chain, so <code>No&lt;T&gt;*</code> inside <code>Lista&lt;T&gt;</code> becomes <code>No&lt;int&gt;*</code> in <code>Lista&lt;int&gt;</code>. The rule applies to a fixed point, because the class it adds may mention another instantiation, and it is idempotent, so <code>check</code> and <code>runWith</code> may both apply it. A template is never checked, only its instantiations are, as in C++, and two instantiations of one template are two independent classes with no subtype relation between them.</p>
+                  The substitution replaces the type <code>T</code> in every field, parameter, result, local declaration, vector element and class name the body mentions, and it rewrites the name of a mentioned class in its own chain, so <code>Node&lt;T&gt;*</code> inside <code>Lista&lt;T&gt;</code> becomes <code>Node&lt;int&gt;*</code> in <code>Lista&lt;int&gt;</code>. The rule applies to a fixed point, because the class it adds may mention another instantiation, and it is idempotent, so <code>check</code> and <code>runWith</code> may both apply it. A template is never checked, only its instantiations are, as in C++, and two instantiations of one template are two independent classes with no subtype relation between them.</p>
                 </div>
               </div>
             <div class="bp_wrapper bp_code_panel_wrapper">
@@ -5698,7 +5698,7 @@ The instantiation is named by the chain the design prints for the type, so
                       <div class="declaration decl opaque" data-decl="CoreCpp.Templates.instantiate" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/c686a41235a676326dcf22815cf30aed21388d6f/CoreCpp/Templates.lean#L206-L217">CoreCpp/Templates.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Templates.lean#L206-L217">CoreCpp/Templates.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5723,7 +5723,7 @@ Idempotent, so `check` and `runWith` may both apply it. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Templates.substClass" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/c686a41235a676326dcf22815cf30aed21388d6f/CoreCpp/Templates.lean#L120-L132">CoreCpp/Templates.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Templates.lean#L120-L132">CoreCpp/Templates.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5748,7 +5748,7 @@ writes for it. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Templates.substTy" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/c686a41235a676326dcf22815cf30aed21388d6f/CoreCpp/Templates.lean#L69-L75">CoreCpp/Templates.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Templates.lean#L69-L75">CoreCpp/Templates.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5771,7 +5771,7 @@ writes for it. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Templates.substName" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/c686a41235a676326dcf22815cf30aed21388d6f/CoreCpp/Templates.lean#L55-L67">CoreCpp/Templates.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Templates.lean#L55-L67">CoreCpp/Templates.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5784,7 +5784,7 @@ writes for it. </pre></div>
     </div>
   <div class="bp_external_decl_body">
     <pre class="docstring">Substitutes the type parameter in a mangled class name, `[T := int]` on
-`No&lt;T&gt;` giving `No&lt;int&gt;`. The parameter may also be the whole name. </pre></div>
+`Node&lt;T&gt;` giving `Node&lt;int&gt;`. The parameter may also be the whole name. </pre></div>
   </div>
 </div>
                     </li>

@@ -5498,7 +5498,7 @@ window.onload = async () => {
                 <p>
                   <code class="bp_math display">\dfrac{\Gamma \vdash e : D* \qquad D \text{ derives from } B}{\Gamma \vdash e : B*}\;\textsf{(T-Sub)}</code></p>
                 <p>
-                  It holds in declarations, assignments, arguments, results, comparisons and in the branches of <code>?:</code>. Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so <code>Pilha&lt;D*&gt;</code> is not a subtype of <code>Pilha&lt;B*&gt;</code>, and the reason is that a <code>Pilha&lt;B*&gt;</code> accepts an <code>empilha</code> of any <code>B*</code>, which a <code>Pilha&lt;D*&gt;</code> does not. The course states the reason and leaves variance out.</p>
+                  It holds in declarations, assignments, arguments, results, comparisons and in the branches of <code>?:</code>. Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so <code>Stack&lt;D*&gt;</code> is not a subtype of <code>Stack&lt;B*&gt;</code>, and the reason is that a <code>Stack&lt;B*&gt;</code> accepts an <code>push</code> of any <code>B*</code>, which a <code>Stack&lt;D*&gt;</code> does not. The course states the reason and leaves variance out.</p>
                 </div>
               </div>
             <div class="bp_wrapper bp_kind_definition_wrapper definition_thmwrapper definition_thmwrapper theorem-style-definition bp_kind_definition bp_style_definition" title="inference" id="--informal-preview-inference--statement">
@@ -5582,7 +5582,7 @@ window.onload = async () => {
                       <div class="declaration decl inductive" data-decl="CoreCpp.Cmd" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(11 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/c686a41235a676326dcf22815cf30aed21388d6f/CoreCpp/Syntax.lean#L115-L132">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(11 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ba4baf3f246106fbdb4b3b3217175889a6680790/CoreCpp/Syntax.lean#L115-L132">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
