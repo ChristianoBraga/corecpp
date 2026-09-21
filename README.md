@@ -65,18 +65,31 @@ echo 'int main() { return 42; }' | bin/corecpp -; echo $?
 ```
 
 The mode `ast` prints the abstract syntax tree, `check` type checks, and
-`trace` prints the derivation tree in post order, one judgment instance per
-line with the name of the rule, indented by depth. The mode `fragment` says
-whether a program lies in the fragment of a paradigm, and names the offending
+`trace` prints the derivation as it is written on the board, the premises over
+a line of inference, the conclusion under it and the rule name at the right. A
+legend names the environments ρᵢ, the stores σⱼ and the subjects too long for
+a judgment, so every judgment fits one line, and a subtree too wide for the
+page is written apart under a name 𝒟ₖ. The mode `fragment` says whether a
+program lies in the fragment of a paradigm, and names the offending
 construction when it does not. The mode `prolog` reads a logic program and
 answers its queries.
 
 ```
-$ bin/corecpp trace examples/assignment_order.cpp
-    [], {} ⊢ 1 ⇒ 1, {}   (Lit)
-  [], {} ⊢ int x = 1; ⇒ normal, [x ↦ ℓ0], {ℓ0 ↦ 1}   (Decl)
-  ...
-[], {} ⊢ main() ⇒ 42, {}   (Call)
+$ echo 'int main() { int x = 1; return x; }' | bin/corecpp trace -
+ρ₀ = []            σ₀ = {}
+ρ₁ = [x ↦ ℓ0]      σ₁ = {ℓ0 ↦ 1}
+
+                   𝒟₁                       𝒟₂
+  ρ₀, σ₀ ⊢ int x = 1; ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ return x; ⇒ ret 1, ρ₁, σ₁
+  ────────────────────────────────────────────────────────────────────────── (Call)
+  ρ₀, σ₀ ⊢ main() ⇒ 1, σ₀
+
+𝒟₁
+  ────────────────── (Lit)
+  ρ₀, σ₀ ⊢ 1 ⇒ 1, σ₀
+  ──────────────────────────────────── (Decl)
+  ρ₀, σ₀ ⊢ int x = 1; ⇒ normal, ρ₁, σ₁
+...
 ```
 
 ## Blueprint

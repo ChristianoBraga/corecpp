@@ -102,6 +102,6 @@ The judgment $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'` states th
 The judgment $`\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'` states that the command $`c` yields the control $`r`, the environment $`\rho'` and the store $`\sigma'`. The output environment exists so that a declaration extends $`\rho` for the following commands, and the block discards the extension when it ends.
 :::
 
-:::definition "judg_trace" (parent := "juizos") (lean := "CoreCpp.M, CoreCpp.TState, CoreCpp.TraceEntry, CoreCpp.Eval.traced, CoreCpp.renderTrace") (uses := "judg_ev_expr, judg_ev_cmd")
-The evaluator runs in the monad $`M`, which carries the derivation tree. Each rule application records its conclusion, with the rule name, at the depth of the tree. Premises are recorded before the conclusion, and `bin/corecpp trace` prints the tree in post order, indented by depth.
+:::definition "judg_trace" (parent := "juizos") (lean := "CoreCpp.M, CoreCpp.TState, CoreCpp.TraceAnte, CoreCpp.TraceCons, CoreCpp.TraceEntry, CoreCpp.Eval.traced, CoreCpp.renderTrace") (uses := "judg_ev_expr, judg_ev_cmd")
+The evaluator runs in the monad $`M`, which carries the derivation tree. Each rule application records the instance of the rule it concludes, at its depth in the tree, with the antecedent and the consequent in parts. The function `renderTrace` then lays the tree out as a derivation is written on the board, the premises over a line of inference, the conclusion under it and the rule name at the right. A legend names the environments $`\rho_i`, the stores $`\sigma_j` and the subjects too long for a judgment, so every judgment fits one line, and a subtree wider than the page is written apart under a name $`\mathcal{D}_k`.
 :::

@@ -6,7 +6,7 @@ import CoreCpp
     corecpp ast   <file>   parse and print the abstract syntax tree
     corecpp check <file>   parse and type check
     corecpp run   <file>   parse, type check and evaluate, printing the result of main
-    corecpp trace <file>   as run, printing the derivation trace before the result
+    corecpp trace <file>   as run, printing the derivation before the result
     corecpp <file>         same as run
 
     corecpp fragment imperative|oo|functional <file>
@@ -21,6 +21,11 @@ behaves like compiling with g++ and running the program. The exit code of `run`
 and `trace` is the value returned by main, reduced modulo 256 as the operating
 system does. An `error` result exits with 134, the code of an aborted process,
 and a syntax or type error exits with 1.
+
+The mode `trace` lays the derivation out as one writes it on the board, the
+premises over a line of inference and the conclusion under it, with a legend
+naming the environments, the stores and the long subjects, and the subtrees
+too wide for the page written apart as named derivations.
 -/
 
 open CoreCpp

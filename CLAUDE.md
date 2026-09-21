@@ -43,6 +43,9 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
   `Pretty.lean`, `Typing.lean` (static semantics), `Eval.lean` (evaluator in the
   monad `M := ExceptT Error (StateM TState)` carrying the derivation trace).
 - `Main.lean`, the executable. `bin/corecpp [ast|check|run|trace] <file | ->`.
+  `trace` renders the derivation as on the board, premises over the line of
+  inference, conclusion under it, rule at the right, with ρ, σ and the long
+  subjects named in a legend and the wide subtrees written apart as 𝒟ₖ.
   The wrapper rebuilds when sources change. It lives in `bin/` because the
   macOS filesystem does not distinguish `corecpp` from `CoreCpp`.
 - `Test.lean`, `#eval` tests. Run with `lake env lean Test.lean`. `bin/compare`
