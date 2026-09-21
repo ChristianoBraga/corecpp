@@ -333,3 +333,92 @@ int main() { B* b = new D(); delete b; return 0; }"
 int main() { C* c = new C(21); return c->dobro(); }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
+
+/-! ## UD VI, overloading, operators, templates and inference -/
+
+-- overloading by the type of the argument
+#eval prog "int dobro(int n) { return 2 * n; }
+bool dobro(bool b) { return b; }
+int main() { return dobro(21) + (dobro(false) ? 1 : 0); }"
+
+-- overloading by the number of arguments
+#eval prog "int soma(int a) { return a; }
+int soma(int a, int b) { return a + b; }
+int main() { return soma(1) + soma(2, 39); }"
+
+-- a method is overloaded like a function
+#eval prog "class C { public: int v; int soma(int a) { return v + a; } int soma(int a, int b) { return v + a + b; } };
+int main() { C* c = new C(); c->v = 1; return c->soma(2) + c->soma(3, 34); }"
+
+-- an exact match wins over a candidate reached by subsumption
+#eval prog "class A { public: int a; }; class B : public A { public: int b; };
+int f(A* x) { return 1; }
+int f(B* x) { return 2; }
+int main() { B* z = new B(); return f(z); }"
+
+-- an infix operator on an object is the call of its member
+#eval prog "class Ponto { public: int x; Ponto* operator+(Ponto& o) { Ponto* r = new Ponto(); r->x = x + o.x; return r; } };
+int main() { Ponto* a = new Ponto(); a->x = 21; Ponto* c = *a + *a; return c->x; }"
+
+-- an overloaded comparison gives a bool
+#eval prog "class Par { public: int k; bool operator<(Par& o) { return k < o.k; } };
+int main() { Par* a = new Par(); a->k = 1; Par* b = new Par(); b->k = 2; return (*a < *b) ? 42 : 0; }"
+
+-- operator[] returning a reference denotes a location
+#eval prog "class V { private: std::vector<int>* d; public: V(int n) { this->d = new std::vector<int>(n); }
+int& operator[](int i) { return (*d)[i]; } };
+int main() { V* v = new V(2); (*v)[0] = 40; (*v)[1] = (*v)[0] + 2; return (*v)[1]; }"
+
+-- a class template instantiated at two types
+#eval prog "template<typename T> class Caixa { private: T v; public: Caixa(T x) { this->v = x; } T abre() { return v; } };
+int main() { Caixa<int>* a = new Caixa<int>(40); Caixa<bool>* b = new Caixa<bool>(true);
+return a->abre() + (b->abre() ? 2 : 0); }"
+
+-- the instantiation of a template that uses the parameter in a vector
+#eval prog "template<typename T> class Pilha { private: std::vector<T>* itens; int topo;
+public: Pilha(int n) { this->itens = new std::vector<T>(n); this->topo = 0; }
+void empilha(T x) { (*itens)[topo] = x; topo = topo + 1; }
+T desempilha() { topo = topo - 1; return (*itens)[topo]; } };
+int main() { Pilha<int>* p = new Pilha<int>(4); p->empilha(20); p->empilha(22);
+return p->desempilha() + p->desempilha(); }"
+
+-- auto copies the type of a pointer to an instantiation
+#eval prog "template<typename T> class Caixa { private: T v; public: Caixa(T x) { this->v = x; } T abre() { return v; } };
+int main() { auto c = new Caixa<int>(42); auto n = c->abre(); return n; }"
+
+-- a member takes an object by reference, never by value
+#eval (parseProgram "class P { public: int x; int soma(P o) { return x + o.x; } }; int main() { return 0; }").map check
+
+-- two overloads that differ only in a std::function parameter are rejected
+#eval (parseProgram "int g(std::function<int(int)> h) { return h(1); }
+int g(std::function<bool(bool)> h) { return 0; }
+int main() { return 0; }").map check
+
+-- two candidates and no exact match is an ambiguous call
+#eval (parseProgram "class A { public: int a; }; class B : public A { public: int b; }; class C : public B { public: int c; };
+int f(A* x) { return 1; }
+int f(B* x) { return 2; }
+int main() { C* z = new C(); return f(z); }").map check
+
+-- an operator[] that returns a value does not denote a location
+#eval (parseProgram "class C { public: int v; int operator[](int i) { return v; } };
+int main() { C* c = new C(); (*c)[0] = 1; return 0; }").map check
+
+-- a member that returns a reference returns a location
+#eval (parseProgram "class C { private: int v; public: int& at() { return 1; } };
+int main() { return 0; }").map check
+
+-- an instantiation of a name that is not a template
+#eval (parseProgram "int main() { Pilha<int>* p = new Pilha<int>(2); return 0; }").map check
+
+-- the grammar admits one type parameter
+#eval parseProgram "template<typename T> class C { public: T v; }; int main() { C<int, bool>* p = nullptr; return 0; }"
+
+-- the trace of an overloaded call and of an operator member
+#eval do
+  let p ← parseProgram "class Ponto { public: int x; Ponto* operator+(Ponto& o) { Ponto* r = new Ponto(); r->x = x + o.x; return r; } };
+int dobro(int n) { return 2 * n; }
+bool dobro(bool b) { return b; }
+int main() { Ponto* a = new Ponto(); a->x = dobro(3); Ponto* c = *a + *a; return c->x; }"
+  let (r, log) := runWith true p
+  return (r, renderTrace log)

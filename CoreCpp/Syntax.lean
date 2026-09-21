@@ -25,6 +25,19 @@ inductive Ty where
   | nullT
   deriving Repr, BEq, Inhabited
 
+/-- The type as the design writes it, which is also the name a template
+instantiation carries, `Pilha<int>`, so the source and the expanded class
+agree. -/
+partial def Ty.toString : Ty → String
+  | .int => "int" | .bool => "bool" | .void => "void"
+  | .cls c => c
+  | .ptr t => s!"{t.toString}*"
+  | .vec t => s!"std::vector<{t.toString}>"
+  | .fn r ps => s!"std::function<{r.toString}({", ".intercalate (ps.map Ty.toString)})>"
+  | .nullT => "nullptr_t"
+
+instance : ToString Ty := ⟨Ty.toString⟩
+
 /-- Object types are class and vector types. Their values live in the store
 and are never copied, so no variable, parameter or result has an object
 type. -/
@@ -71,7 +84,12 @@ the constructor. `this` is the location of the receiver inside a method.
 `e->m(args)` when it is true. The field `static` is the class of the receiver
 as the type checker sees it, filled by `Typing.annotate` and `none` as the
 parser leaves it, the datum the evaluator needs to tell a dispatched call from
-a static one. -/
+a static one. The field `sig` of `call` and of `methodCall` is the parameter
+type list of the overload the type checker chose, `none` as the parser leaves
+it, the datum the evaluator needs to pick one function or method out of an
+overload set. `locOf e` is the location of `e` as a value, an expression no
+program writes, which `Typing.annotate` puts on the `return` of a member that
+returns a reference. -/
 inductive Expr where
   | intLit  (n : Int)
   | boolLit (b : Bool)
@@ -80,17 +98,18 @@ inductive Expr where
   | unop    (op : UnOp) (e : Expr)
   | binop   (op : BinOp) (l r : Expr)
   | cond    (c t e : Expr)
-  | call    (f : String) (args : List Expr)
+  | call    (f : String) (args : List Expr) (sig : Option (List Ty))
   | newObj  (c : String) (args : List Expr)
   | newVec  (t : Ty) (n : Expr)
   | this
-  | methodCall (recv : Expr) (arrow : Bool) (m : String) (args : List Expr) (static : Option String)
+  | methodCall (recv : Expr) (arrow : Bool) (m : String) (args : List Expr) (static : Option String) (sig : Option (List Ty))
   | field   (e : Expr) (f : String)
   | arrow   (e : Expr) (f : String)
   | deref   (e : Expr)
   | index   (e i : Expr)
   | lambda  (params : List Param) (ret : Ty) (body : List Cmd)
   | callFn  (f : Expr) (args : List Expr)
+  | locOf   (e : Expr)
   deriving Repr, BEq, Inhabited
 
 /-- Commands. A block is a list of commands. `exprStmt` is the statement that
@@ -122,11 +141,12 @@ excluded. -/
 partial def Expr.vars : Expr → List String
   | .var x => [x]
   | .this => ["this"]
-  | .unop _ e | .deref e | .field e _ | .arrow e _ | .newVec _ e => e.vars
+  | .unop _ e | .deref e | .field e _ | .arrow e _ | .newVec _ e | .locOf e => e.vars
   | .binop _ a b | .index a b => a.vars ++ b.vars
   | .cond a b c => a.vars ++ b.vars ++ c.vars
-  | .call _ es | .newObj _ es => es.flatMap Expr.vars
-  | .callFn f es | .methodCall f _ _ es _ => f.vars ++ es.flatMap Expr.vars
+  | .call _ es _ | .newObj _ es => es.flatMap Expr.vars
+  | .callFn f es => f.vars ++ es.flatMap Expr.vars
+  | .methodCall f _ _ es _ _ => f.vars ++ es.flatMap Expr.vars
   | .lambda ps _ b => (b.flatMap Cmd.vars).filter fun x => !(ps.any (·.name == x))
   | .intLit _ | .boolLit _ | .nullptr => []
 
@@ -170,7 +190,10 @@ structure Field where
 
 /-- A method, defined inside the class. `isVirtual` marks `virtual`, which
 makes the call dispatch by the class tag of the receiver, and `isOverride`
-marks `override`, required on a method that redefines a `virtual` one. -/
+marks `override`, required on a method that redefines a `virtual` one. An
+operator member is a method whose name is `operator` followed by the
+operator, `operator+` or `operator[]`, which the type checker reaches by
+rewriting the infix form. -/
 structure Method where
   /-- The name of the method. -/
   name       : String
@@ -186,6 +209,9 @@ structure Method where
   isVirtual  : Bool := false
   /-- Whether the method is declared `override`. -/
   isOverride : Bool := false
+  /-- Whether the method returns a reference, `τ& m(…)`, so that a call to it
+  denotes the location the body returns. -/
+  retRef     : Bool := false
   deriving Repr, BEq, Inhabited
 
 /-- The constructor of a class, named after the class and run by `new` after
@@ -225,10 +251,14 @@ structure ClassDecl where
   dtor    : Option Dtor := none
   deriving Repr, BEq, Inhabited
 
-/-- Top level declarations. -/
+/-- Top level declarations. A `tmpl T C` is a class template, the class `C`
+with the type parameter `T`, which is never checked and never run. Only its
+instantiations are, and `Templates.instantiate` adds one class per
+instantiation the program mentions. -/
 inductive Decl where
-  | cls (c : ClassDecl)
-  | fn  (f : Fun)
+  | cls  (c : ClassDecl)
+  | fn   (f : Fun)
+  | tmpl (param : String) (c : ClassDecl)
   deriving Repr, BEq, Inhabited
 
 /-- A program is a list of declarations. There are no global variables. -/
@@ -239,6 +269,14 @@ def Program.funs (p : Program) : List Fun :=
 
 def Program.classes (p : Program) : List ClassDecl :=
   p.filterMap fun | .cls c => some c | _ => none
+
+/-- The class templates of the program, each with its type parameter. -/
+def Program.templates (p : Program) : List (String × ClassDecl) :=
+  p.filterMap fun | .tmpl t c => some (t, c) | _ => none
+
+/-- The template named c, with its type parameter. -/
+def Program.lookupTemplate (p : Program) (c : String) : Option (String × ClassDecl) :=
+  p.templates.find? (·.2.name == c)
 
 def Program.lookupClass (p : Program) (c : String) : Option ClassDecl :=
   p.classes.find? (·.name == c)
@@ -264,9 +302,28 @@ def Program.findField (p : Program) (c f : String) : Option (Field × String) :=
   (p.allFields c).find? (·.1.name == f)
 
 /-- The method m as seen from class c, the nearest declaration in the chain,
-with the class that declares it. -/
+with the class that declares it. With m overloaded it is the first of the
+overload set, and `findMethods` gives them all. -/
 def Program.findMethod (p : Program) (c m : String) : Option (Method × String) :=
   (p.chain c).findSome? fun cd => (cd.methods.find? (·.name == m)).map (·, cd.name)
+
+/-- The signature of a list of parameters, the types alone, which names one
+member of an overload set. -/
+def sigOf (ps : List Param) : List Ty := ps.map (·.ty)
+
+/-- The overload set of the method m as seen from class c, one method per
+signature, the nearest in the chain of c, each with the class that declares
+it. A method of a derived class replaces the one of a base with the same
+signature, and a different signature is another overload, without the name
+hiding of C++. -/
+def Program.findMethods (p : Program) (c m : String) : List (Method × String) :=
+  ((p.chain c).flatMap fun cd => (cd.methods.filter (·.name == m)).map (·, cd.name)).foldl
+    (fun acc (md, k) =>
+      if acc.any fun (md', _) => sigOf md'.params == sigOf md.params then acc else acc ++ [(md, k)]) []
+
+/-- The overload set of the functions named f. -/
+def Program.funsNamed (p : Program) (f : String) : List Fun :=
+  p.funs.filter (·.name == f)
 
 /-- d is c or derives from c. -/
 def Program.subclass (p : Program) (d c : String) : Bool :=

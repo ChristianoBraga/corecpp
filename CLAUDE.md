@@ -30,6 +30,8 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
 
 ## Layout
 
+- `CoreCpp/Templates.lean`, class template instantiation by substitution,
+  applied by `check` and by `runWith` before anything else, idempotent.
 - `CoreCpp/Token.lean`, `Lexer.lean` (hand written finite automaton, longest
   match, `std::function` and `std::vector` as single tokens, uppercase initial
   for type identifiers), `Syntax.lean` (AST), `Parser.lean` (recursive
@@ -91,7 +93,7 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
 - Inductive big step semantics. Divergence has no derivation and the course
   states this limitation (Leroy and Grall).
 
-## Status on 2026-09-20
+## Status on 2026-09-21
 
 Implemented and tested: basic types, expressions, commands, first order
 functions with call by value, type checker, evaluator with trace, CLI, the
@@ -101,20 +103,17 @@ expressions, `std::vector<τ>` created with `new`, objects as records of
 locations with a class tag, `error` on null dereference, out of bounds and
 negative size, the UD III fragment, local references `τ& y = e` with owned and
 aliased bindings in ρ, the UD IV fragment, reference parameters, lambdas `[=]`
-in their three positions, closures, calls through function values, and the
+in their three positions, closures, calls through function values, the
 UD V fragment, classes with `public` and `private` sections, methods,
 constructors run by `new C(args)`, destructors run by `delete`, `this` as an
-alias binding, method calls with dispatch by the class tag for `virtual`
-methods and by the static class otherwise, `override`, single inheritance,
-subsumption of `D*` to `B*`, `delete` with `error` on double delete and on
-delete through a base pointer without a virtual destructor, and namespaces
-flattened into `N::C` names. A derived class redefines only `virtual`
-methods, so static and dynamic dispatch agree. `Typing.annotate` writes the
-static class of every method call and `delete` into the tree and `runWith`
-applies it before evaluating. Thirty seven examples, `bin/compare` runs each
-under `g++` and `corecpp` and reports the exit codes. The specifications of
-the fragments are `../.claude/spec-ud2.md` to `spec-ud5.md`. Not yet
-implemented: templates, function and operator overloading, `auto` beyond
-local declarations. Next step by the course order is UD VI, type systems.
+alias binding, dispatch by the class tag on `virtual`, `override`, single
+inheritance, subsumption and namespaces, and the UD VI fragment, overloading
+of functions and methods by argument type, operator members `operator⊕` and
+`operator[]`, members that return `τ&`, class templates instantiated by
+substitution, and `auto` over pointers and instantiations.
+
+Not yet implemented, and out of the subset by the design: function templates,
+partial specialisation, overloaded constructors, unary and assignment
+operators, name hiding, and `auto` beyond local declarations.
 
 Worklog and memory of the course live under `../.claude/`.

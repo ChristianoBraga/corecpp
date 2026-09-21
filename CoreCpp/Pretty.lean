@@ -24,27 +24,26 @@ def BinOp.prec : BinOp → Nat
   | .or => 1 | .and => 2 | .eq | .ne => 3 | .lt | .le | .gt | .ge => 4
   | .add | .sub => 5 | .mul | .div | .mod => 6
 
-partial def Ty.toString : Ty → String
-  | .int => "int" | .bool => "bool" | .void => "void"
-  | .cls c => c
-  | .ptr t => s!"{t.toString}*"
-  | .vec t => s!"std::vector<{t.toString}>"
-  | .fn r ps => s!"std::function<{r.toString}({", ".intercalate (ps.map Ty.toString)})>"
-  | .nullT => "nullptr_t"
-
-instance : ToString Ty := ⟨Ty.toString⟩
-
 def Param.toString (p : Param) : String :=
   s!"{p.ty}{if p.byRef then "&" else ""} {p.name}"
 
 instance : ToString Param := ⟨Param.toString⟩
 
+/-- The binary operator an operator member overloads, `operator+` giving
+`+`, so the call prints in the infix form the source wrote. -/
+def opOfName (m : String) : Option BinOp :=
+  [BinOp.add, .sub, .mul, .div, .mod, .eq, .ne, .lt, .le, .gt, .ge].find?
+    fun op => m == s!"operator{op.toString}"
+
 /-- Precedence of an expression, 0 for the conditional, 7 for unary, 8 for
-postfix and atoms. A lambda is an atom, it never occurs as an operand. -/
+postfix and atoms. A lambda is an atom, it never occurs as an operand. The
+call of an operator member has the precedence of its operator, and indexing
+that of a postfix form. -/
 def Expr.prec : Expr → Nat
   | .cond .. => 0
   | .binop op .. => op.prec
-  | .unop .. | .deref .. => 7
+  | .methodCall _ _ m _ _ _ => match opOfName m with | some op => op.prec | none => 8
+  | .unop .. | .deref .. | .locOf .. => 7
   | _ => 8
 
 /-- Removes the trailing `;` of a command rendered inside a `for` header. -/
@@ -63,10 +62,15 @@ partial def Expr.toString (e : Expr) : String :=
   | .unop op e => s!"{op.toString}{paren 7 e}"
   | .binop op l r => s!"{paren op.prec l} {op.toString} {paren (op.prec + 1) r}"
   | .cond c t e => s!"{paren 1 c} ? {paren 1 t} : {paren 0 e}"
-  | .call f as => s!"{f}({", ".intercalate (as.map Expr.toString)})"
+  | .call f as _ => s!"{f}({", ".intercalate (as.map Expr.toString)})"
   | .callFn f as => s!"{paren 8 f}({", ".intercalate (as.map Expr.toString)})"
-  | .methodCall r arrow m as _ =>
-    s!"{paren 8 r}{if arrow then "->" else "."}{m}({", ".intercalate (as.map Expr.toString)})"
+  | .methodCall r arrow m as _ _ =>
+    match opOfName m, as with
+    | some op, [a] => s!"{paren op.prec r} {op.toString} {paren (op.prec + 1) a}"
+    | none, [a] =>
+      if m == "operator[]" then s!"{paren 8 r}[{Expr.toString a}]"
+      else s!"{paren 8 r}{if arrow then "->" else "."}{m}({", ".intercalate (as.map Expr.toString)})"
+    | _, _ => s!"{paren 8 r}{if arrow then "->" else "."}{m}({", ".intercalate (as.map Expr.toString)})"
   | .this => "this"
   | .newObj c as => s!"new {c}({", ".intercalate (as.map Expr.toString)})"
   | .newVec t n => s!"new std::vector<{t}>({Expr.toString n})"
@@ -75,6 +79,7 @@ partial def Expr.toString (e : Expr) : String :=
   | .deref e   => s!"*{paren 7 e}"
   | .index e i => s!"{paren 8 e}[{Expr.toString i}]"
   | .lambda ps r b => s!"[=]({", ".intercalate (ps.map Param.toString)}) -> {r} {Cmd.toString (.block b)}"
+  | .locOf e   => s!"&{paren 7 e}"
 
 partial def Cmd.toString : Cmd → String
   | .block cs => s!"\{ {" ".intercalate (cs.map Cmd.toString)} }"

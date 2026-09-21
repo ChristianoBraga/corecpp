@@ -96,14 +96,26 @@ def isTypeStart : Token → Bool
   | .kw "int" | .kw "bool" | .kw "void" | .kw "std::vector" | .kw "std::function" | .typeId _ => true
   | _ => false
 
-/-- `ClassType ::= TypeId ( '::' TypeId )*`, a class name possibly qualified
-by namespaces. -/
+mutual
+
+/-- `ClassType ::= TypeId ( '::' TypeId )* ( '<' Type '>' )?`, a class name
+possibly qualified by namespaces and possibly instantiating a class template.
+The instantiation is named by the chain the design prints for the type, so
+`Pilha<int>` in the source and the expanded class have the same name, and
+`Templates.instantiate` adds the class before the program is checked. -/
 partial def classType : P String := do
   let mut n ← typeId
   while (← peek) == .sym "::" && (match ← peekAt 1 with | .typeId _ => true | _ => false) do
     advance
     n := n ++ "::" ++ (← typeId)
-  qualify n
+  let base ← qualify n
+  if (← peek) == .sym "<" then
+    advance
+    let a ← type
+    if (← peek) == .sym "," then fail "a class template of this subset has one type parameter"
+    expectSym ">"
+    return s!"{base}<{a}>"
+  return base
 
 /-- `Type ::= BasicType | ClassType '*'? | 'std::vector' '<' Type '>' '*'?
 | 'std::function' '<' Type '(' ( Type ( ',' Type )* )? ')' '>'`. -/
@@ -130,6 +142,8 @@ partial def type : P Ty := do
     expectSym ">"
     return .fn r ps
   | _ => basicType
+
+end
 
 mutual
 
@@ -219,15 +233,15 @@ partial def postfixExpr : P Expr := do
   let mut e ← primary
   repeat
     match e, ← peek with
-    | .var f, .sym "(" => e := .call f (← args)
+    | .var f, .sym "(" => e := .call f (← args) none
     | _, .sym "(" => e := .callFn e (← args)
     | _, .sym "[" => advance; let i ← expr; expectSym "]"; e := .index e i
     | _, .sym "." =>
       advance; let f ← varId
-      if (← peek) == .sym "(" then e := .methodCall e false f (← args) none else e := .field e f
+      if (← peek) == .sym "(" then e := .methodCall e false f (← args) none none else e := .field e f
     | _, .sym "->" =>
       advance; let f ← varId
-      if (← peek) == .sym "(" then e := .methodCall e true f (← args) none else e := .arrow e f
+      if (← peek) == .sym "(" then e := .methodCall e true f (← args) none none else e := .arrow e f
     | _, _ => break
   return e
 
@@ -408,11 +422,24 @@ inductive MemberItem where
   | ctor   (c : Ctor)
   | dtor   (d : Dtor)
 
-/-- `Member ::= 'virtual' ( Type VarId Params 'override'? Block | '~' TypeId '(' ')' Block )
-| '~' TypeId '(' ')' Block | TypeId Params Block | Type VarId ( ';' | Params 'override'? Block )`.
+/-- The operators a class may overload, the production `Op` of the design. -/
+def operatorName : P String := do
+  match ← peek with
+  | .sym "[" => advance; expectSym "]"; return "operator[]"
+  | .sym s =>
+    if ["+", "-", "*", "/", "%", "==", "!=", "<", "<=", ">", ">="].contains s then
+      advance; return s!"operator{s}"
+    else fail "expected an operator that a class may overload"
+  | _ => fail "expected an operator that a class may overload"
+
+/-- `Member ::= 'virtual' ( Type '&'? ( VarId Params 'override'? Block | 'operator' Op Params Block )
+| '~' TypeId '(' ')' Block ) | '~' TypeId '(' ')' Block | TypeId Params Block
+| Type '&'? ( VarId ( ';' | Params 'override'? Block ) | 'operator' Op Params Block )`.
 The first factoring of the design. A `TypeId` followed by `(` opens the
 constructor, which must be named after the class, and a `TypeId` followed by
-anything else opens a type. -/
+anything else opens a type. The `&` after the type marks a member that
+returns a reference, so a call to it denotes a location, and it never
+appears on a field. -/
 partial def member (cls : String) (vis : Vis) : P MemberItem := do
   let destructor (isVirtual : Bool) : P MemberItem := do
     expectSym "~"
@@ -421,13 +448,26 @@ partial def member (cls : String) (vis : Vis) : P MemberItem := do
     expectSym "("; expectSym ")"
     let b ← block
     return .dtor ⟨b, isVirtual⟩
-  let methodRest (isVirtual : Bool) : P MemberItem := do
-    let t ← type
+  -- After the type of a member, its `&`, its name and the rest. A field is
+  -- the only form that ends in `;`, and it takes no `&`.
+  let afterType (isVirtual : Bool) (t : Ty) : P MemberItem := do
+    let isRef ← acceptSym "&"
+    if ← accept (.kw "operator") then
+      let name ← operatorName
+      let ps ← params
+      let b ← block
+      return .method ⟨name, t, ps, b, vis, isVirtual, false, isRef⟩
     let name ← varId
+    if (← peek) == .sym ";" then
+      if isRef then fail "a field is not a reference in this subset"
+      advance
+      return .field ⟨t, name, vis⟩
     let ps ← params
     let ovr ← accept (.kw "override")
     let b ← block
-    return .method ⟨name, t, ps, b, vis, isVirtual, ovr⟩
+    return .method ⟨name, t, ps, b, vis, isVirtual, ovr, isRef⟩
+  let methodRest (isVirtual : Bool) : P MemberItem := do
+    afterType isVirtual (← type)
   match ← peek with
   | .kw "virtual" =>
     advance
@@ -440,22 +480,8 @@ partial def member (cls : String) (vis : Vis) : P MemberItem := do
       let ps ← params
       let b ← block
       return .ctor ⟨ps, b⟩
-    else
-      let t ← type
-      let name ← varId
-      if ← acceptSym ";" then return .field ⟨t, name, vis⟩
-      let ps ← params
-      let ovr ← accept (.kw "override")
-      let b ← block
-      return .method ⟨name, t, ps, b, vis, false, ovr⟩
-  | _ =>
-    let t ← type
-    let name ← varId
-    if ← acceptSym ";" then return .field ⟨t, name, vis⟩
-    let ps ← params
-    let ovr ← accept (.kw "override")
-    let b ← block
-    return .method ⟨name, t, ps, b, vis, false, ovr⟩
+    else afterType false (← type)
+  | _ => afterType false (← type)
 
 /-- `Class ::= 'class' TypeId ( ':' 'public' ClassType )? '{' Section* '}' ';'` with
 `Section ::= ( 'public' | 'private' ) ':' Member*`. Members before any section
@@ -495,12 +521,20 @@ partial def classDecl : P ClassDecl := do
 
 mutual
 
-/-- `Declaration ::= 'namespace' TypeId '{' Declaration* '}' | Class | Function`.
+/-- `Declaration ::= 'namespace' TypeId '{' Declaration* '}'
+| 'template' '<' 'typename' TypeId '>' Class | Class | Function`.
 A namespace holds classes and namespaces. Its declarations are flattened into
 the program with qualified names. -/
 partial def declaration : P (List Decl) := do
   match ← peek with
   | .kw "class" => return [.cls (← classDecl)]
+  | .kw "template" =>
+    advance
+    expectSym "<"
+    expect (.kw "typename")
+    let t ← typeId
+    expectSym ">"
+    return [.tmpl t (← classDecl)]
   | .kw "namespace" =>
     advance
     let n ← typeId
@@ -510,8 +544,8 @@ partial def declaration : P (List Decl) := do
     let mut acc : List Decl := []
     while (← peek) != .sym "}" do
       if (← peek) == .eof then fail "unclosed namespace"
-      if (← peek) != .kw "class" && (← peek) != .kw "namespace" then
-        fail "a namespace holds classes and namespaces in this subset"
+      if (← peek) != .kw "class" && (← peek) != .kw "namespace" && (← peek) != .kw "template" then
+        fail "a namespace holds classes, templates and namespaces in this subset"
       acc := acc ++ (← declaration)
     expectSym "}"
     modify fun s => { s with ns := outer }

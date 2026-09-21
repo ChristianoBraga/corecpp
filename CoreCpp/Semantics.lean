@@ -142,4 +142,11 @@ abbrev FunEnv := Program
 def FunEnv.lookup (fs : FunEnv) (f : String) : Option Fun :=
   fs.funs.find? (·.name == f)
 
+/-- The function named f with the signature the type checker chose, or the
+first one of the name when the program was not annotated. -/
+def FunEnv.lookupSig (fs : FunEnv) (f : String) (sig : Option (List Ty)) : Option Fun :=
+  match sig with
+  | some s => (fs.funsNamed f).find? fun g => sigOf g.params == s
+  | none => fs.lookup f
+
 end CoreCpp

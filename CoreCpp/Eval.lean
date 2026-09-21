@@ -254,14 +254,11 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
       method only when the base declares it virtual, the two choices agree.
       With normal in place of ret v the result is void if τ = void and error
       (missing return) otherwise.                                                  -/
-  | .methodCall recv arrow m es static => traced "MethodCall" (confE e ρ σ) showV do
-    let (l, σ₀) ← if arrow then do
-        let (v, σ') ← expr fs ρ σ recv
-        pure (← pointee v, σ')
-      else lval fs ρ σ recv
-    let .obj tag _ ← readLoc σ₀ l | throw (.typeError s!"{recv} does not denote an object")
-    let (md, k) ← resolve fs (static.getD tag) tag m
-    runMember fs ρ σ₀ l md.params md.body es md.ret s!"{k}::{m}"
+  | .methodCall recv arrow m es static sig => traced "MethodCall" (confE e ρ σ) showV do
+    let (md, v, σ') ← callMethod fs ρ σ recv arrow m es static sig
+    -- A member that returns a reference gives the location, read here
+    -- because the call stands in a position that asks for a value.
+    if md.retRef then return (← readLoc σ' (← pointee v), σ') else return (v, σ')
   /-  ρ, σ ⊢ n ⇒ int k, σ₁    k ≥ 0
       (ℓᵢ, σ'ᵢ) = alloc σ'ᵢ₋₁ (default τ) for 1 ≤ i ≤ k,  σ'₀ = σ₁    one location per element
       (ℓ, σ₂) = alloc σ'ₖ (vec [ℓ₁, …, ℓₖ])
@@ -325,7 +322,7 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
       ───────────────────────────────────────────────────────────── (CallFn)     a variable f bound to a
       ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'                                                 function value hides the
                                                                                   function named f      -/
-  | .call f es =>
+  | .call f es sig =>
     match ρ.lookup f with
     | some _ => traced "CallFn" (confE e ρ σ) showV do
       let (v, σ₁) ← expr fs ρ σ (.var f)
@@ -334,9 +331,9 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
       if (fs.lookup f).isNone && (ρ.lookup "this").isSome then
         -- an unqualified method name inside a member body is this->f(…),
         -- the form Typing.annotate produces; this case serves unannotated programs
-        expr fs ρ σ (.methodCall .this true f es none)
+        expr fs ρ σ (.methodCall .this true f es none none)
       else traced "Call" (confE e ρ σ) showV do
-      let some fn := fs.lookup f | throw (.undeclaredFunction f)
+      let some fn := fs.lookupSig f sig | throw (.undeclaredFunction f)
       if fn.params.length != es.length then throw (.arity f)
       let mut σ := σ
       let mut ρf : Env := []
@@ -375,16 +372,42 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
   | .lambda ps r b => traced "Lambda" (confE e ρ σ) showV do
     let cap ← captures ρ σ ps b
     return (.closure ps r b cap, σ)
+  /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'
+      ───────────────────────── (LocOf)      the location as a value, in the return
+      ρ, σ ⊢ &e ⇒ loc ℓ, σ'                  of a member that returns a reference    -/
+  | .locOf e₁ => traced "LocOf" (confE e ρ σ) showV do
+    let (l, σ') ← lval fs ρ σ e₁
+    return (.loc l, σ')
 
-/-- The method m of class s, the nearest in the chain of s, dispatched by the
-tag t when that method is virtual. Returns the method and the class that
-declares it. -/
-partial def resolve (fs : FunEnv) (s t m : String) : M (Method × String) := do
-  let some (md, k) := fs.findMethod s m | throw (.typeError s!"class {s} has no method {m}")
+/-- The method m of class s with the signature the type checker chose, the
+nearest in the chain of s, dispatched by the tag t when that method is
+virtual. The signature picks one member of an overload set, and without it,
+in an unannotated program, the first of the name serves. -/
+partial def resolve (fs : FunEnv) (s t m : String) (sig : Option (List Ty)) : M (Method × String) := do
+  let pick (c : String) : Option (Method × String) :=
+    match sig with
+    | some sg => (fs.findMethods c m).find? fun (md, _) => sigOf md.params == sg
+    | none => fs.findMethod c m
+  let some (md, k) := pick s | throw (.typeError s!"class {s} has no method {m}")
   if md.isVirtual then
-    let some (md', k') := fs.findMethod t m | throw (.typeError s!"class {t} has no method {m}")
+    let some (md', k') := pick t | throw (.typeError s!"class {t} has no method {m}")
     return (md', k')
   else return (md, k)
+
+/-- The receiver, the dispatch and the call of a method, shared by the value
+position and the location position. The result of a member that returns a
+reference is the location, `loc ℓ`, which the value position reads and the
+location position takes as it is. -/
+partial def callMethod (fs : FunEnv) (ρ : Env) (σ : Store) (recv : Expr) (arrow : Bool) (m : String)
+    (es : List Expr) (static : Option String) (sig : Option (List Ty)) : M (Method × Val × Store) := do
+  let (l, σ₀) ← if arrow then do
+      let (v, σ') ← expr fs ρ σ recv
+      pure (← pointee v, σ')
+    else lval fs ρ σ recv
+  let .obj tag _ ← readLoc σ₀ l | throw (.typeError s!"{recv} does not denote an object")
+  let (md, k) ← resolve fs (static.getD tag) tag m sig
+  let (v, σ') ← runMember fs ρ σ₀ l md.params md.body es md.ret s!"{k}::{m}"
+  return (md, v, σ')
 
 /-- The call of a member body, a method, a constructor or a destructor, with
 this bound to the location ℓ of the receiver and the arguments bound as in
@@ -504,6 +527,13 @@ partial def lval (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × St
   | .arrow e₁ f => traced "LocArrow" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     let (v, σ') ← expr fs ρ σ e₁
     fieldLoc σ' (← pointee v) f
+  /-  the member m of C returns τ&    member ℓ (e₁, …, eₖ) ⇒ loc ℓ', σ'
+      ──────────────────────────────────────────────────────────── (MethodLoc)
+      ρ, σ ⊢ e.m(e₁, …, eₖ) ⇒ₗ ℓ', σ'                                            -/
+  | .methodCall recv arrow m es static sig => traced "MethodLoc" (confE e ρ σ) showL (arrow := "⇒ₗ") do
+    let (md, v, σ') ← callMethod fs ρ σ recv arrow m es static sig
+    if !md.retRef then throw (.typeError s!"{m} does not return a reference")
+    return (← pointee v, σ')
   | .index e₁ i => traced "LocIndex" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     let (l, σ₁) ← lval fs ρ σ e₁
     let .vec ls ← readLoc σ₁ l | throw (.typeError s!"{e₁} is not a vector")
@@ -686,7 +716,7 @@ variables, and the result is the value returned by `main()`.
     and otherwise runs as parsed, with every dispatch by the class tag.        -/
 def runWith (trace : Bool) (p : Program) : Except Error Val × Array TraceEntry :=
   let p := (Typing.annotate p).toOption.getD p
-  let (r, s) := (Eval.expr p [] {} (.call "main" [])).run.run { enabled := trace }
+  let (r, s) := (Eval.expr p [] {} (.call "main" [] none)).run.run { enabled := trace }
   (r.map (·.1), s.log)
 
 def run (p : Program) : Except Error Val := (runWith false p).1

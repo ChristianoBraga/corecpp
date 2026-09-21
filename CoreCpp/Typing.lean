@@ -1,5 +1,6 @@
 import CoreCpp.Syntax
 import CoreCpp.Pretty
+import CoreCpp.Templates
 
 /-!
 # Static semantics of Core C++, subset
@@ -32,9 +33,23 @@ derived class redefines a method only when the base declares it `virtual`,
 and then marks it `override`, so the method reached from the static type and
 the one reached from the class tag coincide for every non virtual method.
 
-After checking, `annotate` fills in the static class of every method call and
-every `delete`, the datum the evaluator needs for dispatch and for the
-destructor check, since ρ and σ carry no types.
+Functions and methods are overloaded by the type of the arguments. A name
+denotes an overload set, and a call selects the candidate that accepts the
+arguments, the exact one when several accept. Two overloads of one name
+differ in arity or in a parameter of a type other than `std::function`, so a
+lambda argument never decides a call. An infix operator on an operand of
+class type, and the indexing of an object, are the calls of the members
+`operator⊕` and `operator[]`, which the type checker rewrites. A member may
+return `τ&`, and then a call to it denotes a location, which is what makes
+`v[i] = x` work on a class of the subset.
+
+Class templates are expanded before checking, by `Templates.instantiate`. A
+template is never checked, only its instantiations are.
+
+After checking, `annotate` fills in the static class of every method call,
+the signature of the overload every call selects and the `delete`s, the data
+the evaluator needs for dispatch and for the destructor check, since ρ and σ
+carry no types.
 
 Not checked here, and left to the evaluator as `missingReturn`, is that every
 path of a non-void function ends in a return.
@@ -109,6 +124,12 @@ inductive TypeError where
   | fieldRedeclared (c f : String)
   | thisOutside
   | notDeletable (e : Expr) (t : Ty)
+  | noOverload (f : String)
+  | ambiguousCall (f : String)
+  | indistinguishable (f : String)
+  | refReturnNotLvalue (m : String) (e : Expr)
+  | operatorArity (c m : String)
+  | instantiation (msg : String)
   deriving Repr
 
 def TypeError.toString : TypeError → String
@@ -149,6 +170,12 @@ def TypeError.toString : TypeError → String
   | .fieldRedeclared c f  => s!"class {c} redeclares the field {f} of a base"
   | .thisOutside          => "this outside a class"
   | .notDeletable e t     => s!"delete of {e} of type {t}, not a pointer to an object"
+  | .noOverload f         => s!"no overload of {f} accepts these arguments"
+  | .ambiguousCall f      => s!"the call of {f} is ambiguous, more than one overload accepts these arguments"
+  | .indistinguishable f  => s!"two declarations of {f} are not distinguished by a parameter of a type other than std::function"
+  | .refReturnNotLvalue m e => s!"{m} returns a reference, and {e} does not denote a location"
+  | .operatorArity c m    => s!"the operator {m} of {c} does not have the arity of the operator"
+  | .instantiation msg    => msg
 
 instance : ToString TypeError := ⟨TypeError.toString⟩
 
@@ -172,12 +199,32 @@ def compat (p : Program) : Ty → Ty → Bool
   | .ptr (.cls d), .ptr (.cls b) => d == b || p.subclass d b
   | t₁, t₂ => t₁ == t₂
 
+/-- Two overloads of one name are declared together only when they differ in
+arity or in a parameter of a type other than `std::function`, the check 5 of
+the design. The restriction keeps a lambda argument from deciding a call,
+which would ask for the type of the lambda before the candidate is known.
+
+    arities differ, or ∃ i. pᵢ ≠ qᵢ and neither pᵢ nor qᵢ is std::function
+    ──────────────────────────────────────────────────────────────────── (Distinguishable)
+    the two declarations are overloads                                          -/
+def distinguishable (ps qs : List Param) : Bool :=
+  ps.length != qs.length ||
+    (ps.zip qs).any fun (a, b) => a.ty != b.ty && !a.ty.isFn && !b.ty.isFn
+
 /-- τ₁ ≈ τ₂ in either direction, for comparison and for the branches of `?:`. -/
 def related (p : Program) (t₁ t₂ : Ty) : Bool := compat p t₁ t₂ || compat p t₂ t₁
 
-/-- Requires that a variable, parameter or result type has values. -/
+/-- Requires that a variable, parameter or result type has values. A `τ&`
+parameter and a local reference bind the location of their argument, so an
+object type is admissible there and nowhere else, which is how a member takes
+an object without copying it. -/
 def storable (context : String) (t : Ty) : T Unit :=
   if t.isObject || t == .nullT then .error (.objectByValue context t) else .ok ()
+
+/-- Requires a type a binding may have, an object type included when the
+binding is a reference. -/
+def bindable (context : String) (byRef : Bool) (t : Ty) : T Unit :=
+  if byRef && t.isObject then .ok () else storable context t
 
 /-- Fields and vector elements hold basic values and pointers, never function
 values, which have no default value in this subset. -/
@@ -238,6 +285,15 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
       Γ ⊢ e₁ ⊙ e₂ : bool                                                           -/
   | .binop op e₁ e₂ => do
     let t₁ ← expr p Γ e₁
+    /-  Γ ⊢ e₁ : C    C has operator⊕ visible from Γ    Γ ⊢ e₁.operator⊕(e₂) : τ
+        ──────────────────────────────────────────────────────────────────── (T-OpBin)
+        Γ ⊢ e₁ ⊕ e₂ : τ
+
+        The left operand decides, so no operator on int or bool changes
+        meaning, and && and || are not overloaded.                           -/
+    if op != .and && op != .or then
+      if let .cls _ := t₁ then
+        return ← methodCall p Γ e₁ false s!"operator{op.toString}" [e₂]
     let t₂ ← expr p Γ e₂
     match op with
     | .and | .or =>
@@ -277,26 +333,22 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
       ─────────────────────────────────────────────────────────── (T-CallFn)     a variable f bound to a
       Γ ⊢ f(e₁, …, eₖ) : τ                                                        function value hides the
                                                                                  function named f
-      f ∉ Γ    f ↦ (τ f (τ₁ x₁, …, τₖ xₖ) { c })
+      f ∉ Γ    f ↦ (τ f (τ₁ x₁, …, τₖ xₖ) { c }), the overload T-Overload selects
       Γ ⊢ eᵢ ◁ τᵢ for each parameter by value    Γ ⊢ₗ eⱼ : τⱼ for each parameter τⱼ& xⱼ
       ────────────────────────────────────────────────────────────────────────────── (T-Call)
       Γ ⊢ f(e₁, …, eₖ) : τ                                                         -/
-  | .call f es => do
+  | .call f es _ => do
     match Γ.lookup f with
     | some t => callValue p Γ (.var f) t es
     | none =>
-      match FunEnv.lookup p f with
-      | some fn =>
-        if fn.params.length != es.length then throw (.arity f fn.params.length es.length)
-        checkArgs p Γ f fn.params es
-        return fn.ret
-      | none =>
+      if (p.funsNamed f).isEmpty then
         /-  f ∉ Γ    f not a function    Γ(this) = C*    Γ ⊢ this->f(e₁, …, eₖ) : τ
             ──────────────────────────────────────────────────────────────────── (T-CallThis)
             Γ ⊢ f(e₁, …, eₖ) : τ                                                        -/
         match Γ.self with
-        | some c => if (p.findMethod c f).isSome then methodCall p Γ .this true f es else throw (.undeclaredFunction f)
+        | some c => if !(p.findMethods c f).isEmpty then methodCall p Γ .this true f es else throw (.undeclaredFunction f)
         | none => throw (.undeclaredFunction f)
+      else return (← resolveFun p Γ f es).ret
   /-  Γ ⊢ e : std::function<τ(τ₁, …, τₖ)>    Γ ⊢ eᵢ ◁ τᵢ for each i
       ─────────────────────────────────────────────────────────── (T-CallFn)
       Γ ⊢ e(e₁, …, eₖ) : τ                                                         -/
@@ -306,6 +358,10 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
   /-  A lambda has no type of its own. Outside its three positions it is an
       error, see `lambdaAt` for Γ ⊢ [=](…) -> τ { c } ◁ std::function<…>.        -/
   | e@(.lambda ..) => .error (.lambdaPosition e)
+  /-  Γ ⊢ₗ e : τ
+      ────────────── (T-LocOf)      internal, the annotation of the return of a
+      Γ ⊢ &e : τ                    member that returns a reference              -/
+  | .locOf e => lval p Γ e
   /-  C ↦ class C { … C(p₁ x₁, …, pₖ xₖ) { c } … }    arguments as in T-Call
       ──────────────────────────────────────────────────────────────── (T-New)
       Γ ⊢ new C(e₁, …, eₖ) : C*
@@ -329,7 +385,7 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
 
       A private method is visible only when Γ(this) is the class that
       declares it. The method is the nearest one in the chain of C.              -/
-  | .methodCall recv arrow m es _ => methodCall p Γ recv arrow m es
+  | .methodCall recv arrow m es _ _ => methodCall p Γ recv arrow m es
   /-  Γ ⊢ n : int    τ has values    τ not a function type
       ──────────────────────────────────────────────────── (T-NewVec)
       Γ ⊢ new std::vector<τ>(n) : std::vector<τ>*                                  -/
@@ -364,12 +420,18 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
   /-  Γ ⊢ e : std::vector<τ>    Γ ⊢ i : int
       ─────────────────────────────────────── (T-Index)
       Γ ⊢ e[i] : τ                                                                 -/
+  /-  Γ ⊢ e : C    C has operator[] visible from Γ    Γ ⊢ e.operator[](i) : τ
+      ──────────────────────────────────────────────────────────────────── (T-OpIndex)
+      Γ ⊢ e[i] : τ                                                                 -/
   | .index e i => do
     let t ← expr p Γ e
-    let .vec t' := t | throw (.notVector e t)
-    let ti ← expr p Γ i
-    if ti != .int then throw (.mismatch "index" .int ti)
-    return t'
+    match t with
+    | .vec t' =>
+      let ti ← expr p Γ i
+      if ti != .int then throw (.mismatch "index" .int ti)
+      return t'
+    | .cls _ => methodCall p Γ e false "operator[]" [i]
+    | _ => throw (.notVector e t)
 
 /-- The call of a function value of type t with the arguments es, shared by
 `T-CallFn` on a variable and on any other expression. -/
@@ -428,8 +490,50 @@ partial def checkArgs (p : Program) (Γ : TEnv) (f : String) (ps : List Param) (
     else
       accept p Γ s!"argument {q.name} of {f}" e q.ty
 
-/-- The rules T-Method and T-MethodArrow, see `expr`. -/
-partial def methodCall (p : Program) (Γ : TEnv) (recv : Expr) (arrow : Bool) (m : String) (es : List Expr) : T Ty := do
+/-- The candidate of an overload set that a call selects, by its index. The
+candidates that accept the arguments are collected, and the choice is the
+exact one when several accept.
+
+    A = the candidates of cand(f, k) that accept e₁, …, eₖ
+    A has one element whose parameters are exactly the types of the arguments, or A is a singleton
+    ─────────────────────────────────────────────────────────────────────────────── (T-Overload)
+    the call of f selects that candidate
+
+    With A empty the error is the one of the single candidate of that arity,
+    when there is one, and `no overload` otherwise. With two or more in A and
+    no exact one the call is ambiguous. Core C++ does not rank conversion
+    sequences, so the rule fits in one line on the board.                        -/
+partial def pickOverload (p : Program) (Γ : TEnv) (who : String)
+    (cands : List (List Param)) (es : List Expr) : T Nat := do
+  let idx := (List.range cands.length).filter fun i => (cands[i]!).length == es.length
+  if idx.isEmpty then
+    let some ps := cands.head? | throw (.undeclaredFunction who)
+    throw (.arity who ps.length es.length)
+  let fits := idx.filter fun i => (checkArgs p Γ who (cands[i]!) es).toOption.isSome
+  match fits with
+  | [i] => return i
+  | [] =>
+    match idx with
+    | [i] => do checkArgs p Γ who (cands[i]!) es; return i
+    | _ => throw (.noOverload who)
+  | _ =>
+    let exact := fits.filter fun i =>
+      ((cands[i]!).zip es).all fun (q, e) => (expr p Γ e).toOption == some q.ty
+    match exact with
+    | [i] => return i
+    | _ => throw (.ambiguousCall who)
+
+/-- The function a call selects out of the overload set of its name. -/
+partial def resolveFun (p : Program) (Γ : TEnv) (f : String) (es : List Expr) : T Fun := do
+  let cands := p.funsNamed f
+  if cands.isEmpty then throw (.undeclaredFunction f)
+  let i ← pickOverload p Γ f (cands.map (·.params)) es
+  return cands[i]!
+
+/-- The method a call selects, with the class that declares it, the rules
+T-Method and T-MethodArrow with the overload set of the name. -/
+partial def resolveMethod (p : Program) (Γ : TEnv) (recv : Expr) (arrow : Bool) (m : String)
+    (es : List Expr) : T (Method × String) := do
   let t ← expr p Γ recv
   let c ← if arrow then
       match t with
@@ -439,11 +543,16 @@ partial def methodCall (p : Program) (Γ : TEnv) (recv : Expr) (arrow : Bool) (m
       match t with
       | .cls c => pure c
       | _ => throw (.notObject recv t)
-  let some (md, k) := p.findMethod c m | throw (.unknownMethod c m)
+  let cands := p.findMethods c m
+  if cands.isEmpty then throw (.unknownMethod c m)
+  let i ← pickOverload p Γ m (cands.map (·.1.params)) es
+  let (md, k) := cands[i]!
   if md.vis == .priv && Γ.self != some k then throw (.privateMember k m)
-  if md.params.length != es.length then throw (.arity m md.params.length es.length)
-  checkArgs p Γ m md.params es
-  return md.ret
+  return (md, k)
+
+/-- The rules T-Method and T-MethodArrow, see `expr`. -/
+partial def methodCall (p : Program) (Γ : TEnv) (recv : Expr) (arrow : Bool) (m : String) (es : List Expr) : T Ty := do
+  return (← resolveMethod p Γ recv arrow m es).1.ret
 
 /-- The type of field f of class C as seen from Γ, or the error. A private
 field is visible only when Γ(this) is the class that declares it.
@@ -476,7 +585,28 @@ partial def lval (p : Program) (Γ : TEnv) : Expr → T Ty
       match Γ.self with
       | some c => if (p.findField c x).isSome then fieldType p Γ c x else .error (.undeclaredVariable x)
       | none => .error (.undeclaredVariable x)
-  | e@(.deref _) | e@(.field ..) | e@(.arrow ..) | e@(.index ..) => expr p Γ e
+  | e@(.deref _) | e@(.field ..) | e@(.arrow ..) => expr p Γ e
+  /-  Γ ⊢ e : C    C has τ& operator[] visible from Γ
+      ───────────────────────────────────────────────── (T-LocOpIndex)
+      Γ ⊢ₗ e[i] : τ
+
+      Γ ⊢ e : C    C has τ& m(…) visible from Γ
+      ───────────────────────────────────────────── (T-LocMethod)
+      Γ ⊢ₗ e.m(e₁, …, eₖ) : τ
+
+      Indexing a vector denotes a location as before. Indexing an object, and
+      calling a member, denote one exactly when the member returns τ&.        -/
+  | e@(.index recv i) => do
+    let t ← expr p Γ recv
+    match t with
+    | .vec _ => expr p Γ e
+    | .cls _ =>
+      let (md, _) ← resolveMethod p Γ recv false "operator[]" [i]
+      if md.retRef then return md.ret else throw (.notLvalue e)
+    | _ => throw (.notVector recv t)
+  | e@(.methodCall recv arrow m es _ _) => do
+    let (md, _) ← resolveMethod p Γ recv arrow m es
+    if md.retRef then return md.ret else throw (.notLvalue e)
   | e => .error (.notLvalue e)
 
 /-- Γ ⊢ c ⊣ Γ', under the return type τᵣ of the enclosing function. -/
@@ -535,7 +665,7 @@ partial def cmd (p : Program) (τᵣ : Ty) (Γ : TEnv) : Cmd → T TEnv
       ───────────────────────────────────────────── (T-DeclRef)      the initialiser denotes a location
       Γ ⊢ τ& x = e ⊣ Γ[x ↦ τ]                                        and x has the type of its referent -/
   | .declRef t x e => do
-    storable s!"reference {x}" t
+    bindable s!"reference {x}" true t
     wellFormed p t
     let te ← value e (← lval p Γ e)
     if te != t then throw (.mismatch s!"referent of {x}" t te)
@@ -584,6 +714,25 @@ partial def cmds (p : Program) (τᵣ : Ty) (Γ : TEnv) : List Cmd → T TEnv
 
 end
 
+/-- Every `return` of a member that returns a reference is a `return e` with
+`e` denoting a location. The walk does not enter the body of a lambda, whose
+`return` is the lambda's own.
+
+    τ has values    every return of c is return e with Γ ⊢ₗ e : τ
+    ─────────────────────────────────────────────────────────────── (T-RetRef)
+    ⊢ τ& m(…) { c } in C                                                          -/
+partial def refReturns (p : Program) (Γ : TEnv) (m : String) : List Cmd → T Unit
+  | [] => .ok ()
+  | c :: cs => do
+    match c with
+    | .ret (some e) => let _ ← (lval p Γ e).mapError fun _ => TypeError.refReturnNotLvalue m e
+    | .ret none => pure ()
+    | .block b | .while _ b => refReturns p Γ m b
+    | .ite _ t f => do refReturns p Γ m t; refReturns p Γ m f
+    | .for _ _ _ b => refReturns p Γ m b
+    | _ => pure ()
+    refReturns p Γ m cs
+
 /-- A function is well typed when its parameter and return types have values
 and are well formed, and its body is, under the context of its parameters and
 its return type. A reference parameter has in Γ the type of its referent, as a
@@ -596,7 +745,7 @@ def fn (p : Program) (f : Fun) : T Unit := do
   if f.ret != .void then storable s!"result of {f.name}" f.ret
   wellFormed p f.ret
   for q in f.params do
-    storable s!"parameter {q.name} of {f.name}" q.ty
+    bindable s!"parameter {q.name} of {f.name}" q.byRef q.ty
     wellFormed p q.ty
   let Γ : TEnv := f.params.reverse.map fun q => (q.name, ⟨q.ty, false⟩)
   let _ ← cmds p f.ret Γ f.body
@@ -629,15 +778,31 @@ def cls (p : Program) (c : ClassDecl) : T Unit := do
   let baseFields : List String := match c.base with
     | some b => (p.allFields b).map fun (f, _) => f.name
     | none => []
-  let names := c.fields.map (·.name) ++ c.methods.map (·.name)
-  for n in names do
-    if (names.filter (· == n)).length > 1 then throw (.duplicateMember c.name n)
+  -- A field name is unique, and two methods of one name are overloads when
+  -- they differ in arity or in a parameter of a type other than std::function.
+  let fieldNames := c.fields.map (·.name)
+  for n in fieldNames do
+    if (fieldNames.filter (· == n)).length > 1 then throw (.duplicateMember c.name n)
+  for m in c.methods do
+    if fieldNames.contains m.name then throw (.duplicateMember c.name m.name)
+    for m' in c.methods do
+      if m.name == m'.name && sigOf m.params != sigOf m'.params && !distinguishable m.params m'.params then
+        throw (.indistinguishable s!"{c.name}::{m.name}")
+    if (c.methods.filter fun m' => m'.name == m.name && sigOf m'.params == sigOf m.params).length > 1 then
+      throw (.duplicateMember c.name m.name)
   for f in c.fields do
     if baseFields.contains f.name then throw (TypeError.fieldRedeclared c.name f.name)
     storable s!"field {f.name} of {c.name}" f.ty
     wellFormed p f.ty
   for m in c.methods do
-    let inherited := c.base.bind fun b => p.findMethod b m.name
+    -- Every operator of the subset is binary, the receiver and one parameter.
+    if m.name.startsWith "operator" && m.params.length != 1 then
+      throw (.operatorArity c.name m.name)
+    if m.retRef then
+      if m.ret == .void then throw (.mismatch s!"result of {c.name}::{m.name}" m.ret .void)
+      refReturns p (memberEnv c.name m.params) s!"{c.name}::{m.name}" m.body
+    let inherited := c.base.bind fun b =>
+      (p.findMethods b m.name).find? fun (bm, _) => sigOf bm.params == sigOf m.params
     match inherited with
     | some (bm, _) =>
       if !bm.isVirtual then throw (.redefinesNonVirtual c.name m.name)
@@ -648,7 +813,7 @@ def cls (p : Program) (c : ClassDecl) : T Unit := do
     if m.ret != .void then storable s!"result of {c.name}::{m.name}" m.ret
     wellFormed p m.ret
     for q in m.params do
-      storable s!"parameter {q.name} of {c.name}::{m.name}" q.ty
+      bindable s!"parameter {q.name} of {c.name}::{m.name}" q.byRef q.ty
       wellFormed p q.ty
     let _ ← cmds p m.ret (memberEnv c.name m.params) m.body
   if let some b := c.base then
@@ -656,7 +821,7 @@ def cls (p : Program) (c : ClassDecl) : T Unit := do
       if bd.ctor.any (!·.params.isEmpty) then throw (.baseConstructorParams c.name b)
   if let some k := c.ctor then
     for q in k.params do
-      storable s!"parameter {q.name} of the constructor of {c.name}" q.ty
+      bindable s!"parameter {q.name} of the constructor of {c.name}" q.byRef q.ty
       wellFormed p q.ty
     let _ ← cmds p .void (memberEnv c.name k.params) k.body
   if let some d := c.dtor then
@@ -664,19 +829,31 @@ def cls (p : Program) (c : ClassDecl) : T Unit := do
 
 end Typing
 
-/-- A program is well typed when class and function names are distinct, every
-class and function is well typed and `int main()` exists.
+/-- The program with one class per template instantiation it mentions, the
+expansion that precedes every other judgment. Idempotent. -/
+def expand (p : Program) : Except TypeError Program :=
+  (Templates.instantiate p).mapError TypeError.instantiation
 
-    names distinct    ⊢ Cᵢ for each class    ⊢ fᵢ for each function    main ↦ (int main() { c })
-    ────────────────────────────────────────────────────────────────────────────────────── (T-Program)
+/-- A program is well typed when class and function names are distinct up to
+overloading, every class and function is well typed and `int main()` exists.
+A template is not checked, only its instantiations are.
+
+    names distinct up to overloading    ⊢ Cᵢ for each class    ⊢ fᵢ for each function
+    main ↦ (int main() { c })
+    ────────────────────────────────────────────────────────────────────────────── (T-Program)
     ⊢ p                                                                            -/
-def check (p : Program) : Except TypeError Unit := do
-  let fnames := p.funs.map (·.name)
+def check (p₀ : Program) : Except TypeError Unit := do
+  let p ← expand p₀
   for f in p.funs do
-    if (fnames.filter (· == f.name)).length > 1 then throw (.duplicateFunction f.name)
-  let cnames := p.classes.map (·.name)
-  for c in p.classes do
-    if (cnames.filter (· == c.name)).length > 1 then throw (.duplicateClass c.name)
+    for g in p.funs do
+      if f.name == g.name && sigOf f.params != sigOf g.params
+         && !Typing.distinguishable f.params g.params then
+        throw (.indistinguishable f.name)
+    if (p.funsNamed f.name |>.filter fun g => sigOf g.params == sigOf f.params).length > 1 then
+      throw (.duplicateFunction f.name)
+  let cnames := p.classes.map (·.name) ++ p.templates.map (·.2.name)
+  for c in cnames do
+    if (cnames.filter (· == c)).length > 1 then throw (.duplicateClass c)
   for c in p.classes do Typing.cls p c
   for f in p.funs do Typing.fn p f
   match FunEnv.lookup p "main" with
@@ -685,14 +862,18 @@ def check (p : Program) : Except TypeError Unit := do
 
 namespace Typing
 
-/-! ## Static classes for the evaluator
+/-! ## Static classes and chosen overloads, for the evaluator
 
 The evaluator dispatches a method call by the class tag of the receiver when
 the method is virtual, and otherwise runs the method of the static class of
 the receiver, and `delete` through a pointer needs the static class to check
-that the destructor is virtual when the tag differs. Neither ρ nor σ carries
-types, so `annotate` writes the static class into every `methodCall` and every
-`delete` after the program has been checked. -/
+that the destructor is virtual when the tag differs. A call also needs the
+signature of the overload the type checker selected, since a name may denote
+several functions or methods. Neither ρ nor σ carries types, so `annotate`
+writes the static class and the signature into the tree after the program has
+been checked, rewrites an operator on a class operand and the indexing of an
+object into the call of the member, and rewrites the `return e` of a member
+that returns a reference into `return &e`, the location as a value. -/
 
 /-- The class a receiver expression has, `C` for `e.m` with `e : C` and for
 `e->m` with `e : C*`, and for `delete e` with `e : C*`. -/
@@ -704,30 +885,49 @@ def staticClass (t : Ty) (arrow : Bool) : Option String :=
 
 mutual
 
+/-- The annotated call of the member m on the receiver recv, the form every
+method call, operator and object indexing takes after annotation. -/
+partial def annMethod (p : Program) (Γ : TEnv) (recv : Expr) (arrow : Bool) (m : String)
+    (es : List Expr) : T Expr := do
+  let t ← expr p Γ recv
+  let (md, _) ← resolveMethod p Γ recv arrow m es
+  return .methodCall recv arrow m es (staticClass t arrow) (some (sigOf md.params))
+
 partial def annExpr (p : Program) (Γ : TEnv) : Expr → T Expr
   | .unop op e => return .unop op (← annExpr p Γ e)
-  | .binop op a b => return .binop op (← annExpr p Γ a) (← annExpr p Γ b)
+  | .binop op a b => do
+    let a' ← annExpr p Γ a
+    let b' ← annExpr p Γ b
+    if op != .and && op != .or then
+      if let .cls _ ← expr p Γ a' then
+        return ← annMethod p Γ a' false s!"operator{op.toString}" [b']
+    return .binop op a' b'
   | .cond a b c => return .cond (← annExpr p Γ a) (← annExpr p Γ b) (← annExpr p Γ c)
-  | .call f es => do
+  | .call f es _ => do
     let es' ← es.mapM (annExpr p Γ)
-    if (Γ.lookup f).isNone && (FunEnv.lookup p f).isNone then
+    if (Γ.lookup f).isNone && (p.funsNamed f).isEmpty then
       if let some c := Γ.self then
-        if (p.findMethod c f).isSome then return .methodCall .this true f es' (some c)
-    return .call f es'
+        if !(p.findMethods c f).isEmpty then return ← annMethod p Γ .this true f es'
+    if (Γ.lookup f).isSome then return .call f es' none
+    return .call f es' (some (sigOf (← resolveFun p Γ f es').params))
   | .callFn f es => return .callFn (← annExpr p Γ f) (← es.mapM (annExpr p Γ))
   | .newObj c es => return .newObj c (← es.mapM (annExpr p Γ))
   | .newVec t n => return .newVec t (← annExpr p Γ n)
   | .field e f => return .field (← annExpr p Γ e) f
   | .arrow e f => return .arrow (← annExpr p Γ e) f
   | .deref e => return .deref (← annExpr p Γ e)
-  | .index e i => return .index (← annExpr p Γ e) (← annExpr p Γ i)
+  | .locOf e => return .locOf (← annExpr p Γ e)
+  | .index e i => do
+    let e' ← annExpr p Γ e
+    let i' ← annExpr p Γ i
+    if let .cls _ ← expr p Γ e' then
+      return ← annMethod p Γ e' false "operator[]" [i']
+    return .index e' i'
   | .lambda ps r b =>
     let Γ' := ps.reverse.foldl (fun Γ q => Γ.bind q.name q.ty) Γ.captured
     return .lambda ps r (← annCmds p r Γ' b)
-  | .methodCall recv arrow m es _ => do
-    let recv' ← annExpr p Γ recv
-    let t ← expr p Γ recv'
-    return .methodCall recv' arrow m (← es.mapM (annExpr p Γ)) (staticClass t arrow)
+  | .methodCall recv arrow m es _ _ => do
+    annMethod p Γ (← annExpr p Γ recv) arrow m (← es.mapM (annExpr p Γ))
   | e => return e
 
 partial def annCmd (p : Program) (τᵣ : Ty) (Γ : TEnv) : Cmd → T Cmd
@@ -758,16 +958,35 @@ partial def annCmds (p : Program) (τᵣ : Ty) (Γ : TEnv) : List Cmd → T (Lis
 
 end
 
-/-- The program with the static classes filled in. Fails only on an ill typed
-program, which `check` rejects first. -/
-def annotate (p : Program) : T Program :=
+/-- The `return e` of a member that returns a reference becomes `return &e`,
+the location as a value, which the caller reads or uses as a location. The
+walk does not enter the body of a lambda. -/
+partial def refRets : List Cmd → List Cmd
+  | [] => []
+  | c :: cs =>
+    let c' := match c with
+      | .ret (some e) => Cmd.ret (some (.locOf e))
+      | .block b => .block (refRets b)
+      | .while e b => .while e (refRets b)
+      | .ite e t f => .ite e (refRets t) (refRets f)
+      | .for i e s b => .for i e s (refRets b)
+      | c => c
+    c' :: refRets cs
+
+/-- The program with the static classes, the chosen overloads and the
+reference returns filled in. Fails only on an ill typed program, which
+`check` rejects first. -/
+def annotate (p₀ : Program) : T Program := do
+  let p ← expand p₀
   p.mapM fun
     | .fn f => do
       let Γ : TEnv := f.params.reverse.map fun q => (q.name, ⟨q.ty, false⟩)
       return .fn { f with body := ← annCmds p f.ret Γ f.body }
+    | .tmpl t c => return .tmpl t c
     | .cls c => do
       let methods ← c.methods.mapM fun m => do
-        return { m with body := ← annCmds p m.ret (memberEnv c.name m.params) m.body }
+        let body ← annCmds p m.ret (memberEnv c.name m.params) m.body
+        return { m with body := if m.retRef then refRets body else body }
       let ctor ← c.ctor.mapM fun k => do
         return { k with body := ← annCmds p .void (memberEnv c.name k.params) k.body }
       let dtor ← c.dtor.mapM fun d => do

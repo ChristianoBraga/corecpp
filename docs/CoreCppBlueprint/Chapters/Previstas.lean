@@ -14,12 +14,6 @@ Constructions of the Core C++ design without rules or implementation yet. They a
 Constructions planned in `core-cpp-design.md`, not implemented.
 :::
 
-# UD VI
-
-:::definition "overload" (parent := "pendentes") (uses := "fun_call, judg_ty_expr")
-Overloading of functions and operators by argument type, resolved in $`\Gamma`, except over `std::function` parameters. The expression `v[i]` is the call of `operator[]`, which returns `int&`.
-:::
-
-:::definition "template_class" (parent := "pendentes") (uses := "cls_decl")
-Class templates only, instantiated in type position, by substitution of the type parameter at instantiation.
-:::
+The design lists no construction outside the units already written. The
+units I to VI cover the subset, and this chapter stays as the place for a
+construction the course decides to add.
