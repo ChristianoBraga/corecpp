@@ -34,18 +34,44 @@ the store. The static classes come from `Typing.annotate`, applied by
 `runWith` before the evaluation starts.
 
 The evaluator runs in the monad `M`, which carries the derivation trace. When
-tracing is enabled, every rule application records its conclusion, the full
-judgment instance with the rule name, at the depth of the derivation tree.
-Premises are recorded before their conclusion, so the trace read top to bottom
-is the derivation tree in post-order, indented by depth.
+tracing is enabled, every rule application records the instance of the rule it
+concludes, at its depth in the derivation tree. `renderTrace` then lays the
+tree out as a derivation is written on the board, the premises above a line of
+inference and the conclusion below it, with the environments, the stores and
+the long subjects named in a legend and the subtrees that do not fit printed
+apart as named derivations.
 -/
 
 namespace CoreCpp
 
-/-- One recorded judgment instance. -/
+/-- The antecedent of a recorded judgment. The environment and the store are
+kept apart from the subject so that the renderer can name them in a legend
+instead of repeating them on every line. -/
+structure TraceAnte where
+  env     : String
+  store   : String
+  subject : String
+  /-- The letter under which a long subject is named in the legend, `e` for an
+  expression and `c` for a command. -/
+  kind    : String := "e"
+  arrow   : String := "⇒"
+  deriving Repr
+
+/-- The consequent of a recorded judgment. `head` is the value, the location,
+the control result or the error; the environment and the store are present
+only in the judgments that produce them. -/
+structure TraceCons where
+  head   : String
+  env?   : Option String := none
+  store? : Option String := none
+  deriving Repr
+
+/-- One recorded instance of a judgment, at its depth in the derivation. -/
 structure TraceEntry where
   depth : Nat
-  text  : String
+  rule  : String
+  ante  : TraceAnte
+  cons  : TraceCons
   deriving Repr
 
 structure TState where
@@ -59,27 +85,35 @@ abbrev M := ExceptT Error (StateM TState)
 
 namespace Eval
 
-/-- Runs `k` one level deeper and records the conclusion of the rule `rule`,
-`conf arrow render a` in sequent notation, or the error, at the current depth. -/
-def traced (rule conf : String) (render : α → String) (k : M α) (arrow : String := "⇒") : M α := do
+/-- Runs `k` one level deeper and records the instance of the rule `rule` it
+concludes, or the error, at the current depth of the derivation. -/
+def traced (rule : String) (ante : TraceAnte) (render : α → TraceCons) (k : M α)
+    (arrow : String := "⇒") : M α := do
   modify fun s => { s with depth := s.depth + 1 }
   let res : Except Error α ← tryCatch (do let a ← k; pure (.ok a)) (fun e => pure (.error e))
   modify fun s => { s with depth := s.depth - 1 }
   let s ← get
   if s.enabled then
-    let concl := match res with
-      | .ok a    => s!"{conf} {arrow} {render a}"
-      | .error e => s!"{conf} {arrow} error ({e})"
-    modify fun s => { s with log := s.log.push ⟨s.depth, s!"{concl}   ({rule})"⟩ }
+    let cons := match res with
+      | .ok a    => render a
+      | .error e => { head := s!"error ({e})" }
+    modify fun s =>
+      { s with log := s.log.push ⟨s.depth, rule, { ante with arrow := arrow }, cons⟩ }
   match res with
   | .ok a    => pure a
   | .error e => throw e
 
-def confE (e : Expr) (ρ : Env) (σ : Store) : String := s!"{ρ.toString}, {σ.toString} ⊢ {e}"
-def confC (c : Cmd) (ρ : Env) (σ : Store) : String := s!"{ρ.toString}, {σ.toString} ⊢ {c}"
-def showV (r : Val × Store) : String := s!"{r.1}, {r.2.toString}"
-def showL (r : Loc × Store) : String := s!"{Loc.toString r.1}, {r.2.toString}"
-def showR (r : Ctrl × Env × Store) : String := s!"{r.1}, {r.2.1.toString}, {r.2.2.toString}"
+def confE (e : Expr) (ρ : Env) (σ : Store) : TraceAnte :=
+  { env := ρ.toString, store := σ.toString, subject := toString e }
+def confC (c : Cmd) (ρ : Env) (σ : Store) : TraceAnte :=
+  { env := ρ.toString, store := σ.toString, subject := toString c, kind := "c" }
+def showV (r : Val × Store) : TraceCons :=
+  { head := toString r.1, store? := some r.2.toString }
+def showL (r : Loc × Store) : TraceCons :=
+  { head := Loc.toString r.1, store? := some r.2.toString }
+def showR (r : Ctrl × Env × Store) : TraceCons :=
+  { head := toString r.1,
+    env? := some r.2.1.toString, store? := some r.2.2.toString }
 
 /-- Range check for `int`.
 
@@ -721,8 +755,160 @@ def runWith (trace : Bool) (p : Program) : Except Error Val × Array TraceEntry 
 
 def run (p : Program) : Except Error Val := (runWith false p).1
 
-/-- Renders the trace as the derivation tree in post-order, indented by depth. -/
+/-! ## Rendering the derivation
+
+The trace is laid out as a derivation is written on the board, the premises
+above a line of inference, the conclusion below it and the rule name to the
+right. Environments and stores are named ρᵢ and σⱼ in a legend, so a judgment
+occupies one short line. A subtree wider than `maxWidth` is pulled out as a
+named derivation 𝒟ₖ, printed after the one that uses it, exactly as one does
+with a derivation that does not fit the page.
+-/
+
+namespace Trace
+
+private def subDigits : Array Char := #['₀','₁','₂','₃','₄','₅','₆','₇','₈','₉']
+
+/-- A natural number in subscript digits. -/
+private def sub (n : Nat) : String :=
+  (toString n).map fun c => subDigits[c.toNat - '0'.toNat]!
+
+private def indexOf (tbl : Array String) (s : String) : Nat :=
+  (tbl.findIdx? (· == s)).getD 0
+
+private def insert (tbl : Array String) (s : String) : Array String :=
+  if tbl.contains s then tbl else tbl.push s
+
+/-- A subject longer than this is named in the legend instead of being written
+in every judgment that mentions it. -/
+private def maxSubject : Nat := 40
+
+/-- The distinct environments, stores and long subjects of a trace, in order of
+appearance. -/
+private def tables (log : Array TraceEntry) :
+    Array String × Array String × Array (String × String) :=
+  log.foldl (init := (#[], #[], #[])) fun (es, ss, cs) t =>
+    let es := insert es t.ante.env
+    let es := match t.cons.env? with | some e => insert es e | none => es
+    let ss := insert ss t.ante.store
+    let ss := match t.cons.store? with | some x => insert ss x | none => ss
+    let cs :=
+      if t.ante.subject.length ≤ maxSubject then cs
+      else if cs.contains (t.ante.kind, t.ante.subject) then cs
+      else cs.push (t.ante.kind, t.ante.subject)
+    (es, ss, cs)
+
+/-- The derivation, rebuilt from the post-order log. A node's premises are the
+entries that directly precede it one level deeper. -/
+private structure DTree where
+  entry : TraceEntry
+  kids  : List DTree
+
+private partial def forest (log : Array TraceEntry) : List DTree :=
+  let stack := log.foldl (init := ([] : List (Nat × DTree))) fun st t =>
+    let (kids, rest) := st.span (fun p => p.1 == t.depth + 1)
+    (t.depth, ⟨t, (kids.map (·.2)).reverse⟩) :: rest
+  (stack.map (·.2)).reverse
+
+private abbrev Block := Array String
+
+private def width (b : Block) : Nat := b.foldl (fun w l => max w l.length) 0
+
+private def pad (n : Nat) (s : String) : String := s ++ "".pushn ' ' (n - s.length)
+
+private def centre (n : Nat) (s : String) : String :=
+  let left := (n - s.length) / 2
+  pad n ("".pushn ' ' left ++ s)
+
+private def hcat2 (gap : Nat) (a b : Block) : Block :=
+  (List.range a.size).toArray.map fun i => a[i]! ++ "".pushn ' ' gap ++ b[i]!
+
+/-- Blocks side by side, their conclusions on the same line. -/
+private def hcat (gap : Nat) (bs : List Block) : Block :=
+  let h := bs.foldl (fun h b => max h b.size) 0
+  let padded := bs.map fun b =>
+    let w := width b
+    Array.replicate (h - b.size) ("".pushn ' ' w) ++ b.map (pad w)
+  match padded with
+  | []      => #[]
+  | b :: bs => bs.foldl (hcat2 gap) b
+
+private structure Ctx where
+  envs     : Array String
+  stores   : Array String
+  subjects : Array (String × String)
+
+/-- A long subject is written as the name the legend gives it. -/
+private def subjectOf (ctx : Ctx) (a : TraceAnte) : String :=
+  if a.subject.length ≤ maxSubject then a.subject
+  else
+    let same := ctx.subjects.filter (·.1 == a.kind)
+    s!"{a.kind}{sub ((same.findIdx? (·.2 == a.subject)).getD 0)}"
+
+private def conclusion (ctx : Ctx) (t : TraceEntry) : String :=
+  let a := t.ante
+  let ante :=
+    s!"ρ{sub (indexOf ctx.envs a.env)}, σ{sub (indexOf ctx.stores a.store)} ⊢ {subjectOf ctx a}"
+  let parts := [some t.cons.head,
+                t.cons.env?.map fun e => s!"ρ{sub (indexOf ctx.envs e)}",
+                t.cons.store?.map fun x => s!"σ{sub (indexOf ctx.stores x)}"]
+  s!"{ante} {a.arrow} {", ".intercalate (parts.filterMap id)}"
+
+private def close (rule : String) (w : Nat) (concl : String) (above : Block) : Block :=
+  (above.push ("".pushn '─' w ++ s!" ({rule})")).push concl
+
+/-- Renders one node, collecting the subderivations too wide to stay inline. -/
+private partial def node (ctx : Ctx) (maxWidth : Nat) (t : DTree) :
+    StateM (Array Block) Block := do
+  let concl := conclusion ctx t.entry
+  if t.kids.isEmpty then
+    return close t.entry.rule concl.length concl #[]
+  let blocks ← t.kids.mapM (node ctx maxWidth)
+  let joined := hcat 4 blocks
+  let w := max (width joined) concl.length
+  if w ≤ maxWidth then
+    return close t.entry.rule w concl joined
+  let stubs ← (t.kids.zip blocks).mapM fun (k, b) => do
+    if k.kids.isEmpty then
+      return b
+    else
+      let n := (← get).size + 1
+      modify (·.push b)
+      let c := conclusion ctx k.entry
+      return #[centre c.length s!"𝒟{sub n}", c]
+  let joined := hcat 4 stubs
+  let w := max (width joined) concl.length
+  return close t.entry.rule w concl joined
+
+private def legend (ctx : Ctx) : Block :=
+  let col (name : String) (tbl : Array String) : Block :=
+    (List.range tbl.size).toArray.map fun i => s!"{name}{sub i} = {tbl[i]!}"
+  let l := col "ρ" ctx.envs
+  let r := col "σ" ctx.stores
+  let h := max l.size r.size
+  let grow (b : Block) : Block := b ++ Array.replicate (h - b.size) ""
+  let w := width l
+  let states := (hcat2 6 ((grow l).map (pad w)) (grow r)).map (·.trimRight)
+  let named := ["e", "c"].foldl (init := (#[] : Block)) fun acc k =>
+    let same := ctx.subjects.filter (·.1 == k)
+    acc ++ (List.range same.size).toArray.map fun i => s!"{k}{sub i} = {same[i]!.2}"
+  states ++ named
+
+end Trace
+
+/-- Renders the trace as a derivation, premises over the line of inference and
+the conclusion under it, with the environments and the stores named in a
+legend. -/
 def renderTrace (log : Array TraceEntry) : String :=
-  "\n".intercalate (log.toList.map fun t => "".pushn ' ' (2 * t.depth) ++ t.text)
+  if log.isEmpty then "" else
+  let (envs, stores, subjects) := Trace.tables log
+  let ctx : Trace.Ctx := ⟨envs, stores, subjects⟩
+  let (main, subs) := ((Trace.forest log).mapM (Trace.node ctx 100)).run #[]
+  let named := (List.range subs.size).map fun i =>
+    #[s!"𝒟{Trace.sub (i + 1)}"] ++ subs[i]!.map ("  " ++ ·)
+  let blocks := main.map (fun b => b.map ("  " ++ ·)) ++ named
+  let render (b : Array String) : String :=
+    "\n".intercalate (b.toList.map (·.trimRight))
+  "\n\n".intercalate (render (Trace.legend ctx) :: blocks.map render)
 
 end CoreCpp
