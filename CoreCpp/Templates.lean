@@ -16,7 +16,7 @@ happens before, and two instantiations of one template are two independent
 classes, with no subtype relation between them.
 
 A template is never checked, only its instantiations are, as in C++. The name
-of an instantiation is the chain the design prints for the type, `Pilha<int>`,
+of an instantiation is the chain the design prints for the type, `Stack<int>`,
 so the name in the source and the name of the expanded class agree, and the
 parser builds it when it reads a type.
 -/
@@ -26,7 +26,7 @@ namespace Templates
 
 /-! ## Substitution in a mangled class name
 
-A class name carries its type arguments as text, `No<T>`, so substituting the
+A class name carries its type arguments as text, `Node<T>`, so substituting the
 parameter of the template rewrites the name as well as the types around it.
 -/
 
@@ -42,8 +42,8 @@ partial def splitArgs (s : String) : List String :=
       else go rest depth (c :: cur) acc
   go s.toList 0 [] []
 
-/-- The base name and the arguments of a mangled name, `Pilha<int>` into
-`Pilha` and `["int"]`, and a name without arguments into itself and `[]`. -/
+/-- The base name and the arguments of a mangled name, `Stack<int>` into
+`Stack` and `["int"]`, and a name without arguments into itself and `[]`. -/
 def splitName (n : String) : String × List String :=
   match n.splitOn "<" with
   | [] | [_] => (n, [])
@@ -53,7 +53,7 @@ def splitName (n : String) : String × List String :=
     (base, splitArgs inner)
 
 /-- Substitutes the type parameter in a mangled class name, `[T := int]` on
-`No<T>` giving `No<int>`. The parameter may also be the whole name. -/
+`Node<T>` giving `Node<int>`. The parameter may also be the whole name. -/
 partial def substName (param repl : String) (n : String) : String :=
   if n == param then repl
   else

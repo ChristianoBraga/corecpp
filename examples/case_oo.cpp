@@ -2,23 +2,23 @@
 // oriented fragment. The accumulator is the state of an object, and the
 // filter is a virtual method the derived class redefines, so the criterion
 // is chosen by dispatch and not by a parameter. Exit code 30.
-class Somador {
+class Adder {
 public:
   int acc;
-  virtual bool aceita(int i) { return true; }
-  void junta(int i) { if (aceita(i)) { acc = acc + i; } }
+  virtual bool accepts(int i) { return true; }
+  void add(int i) { if (accepts(i)) { acc = acc + i; } }
   int total() { return acc; }
-  virtual ~Somador() { }
+  virtual ~Adder() { }
 };
 
-class SomadorPar : public Somador {
+class EvenAdder : public Adder {
 public:
-  bool aceita(int i) override { return i % 2 == 0; }
+  bool accepts(int i) override { return i % 2 == 0; }
 };
 
 int main() {
-  Somador* s = new SomadorPar();
-  for (int i = 1; i <= 10; i = i + 1) { s->junta(i); }
+  Adder* s = new EvenAdder();
+  for (int i = 1; i <= 10; i = i + 1) { s->add(i); }
   int r = s->total();
   delete s;
   return r;

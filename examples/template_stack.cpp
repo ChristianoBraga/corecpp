@@ -2,42 +2,42 @@
 // instantiation is a class of its own, built by substitution before the
 // program is checked, and the two share no subtype relation. Returns 7.
 template<typename T>
-class Pilha {
+class Stack {
 private:
-  std::vector<T>* itens;
-  int topo;
+  std::vector<T>* items;
+  int top;
 public:
-  Pilha(int n) {
-    this->itens = new std::vector<T>(n);
-    this->topo = 0;
+  Stack(int n) {
+    this->items = new std::vector<T>(n);
+    this->top = 0;
   }
-  void empilha(T x) {
-    (*itens)[topo] = x;
-    topo = topo + 1;
+  void push(T x) {
+    (*items)[top] = x;
+    top = top + 1;
   }
-  T desempilha() {
-    topo = topo - 1;
-    return (*itens)[topo];
+  T pop() {
+    top = top - 1;
+    return (*items)[top];
   }
-  ~Pilha() { delete itens; }
+  ~Stack() { delete items; }
 };
 
-class Ponto {
+class Point {
 public:
   int x;
 };
 
 int main() {
-  Pilha<int>* p = new Pilha<int>(4);
-  p->empilha(3);
-  p->empilha(4);
-  int s = p->desempilha() + p->desempilha();
+  Stack<int>* p = new Stack<int>(4);
+  p->push(3);
+  p->push(4);
+  int s = p->pop() + p->pop();
 
-  Pilha<Ponto*>* q = new Pilha<Ponto*>(2);
-  Ponto* a = new Ponto();
+  Stack<Point*>* q = new Stack<Point*>(2);
+  Point* a = new Point();
   a->x = 0;
-  q->empilha(a);
-  Ponto* b = q->desempilha();
+  q->push(a);
+  Point* b = q->pop();
   int r = s + b->x;
   delete a;
   delete p;

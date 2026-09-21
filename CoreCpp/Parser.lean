@@ -101,7 +101,7 @@ mutual
 /-- `ClassType ::= TypeId ( '::' TypeId )* ( '<' Type '>' )?`, a class name
 possibly qualified by namespaces and possibly instantiating a class template.
 The instantiation is named by the chain the design prints for the type, so
-`Pilha<int>` in the source and the expanded class have the same name, and
+`Stack<int>` in the source and the expanded class have the same name, and
 `Templates.instantiate` adds the class before the program is checked. -/
 partial def classType : P String := do
   let mut n ← typeId

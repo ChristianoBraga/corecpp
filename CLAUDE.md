@@ -15,6 +15,10 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
 - Code, comments, docstrings, identifiers, error messages and grammar
   nonterminals are always in English. Prose replies to Christiano are in
   Portuguese.
+- The identifiers of every Core C++ program and of every logic program are
+  English too, in `examples/`, in `Test.lean` and in every snippet of the
+  blueprint. A class is `Stack`, `Node`, `Shape` or `Account`, a field is
+  `value`, `next` or `balance`, a method is `push`, `pop` or `deposit`.
 - RULE ZERO of `~/.claude/CLAUDE.md` applies. Short replies, active voice, no
   first person, no `:`, `-` or `;` in prose, exact domain terminology. Token,
   not "ficha". Closure, not "fechamento". Command (`Cmd`) for assignment,

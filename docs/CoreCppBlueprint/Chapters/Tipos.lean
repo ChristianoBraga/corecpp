@@ -82,7 +82,7 @@ Instantiation is substitution, and it precedes every other judgment.
 
 $$`\dfrac{p \text{ has } \mathtt{template{<}typename\ T{>}\ class}\ C \qquad C{<}\tau{>} \text{ mentioned in } p \qquad C{<}\tau{>} \notin \text{class table of } p}{p \longrightarrow p, \mathtt{class}\ C{<}\tau{>}\ \{ \ldots [T := \tau] \ldots \}}\;\textsf{(Inst)}`
 
-The substitution replaces the type `T` in every field, parameter, result, local declaration, vector element and class name the body mentions, and it rewrites the name of a mentioned class in its own chain, so `No<T>*` inside `Lista<T>` becomes `No<int>*` in `Lista<int>`. The rule applies to a fixed point, because the class it adds may mention another instantiation, and it is idempotent, so `check` and `runWith` may both apply it. A template is never checked, only its instantiations are, as in C++, and two instantiations of one template are two independent classes with no subtype relation between them.
+The substitution replaces the type `T` in every field, parameter, result, local declaration, vector element and class name the body mentions, and it rewrites the name of a mentioned class in its own chain, so `Node<T>*` inside `Lista<T>` becomes `Node<int>*` in `Lista<int>`. The rule applies to a fixed point, because the class it adds may mention another instantiation, and it is idempotent, so `check` and `runWith` may both apply it. A template is never checked, only its instantiations are, as in C++, and two instantiations of one template are two independent classes with no subtype relation between them.
 :::
 
 # Subtyping and inference
@@ -92,7 +92,7 @@ Subsumption is the typing rule of subtyping, and it is the only conversion betwe
 
 $$`\dfrac{\Gamma \vdash e : D* \qquad D \text{ derives from } B}{\Gamma \vdash e : B*}\;\textsf{(T-Sub)}`
 
-It holds in declarations, assignments, arguments, results, comparisons and in the branches of `?:`. Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so `Pilha<D*>` is not a subtype of `Pilha<B*>`, and the reason is that a `Pilha<B*>` accepts an `empilha` of any `B*`, which a `Pilha<D*>` does not. The course states the reason and leaves variance out.
+It holds in declarations, assignments, arguments, results, comparisons and in the branches of `?:`. Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so `Stack<D*>` is not a subtype of `Stack<B*>`, and the reason is that a `Stack<B*>` accepts an `push` of any `B*`, which a `Stack<D*>` does not. The course states the reason and leaves variance out.
 :::
 
 :::definition "inference" (parent := "ud6") (lean := "CoreCpp.Cmd") (uses := "cmd_decl")

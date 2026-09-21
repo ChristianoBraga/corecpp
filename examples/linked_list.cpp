@@ -2,22 +2,22 @@
 // recursive type, nullptr as the end of the list, and a recursive sum through
 // the pointers. Every object is created with new and reached through a
 // pointer. Exit code 6.
-class No {
+class Node {
 public:
-  int valor;
-  No* prox;
+  int value;
+  Node* next;
 };
 
-int soma(No* p) {
-  return p == nullptr ? 0 : p->valor + soma(p->prox);
+int sum(Node* p) {
+  return p == nullptr ? 0 : p->value + sum(p->next);
 }
 
 int main() {
-  No* lista = new No();
-  lista->valor = 1;
-  lista->prox = new No();
-  lista->prox->valor = 2;
-  lista->prox->prox = new No();
-  lista->prox->prox->valor = 3;
-  return soma(lista);
+  Node* list = new Node();
+  list->value = 1;
+  list->next = new Node();
+  list->next->value = 2;
+  list->next->next = new Node();
+  list->next->next->value = 3;
+  return sum(list);
 }

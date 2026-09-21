@@ -4,16 +4,16 @@
 // resolutions coincide on every accepted program. Exit code 21.
 class Base {
 public:
-  int fixo() { return 1; }
-  virtual int variavel() { return 10; }
+  int fixed() { return 1; }
+  virtual int dispatched() { return 10; }
 };
 
-class Derivada : public Base {
+class Derived : public Base {
 public:
-  int variavel() override { return 20; }
+  int dispatched() override { return 20; }
 };
 
 int main() {
-  Base* b = new Derivada();
-  return b->fixo() + b->variavel();
+  Base* b = new Derived();
+  return b->fixed() + b->dispatched();
 }

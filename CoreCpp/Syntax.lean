@@ -26,7 +26,7 @@ inductive Ty where
   deriving Repr, BEq, Inhabited
 
 /-- The type as the design writes it, which is also the name a template
-instantiation carries, `Pilha<int>`, so the source and the expanded class
+instantiation carries, `Stack<int>`, so the source and the expanded class
 agree. -/
 partial def Ty.toString : Ty → String
   | .int => "int" | .bool => "bool" | .void => "void"

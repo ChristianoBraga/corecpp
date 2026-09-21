@@ -1,24 +1,24 @@
 // Core C++ example, UD V. Single inheritance, a virtual method redefined with
-// override, subsumption of Quadrado* to Forma*, dispatch by the class tag of
+// override, subsumption of Square* to Shape*, dispatch by the class tag of
 // the object, and a namespace. The virtual destructor lets delete through the
 // base pointer reach the object. Exit code 16.
-namespace Geometria {
-  class Forma {
+namespace Geometry {
+  class Shape {
   public:
     virtual int area() { return 0; }
-    virtual ~Forma() { }
+    virtual ~Shape() { }
   };
-  class Quadrado : public Forma {
+  class Square : public Shape {
   private:
-    int lado;
+    int side;
   public:
-    Quadrado(int l) { this->lado = l; }
-    int area() override { return lado * lado; }
+    Square(int l) { this->side = l; }
+    int area() override { return side * side; }
   };
 }
 
 int main() {
-  Geometria::Forma* f = new Geometria::Quadrado(4);
+  Geometry::Shape* f = new Geometry::Square(4);
   int a = f->area();
   delete f;
   return a;

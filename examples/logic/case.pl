@@ -2,13 +2,13 @@
 % language. The sum of the even numbers from 1 to N is a relation between N
 % and S, and the two recursive clauses are the two cases of the filter.
 % Expected: S = 30.
-soma_pares(0, 0).
-soma_pares(N, S) :-
+sum_even(0, 0).
+sum_even(N, S) :-
   N > 0, 0 =:= N mod 2,
-  M is N - 1, soma_pares(M, T), S is T + N.
-soma_pares(N, S) :-
+  M is N - 1, sum_even(M, T), S is T + N.
+sum_even(N, S) :-
   N > 0, 1 =:= N mod 2,
-  M is N - 1, soma_pares(M, S).
+  M is N - 1, sum_even(M, S).
 
-?- soma_pares(10, S).
-?- soma_pares(4, S).
+?- sum_even(10, S).
+?- sum_even(4, S).

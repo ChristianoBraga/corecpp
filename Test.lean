@@ -89,14 +89,14 @@ int main() { return factorial(5); }"
 /-! ## UD II, classes with fields, pointers, nullptr and vectors -/
 
 -- a linked list summed through pointers
-#eval prog "class No { public: int valor; No* prox; };
-int soma(No* p) { return p == nullptr ? 0 : p->valor + soma(p->prox); }
+#eval prog "class Node { public: int value; Node* next; };
+int sum(Node* p) { return p == nullptr ? 0 : p->value + sum(p->next); }
 int main() {
-  No* lista = new No();
-  lista->valor = 1;
-  lista->prox = new No();
-  lista->prox->valor = 2;
-  return soma(lista);
+  Node* list = new Node();
+  list->value = 1;
+  list->next = new Node();
+  list->next->value = 2;
+  return sum(list);
 }"
 
 -- a vector created with new, indexed through the pointer
@@ -113,12 +113,12 @@ int main() {
 int main() { P* a = new P(); P* b = a; b->x = 7; return a->x + (a == b ? 10 : 0); }"
 
 -- new gives every field its default value
-#eval prog "class R { public: int n; bool ok; R* prox; };
-int main() { R* r = new R(); return r->n + (r->ok ? 10 : 1) + (r->prox == nullptr ? 100 : 0); }"
+#eval prog "class R { public: int n; bool ok; R* next; };
+int main() { R* r = new R(); return r->n + (r->ok ? 10 : 1) + (r->next == nullptr ? 100 : 0); }"
 
 -- dereferencing nullptr is an error
-#eval prog "class No { public: int valor; No* prox; };
-int main() { No* p = nullptr; return p->valor; }"
+#eval prog "class Node { public: int value; Node* next; };
+int main() { Node* p = nullptr; return p->value; }"
 
 -- an index outside the vector is an error
 #eval prog "int main() { std::vector<int>* v = new std::vector<int>(2); return (*v)[2]; }"
@@ -168,9 +168,9 @@ int main() { P* p = nullptr; P*& q = p; q = new P(); q->a = 3; return p->a; }"
 int main() { P* keep = nullptr; { P* p = new P(); int& r = p->a; r = 4; keep = p; } return keep->a; }"
 
 -- calls with effects inside an expression, left operand first
-#eval prog "class Cont { public: int n; };
-int prox(Cont* c) { c->n = c->n + 1; return c->n; }
-int main() { Cont* c = new Cont(); return prox(c) + 10 * prox(c); }"
+#eval prog "class Cell { public: int n; };
+int next(Cell* c) { c->n = c->n + 1; return c->n; }
+int main() { Cell* c = new Cell(); return next(c) + 10 * next(c); }"
 
 -- the initialiser of a reference must denote a location
 #eval (parseProgram "int main() { int& r = 5; return r; }").map check
@@ -186,8 +186,8 @@ int main() { Cont* c = new Cont(); return prox(c) + 10 * prox(c); }"
 /-! ## UD IV, reference parameters, lambdas and std::function -/
 
 -- swap by reference, the parameters alias the arguments
-#eval prog "void troca(int& a, int& b) { int t = a; a = b; b = t; }
-int main() { int x = 1; int y = 2; troca(x, y); return x * 10 + y; }"
+#eval prog "void swap(int& a, int& b) { int t = a; a = b; b = t; }
+int main() { int x = 1; int y = 2; swap(x, y); return x * 10 + y; }"
 
 -- a reference parameter bound to a field and to a vector element
 #eval prog "class P { public: int a; };
@@ -197,29 +197,29 @@ int main() { P* p = new P(); inc(p->a); inc(p->a);
   return p->a * 10 + (*v)[1]; }"
 
 -- a lambda returned by a function and applied through a std::function parameter
-#eval prog "std::function<int(int)> multiplicador(int k) {
+#eval prog "std::function<int(int)> multiplier(int k) {
   return [=](int x) -> int { return k * x; };
 }
-int aplica(std::function<int(int)> f, int v) { return f(v); }
-int main() { return aplica(multiplicador(3), 14); }"
+int apply(std::function<int(int)> f, int v) { return f(v); }
+int main() { return apply(multiplier(3), 14); }"
 
 -- a counter through a captured pointer, the object outlives its block
-#eval prog "class Caixa { public: int valor; };
-std::function<int()> contador() {
-  Caixa* c = new Caixa();
-  c->valor = 0;
-  return [=]() -> int { c->valor = c->valor + 1; return c->valor; };
+#eval prog "class Box { public: int value; };
+std::function<int()> counter() {
+  Box* c = new Box();
+  c->value = 0;
+  return [=]() -> int { c->value = c->value + 1; return c->value; };
 }
-int main() { std::function<int()> k = contador(); int primeiro = k(); return k() + k() + primeiro; }"
+int main() { std::function<int()> k = counter(); int first = k(); return k() + k() + first; }"
 
 -- the capture is a copy taken at the lambda, later writes to n are not seen
 #eval prog "int main() { int n = 5;
-  std::function<int(int)> soma = [=](int x) -> int { return x + n; };
-  n = 100; return soma(1); }"
+  std::function<int(int)> sum = [=](int x) -> int { return x + n; };
+  n = 100; return sum(1); }"
 
 -- a lambda passed directly as an argument
-#eval prog "int duasVezes(std::function<int(int)> f, int x) { return f(f(x)); }
-int main() { return duasVezes([=](int x) -> int { return x * x; }, 3); }"
+#eval prog "int applyTwice(std::function<int(int)> f, int x) { return f(f(x)); }
+int main() { return applyTwice([=](int x) -> int { return x * x; }, 3); }"
 
 -- a function value copied into another variable and called through it
 #eval prog "int main() { std::function<int(int, int)> g = [=](int a, int b) -> int { return a - b; };
@@ -251,37 +251,37 @@ int main() { return duasVezes([=](int x) -> int { return x * x; }, 3); }"
 /-! ## UD V, classes, methods, inheritance, delete and namespaces -/
 
 -- a class with a private field, a constructor and methods, this and the unqualified field
-#eval prog "class Contador {
+#eval prog "class Counter {
 private:
-  int valor;
+  int value;
 public:
-  Contador(int inicial) { this->valor = inicial; }
-  void incrementa() { valor = valor + 1; }
-  int atual() { return valor; }
+  Counter(int initial) { this->value = initial; }
+  void increment() { value = value + 1; }
+  int current() { return value; }
 };
-int main() { Contador* c = new Contador(40); c->incrementa(); c->incrementa(); return c->atual(); }"
+int main() { Counter* c = new Counter(40); c->increment(); c->increment(); return c->current(); }"
 
 -- an abstract data type, a stack over a vector
-#eval prog "class Pilha {
+#eval prog "class Stack {
 private:
-  std::vector<int>* itens;
-  int topo;
+  std::vector<int>* items;
+  int top;
 public:
-  Pilha(int n) { this->itens = new std::vector<int>(n); this->topo = 0; }
-  void empilha(int x) { (*itens)[topo] = x; topo = topo + 1; }
-  int desempilha() { topo = topo - 1; return (*itens)[topo]; }
+  Stack(int n) { this->items = new std::vector<int>(n); this->top = 0; }
+  void push(int x) { (*items)[top] = x; top = top + 1; }
+  int pop() { top = top - 1; return (*items)[top]; }
 };
-int main() { Pilha* p = new Pilha(8); p->empilha(1); p->empilha(41); return p->desempilha() + p->desempilha(); }"
+int main() { Stack* p = new Stack(8); p->push(1); p->push(41); return p->pop() + p->pop(); }"
 
 -- inheritance, virtual dispatch, subsumption, a namespace and delete with a virtual destructor
-#eval prog "namespace Geometria {
-  class Forma { public: virtual int area() { return 0; } virtual ~Forma() { } };
-  class Quadrado : public Forma {
-  private: int lado;
-  public: Quadrado(int l) { this->lado = l; } int area() override { return lado * lado; }
+#eval prog "namespace Geometry {
+  class Shape { public: virtual int area() { return 0; } virtual ~Shape() { } };
+  class Square : public Shape {
+  private: int side;
+  public: Square(int l) { this->side = l; } int area() override { return side * side; }
   };
 }
-int main() { Geometria::Forma* f = new Geometria::Quadrado(4); int a = f->area(); delete f; return a; }"
+int main() { Geometry::Shape* f = new Geometry::Square(4); int a = f->area(); delete f; return a; }"
 
 -- a non virtual method through a base pointer is the method of the base
 #eval prog "class B { public: int f() { return 1; } virtual int g() { return 10; } };
@@ -322,33 +322,33 @@ int main() { B* b = new D(); delete b; return 0; }"
 #eval (parseProgram "class B { public: int x; B(int v) { x = v; } }; class D : public B { public: int y; }; int main() { return 0; }").map check
 -- this outside a class
 #eval (parseProgram "int main() { return this->x; }").map check
--- a Base* is not a Derivada*
+-- a Base* is not a Derived*
 #eval (parseProgram "class B { public: int x; }; class D : public B { public: int y; }; int main() { B* b = new D(); D* d = b; return 0; }").map check
 -- the constructor is named after the class, by the grammar
 #eval parseProgram "class C { public: D() { } }; int main() { return 0; }"
 
 -- the trace of a constructor and a method call
 #eval do
-  let p ← parseProgram "class C { private: int v; public: C(int x) { v = x; } int dobro() { return v * 2; } };
-int main() { C* c = new C(21); return c->dobro(); }"
+  let p ← parseProgram "class C { private: int v; public: C(int x) { v = x; } int twice() { return v * 2; } };
+int main() { C* c = new C(21); return c->twice(); }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
 /-! ## UD VI, overloading, operators, templates and inference -/
 
 -- overloading by the type of the argument
-#eval prog "int dobro(int n) { return 2 * n; }
-bool dobro(bool b) { return b; }
-int main() { return dobro(21) + (dobro(false) ? 1 : 0); }"
+#eval prog "int twice(int n) { return 2 * n; }
+bool twice(bool b) { return b; }
+int main() { return twice(21) + (twice(false) ? 1 : 0); }"
 
 -- overloading by the number of arguments
-#eval prog "int soma(int a) { return a; }
-int soma(int a, int b) { return a + b; }
-int main() { return soma(1) + soma(2, 39); }"
+#eval prog "int sum(int a) { return a; }
+int sum(int a, int b) { return a + b; }
+int main() { return sum(1) + sum(2, 39); }"
 
 -- a method is overloaded like a function
-#eval prog "class C { public: int v; int soma(int a) { return v + a; } int soma(int a, int b) { return v + a + b; } };
-int main() { C* c = new C(); c->v = 1; return c->soma(2) + c->soma(3, 34); }"
+#eval prog "class C { public: int v; int sum(int a) { return v + a; } int sum(int a, int b) { return v + a + b; } };
+int main() { C* c = new C(); c->v = 1; return c->sum(2) + c->sum(3, 34); }"
 
 -- an exact match wins over a candidate reached by subsumption
 #eval prog "class A { public: int a; }; class B : public A { public: int b; };
@@ -357,12 +357,12 @@ int f(B* x) { return 2; }
 int main() { B* z = new B(); return f(z); }"
 
 -- an infix operator on an object is the call of its member
-#eval prog "class Ponto { public: int x; Ponto* operator+(Ponto& o) { Ponto* r = new Ponto(); r->x = x + o.x; return r; } };
-int main() { Ponto* a = new Ponto(); a->x = 21; Ponto* c = *a + *a; return c->x; }"
+#eval prog "class Point { public: int x; Point* operator+(Point& o) { Point* r = new Point(); r->x = x + o.x; return r; } };
+int main() { Point* a = new Point(); a->x = 21; Point* c = *a + *a; return c->x; }"
 
 -- an overloaded comparison gives a bool
-#eval prog "class Par { public: int k; bool operator<(Par& o) { return k < o.k; } };
-int main() { Par* a = new Par(); a->k = 1; Par* b = new Par(); b->k = 2; return (*a < *b) ? 42 : 0; }"
+#eval prog "class Pair { public: int k; bool operator<(Pair& o) { return k < o.k; } };
+int main() { Pair* a = new Pair(); a->k = 1; Pair* b = new Pair(); b->k = 2; return (*a < *b) ? 42 : 0; }"
 
 -- operator[] returning a reference denotes a location
 #eval prog "class V { private: std::vector<int>* d; public: V(int n) { this->d = new std::vector<int>(n); }
@@ -370,24 +370,24 @@ int& operator[](int i) { return (*d)[i]; } };
 int main() { V* v = new V(2); (*v)[0] = 40; (*v)[1] = (*v)[0] + 2; return (*v)[1]; }"
 
 -- a class template instantiated at two types
-#eval prog "template<typename T> class Caixa { private: T v; public: Caixa(T x) { this->v = x; } T abre() { return v; } };
-int main() { Caixa<int>* a = new Caixa<int>(40); Caixa<bool>* b = new Caixa<bool>(true);
-return a->abre() + (b->abre() ? 2 : 0); }"
+#eval prog "template<typename T> class Box { private: T v; public: Box(T x) { this->v = x; } T get() { return v; } };
+int main() { Box<int>* a = new Box<int>(40); Box<bool>* b = new Box<bool>(true);
+return a->get() + (b->get() ? 2 : 0); }"
 
 -- the instantiation of a template that uses the parameter in a vector
-#eval prog "template<typename T> class Pilha { private: std::vector<T>* itens; int topo;
-public: Pilha(int n) { this->itens = new std::vector<T>(n); this->topo = 0; }
-void empilha(T x) { (*itens)[topo] = x; topo = topo + 1; }
-T desempilha() { topo = topo - 1; return (*itens)[topo]; } };
-int main() { Pilha<int>* p = new Pilha<int>(4); p->empilha(20); p->empilha(22);
-return p->desempilha() + p->desempilha(); }"
+#eval prog "template<typename T> class Stack { private: std::vector<T>* items; int top;
+public: Stack(int n) { this->items = new std::vector<T>(n); this->top = 0; }
+void push(T x) { (*items)[top] = x; top = top + 1; }
+T pop() { top = top - 1; return (*items)[top]; } };
+int main() { Stack<int>* p = new Stack<int>(4); p->push(20); p->push(22);
+return p->pop() + p->pop(); }"
 
 -- auto copies the type of a pointer to an instantiation
-#eval prog "template<typename T> class Caixa { private: T v; public: Caixa(T x) { this->v = x; } T abre() { return v; } };
-int main() { auto c = new Caixa<int>(42); auto n = c->abre(); return n; }"
+#eval prog "template<typename T> class Box { private: T v; public: Box(T x) { this->v = x; } T get() { return v; } };
+int main() { auto c = new Box<int>(42); auto n = c->get(); return n; }"
 
 -- a member takes an object by reference, never by value
-#eval (parseProgram "class P { public: int x; int soma(P o) { return x + o.x; } }; int main() { return 0; }").map check
+#eval (parseProgram "class P { public: int x; int sum(P o) { return x + o.x; } }; int main() { return 0; }").map check
 
 -- two overloads that differ only in a std::function parameter are rejected
 #eval (parseProgram "int g(std::function<int(int)> h) { return h(1); }
@@ -409,42 +409,42 @@ int main() { C* c = new C(); (*c)[0] = 1; return 0; }").map check
 int main() { return 0; }").map check
 
 -- an instantiation of a name that is not a template
-#eval (parseProgram "int main() { Pilha<int>* p = new Pilha<int>(2); return 0; }").map check
+#eval (parseProgram "int main() { Stack<int>* p = new Stack<int>(2); return 0; }").map check
 
 -- the grammar admits one type parameter
 #eval parseProgram "template<typename T> class C { public: T v; }; int main() { C<int, bool>* p = nullptr; return 0; }"
 
 -- the trace of an overloaded call and of an operator member
 #eval do
-  let p ← parseProgram "class Ponto { public: int x; Ponto* operator+(Ponto& o) { Ponto* r = new Ponto(); r->x = x + o.x; return r; } };
-int dobro(int n) { return 2 * n; }
-bool dobro(bool b) { return b; }
-int main() { Ponto* a = new Ponto(); a->x = dobro(3); Ponto* c = *a + *a; return c->x; }"
+  let p ← parseProgram "class Point { public: int x; Point* operator+(Point& o) { Point* r = new Point(); r->x = x + o.x; return r; } };
+int twice(int n) { return 2 * n; }
+bool twice(bool b) { return b; }
+int main() { Point* a = new Point(); a->x = twice(3); Point* c = *a + *a; return c->x; }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
 /-! ## UD VII, the fragments of the paradigms -/
 
 def impProg : String :=
-  "int mdc(int a, int b) {
+  "int gcd(int a, int b) {
     while (b != 0) { int t = b; b = a % b; a = t; }
     return a;
   }
-  int main() { int x = mdc(48, 18); int& y = x; y = y + 1; return y; }"
+  int main() { int x = gcd(48, 18); int& y = x; y = y + 1; return y; }"
 
 def ooProg : String :=
-  "class Conta {
+  "class Account {
    public:
-     int saldo;
-     virtual int taxa() { return 2; }
-     void deposita(int v) { saldo = saldo + v; }
-     virtual ~Conta() { }
+     int balance;
+     virtual int rate() { return 2; }
+     void deposit(int v) { balance = balance + v; }
+     virtual ~Account() { }
    };
-   int main() { Conta* c = new Conta(); c->deposita(5); int s = c->saldo; delete c; return s; }"
+   int main() { Account* c = new Account(); c->deposit(5); int s = c->balance; delete c; return s; }"
 
 def funProg : String :=
-  "std::function<int(int)> escala(int k) { return [=](int x) -> int { return k * x; }; }
-   int main() { std::function<int(int)> t = escala(3); return t(4); }"
+  "std::function<int(int)> scale(int k) { return [=](int x) -> int { return k * x; }; }
+   int main() { std::function<int(int)> t = scale(3); return t(4); }"
 
 -- the imperative program lies in the three fragments that admit it
 #eval (parseProgram impProg).map (fragment .imperative)
@@ -476,9 +476,9 @@ def appendProg : String :=
    ?- append([1, 2], [3, 4], R)."
 
 def factProg : String :=
-  "fatorial(0, 1).
-   fatorial(N, F) :- N > 0, M is N - 1, fatorial(M, G), F is N * G.
-   ?- fatorial(5, F)."
+  "factorial(0, 1).
+   factorial(N, F) :- N > 0, M is N - 1, factorial(M, G), F is N * G.
+   ?- factorial(5, F)."
 
 -- unification, with the occurs check
 #eval unify [] (.var "X") (.fn "f" [.num 1])

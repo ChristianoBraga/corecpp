@@ -1,13 +1,13 @@
 // Core C++ example, UD VI. An operator overloaded as a member. The infix
-// *a + *b is the call of Ponto::operator+, with the left operand as the
+// *a + *b is the call of Point::operator+, with the left operand as the
 // receiver. The result is a pointer, because objects are never copied.
 // Returns 10.
-class Ponto {
+class Point {
 public:
   int x;
   int y;
-  Ponto* operator+(Ponto& o) {
-    Ponto* r = new Ponto();
+  Point* operator+(Point& o) {
+    Point* r = new Point();
     r->x = x + o.x;
     r->y = y + o.y;
     return r;
@@ -15,13 +15,13 @@ public:
 };
 
 int main() {
-  Ponto* a = new Ponto();
+  Point* a = new Point();
   a->x = 1;
   a->y = 4;
-  Ponto* b = new Ponto();
+  Point* b = new Point();
   b->x = 2;
   b->y = 3;
-  Ponto* c = *a + *b;
+  Point* c = *a + *b;
   int r = c->x + c->y;
   delete a;
   delete b;
