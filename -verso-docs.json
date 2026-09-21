@@ -1,45 +1,44 @@
-{"99":
- "<code>CoreCpp.Cmd.decl (ty : CoreCpp.Ty) (x : String) (init : CoreCpp.Expr) : CoreCpp.Cmd</code>",
- "98": "<code>Option CoreCpp.Expr</code>",
- "97": "<code>CoreCpp.Cmd.ret (e : Option CoreCpp.Expr) : CoreCpp.Cmd</code>",
- "96": "<code>CoreCpp.Cmd</code>",
- "95":
+{"99": "<code>CoreCpp.Cmd.ret (e : Option CoreCpp.Expr) : CoreCpp.Cmd</code>",
+ "98": "<code>CoreCpp.Cmd</code>",
+ "97":
  "<code>CoreCpp.Cmd.for (init : CoreCpp.Cmd) (c : CoreCpp.Expr) (step : CoreCpp.Cmd) (body : List CoreCpp.Cmd) : CoreCpp.Cmd</code>",
- "94":
+ "96":
  "<code>CoreCpp.Cmd.while (c : CoreCpp.Expr) (body : List CoreCpp.Cmd) : CoreCpp.Cmd</code>",
- "93":
+ "95":
  "<code>CoreCpp.Cmd.ite (c : CoreCpp.Expr) (t e : List CoreCpp.Cmd) : CoreCpp.Cmd</code>",
- "92": "<code>CoreCpp.Cmd.block (cs : List CoreCpp.Cmd) : CoreCpp.Cmd</code>",
- "91":
+ "94": "<code>CoreCpp.Cmd.block (cs : List CoreCpp.Cmd) : CoreCpp.Cmd</code>",
+ "93": "<code>CoreCpp.Expr.locOf (e : CoreCpp.Expr) : CoreCpp.Expr</code>",
+ "92":
  "<code>CoreCpp.Expr.callFn (f : CoreCpp.Expr) (args : List CoreCpp.Expr) : CoreCpp.Expr</code>",
- "90":
+ "91":
  "<code>CoreCpp.Cmd : Type</code><span class=\"sep\"></span><code class=\"docstring\">Commands. A block is a list of commands. `exprStmt` is the statement that\nevaluates an expression and discards its value. `declRef` is the local\nreference `τ& x = e`, a second name for the location `e` denotes. `delete e\nstatic` is `delete e;`, with `static` the class of the pointer as the type\nchecker sees it, filled by `Typing.annotate`. </code>",
+ "90": "<code>List CoreCpp.Cmd</code>",
  "9": "<code>CoreCpp.Token.sym (s : String) : CoreCpp.Token</code>",
- "89": "<code>List CoreCpp.Cmd</code>",
- "88":
+ "89":
  "<code>CoreCpp.Param : Type</code><span class=\"sep\"></span><code class=\"docstring\">A parameter. `byRef` marks a `τ&` parameter, bound to the location of the\nargument instead of to a fresh copy. </code>",
- "87": "<code>List CoreCpp.Param</code>",
- "86":
+ "88": "<code>List CoreCpp.Param</code>",
+ "87":
  "<code>CoreCpp.Expr.lambda (params : List CoreCpp.Param) (ret : CoreCpp.Ty) (body : List CoreCpp.Cmd) : CoreCpp.Expr</code>",
- "85": "<code>CoreCpp.Expr.index (e i : CoreCpp.Expr) : CoreCpp.Expr</code>",
- "84": "<code>CoreCpp.Expr.deref (e : CoreCpp.Expr) : CoreCpp.Expr</code>",
- "83":
+ "86": "<code>CoreCpp.Expr.index (e i : CoreCpp.Expr) : CoreCpp.Expr</code>",
+ "85": "<code>CoreCpp.Expr.deref (e : CoreCpp.Expr) : CoreCpp.Expr</code>",
+ "84":
  "<code>CoreCpp.Expr.arrow (e : CoreCpp.Expr) (f : String) : CoreCpp.Expr</code>",
- "82":
+ "83":
  "<code>CoreCpp.Expr.field (e : CoreCpp.Expr) (f : String) : CoreCpp.Expr</code>",
- "81": "<code>Option String</code>",
- "80":
- "<code>CoreCpp.Expr.methodCall (recv : CoreCpp.Expr) (arrow : Bool) (m : String) (args : List CoreCpp.Expr)\n  (static : Option String) : CoreCpp.Expr</code>",
+ "82": "<code>Option String</code>",
+ "81":
+ "<code>CoreCpp.Expr.methodCall (recv : CoreCpp.Expr) (arrow : Bool) (m : String) (args : List CoreCpp.Expr)\n  (static : Option String) (sig : Option (List CoreCpp.Ty)) : CoreCpp.Expr</code>",
+ "80": "<code>CoreCpp.Expr.this : CoreCpp.Expr</code>",
  "8":
  "<code>Nat : Type</code><span class=\"sep\"></span><code class=\"docstring\">The natural numbers, starting at zero.\n\nThis type is special-cased by both the kernel and the compiler, and overridden with an efficient\nimplementation. Both use a fast arbitrary-precision arithmetic library (usually\n[GMP](https://gmplib.org/)); at runtime, `Nat` values that are sufficiently small are unboxed.\n</code>",
- "79": "<code>CoreCpp.Expr.this : CoreCpp.Expr</code>",
- "78":
+ "79":
  "<code>CoreCpp.Expr.newVec (t : CoreCpp.Ty) (n : CoreCpp.Expr) : CoreCpp.Expr</code>",
- "77":
+ "78":
  "<code>CoreCpp.Expr.newObj (c : String) (args : List CoreCpp.Expr) : CoreCpp.Expr</code>",
+ "77": "<code>Option (List CoreCpp.Ty)</code>",
  "76": "<code>List CoreCpp.Expr</code>",
  "75":
- "<code>CoreCpp.Expr.call (f : String) (args : List CoreCpp.Expr) : CoreCpp.Expr</code>",
+ "<code>CoreCpp.Expr.call (f : String) (args : List CoreCpp.Expr) (sig : Option (List CoreCpp.Ty)) : CoreCpp.Expr</code>",
  "74": "<code>CoreCpp.Expr.cond (c t e : CoreCpp.Expr) : CoreCpp.Expr</code>",
  "73": "<code>CoreCpp.BinOp</code>",
  "72":
@@ -54,7 +53,7 @@
  "66": "<code>Bool</code>",
  "65": "<code>CoreCpp.Expr.boolLit (b : Bool) : CoreCpp.Expr</code>",
  "64":
- "<code>CoreCpp.Expr : Type</code><span class=\"sep\"></span><code class=\"docstring\">Expressions. Function call is included because `Args` is part of\n`PostfixExpr`. `field` is `e.f`, `arrow` is `e-&gt;f`, `deref` is `*e` and\n`index` is `e[i]`. `newObj C` is `new C()` and `newVec τ n` is\n`new std::vector&lt;τ&gt;(n)`. `lambda ps τ c` is `[=](ps) -&gt; τ { c }`, which the\ngrammar admits only as an argument, as the initialiser of a declaration and\nas the expression of `return`. `callFn e args` calls the function value `e`,\nand `call f args` calls the function named `f`, or the function value bound to\n`f` when `f` is a variable in scope, or the method `f` of `this` inside a\nclass. `newObj C args` is `new C(args)`, which allocates the object and runs\nthe constructor. `this` is the location of the receiver inside a method.\n`methodCall e arrow m args static` is `e.m(args)` when `arrow` is false and\n`e-&gt;m(args)` when it is true. The field `static` is the class of the receiver\nas the type checker sees it, filled by `Typing.annotate` and `none` as the\nparser leaves it, the datum the evaluator needs to tell a dispatched call from\na static one. </code>",
+ "<code>CoreCpp.Expr : Type</code><span class=\"sep\"></span><code class=\"docstring\">Expressions. Function call is included because `Args` is part of\n`PostfixExpr`. `field` is `e.f`, `arrow` is `e-&gt;f`, `deref` is `*e` and\n`index` is `e[i]`. `newObj C` is `new C()` and `newVec τ n` is\n`new std::vector&lt;τ&gt;(n)`. `lambda ps τ c` is `[=](ps) -&gt; τ { c }`, which the\ngrammar admits only as an argument, as the initialiser of a declaration and\nas the expression of `return`. `callFn e args` calls the function value `e`,\nand `call f args` calls the function named `f`, or the function value bound to\n`f` when `f` is a variable in scope, or the method `f` of `this` inside a\nclass. `newObj C args` is `new C(args)`, which allocates the object and runs\nthe constructor. `this` is the location of the receiver inside a method.\n`methodCall e arrow m args static` is `e.m(args)` when `arrow` is false and\n`e-&gt;m(args)` when it is true. The field `static` is the class of the receiver\nas the type checker sees it, filled by `Typing.annotate` and `none` as the\nparser leaves it, the datum the evaluator needs to tell a dispatched call from\na static one. The field `sig` of `call` and of `methodCall` is the parameter\ntype list of the overload the type checker chose, `none` as the parser leaves\nit, the datum the evaluator needs to pick one function or method out of an\noverload set. `locOf e` is the location of `e` as a value, an expression no\nprogram writes, which `Typing.annotate` puts on the `return` of a member that\nreturns a reference. </code>",
  "63":
  "<code>Int : Type</code><span class=\"sep\"></span><code class=\"docstring\">The integers.\n\nThis type is special-cased by the compiler and overridden with an efficient implementation. The\nruntime has a special representation for `Int` that stores “small” signed numbers directly, while\nlarger numbers use a fast arbitrary-precision arithmetic library (usually\n[GMP](https://gmplib.org/)). A “small number” is an integer that can be encoded with one fewer bits\nthan the platform's pointer size (i.e. 63 bits on 64-bit architectures and 31 bits on 32-bit\narchitectures).\n</code>",
  "62": "<code>Int</code>",
@@ -91,820 +90,906 @@
  "35": "<code>CoreCpp.Ty.bool : CoreCpp.Ty</code>",
  "34":
  "<code>CoreCpp.Ty : Type</code><span class=\"sep\"></span><code class=\"docstring\">Types. `cls` is a class type, reached only through a pointer, `ptr` a\npointer type, `vec` the type of `std::vector&lt;τ&gt;`, also reached only through a\npointer, `fn ret params` the type `std::function&lt;ret(params)&gt;` of function\nvalues, and `nullT` the type of `nullptr`, which converts to any pointer type\nand never names a variable. </code>",
+ "330":
+ "<code>CoreCpp.Templates.substName (param repl n : String) : String</code><span class=\"sep\"></span><code class=\"docstring\">Substitutes the type parameter in a mangled class name, `[T := int]` on\n`No&lt;T&gt;` giving `No&lt;int&gt;`. The parameter may also be the whole name. </code>",
  "33": "<code>CoreCpp.Ty.int : CoreCpp.Ty</code>",
+ "329":
+ "<code>CoreCpp.Templates.substTy (param : String) (τ : CoreCpp.Ty) : CoreCpp.Ty → CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">`[T := τ]` on a type. </code>",
+ "328":
+ "<code>CoreCpp.Templates.substClass (param : String) (τ : CoreCpp.Ty) (c : CoreCpp.ClassDecl) : CoreCpp.ClassDecl</code><span class=\"sep\"></span><code class=\"docstring\">The class of the template instantiated at τ, with the name the source\nwrites for it. </code>",
+ "327": "<code>optParam Nat 32</code>",
+ "326":
+ "<code>CoreCpp.Templates.instantiate (p : CoreCpp.Program) (fuel : Nat := 32) : Except String CoreCpp.Program</code><span class=\"sep\"></span><code class=\"docstring\">Adds one class per instantiation the program mentions, to a fixed point.\nIdempotent, so `check` and `runWith` may both apply it. </code>",
+ "325":
+ "<code>CoreCpp.Program.templates (p : CoreCpp.Program) : List (String × CoreCpp.ClassDecl)</code><span class=\"sep\"></span><code class=\"docstring\">The class templates of the program, each with its type parameter. </code>",
+ "324":
+ "<code>CoreCpp.Eval.callMethod (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (recv : CoreCpp.Expr) (arrow : Bool)\n  (m : String) (es : List CoreCpp.Expr) (static : Option String) (sig : Option (List CoreCpp.Ty)) :\n  CoreCpp.M (CoreCpp.Method × CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The receiver, the dispatch and the call of a method, shared by the value\nposition and the location position. The result of a member that returns a\nreference is the location, `loc ℓ`, which the value position reads and the\nlocation position takes as it is. </code>",
+ "323":
+ "<code>CoreCpp.Typing.refRets : List CoreCpp.Cmd → List CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">The `return e` of a member that returns a reference becomes `return &e`,\nthe location as a value, which the caller reads or uses as a location. The\nwalk does not enter the body of a lambda. </code>",
+ "322":
+ "<code>CoreCpp.Typing.refReturns (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (m : String) : List CoreCpp.Cmd → CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Every `return` of a member that returns a reference is a `return e` with\n`e` denoting a location. The walk does not enter the body of a lambda, whose\n`return` is the lambda's own.\n\n    τ has values    every return of c is return e with Γ ⊢ₗ e : τ\n    ─────────────────────────────────────────────────────────────── (T-RetRef)\n    ⊢ τ& m(…) { c } in C                                                          </code>",
+ "321":
+ "<code>CoreCpp.operatorName : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">The operators a class may overload, the production `Op` of the design. </code>",
+ "320":
+ "<code>CoreCpp.FunEnv.lookupSig (fs : CoreCpp.FunEnv) (f : String) (sig : Option (List CoreCpp.Ty)) : Option CoreCpp.Fun</code><span class=\"sep\"></span><code class=\"docstring\">The function named f with the signature the type checker chose, or the\nfirst one of the name when the program was not annotated. </code>",
  "32":
  "<code>CoreCpp.Lexer.skipLine : List Char → List Char</code><span class=\"sep\"></span><code class=\"docstring\">Discards a line comment. </code>",
+ "319":
+ "<code>CoreCpp.Typing.resolveMethod (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (recv : CoreCpp.Expr) (arrow : Bool) (m : String)\n  (es : List CoreCpp.Expr) : CoreCpp.T (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method a call selects, with the class that declares it, the rules\nT-Method and T-MethodArrow with the overload set of the name. </code>",
+ "318":
+ "<code>CoreCpp.Typing.resolveFun (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (f : String) (es : List CoreCpp.Expr) :\n  CoreCpp.T CoreCpp.Fun</code><span class=\"sep\"></span><code class=\"docstring\">The function a call selects out of the overload set of its name. </code>",
+ "317": "<code>List (List CoreCpp.Param)</code>",
+ "316":
+ "<code>CoreCpp.Typing.pickOverload (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (who : String) (cands : List (List CoreCpp.Param))\n  (es : List CoreCpp.Expr) : CoreCpp.T Nat</code><span class=\"sep\"></span><code class=\"docstring\">The candidate of an overload set that a call selects, by its index. The\ncandidates that accept the arguments are collected, and the choice is the\nexact one when several accept.\n\n    A = the candidates of cand(f, k) that accept e₁, …, eₖ\n    A has one element whose parameters are exactly the types of the arguments, or A is a singleton\n    ─────────────────────────────────────────────────────────────────────────────── (T-Overload)\n    the call of f selects that candidate\n\n    With A empty the error is the one of the single candidate of that arity,\n    when there is one, and `no overload` otherwise. With two or more in A and\n    no exact one the call is ambiguous. Core C++ does not rank conversion\n    sequences, so the rule fits in one line on the board.                        </code>",
+ "315":
+ "<code>CoreCpp.Typing.distinguishable (ps qs : List CoreCpp.Param) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">Two overloads of one name are declared together only when they differ in\narity or in a parameter of a type other than `std::function`, the check 5 of\nthe design. The restriction keeps a lambda argument from deciding a call,\nwhich would ask for the type of the lambda before the candidate is known.\n\n    arities differ, or ∃ i. pᵢ ≠ qᵢ and neither pᵢ nor qᵢ is std::function\n    ──────────────────────────────────────────────────────────────────── (Distinguishable)\n    the two declarations are overloads                                          </code>",
+ "314":
+ "<code>CoreCpp.Program.findMethods (p : CoreCpp.Program) (c m : String) : List (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The overload set of the method m as seen from class c, one method per\nsignature, the nearest in the chain of c, each with the class that declares\nit. A method of a derived class replaces the one of a base with the same\nsignature, and a different signature is another overload, without the name\nhiding of C++. </code>",
+ "313":
+ "<code>CoreCpp.Program.funsNamed (p : CoreCpp.Program) (f : String) : List CoreCpp.Fun</code><span class=\"sep\"></span><code class=\"docstring\">The overload set of the functions named f. </code>",
+ "312":
+ "<code>CoreCpp.sigOf (ps : List CoreCpp.Param) : List CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The signature of a list of parameters, the types alone, which names one\nmember of an overload set. </code>",
+ "311":
+ "<code>CoreCpp.P.qualify (n : String) : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">A class name as written, qualified by the enclosing namespaces when it\ncarries no `::` of its own. </code>",
+ "310":
+ "<code>CoreCpp.Typing.annCmds (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) :\n  List CoreCpp.Cmd → CoreCpp.T (List CoreCpp.Cmd)</code>",
  "31":
  "<code>Option.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">Optional values, which are either `some` around a value from the underlying type or `none`.\n\n`Option` can represent nullable types or computations that might fail. In the codomain of a function\ntype, it can also represent partiality.\n</code>",
- "307":
- "<code>CoreCpp.P.qualify (n : String) : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">A class name as written, qualified by the enclosing namespaces when it\ncarries no `::` of its own. </code>",
- "306":
- "<code>CoreCpp.Typing.annCmds (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) :\n  List CoreCpp.Cmd → CoreCpp.T (List CoreCpp.Cmd)</code>",
- "305":
+ "309":
  "<code>CoreCpp.Typing.annCmd (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) : CoreCpp.Cmd → CoreCpp.T CoreCpp.Cmd</code>",
- "304":
+ "308":
  "<code>CoreCpp.Typing.annExpr (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) : CoreCpp.Expr → CoreCpp.T CoreCpp.Expr</code>",
- "303":
+ "307":
  "<code>CoreCpp.Typing.staticClass (t : CoreCpp.Ty) (arrow : Bool) : Option String</code><span class=\"sep\"></span><code class=\"docstring\">The class a receiver expression has, `C` for `e.m` with `e : C` and for\n`e-&gt;m` with `e : C*`, and for `delete e` with `e : C*`. </code>",
- "302":
- "<code>CoreCpp.Typing.annotate (p : CoreCpp.Program) : CoreCpp.T CoreCpp.Program</code><span class=\"sep\"></span><code class=\"docstring\">The program with the static classes filled in. Fails only on an ill typed\nprogram, which `check` rejects first. </code>",
- "301":
+ "306":
+ "<code>CoreCpp.Typing.annotate (p₀ : CoreCpp.Program) : CoreCpp.T CoreCpp.Program</code><span class=\"sep\"></span><code class=\"docstring\">The program with the static classes, the chosen overloads and the\nreference returns filled in. Fails only on an ill typed program, which\n`check` rejects first. </code>",
+ "305":
  "<code>CoreCpp.Typing.related (p : CoreCpp.Program) (t₁ t₂ : CoreCpp.Ty) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">τ₁ ≈ τ₂ in either direction, for comparison and for the branches of `?:`. </code>",
+ "304":
+ "<code>CoreCpp.Eval.resolve (fs : CoreCpp.FunEnv) (s t m : String) (sig : Option (List CoreCpp.Ty)) :\n  CoreCpp.M (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method m of class s with the signature the type checker chose, the\nnearest in the chain of s, dispatched by the tag t when that method is\nvirtual. The signature picks one member of an overload set, and without it,\nin an unannotated program, the first of the name serves. </code>",
+ "303":
+ "<code>CoreCpp.Typing.checkArgs (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (f : String) (ps : List CoreCpp.Param)\n  (es : List CoreCpp.Expr) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">The arguments of a call against the parameters, by value with ◁ and by\nreference with ⊢ₗ, shared by T-Call, T-New and T-Method. </code>",
+ "302":
+ "<code>CoreCpp.Eval.runMember (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (l : CoreCpp.Loc)\n  (ps : List CoreCpp.Param) (body : List CoreCpp.Cmd) (es : List CoreCpp.Expr) (ret : CoreCpp.Ty) (who : String) :\n  CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The call of a member body, a method, a constructor or a destructor, with\nthis bound to the location ℓ of the receiver and the arguments bound as in\nCall, by value with a fresh copy and by reference with an alias. The return\nfrees the copies and the locals of the body, never the receiver.\n\n    for each i, left to right, with σ'₀ = σ,\n      pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ\n      pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ₗ ℓᵢ, σ'ᵢ\n    ρ_m = [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]    ρ_m, σ'ₖ ⊢ c ⇒ r, ρ', σ''\n    ────────────────────────────────────────────────────────────── (Member)\n    member ℓ (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))          </code>",
+ "301":
+ "<code>CoreCpp.Typing.methodCall (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (recv : CoreCpp.Expr) (arrow : Bool) (m : String)\n  (es : List CoreCpp.Expr) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The rules T-Method and T-MethodArrow, see `expr`. </code>",
  "300":
- "<code>CoreCpp.Eval.resolve (fs : CoreCpp.FunEnv) (s t m : String) : CoreCpp.M (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method m of class s, the nearest in the chain of s, dispatched by the\ntag t when that method is virtual. Returns the method and the class that\ndeclares it. </code>",
+ "<code>CoreCpp.Typing.memberEnv (c : String) (ps : List CoreCpp.Param) : CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">The context of a member body, `this` bound to a pointer to the class and\nthe parameters as variables. </code>",
  "30": "<code>List String</code>",
  "3": "<code>CoreCpp.Token : Type</code>",
  "299":
- "<code>CoreCpp.Typing.checkArgs (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (f : String) (ps : List CoreCpp.Param)\n  (es : List CoreCpp.Expr) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">The arguments of a call against the parameters, by value with ◁ and by\nreference with ⊢ₗ, shared by T-Call, T-New and T-Method. </code>",
- "298":
- "<code>CoreCpp.Eval.runMember (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (l : CoreCpp.Loc)\n  (ps : List CoreCpp.Param) (body : List CoreCpp.Cmd) (es : List CoreCpp.Expr) (ret : CoreCpp.Ty) (who : String) :\n  CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The call of a member body, a method, a constructor or a destructor, with\nthis bound to the location ℓ of the receiver and the arguments bound as in\nCall, by value with a fresh copy and by reference with an alias. The return\nfrees the copies and the locals of the body, never the receiver.\n\n    for each i, left to right, with σ'₀ = σ,\n      pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ\n      pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ₗ ℓᵢ, σ'ᵢ\n    ρ_m = [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]    ρ_m, σ'ₖ ⊢ c ⇒ r, ρ', σ''\n    ────────────────────────────────────────────────────────────── (Member)\n    member ℓ (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))          </code>",
- "297":
- "<code>CoreCpp.Typing.methodCall (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (recv : CoreCpp.Expr) (arrow : Bool) (m : String)\n  (es : List CoreCpp.Expr) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The rules T-Method and T-MethodArrow, see `expr`. </code>",
- "296":
- "<code>CoreCpp.Typing.memberEnv (c : String) (ps : List CoreCpp.Param) : CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">The context of a member body, `this` bound to a pointer to the class and\nthe parameters as variables. </code>",
- "295":
  "<code>CoreCpp.Typing.cls (p : CoreCpp.Program) (c : CoreCpp.ClassDecl) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">A class is well formed when its base exists and the chain has no cycle,\nits fields have types with values, well formed, and repeat no field of a\nbase, its members have distinct names, each method redefines only a method\nthe base declares virtual and then carries override, with the same\nsignature, the constructor of the base, if any, takes no parameters, and\nevery member body is well typed under `this`.\n\n    B exists, chain acyclic    fields storable, well formed, new in the chain\n    for each method m of C. if some base has m then that m is virtual, m is override and the signatures agree\n    for each override m of C. some base has a virtual m\n    B has no constructor or one with no parameters\n    [this ↦ C*, params] ⊢ body ⊣ Γ' for each method, the constructor and the destructor\n    ───────────────────────────────────────────────────────────────────────────────────── (T-Class)\n    ⊢ class C : public B { … }                                                     </code>",
- "294":
+ "298":
  "<code>CoreCpp.run (p : CoreCpp.Program) : Except CoreCpp.Error CoreCpp.Val</code>",
- "293":
+ "297":
  "<code>CoreCpp.runWith (trace : Bool) (p : CoreCpp.Program) : Except CoreCpp.Error CoreCpp.Val × Array CoreCpp.TraceEntry</code><span class=\"sep\"></span><code class=\"docstring\">Program execution. The initial store is empty, because there are no global\nvariables, and the result is the value returned by `main()`.\n\n    main ↦ (int main() { c })    [], ∅ ⊢ main() ⇒ v, σ\n    ─────────────────────────────────────────────────── (Program)\n    p ⇒ v\n\n    The objects created with new stay in σ until delete or the end of the\n    program. The locals of main leave σ with the return of the call, so the\n    final store holds objects only. The program is annotated with the static\n    classes of method calls and deletes before it runs, when it is well typed,\n    and otherwise runs as parsed, with every dispatch by the class tag.        </code>",
- "292": "<code>CoreCpp.TypeError : Type</code>",
- "291":
- "<code>CoreCpp.check (p : CoreCpp.Program) : Except CoreCpp.TypeError Unit</code><span class=\"sep\"></span><code class=\"docstring\">A program is well typed when class and function names are distinct, every\nclass and function is well typed and `int main()` exists.\n\n    names distinct    ⊢ Cᵢ for each class    ⊢ fᵢ for each function    main ↦ (int main() { c })\n    ────────────────────────────────────────────────────────────────────────────────────── (T-Program)\n    ⊢ p                                                                            </code>",
- "290":
+ "296": "<code>CoreCpp.TypeError : Type</code>",
+ "295":
+ "<code>CoreCpp.check (p₀ : CoreCpp.Program) : Except CoreCpp.TypeError Unit</code><span class=\"sep\"></span><code class=\"docstring\">A program is well typed when class and function names are distinct up to\noverloading, every class and function is well typed and `int main()` exists.\nA template is not checked, only its instantiations are.\n\n    names distinct up to overloading    ⊢ Cᵢ for each class    ⊢ fᵢ for each function\n    main ↦ (int main() { c })\n    ────────────────────────────────────────────────────────────────────────────── (T-Program)\n    ⊢ p                                                                            </code>",
+ "294":
  "<code>CoreCpp.Typing.fn (p : CoreCpp.Program) (f : CoreCpp.Fun) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">A function is well typed when its parameter and return types have values\nand are well formed, and its body is, under the context of its parameters and\nits return type. A reference parameter has in Γ the type of its referent, as a\nlocal reference does.\n\n    τ, τᵢ storable and well formed    [x₁ ↦ τ₁, …, xₖ ↦ τₖ] ⊢ c ⊣ Γ'\n    ──────────────────────────────────────────────────────────────── (T-Fun)\n    ⊢ τ f (τ₁ x₁, …, τₖ xₖ) { c }                                                  </code>",
+ "293":
+ "<code>CoreCpp.Eval.applyClosure (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (v : CoreCpp.Val)\n  (es : List CoreCpp.Expr) : CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The application of a closure to arguments.\n\nv = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])\nρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right, by value\n(ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ                        fresh locations for the copies and the parameters\nρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                the closure environment, nothing else is visible\nρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''\n─────────────────────────────────────────────────────────────── (Apply)\napply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))          the copies, the parameters and the locals leave\n\nWith normal in place of ret v the result is void if τ = void and error\n(missing return) otherwise. A value that is not a closure is error.        </code>",
+ "292":
+ "<code>CoreCpp.Typing.callValue (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (fe : CoreCpp.Expr) (t : CoreCpp.Ty)\n  (es : List CoreCpp.Expr) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The call of a function value of type t with the arguments es, shared by\n`T-CallFn` on a variable and on any other expression. </code>",
+ "291": "<code>CoreCpp.Cmd.vars : CoreCpp.Cmd → List String</code>",
+ "290":
+ "<code>CoreCpp.Expr.vars : CoreCpp.Expr → List String</code><span class=\"sep\"></span><code class=\"docstring\">The variables an expression mentions, the candidates for capture by a\nlambda. A nested lambda contributes its own free variables, its parameters\nexcluded. </code>",
  "29":
  "<code>CoreCpp.Lexer.matchSymbol (syms : List String) (cs : List Char) : Option (String × List Char)</code><span class=\"sep\"></span><code class=\"docstring\">Tries to match one of the symbols at the start of the input. </code>",
  "289":
- "<code>CoreCpp.Eval.applyClosure (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (v : CoreCpp.Val)\n  (es : List CoreCpp.Expr) : CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The application of a closure to arguments.\n\nv = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])\nρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right, by value\n(ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ                        fresh locations for the copies and the parameters\nρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                the closure environment, nothing else is visible\nρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''\n─────────────────────────────────────────────────────────────── (Apply)\napply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))          the copies, the parameters and the locals leave\n\nWith normal in place of ret v the result is void if τ = void and error\n(missing return) otherwise. A value that is not a closure is error.        </code>",
- "288":
- "<code>CoreCpp.Typing.callValue (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (fe : CoreCpp.Expr) (t : CoreCpp.Ty)\n  (es : List CoreCpp.Expr) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The call of a function value of type t with the arguments es, shared by\n`T-CallFn` on a variable and on any other expression. </code>",
- "287": "<code>CoreCpp.Cmd.vars : CoreCpp.Cmd → List String</code>",
- "286":
- "<code>CoreCpp.Expr.vars : CoreCpp.Expr → List String</code><span class=\"sep\"></span><code class=\"docstring\">The variables an expression mentions, the candidates for capture by a\nlambda. A nested lambda contributes its own free variables, its parameters\nexcluded. </code>",
- "285":
  "<code>CoreCpp.Eval.captures (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (ps : List CoreCpp.Param) (b : List CoreCpp.Cmd) :\n  CoreCpp.M (List (String × CoreCpp.Val))</code><span class=\"sep\"></span><code class=\"docstring\">The free variables of a lambda body that the enclosing environment binds,\neach with its current value, the captures of `[=]`. Reading a captured\nvariable whose location left the store is error. </code>",
- "284":
+ "288":
  "<code>CoreCpp.Typing.lambdaAt (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (ps : List CoreCpp.Param) (r : CoreCpp.Ty)\n  (b : List CoreCpp.Cmd) (τ : CoreCpp.Ty) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -&gt; τ { c } ◁ std::function&lt;τ(τ₁, …, τₖ)&gt;.\n\nΓ' = Γ marked read only, [x₁ ↦ τ₁, …, xₖ ↦ τₖ]    Γ' ⊢ c ⊣ Γ''    τ, τᵢ storable, well formed\n───────────────────────────────────────────────────────────────────────────────────── (T-Lambda)\nΓ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -&gt; τ { c } ◁ std::function&lt;τ(τ₁, …, τₖ)&gt;\n\nThe parameter and result types of the lambda are exactly those of the\nexpected std::function type. The body is checked under Γ with every\nvariable of the enclosing scope marked read only, the copies of `[=]`, and\nwith the parameters of the lambda as ordinary variables.                    </code>",
- "283":
+ "287":
  "<code>CoreCpp.Typing.accept (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (context : String) (e : CoreCpp.Expr) (τ : CoreCpp.Ty) :\n  CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ e ◁ τ, e is acceptable at type τ. For a lambda, `lambdaAt`. For any\nother expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.\n\n    Γ ⊢ e : τ'    τ' ≈ τ    τ' has values\n    ───────────────────────────────────── (Accept)\n    Γ ⊢ e ◁ τ                                                                      </code>",
- "282":
+ "286":
  "<code>CoreCpp.Eval.fresh (ρ ρ' : CoreCpp.Env) : List CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">Locations a block allocated, the owned bindings of ρ' ∖ ρ, for scope exit.\nThe bindings a reference declaration added alias locations that exist before\nor outside the block, and those locations stay in σ. </code>",
- "281":
+ "285":
  "<code>CoreCpp.Eval.readLoc (σ : CoreCpp.Store) (l : CoreCpp.Loc) : CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">σ(ℓ), or error when ℓ ∉ dom σ. </code>",
- "280":
+ "284":
  "<code>CoreCpp.Eval.fieldLoc (σ : CoreCpp.Store) (l : CoreCpp.Loc) (f : String) : CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The location of field f of the object stored at ℓ. </code>",
+ "283":
+ "<code>CoreCpp.Typing.fieldType (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (c f : String) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The type of field f of class C as seen from Γ, or the error. A private\nfield is visible only when Γ(this) is the class that declares it.\n\n    C has τ f declared in K    f public or Γ(this) = K*\n    ──────────────────────────────────────────────────── (Visible)                </code>",
+ "282":
+ "<code>CoreCpp.Eval.pointee (v : CoreCpp.Val) : CoreCpp.M CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">A pointer value as a live location. nullptr is error, the dereference\nthat C++ leaves undefined. </code>",
+ "281":
+ "<code>Unit : Type</code><span class=\"sep\"></span><code class=\"docstring\">The canonical type with one element. This element is written `()`.\n\n`Unit` has a number of uses:\n* It can be used to model control flow that returns from a function call without providing other\n  information.\n* Monadic actions that return `Unit` have side effects without computing values.\n* In polymorphic types, it can be used to indicate that no data is to be stored in a particular\n  field.\n</code>",
+ "280":
+ "<code>CoreCpp.Typing.storable (context : String) (t : CoreCpp.Ty) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Requires that a variable, parameter or result type has values. A `τ&`\nparameter and a local reference bind the location of their argument, so an\nobject type is admissible there and nowhere else, which is how a member takes\nan object without copying it. </code>",
  "28":
  "<code>Prod.{u, v} (α : Type u) (β : Type v) : Type (max u v)</code><span class=\"sep\"></span><code class=\"docstring\">The product type, usually written `α × β`. Product types are also called pair or tuple types.\nElements of this type are pairs in which the first element is an `α` and the second element is a\n`β`.\n\nProducts nest to the right, so `(x, y, z) : α × β × γ` is equivalent to `(x, (y, z)) : α × (β × γ)`.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `×` in identifiers is `Prod`.</code>",
  "279":
- "<code>CoreCpp.Typing.fieldType (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (c f : String) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The type of field f of class C as seen from Γ, or the error. A private\nfield is visible only when Γ(this) is the class that declares it.\n\n    C has τ f declared in K    f public or Γ(this) = K*\n    ──────────────────────────────────────────────────── (Visible)                </code>",
- "278":
- "<code>CoreCpp.Eval.pointee (v : CoreCpp.Val) : CoreCpp.M CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">A pointer value as a live location. nullptr is error, the dereference\nthat C++ leaves undefined. </code>",
- "277":
- "<code>Unit : Type</code><span class=\"sep\"></span><code class=\"docstring\">The canonical type with one element. This element is written `()`.\n\n`Unit` has a number of uses:\n* It can be used to model control flow that returns from a function call without providing other\n  information.\n* Monadic actions that return `Unit` have side effects without computing values.\n* In polymorphic types, it can be used to indicate that no data is to be stored in a particular\n  field.\n</code>",
- "276":
- "<code>CoreCpp.Typing.storable (context : String) (t : CoreCpp.Ty) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Requires that a variable, parameter or result type has values. </code>",
- "275":
  "<code>CoreCpp.Typing.compat (p : CoreCpp.Program) : CoreCpp.Ty → CoreCpp.Ty → Bool</code><span class=\"sep\"></span><code class=\"docstring\">τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal\ntypes, nullptr against a pointer type, or, by subsumption, a pointer to a\nderived class where a pointer to its base is expected. These and the lambda\nto `std::function` are the only implicit conversions. </code>",
- "274":
+ "278":
  "<code>CoreCpp.Eval.binop : CoreCpp.BinOp → CoreCpp.Val → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Arithmetic and relational binary operators, on already evaluated values.\n\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂\n──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})\nρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂\n\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0\n──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})\nρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++\n\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int 0, σ₂\n──────────────────────────────────────────────── (DivZero)\nρ, σ ⊢ e₁ ⊘ e₂ ⇒ error (division by zero)\n\nρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂\n─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, &lt;, &lt;=, &gt;, &gt;=})\nρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂\n\nTwo pointers are equal when they are the same location. nullptr equals\nonly nullptr. There is no order on pointers.\n\nThe left operand is evaluated before the right one, the Core C++ choice\nwhere C++17 does not specify the order.                                        </code>",
- "273":
+ "277":
  "<code>CoreCpp.Eval.unop : CoreCpp.UnOp → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Unary operators.\n\nρ, σ ⊢ e ⇒ bool b, σ'                    ρ, σ ⊢ e ⇒ int n, σ'\n──────────────────────── (Not)           ────────────────────────── (Neg)\nρ, σ ⊢ !e ⇒ bool ¬b, σ'                  ρ, σ ⊢ −e ⇒ int32 (−n), σ'          </code>",
- "272":
+ "276":
  "<code>CoreCpp.Eval.int32 (n : Int) : CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Range check for `int`.\n\nn ∈ [−2³¹, 2³¹ − 1]              n ∉ [−2³¹, 2³¹ − 1]\n──────────────────              ──────────────────────\nint32 n = int n                 int32 n = error (overflow)              </code>",
- "271":
+ "275":
  "<code>CoreCpp.renderTrace (log : Array CoreCpp.TraceEntry) : String</code><span class=\"sep\"></span><code class=\"docstring\">Renders the trace as the derivation tree in post-order, indented by depth. </code>",
- "270": "<code><span class=\"literal string\">\"⇒\"</span> : String</code>",
+ "274": "<code><span class=\"literal string\">\"⇒\"</span> : String</code>",
+ "273": "<code>optParam String \"⇒\"</code>",
+ "272": "<code>CoreCpp.M α</code>",
+ "271": "<code>α → String</code>",
+ "270":
+ "<code>CoreCpp.Eval.traced {α : Type} (rule conf : String) (render : α → String) (k : CoreCpp.M α) (arrow : String := \"⇒\") :\n  CoreCpp.M α</code><span class=\"sep\"></span><code class=\"docstring\">Runs `k` one level deeper and records the conclusion of the rule `rule`,\n`conf arrow render a` in sequent notation, or the error, at the current depth. </code>",
  "27":
  "<code>Bool : Type</code><span class=\"sep\"></span><code class=\"docstring\">The Boolean values, `true` and `false`.\n\nLogically speaking, this is equivalent to `Prop` (the type of propositions). The distinction is\npublic important for programming: both propositions and their proofs are erased in the code generator,\nwhile `Bool` corresponds to the Boolean type in most programming languages and carries precisely one\nbit of run-time information.\n</code>",
- "269": "<code>optParam String \"⇒\"</code>",
- "268": "<code>CoreCpp.M α</code>",
- "267": "<code>α → String</code>",
- "266":
- "<code>CoreCpp.Eval.traced {α : Type} (rule conf : String) (render : α → String) (k : CoreCpp.M α) (arrow : String := \"⇒\") :\n  CoreCpp.M α</code><span class=\"sep\"></span><code class=\"docstring\">Runs `k` one level deeper and records the conclusion of the rule `rule`,\n`conf arrow render a` in sequent notation, or the error, at the current depth. </code>",
- "265": "<code>CoreCpp.TState : Type</code>",
- "264":
+ "269": "<code>CoreCpp.TState : Type</code>",
+ "268":
  "<code>CoreCpp.TraceEntry : Type</code><span class=\"sep\"></span><code class=\"docstring\">One recorded judgment instance. </code>",
- "263": "<code>Array CoreCpp.TraceEntry</code>",
- "262":
+ "267": "<code>Array CoreCpp.TraceEntry</code>",
+ "266":
  "<code>CoreCpp.Eval.cmds (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) :\n  List CoreCpp.Cmd → CoreCpp.M (CoreCpp.Ctrl × CoreCpp.Env × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">Command sequences.\n\n────────────────────────── (Seq-Empty)\nρ, σ ⊢ ε ⇒ normal, ρ, σ\n\nρ, σ ⊢ c ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ cs ⇒ r, ρ₂, σ₂\n──────────────────────────────────────────────────── (Seq)   ρ₁ carries the binding of c to the rest\nρ, σ ⊢ c cs ⇒ r, ρ₂, σ₂\n\nρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁\n───────────────────────────── (Seq-Ret)   the return interrupts the sequence\nρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁                                                                </code>",
- "261":
+ "265":
  "<code>CoreCpp.Eval.cmd (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (c : CoreCpp.Cmd) :\n  CoreCpp.M (CoreCpp.Ctrl × CoreCpp.Env × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ c ⇒ r, ρ', σ' </code>",
- "260":
+ "264":
  "<code>CoreCpp.Eval.lval (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (e : CoreCpp.Expr) :\n  CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, a\ndereferenced pointer, a field of an object, a field through a pointer and an\nelement of a vector.\n\n    ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'\n    ──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error\n    ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'\n\n    ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]\n    ─────────────────────────────────────────────── (LocField)\n    ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'\n\n    ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]\n    ────────────────────────────────────────────────── (LocArrow)    e-&gt;f is (*e).f\n    ρ, σ ⊢ e-&gt;f ⇒ₗ ℓ_f, σ'\n\n    ρ, σ ⊢ e ⇒ₗ ℓ, σ₁    σ₁(ℓ) = vec [ℓ₀, …, ℓₙ₋₁]    ρ, σ₁ ⊢ i ⇒ int k, σ₂    0 ≤ k &lt; n\n    ──────────────────────────────────────────────────────────────────────────────── (LocIndex)\n    ρ, σ ⊢ e[i] ⇒ₗ ℓₖ, σ₂\n\n    With k outside [0, n) the result is error (out of bounds), where C++\n    leaves it undefined.                                                            </code>",
+ "263":
+ "<code>CoreCpp.M (α : Type) : Type</code><span class=\"sep\"></span><code class=\"docstring\">The evaluation monad. The state survives an error, so the trace up to the\nfailing rule is kept. </code>",
+ "262":
+ "<code>CoreCpp.Eval.expr (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (e : CoreCpp.Expr) :\n  CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ e ⇒ v, σ' </code>",
+ "261":
+ "<code>CoreCpp.Typing.cmds (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) :\n  List CoreCpp.Cmd → CoreCpp.T CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ c₁ … cₙ ⊣ Γₙ, threading the context through the sequence.\n\n──────────── (T-Seq-Empty)      Γ ⊢ c ⊣ Γ₁    Γ₁ ⊢ cs ⊣ Γ₂\nΓ ⊢ ε ⊣ Γ                       ──────────────────────────── (T-Seq)\n                                Γ ⊢ c cs ⊣ Γ₂                                  </code>",
+ "260":
+ "<code>CoreCpp.Typing.cmd (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) : CoreCpp.Cmd → CoreCpp.T CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ c ⊣ Γ', under the return type τᵣ of the enclosing function. </code>",
  "26": "<code>Char → Bool</code>",
  "259":
- "<code>CoreCpp.M (α : Type) : Type</code><span class=\"sep\"></span><code class=\"docstring\">The evaluation monad. The state survives an error, so the trace up to the\nfailing rule is kept. </code>",
- "258":
- "<code>CoreCpp.Eval.expr (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (e : CoreCpp.Expr) :\n  CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ e ⇒ v, σ' </code>",
- "257":
- "<code>CoreCpp.Typing.cmds (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) :\n  List CoreCpp.Cmd → CoreCpp.T CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ c₁ … cₙ ⊣ Γₙ, threading the context through the sequence.\n\n──────────── (T-Seq-Empty)      Γ ⊢ c ⊣ Γ₁    Γ₁ ⊢ cs ⊣ Γ₂\nΓ ⊢ ε ⊣ Γ                       ──────────────────────────── (T-Seq)\n                                Γ ⊢ c cs ⊣ Γ₂                                  </code>",
- "256":
- "<code>CoreCpp.Typing.cmd (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) : CoreCpp.Cmd → CoreCpp.T CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ c ⊣ Γ', under the return type τᵣ of the enclosing function. </code>",
- "255":
  "<code>CoreCpp.Typing.lval (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) : CoreCpp.Expr → CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The expressions that denote a location, with their type. A variable, a\ndereferenced pointer, a field of an object, a field through a pointer and an\nelement of a vector. A variable captured by copy inside a lambda denotes no\nwritable location.\n\n    Γ(x) = τ, x not captured   Γ ⊢ e : τ*           Γ ⊢ e : C, C has τ f\n    ──────────────────────── (T-LocVar)  ──────────── (T-LocDeref)  ─────────────────── (T-LocField)\n    Γ ⊢ₗ x : τ                 Γ ⊢ₗ *e : τ          Γ ⊢ₗ e.f : τ\n\n    Γ ⊢ e : C*, C has τ f                Γ ⊢ e : std::vector&lt;τ&gt;    Γ ⊢ i : int\n    ────────────────────── (T-LocArrow)  ─────────────────────────────────── (T-LocIndex)\n    Γ ⊢ₗ e-&gt;f : τ                        Γ ⊢ₗ e[i] : τ                                       </code>",
- "254": "<code>CoreCpp.T (α : Type) : Type</code>",
- "253":
+ "258": "<code>CoreCpp.T (α : Type) : Type</code>",
+ "257":
  "<code>CoreCpp.Typing.expr (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) : CoreCpp.Expr → CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ e : τ </code>",
- "252":
+ "256":
  "<code>CoreCpp.Program.hasVirtualDtor (p : CoreCpp.Program) (c : String) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">Some class in the chain of c declares a virtual destructor, so `delete`\nthrough a pointer to c reaches the destructor of the tag. </code>",
- "251":
+ "255":
  "<code>CoreCpp.Program.subclass (p : CoreCpp.Program) (d c : String) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">d is c or derives from c. </code>",
+ "254":
+ "<code>CoreCpp.Program.findMethod (p : CoreCpp.Program) (c m : String) : Option (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method m as seen from class c, the nearest declaration in the chain,\nwith the class that declares it. With m overloaded it is the first of the\noverload set, and `findMethods` gives them all. </code>",
+ "253":
+ "<code>CoreCpp.Program.findField (p : CoreCpp.Program) (c f : String) : Option (CoreCpp.Field × String)</code><span class=\"sep\"></span><code class=\"docstring\">The field f as seen from class c, with the class that declares it. </code>",
+ "252":
+ "<code>CoreCpp.Program.allFields (p : CoreCpp.Program) (c : String) : List (CoreCpp.Field × String)</code><span class=\"sep\"></span><code class=\"docstring\">Every field of a class, the fields of the root base first, each with the\nclass that declares it. </code>",
+ "251": "<code>optParam Nat 64</code>",
  "250":
- "<code>CoreCpp.Program.findMethod (p : CoreCpp.Program) (c m : String) : Option (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method m as seen from class c, the nearest declaration in the chain,\nwith the class that declares it. </code>",
+ "<code>CoreCpp.Program.chain (p : CoreCpp.Program) (c : String) (fuel : Nat := 64) : List CoreCpp.ClassDecl</code><span class=\"sep\"></span><code class=\"docstring\">The chain of a class, the class itself, its base, the base of the base\nand so on. A cycle or an unknown base ends the chain, and the type checker\nrejects both. </code>",
  "25":
  "<code>CoreCpp.Lexer.takeWhile (p : Char → Bool) : List Char → String × List Char</code><span class=\"sep\"></span><code class=\"docstring\">Takes the longest prefix of characters satisfying `p`. </code>",
  "249":
- "<code>CoreCpp.Program.findField (p : CoreCpp.Program) (c f : String) : Option (CoreCpp.Field × String)</code><span class=\"sep\"></span><code class=\"docstring\">The field f as seen from class c, with the class that declares it. </code>",
- "248":
- "<code>CoreCpp.Program.allFields (p : CoreCpp.Program) (c : String) : List (CoreCpp.Field × String)</code><span class=\"sep\"></span><code class=\"docstring\">Every field of a class, the fields of the root base first, each with the\nclass that declares it. </code>",
- "247": "<code>optParam Nat 64</code>",
- "246":
- "<code>CoreCpp.Program.chain (p : CoreCpp.Program) (c : String) (fuel : Nat := 64) : List CoreCpp.ClassDecl</code><span class=\"sep\"></span><code class=\"docstring\">The chain of a class, the class itself, its base, the base of the base\nand so on. A cycle or an unknown base ends the chain, and the type checker\nrejects both. </code>",
- "245":
  "<code>CoreCpp.Program.lookupClass (p : CoreCpp.Program) (c : String) : Option CoreCpp.ClassDecl</code>",
- "244":
+ "248":
  "<code>CoreCpp.Program.classes (p : CoreCpp.Program) : List CoreCpp.ClassDecl</code>",
- "243":
+ "247":
  "<code>CoreCpp.Vis.priv : CoreCpp.Vis</code><span class=\"sep\"></span><code class=\"docstring\">A private member, visible only inside a member body of the class that\ndeclares it. </code>",
- "242":
+ "246":
  "<code>CoreCpp.Vis.pub : CoreCpp.Vis</code><span class=\"sep\"></span><code class=\"docstring\">A public member, visible to every expression. </code>",
- "241":
+ "245":
  "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the destructor is declared `virtual`, which makes `delete`\nthrough a pointer to the base well defined. </code>",
- "240":
+ "244":
  "<code>List CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">The body, run by `delete` before the object leaves the store. </code>",
+ "243":
+ "<code>List CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">The body, run by `new C(args)` after the fields are allocated. </code>",
+ "242":
+ "<code>List CoreCpp.Param</code><span class=\"sep\"></span><code class=\"docstring\">The parameters of the constructor. </code>",
+ "241":
+ "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the method returns a reference, `τ& m(…)`, so that a call to it\ndenotes the location the body returns. </code>",
+ "240":
+ "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the method is declared `override`. </code>",
  "24": "<code>Array CoreCpp.Token</code>",
  "239":
- "<code>List CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">The body, run by `new C(args)` after the fields are allocated. </code>",
- "238":
- "<code>List CoreCpp.Param</code><span class=\"sep\"></span><code class=\"docstring\">The parameters of the constructor. </code>",
- "237":
- "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the method is declared `override`. </code>",
- "236":
  "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the method is declared `virtual`. </code>",
- "235":
+ "238":
  "<code>CoreCpp.Vis</code><span class=\"sep\"></span><code class=\"docstring\">The visibility of the method. </code>",
- "234":
+ "237":
  "<code>List CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">The body, run with `this` bound to the receiver. </code>",
- "233":
+ "236":
  "<code>List CoreCpp.Param</code><span class=\"sep\"></span><code class=\"docstring\">The parameters. </code>",
- "232":
+ "235":
  "<code>CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The result type. </code>",
- "231":
+ "234":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The name of the method. </code>",
- "230":
+ "233":
  "<code>CoreCpp.Vis</code><span class=\"sep\"></span><code class=\"docstring\">The visibility of the field. </code>",
+ "232":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The name of the field. </code>",
+ "231":
+ "<code>CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The type of the field. </code>",
+ "230": "<code>CoreCpp.FunEnv</code>",
  "23":
  "<code>Char : Type</code><span class=\"sep\"></span><code class=\"docstring\">Characters are Unicode [scalar values](http://www.unicode.org/glossary/#unicode_scalar_value).\n</code>",
  "229":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The name of the field. </code>",
- "228":
- "<code>CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The type of the field. </code>",
- "227": "<code>CoreCpp.FunEnv</code>",
- "226":
  "<code>CoreCpp.FunEnv.lookup (fs : CoreCpp.FunEnv) (f : String) : Option CoreCpp.Fun</code>",
- "225":
+ "228":
  "<code>CoreCpp.FunEnv : Type</code><span class=\"sep\"></span><code class=\"docstring\">Function environment, the program seen as a finite map from names. The\nwhole program is threaded, because `new` also needs the class table. </code>",
- "224": "<code>CoreCpp.Program</code>",
- "223":
+ "227": "<code>CoreCpp.Program</code>",
+ "226":
  "<code>CoreCpp.Program.funs (p : CoreCpp.Program) : List CoreCpp.Fun</code>",
- "222":
+ "225":
  "<code>CoreCpp.TEnv.self (Γ : CoreCpp.TEnv) : Option String</code><span class=\"sep\"></span><code class=\"docstring\">The current class, the class of `this` when Γ binds it, inside a method,\na constructor or a destructor. </code>",
- "221":
+ "224":
  "<code>CoreCpp.TEnv.captured (Γ : CoreCpp.TEnv) : CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ with every binding marked read only, the context of a lambda body. </code>",
- "220":
+ "223":
  "<code>CoreCpp.TEnv.bind (Γ : CoreCpp.TEnv) (x : String) (t : CoreCpp.Ty) : CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ[x ↦ τ] </code>",
+ "222":
+ "<code>CoreCpp.TEnv.isConst (Γ : CoreCpp.TEnv) (x : String) : Bool</code>",
+ "221": "<code>CoreCpp.TEnv</code>",
+ "220":
+ "<code>CoreCpp.TEnv.lookup (Γ : CoreCpp.TEnv) (x : String) : Option CoreCpp.Ty</code>",
  "22": "<code>List Char</code>",
  "219":
- "<code>CoreCpp.TEnv.isConst (Γ : CoreCpp.TEnv) (x : String) : Bool</code>",
- "218": "<code>CoreCpp.TEnv</code>",
- "217":
- "<code>CoreCpp.TEnv.lookup (Γ : CoreCpp.TEnv) (x : String) : Option CoreCpp.Ty</code>",
- "216":
  "<code>CoreCpp.TBind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A binding of Γ. `const` marks a variable captured by copy in a lambda body,\nwhich the body may read and not write. </code>",
- "215":
+ "218":
  "<code>CoreCpp.TEnv : Type</code><span class=\"sep\"></span><code class=\"docstring\">Typing context Γ, a finite map from identifiers to types. </code>",
- "214":
+ "217":
  "<code>CoreCpp.Error.doubleDelete (l : CoreCpp.Loc) : CoreCpp.Error</code>",
- "213":
+ "216":
  "<code>CoreCpp.Error.deleteWithoutVirtualDtor (static tag : String) : CoreCpp.Error</code>",
- "212":
+ "215":
  "<code>CoreCpp.Error.notCallable (v : CoreCpp.Val) : CoreCpp.Error</code>",
- "211": "<code>CoreCpp.Error.missingReturn (f : String) : CoreCpp.Error</code>",
- "210": "<code>CoreCpp.Error.typeError (msg : String) : CoreCpp.Error</code>",
+ "214": "<code>CoreCpp.Error.missingReturn (f : String) : CoreCpp.Error</code>",
+ "213": "<code>CoreCpp.Error.typeError (msg : String) : CoreCpp.Error</code>",
+ "212": "<code>CoreCpp.Error.arity (f : String) : CoreCpp.Error</code>",
+ "211":
+ "<code>CoreCpp.Error.undeclaredFunction (f : String) : CoreCpp.Error</code>",
+ "210":
+ "<code>CoreCpp.Error.undeclaredVariable (x : String) : CoreCpp.Error</code>",
  "21":
  "<code>CoreCpp.Lexer.run (cs : List Char) (acc : Array CoreCpp.Token) : Except String (Array CoreCpp.Token)</code>",
- "209": "<code>CoreCpp.Error.arity (f : String) : CoreCpp.Error</code>",
- "208":
- "<code>CoreCpp.Error.undeclaredFunction (f : String) : CoreCpp.Error</code>",
- "207":
- "<code>CoreCpp.Error.undeclaredVariable (x : String) : CoreCpp.Error</code>",
- "206":
+ "209":
  "<code>CoreCpp.Error.danglingLocation (l : CoreCpp.Loc) : CoreCpp.Error</code>",
- "205": "<code>CoreCpp.Error.negativeSize (n : Int) : CoreCpp.Error</code>",
- "204": "<code>CoreCpp.Error.outOfBounds (i n : Int) : CoreCpp.Error</code>",
- "203": "<code>CoreCpp.Error.nullDereference : CoreCpp.Error</code>",
- "202": "<code>CoreCpp.Error.overflow : CoreCpp.Error</code>",
- "201":
+ "208": "<code>CoreCpp.Error.negativeSize (n : Int) : CoreCpp.Error</code>",
+ "207": "<code>CoreCpp.Error.outOfBounds (i n : Int) : CoreCpp.Error</code>",
+ "206": "<code>CoreCpp.Error.nullDereference : CoreCpp.Error</code>",
+ "205": "<code>CoreCpp.Error.overflow : CoreCpp.Error</code>",
+ "204":
  "<code>CoreCpp.Error : Type</code><span class=\"sep\"></span><code class=\"docstring\">The `error` result. It is not a value of the language. No syntax produces,\ntests or catches it. It corresponds in C++ to abnormal program termination. </code>",
- "200": "<code>CoreCpp.Error.divisionByZero : CoreCpp.Error</code>",
+ "203": "<code>CoreCpp.Error.divisionByZero : CoreCpp.Error</code>",
+ "202": "<code>CoreCpp.Ctrl.ret (v : CoreCpp.Val) : CoreCpp.Ctrl</code>",
+ "201":
+ "<code>CoreCpp.Ctrl : Type</code><span class=\"sep\"></span><code class=\"docstring\">Control result of a statement. </code>",
+ "200": "<code>CoreCpp.Ctrl.normal : CoreCpp.Ctrl</code>",
  "20":
  "<code>Array.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">`Array α` is the type of [dynamic arrays](https://en.wikipedia.org/wiki/Dynamic_array) with elements\nfrom `α`. This type has special support in the runtime.\n\nArrays perform best when unshared. As long as there is never more than one reference to an array,\nall updates will be performed _destructively_. This results in performance comparable to mutable\narrays in imperative programming languages.\n\nAn array has a size and a capacity. The size is the number of elements present in the array, while\nthe capacity is the amount of memory currently allocated for elements. The size is accessible via\n`Array.size`, but the capacity is not observable from Lean code. `Array.emptyWithCapacity n` creates\nan array which is equal to `#[]`, but internally allocates an array of capacity `n`. When the size\nexceeds the capacity, allocation is required to grow the array.\n\nFrom the point of view of proofs, `Array α` is just a wrapper around `List α`.\n</code>",
  "2":
  "<code>String : Type</code><span class=\"sep\"></span><code class=\"docstring\">A string is a sequence of Unicode scalar values.\n\nAt runtime, strings are represented by [dynamic arrays](https://en.wikipedia.org/wiki/Dynamic_array)\nof bytes using the UTF-8 encoding. Both the size in bytes (`String.utf8ByteSize`) and in characters\n(`String.length`) are cached and take constant time. Many operations on strings perform in-place\nmodifications when the reference to the string is unique.\n</code>",
- "199": "<code>CoreCpp.Ctrl.ret (v : CoreCpp.Val) : CoreCpp.Ctrl</code>",
- "198":
- "<code>CoreCpp.Ctrl : Type</code><span class=\"sep\"></span><code class=\"docstring\">Control result of a statement. </code>",
- "197": "<code>CoreCpp.Ctrl.normal : CoreCpp.Ctrl</code>",
- "196":
+ "199":
  "<code>CoreCpp.Ty.isFn : CoreCpp.Ty → Bool</code><span class=\"sep\"></span><code class=\"docstring\">Function types, the types of closures. </code>",
- "195": "<code>CoreCpp.Store.dom (σ : CoreCpp.Store) : List CoreCpp.Loc</code>",
- "194":
+ "198": "<code>CoreCpp.Store.dom (σ : CoreCpp.Store) : List CoreCpp.Loc</code>",
+ "197":
  "<code>CoreCpp.Store.free (σ : CoreCpp.Store) (ls : List CoreCpp.Loc) : CoreCpp.Store</code><span class=\"sep\"></span><code class=\"docstring\">σ ∖ L, removes the locations in L from the domain. Realises scope exit. </code>",
- "193": "<code>List CoreCpp.Val</code>",
- "192":
+ "196": "<code>List CoreCpp.Val</code>",
+ "195":
  "<code>CoreCpp.Store.allocMany (σ : CoreCpp.Store) (vs : List CoreCpp.Val) : List CoreCpp.Loc × CoreCpp.Store</code><span class=\"sep\"></span><code class=\"docstring\">Allocates one fresh location per value, in order. </code>",
- "191":
+ "194":
  "<code>CoreCpp.Store.alloc (σ : CoreCpp.Store) (v : CoreCpp.Val) : CoreCpp.Loc × CoreCpp.Store</code><span class=\"sep\"></span><code class=\"docstring\">Allocates a fresh location ℓ ∉ dom σ holding v. Returns ℓ and σ[ℓ ↦ v]. </code>",
- "190": "<code>CoreCpp.Val</code>",
+ "193": "<code>CoreCpp.Val</code>",
+ "192":
+ "<code>CoreCpp.Store.write (σ : CoreCpp.Store) (l : CoreCpp.Loc) (v : CoreCpp.Val) : CoreCpp.Store</code><span class=\"sep\"></span><code class=\"docstring\">σ[ℓ ↦ v] for ℓ ∈ dom σ. </code>",
+ "191": "<code>CoreCpp.Store</code>",
+ "190":
+ "<code>CoreCpp.Store.read (σ : CoreCpp.Store) (l : CoreCpp.Loc) : Option CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">σ(ℓ), or nothing if ℓ ∉ dom σ. </code>",
  "19":
  "<code>Except.{u, v} (ε : Type u) (α : Type v) : Type (max u v)</code><span class=\"sep\"></span><code class=\"docstring\">`Except ε α` is a type which represents either an error of type `ε` or a successful result with a\nvalue of type `α`.\n\n`Except ε : Type u → Type v` is a `Monad` that represents computations that may throw exceptions:\nthe `pure` operation is `Except.ok` and the `bind` operation returns the first encountered\n`Except.error`.\n</code>",
  "189":
- "<code>CoreCpp.Store.write (σ : CoreCpp.Store) (l : CoreCpp.Loc) (v : CoreCpp.Val) : CoreCpp.Store</code><span class=\"sep\"></span><code class=\"docstring\">σ[ℓ ↦ v] for ℓ ∈ dom σ. </code>",
- "188": "<code>CoreCpp.Store</code>",
- "187":
- "<code>CoreCpp.Store.read (σ : CoreCpp.Store) (l : CoreCpp.Loc) : Option CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">σ(ℓ), or nothing if ℓ ∉ dom σ. </code>",
- "186":
  "<code>CoreCpp.Store : Type</code><span class=\"sep\"></span><code class=\"docstring\">Store σ with the location counter. `next` is the next free location. </code>",
- "185": "<code>List (CoreCpp.Loc × CoreCpp.Val)</code>",
- "184":
+ "188": "<code>List (CoreCpp.Loc × CoreCpp.Val)</code>",
+ "187":
  "<code>CoreCpp.Env.alias (ρ : CoreCpp.Env) (x : String) (l : CoreCpp.Loc) : CoreCpp.Env</code><span class=\"sep\"></span><code class=\"docstring\">ρ[x ↦ ℓ] for a reference, a binding to a location that already exists. </code>",
- "183":
+ "186":
  "<code>CoreCpp.Env.extend (ρ : CoreCpp.Env) (x : String) (l : CoreCpp.Loc) : CoreCpp.Env</code><span class=\"sep\"></span><code class=\"docstring\">ρ[x ↦ ℓ], a binding to a location the declaration allocated. </code>",
- "182": "<code>CoreCpp.Env</code>",
- "181":
+ "185": "<code>CoreCpp.Env</code>",
+ "184":
  "<code>CoreCpp.Env.lookup (ρ : CoreCpp.Env) (x : String) : Option CoreCpp.Loc</code>",
- "180":
+ "183":
  "<code>CoreCpp.Binding : Type</code><span class=\"sep\"></span><code class=\"docstring\">A binding of ρ. `owned` records whether the declaration that created the\nbinding allocated the location, as `τ x = e` does, or aliased an existing one,\nas the reference `τ& y = e` does. Block exit frees only owned locations, so an\nalias never removes the location of the variable it names. </code>",
+ "182":
+ "<code>CoreCpp.Env : Type</code><span class=\"sep\"></span><code class=\"docstring\">Environment ρ, a finite map from identifiers to locations. The most recent\nentry wins, which realises shadowing by inner blocks. </code>",
+ "181": "<code>CoreCpp.Int32.inRange (n : Int) : Bool</code>",
+ "180": "<code>CoreCpp.Int32.max : Int</code>",
  "18":
  "<code>CoreCpp.lex (input : String) : Except String (Array CoreCpp.Token)</code><span class=\"sep\"></span><code class=\"docstring\">The lexer. </code>",
  "179":
- "<code>CoreCpp.Env : Type</code><span class=\"sep\"></span><code class=\"docstring\">Environment ρ, a finite map from identifiers to locations. The most recent\nentry wins, which realises shadowing by inner blocks. </code>",
- "178": "<code>CoreCpp.Int32.inRange (n : Int) : Bool</code>",
- "177": "<code>CoreCpp.Int32.max : Int</code>",
- "176":
  "<code>CoreCpp.Int32.min : Int</code><span class=\"sep\"></span><code class=\"docstring\">Bounds of `int`. </code>",
- "175":
+ "178":
  "<code>CoreCpp.Ty.default : CoreCpp.Ty → CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">The default value of a type, the one `new` gives to every field and\nelement before the constructor runs. Object types have no value, their default\nis never asked. A field of function type starts empty, `void`, and a call\nthrough it before the constructor assigns a lambda is `error`, as the\n`bad_function_call` of C++. </code>",
- "174": "<code>List (String × CoreCpp.Val)</code>",
- "173":
+ "177": "<code>List (String × CoreCpp.Val)</code>",
+ "176":
  "<code>CoreCpp.Val.closure (params : List CoreCpp.Param) (ret : CoreCpp.Ty) (body : List CoreCpp.Cmd)\n  (captured : List (String × CoreCpp.Val)) : CoreCpp.Val</code>",
- "172": "<code>List CoreCpp.Loc</code>",
- "171": "<code>CoreCpp.Val.vec (elems : List CoreCpp.Loc) : CoreCpp.Val</code>",
- "170": "<code>List (String × CoreCpp.Loc)</code>",
+ "175": "<code>List CoreCpp.Loc</code>",
+ "174": "<code>CoreCpp.Val.vec (elems : List CoreCpp.Loc) : CoreCpp.Val</code>",
+ "173": "<code>List (String × CoreCpp.Loc)</code>",
+ "172":
+ "<code>CoreCpp.Val.obj (tag : String) (fields : List (String × CoreCpp.Loc)) : CoreCpp.Val</code>",
+ "171": "<code>CoreCpp.Val.null : CoreCpp.Val</code>",
+ "170": "<code>CoreCpp.Loc</code>",
  "17":
  "<code>CoreCpp.Lexer.identifier (s : String) : CoreCpp.Token</code><span class=\"sep\"></span><code class=\"docstring\">Classifies an identifier by its initial, or as a reserved word. </code>",
- "169":
- "<code>CoreCpp.Val.obj (tag : String) (fields : List (String × CoreCpp.Loc)) : CoreCpp.Val</code>",
- "168": "<code>CoreCpp.Val.null : CoreCpp.Val</code>",
- "167": "<code>CoreCpp.Loc</code>",
- "166": "<code>CoreCpp.Val.loc (l : CoreCpp.Loc) : CoreCpp.Val</code>",
- "165": "<code>CoreCpp.Val.void : CoreCpp.Val</code>",
- "164": "<code>CoreCpp.Val.bool (b : Bool) : CoreCpp.Val</code>",
- "163":
+ "169": "<code>CoreCpp.Val.loc (l : CoreCpp.Loc) : CoreCpp.Val</code>",
+ "168": "<code>CoreCpp.Val.void : CoreCpp.Val</code>",
+ "167": "<code>CoreCpp.Val.bool (b : Bool) : CoreCpp.Val</code>",
+ "166":
  "<code>CoreCpp.Val : Type</code><span class=\"sep\"></span><code class=\"docstring\">Values. `int` is a 32-bit two's complement integer, stored as an `Int` with\nthe range invariant checked at every operation. `loc` is a pointer to the\nobject stored at ℓ, `null` the value of `nullptr`, `obj` an object with its\nclass tag and one location per field, `vec` a vector with one location per\nelement, and `closure ps τ c cap` the value of `[=](ps) -&gt; τ { c }`, with the\nvalues the lambda captured by copy, one per free variable of the body. </code>",
- "162": "<code>CoreCpp.Val.int (n : Int) : CoreCpp.Val</code>",
- "161":
+ "165": "<code>CoreCpp.Val.int (n : Int) : CoreCpp.Val</code>",
+ "164":
  "<code>CoreCpp.Loc : Type</code><span class=\"sep\"></span><code class=\"docstring\">Memory location. </code>",
- "160":
+ "163":
  "<code>CoreCpp.parseStatement : String → Except String CoreCpp.Cmd</code>",
- "16": "<code>CoreCpp.symbols1 : List String</code>",
- "159": "<code>CoreCpp.parseExpr : String → Except String CoreCpp.Expr</code>",
- "158":
+ "162": "<code>CoreCpp.parseExpr : String → Except String CoreCpp.Expr</code>",
+ "161":
  "<code>CoreCpp.parseProgram : String → Except String CoreCpp.Program</code>",
- "157": "<code>CoreCpp.P α</code>",
- "156": "<code>Type</code>",
- "155":
+ "160": "<code>CoreCpp.P α</code>",
+ "16": "<code>CoreCpp.symbols1 : List String</code>",
+ "159": "<code>Type</code>",
+ "158":
  "<code>CoreCpp.runParser {α : Type} (p : CoreCpp.P α) (input : String) : Except String α</code><span class=\"sep\"></span><code class=\"docstring\">Runs a parser on a string, requiring the whole input to be consumed. </code>",
- "154":
+ "157":
  "<code>CoreCpp.basicType : CoreCpp.P CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">`BasicType ::= 'int' | 'bool' | 'void'` </code>",
- "153":
+ "156":
  "<code>CoreCpp.type : CoreCpp.P CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">`Type ::= BasicType | ClassType '*'? | 'std::vector' '&lt;' Type '&gt;' '*'?\n| 'std::function' '&lt;' Type '(' ( Type ( ',' Type )* )? ')' '&gt;'`. </code>",
- "152":
+ "155":
  "<code>CoreCpp.param : CoreCpp.P CoreCpp.Param</code><span class=\"sep\"></span><code class=\"docstring\">`Param ::= Type '&'? VarId`. With `&` the parameter is by reference. </code>",
- "151":
+ "154":
  "<code>CoreCpp.params : CoreCpp.P (List CoreCpp.Param)</code><span class=\"sep\"></span><code class=\"docstring\">`Params ::= '(' ( Param ( ',' Param )* )? ')'` </code>",
- "150":
+ "153":
  "<code>CoreCpp.function : CoreCpp.P CoreCpp.Fun</code><span class=\"sep\"></span><code class=\"docstring\">`Function ::= Type VarId Params Block` </code>",
- "15": "<code>CoreCpp.symbols2 : List String</code>",
- "149":
- "<code>CoreCpp.classType : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">`ClassType ::= TypeId ( '::' TypeId )*`, a class name possibly qualified\nby namespaces. </code>",
- "148":
+ "152":
+ "<code>CoreCpp.classType : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">`ClassType ::= TypeId ( '::' TypeId )* ( '&lt;' Type '&gt;' )?`, a class name\npossibly qualified by namespaces and possibly instantiating a class template.\nThe instantiation is named by the chain the design prints for the type, so\n`Pilha&lt;int&gt;` in the source and the expanded class have the same name, and\n`Templates.instantiate` adds the class before the program is checked. </code>",
+ "151":
  "<code>CoreCpp.MemberItem : Type</code><span class=\"sep\"></span><code class=\"docstring\">The members of a class as the parser reads them, one constructor at a time. </code>",
- "147":
+ "150":
  "<code>CoreCpp.Vis : Type</code><span class=\"sep\"></span><code class=\"docstring\">Visibility of a member. Members before any section label are private, as\nin C++. </code>",
- "146": "<code>CoreCpp.Vis</code>",
- "145":
- "<code>CoreCpp.member (cls : String) (vis : CoreCpp.Vis) : CoreCpp.P CoreCpp.MemberItem</code><span class=\"sep\"></span><code class=\"docstring\">`Member ::= 'virtual' ( Type VarId Params 'override'? Block | '~' TypeId '(' ')' Block )\n| '~' TypeId '(' ')' Block | TypeId Params Block | Type VarId ( ';' | Params 'override'? Block )`.\nThe first factoring of the design. A `TypeId` followed by `(` opens the\nconstructor, which must be named after the class, and a `TypeId` followed by\nanything else opens a type. </code>",
- "144":
+ "15": "<code>CoreCpp.symbols2 : List String</code>",
+ "149": "<code>CoreCpp.Vis</code>",
+ "148":
+ "<code>CoreCpp.member (cls : String) (vis : CoreCpp.Vis) : CoreCpp.P CoreCpp.MemberItem</code><span class=\"sep\"></span><code class=\"docstring\">`Member ::= 'virtual' ( Type '&'? ( VarId Params 'override'? Block | 'operator' Op Params Block )\n| '~' TypeId '(' ')' Block ) | '~' TypeId '(' ')' Block | TypeId Params Block\n| Type '&'? ( VarId ( ';' | Params 'override'? Block ) | 'operator' Op Params Block )`.\nThe first factoring of the design. A `TypeId` followed by `(` opens the\nconstructor, which must be named after the class, and a `TypeId` followed by\nanything else opens a type. The `&` after the type marks a member that\nreturns a reference, so a call to it denotes a location, and it never\nappears on a field. </code>",
+ "147":
  "<code>CoreCpp.classDecl : CoreCpp.P CoreCpp.ClassDecl</code><span class=\"sep\"></span><code class=\"docstring\">`Class ::= 'class' TypeId ( ':' 'public' ClassType )? '{' Section* '}' ';'` with\n`Section ::= ( 'public' | 'private' ) ':' Member*`. Members before any section\nlabel are private, as in C++. </code>",
- "143":
- "<code>CoreCpp.declaration : CoreCpp.P (List CoreCpp.Decl)</code><span class=\"sep\"></span><code class=\"docstring\">`Declaration ::= 'namespace' TypeId '{' Declaration* '}' | Class | Function`.\nA namespace holds classes and namespaces. Its declarations are flattened into\nthe program with qualified names. </code>",
- "142":
+ "146":
+ "<code>CoreCpp.declaration : CoreCpp.P (List CoreCpp.Decl)</code><span class=\"sep\"></span><code class=\"docstring\">`Declaration ::= 'namespace' TypeId '{' Declaration* '}'\n| 'template' '&lt;' 'typename' TypeId '&gt;' Class | Class | Function`.\nA namespace holds classes and namespaces. Its declarations are flattened into\nthe program with qualified names. </code>",
+ "145":
  "<code>CoreCpp.program : CoreCpp.P CoreCpp.Program</code><span class=\"sep\"></span><code class=\"docstring\">`Program ::= Declaration*` </code>",
- "141":
+ "144":
  "<code>CoreCpp.exprStatement : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`ExprStatement ::= Expr ( '=' Expr )?`, an assignment command or an expression as statement. </code>",
- "140":
+ "143":
  "<code>CoreCpp.forInit : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`ForInit ::= LocalDecl | ExprStatement` </code>",
+ "142":
+ "<code>CoreCpp.localDecl : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With\n`&` the declaration is a local reference, UD III. A lambda initialises only a\ntyped declaration, never an `auto` one. </code>",
+ "141":
+ "<code>CoreCpp.statement : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`Statement`, a command or an expression statement, chosen by the first token. </code>",
+ "140":
+ "<code>CoreCpp.block : CoreCpp.P (List CoreCpp.Cmd)</code><span class=\"sep\"></span><code class=\"docstring\">`Block ::= '{' Statement* '}'` </code>",
  "14":
  "<code>CoreCpp.symbols3 : List String</code><span class=\"sep\"></span><code class=\"docstring\">Symbols of three, two and one characters, longest first. </code>",
  "139":
- "<code>CoreCpp.localDecl : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With\n`&` the declaration is a local reference, UD III. A lambda initialises only a\ntyped declaration, never an `auto` one. </code>",
- "138":
- "<code>CoreCpp.statement : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`Statement`, a command or an expression statement, chosen by the first token. </code>",
- "137":
- "<code>CoreCpp.block : CoreCpp.P (List CoreCpp.Cmd)</code><span class=\"sep\"></span><code class=\"docstring\">`Block ::= '{' Statement* '}'` </code>",
- "136":
  "<code>CoreCpp.lambda : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`Lambda ::= '[=]' Params '-&gt;' Type Block`. The parameters are by value. </code>",
- "135":
+ "138":
  "<code>CoreCpp.argExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`ArgExpr ::= Lambda | Expr`. The lambda is an argument expression and not\na primary, so it occurs only as argument, as initialiser of a declaration and\nas the expression of `return`. </code>",
- "134":
+ "137":
  "<code>CoreCpp.args : CoreCpp.P (List CoreCpp.Expr)</code><span class=\"sep\"></span><code class=\"docstring\">`Args ::= '(' ( ArgExpr ( ',' ArgExpr )* )? ')'` </code>",
- "133":
+ "136":
  "<code>CoreCpp.primary : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`Primary ::= IntLit | 'true' | 'false' | 'nullptr' | 'this' | VarId | '(' Expr ')'\n| 'new' ( ClassType | 'std::vector' '&lt;' Type '&gt;' ) Args` </code>",
- "132":
+ "135":
  "<code>CoreCpp.postfixExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId Args? | '-&gt;' VarId Args? | Args )*`.\n`Args` after a variable is the call `f(…)`, of the function named `f`, of the\nfunction value bound to `f` or of the method `f` of `this`, and after any other\npostfix expression it is the call of a function value, `callFn`. `.m(…)` and\n`-&gt;m(…)` are method calls, with the static class left for the type checker. </code>",
- "131":
+ "134":
  "<code>CoreCpp.unaryExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`UnaryExpr ::= ( '!' | '-' | '*' ) UnaryExpr | PostfixExpr` </code>",
- "130":
+ "133":
  "<code>CoreCpp.mulExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`MulExpr ::= UnaryExpr ( ( '*' | '/' | '%' ) UnaryExpr )*` </code>",
+ "132":
+ "<code>CoreCpp.addExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`AddExpr ::= MulExpr ( ( '+' | '-' ) MulExpr )*` </code>",
+ "131":
+ "<code>CoreCpp.relExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`RelExpr ::= AddExpr ( ( '&lt;' | '&lt;=' | '&gt;' | '&gt;=' ) AddExpr )*` </code>",
+ "130":
+ "<code>CoreCpp.eqExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`EqExpr ::= RelExpr ( ( '==' | '!=' ) RelExpr )*` </code>",
  "13":
  "<code>List.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">Linked lists: ordered lists, in which each element has a reference to the next element.\n\nMost operations on linked lists take time proportional to the length of the list, because each\nelement must be traversed to find the next element.\n\n`List α` is isomorphic to `Array α`, but they are useful for different things:\n* `List α` is easier for reasoning, and `Array α` is modeled as a wrapper around `List α`.\n* `List α` works well as a persistent data structure, when many copies of the tail are shared. When\n  the value is not shared, `Array α` will have better performance because it can do destructive\n  updates.\n</code>",
  "129":
- "<code>CoreCpp.addExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`AddExpr ::= MulExpr ( ( '+' | '-' ) MulExpr )*` </code>",
- "128":
- "<code>CoreCpp.relExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`RelExpr ::= AddExpr ( ( '&lt;' | '&lt;=' | '&gt;' | '&gt;=' ) AddExpr )*` </code>",
- "127":
- "<code>CoreCpp.eqExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`EqExpr ::= RelExpr ( ( '==' | '!=' ) RelExpr )*` </code>",
- "126":
  "<code>CoreCpp.andExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`AndExpr ::= EqExpr ( '&&' EqExpr )*` </code>",
- "125":
+ "128":
  "<code>CoreCpp.orExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`OrExpr ::= AndExpr ( '||' AndExpr )*` </code>",
- "124": "<code>CoreCpp.P (α : Type) : Type</code>",
- "123":
+ "127": "<code>CoreCpp.P (α : Type) : Type</code>",
+ "126":
  "<code>CoreCpp.expr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`Expr ::= OrExpr ( '?' Expr ':' Expr )?` </code>",
- "122":
+ "125":
  "<code>CoreCpp.Program : Type</code><span class=\"sep\"></span><code class=\"docstring\">A program is a list of declarations. There are no global variables. </code>",
- "121": "<code>CoreCpp.Fun</code>",
- "120": "<code>CoreCpp.Decl.fn (f : CoreCpp.Fun) : CoreCpp.Decl</code>",
+ "124":
+ "<code>CoreCpp.Decl.tmpl (param : String) (c : CoreCpp.ClassDecl) : CoreCpp.Decl</code>",
+ "123": "<code>CoreCpp.Fun</code>",
+ "122": "<code>CoreCpp.Decl.fn (f : CoreCpp.Fun) : CoreCpp.Decl</code>",
+ "121":
+ "<code>CoreCpp.Decl : Type</code><span class=\"sep\"></span><code class=\"docstring\">Top level declarations. A `tmpl T C` is a class template, the class `C`\nwith the type parameter `T`, which is never checked and never run. Only its\ninstantiations are, and `Templates.instantiate` adds one class per\ninstantiation the program mentions. </code>",
+ "120": "<code>CoreCpp.ClassDecl</code>",
  "12":
  "<code>CoreCpp.keywords : List String</code><span class=\"sep\"></span><code class=\"docstring\">Reserved words of the subset handled by this parser. </code>",
- "119":
- "<code>CoreCpp.Decl : Type</code><span class=\"sep\"></span><code class=\"docstring\">Top level declarations. </code>",
- "118": "<code>CoreCpp.ClassDecl</code>",
- "117": "<code>CoreCpp.Decl.cls (c : CoreCpp.ClassDecl) : CoreCpp.Decl</code>",
- "116":
+ "119": "<code>CoreCpp.Decl.cls (c : CoreCpp.ClassDecl) : CoreCpp.Decl</code>",
+ "118":
  "<code>CoreCpp.ClassDecl : Type</code><span class=\"sep\"></span><code class=\"docstring\">A class, with an optional base class, fields, methods, at most one\nconstructor and at most one destructor. Names are qualified by their\nnamespace, `N::C`. </code>",
- "115":
+ "117":
  "<code>CoreCpp.Dtor : Type</code><span class=\"sep\"></span><code class=\"docstring\">The destructor of a class, `~C()`, run by `delete` before the locations of\nthe object leave the store. </code>",
- "114":
+ "116":
  "<code>Option CoreCpp.Dtor</code><span class=\"sep\"></span><code class=\"docstring\">The destructor, when the class declares one. </code>",
- "113":
+ "115":
  "<code>CoreCpp.Ctor : Type</code><span class=\"sep\"></span><code class=\"docstring\">The constructor of a class, named after the class and run by `new` after\nthe fields are allocated. </code>",
- "112":
+ "114":
  "<code>Option CoreCpp.Ctor</code><span class=\"sep\"></span><code class=\"docstring\">The constructor, when the class declares one. </code>",
- "111":
- "<code>CoreCpp.Method : Type</code><span class=\"sep\"></span><code class=\"docstring\">A method, defined inside the class. `isVirtual` marks `virtual`, which\nmakes the call dispatch by the class tag of the receiver, and `isOverride`\nmarks `override`, required on a method that redefines a `virtual` one. </code>",
- "110":
+ "113":
+ "<code>CoreCpp.Method : Type</code><span class=\"sep\"></span><code class=\"docstring\">A method, defined inside the class. `isVirtual` marks `virtual`, which\nmakes the call dispatch by the class tag of the receiver, and `isOverride`\nmarks `override`, required on a method that redefines a `virtual` one. An\noperator member is a method whose name is `operator` followed by the\noperator, `operator+` or `operator[]`, which the type checker reaches by\nrewriting the infix form. </code>",
+ "112":
  "<code>List CoreCpp.Method</code><span class=\"sep\"></span><code class=\"docstring\">The methods declared by the class itself. </code>",
+ "111":
+ "<code>CoreCpp.Field : Type</code><span class=\"sep\"></span><code class=\"docstring\">A field of a class. </code>",
+ "110":
+ "<code>List CoreCpp.Field</code><span class=\"sep\"></span><code class=\"docstring\">The fields declared by the class itself. </code>",
  "11":
  "<code class=\"docstring\">A type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. </code>",
  "109":
- "<code>CoreCpp.Field : Type</code><span class=\"sep\"></span><code class=\"docstring\">A field of a class. </code>",
- "108":
- "<code>List CoreCpp.Field</code><span class=\"sep\"></span><code class=\"docstring\">The fields declared by the class itself. </code>",
- "107":
  "<code>Option String</code><span class=\"sep\"></span><code class=\"docstring\">The base class, when the class derives from one. </code>",
- "106":
+ "108":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The name of the class, qualified by its namespace when it has one. </code>",
- "105": "<code>CoreCpp.Fun : Type</code>",
- "104":
+ "107": "<code>CoreCpp.Fun : Type</code>",
+ "106":
  "<code>CoreCpp.Cmd.delete (e : CoreCpp.Expr) (static : Option String) : CoreCpp.Cmd</code>",
- "103": "<code>CoreCpp.Cmd.exprStmt (e : CoreCpp.Expr) : CoreCpp.Cmd</code>",
- "102":
+ "105": "<code>CoreCpp.Cmd.exprStmt (e : CoreCpp.Expr) : CoreCpp.Cmd</code>",
+ "104":
  "<code>CoreCpp.Cmd.assign (lhs rhs : CoreCpp.Expr) : CoreCpp.Cmd</code>",
- "101":
+ "103":
  "<code>CoreCpp.Cmd.declAuto (x : String) (init : CoreCpp.Expr) : CoreCpp.Cmd</code>",
- "1000307":
+ "102":
+ "<code>CoreCpp.Cmd.declRef (ty : CoreCpp.Ty) (x : String) (init : CoreCpp.Expr) : CoreCpp.Cmd</code>",
+ "101":
+ "<code>CoreCpp.Cmd.decl (ty : CoreCpp.Ty) (x : String) (init : CoreCpp.Expr) : CoreCpp.Cmd</code>",
+ "1000330":
  "<code>CoreCpp.unaryExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`UnaryExpr ::= ( '!' | '-' | '*' ) UnaryExpr | PostfixExpr` </code>",
- "1000306":
+ "1000329":
  "<code>CoreCpp.type : CoreCpp.P CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">`Type ::= BasicType | ClassType '*'? | 'std::vector' '&lt;' Type '&gt;' '*'?\n| 'std::function' '&lt;' Type '(' ( Type ( ',' Type )* )? ')' '&gt;'`. </code>",
- "1000305":
+ "1000328":
  "<code>CoreCpp.symbols3 : List String</code><span class=\"sep\"></span><code class=\"docstring\">Symbols of three, two and one characters, longest first. </code>",
- "1000304": "<code>CoreCpp.symbols2 : List String</code>",
- "1000303": "<code>CoreCpp.symbols1 : List String</code>",
- "1000302":
+ "1000327": "<code>CoreCpp.symbols2 : List String</code>",
+ "1000326": "<code>CoreCpp.symbols1 : List String</code>",
+ "1000325":
  "<code>CoreCpp.statement : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`Statement`, a command or an expression statement, chosen by the first token. </code>",
- "1000301":
+ "1000324":
+ "<code>CoreCpp.sigOf (ps : List CoreCpp.Param) : List CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The signature of a list of parameters, the types alone, which names one\nmember of an overload set. </code>",
+ "1000323":
  "<code>CoreCpp.runWith (trace : Bool) (p : CoreCpp.Program) : Except CoreCpp.Error CoreCpp.Val × Array CoreCpp.TraceEntry</code><span class=\"sep\"></span><code class=\"docstring\">Program execution. The initial store is empty, because there are no global\nvariables, and the result is the value returned by `main()`.\n\n    main ↦ (int main() { c })    [], ∅ ⊢ main() ⇒ v, σ\n    ─────────────────────────────────────────────────── (Program)\n    p ⇒ v\n\n    The objects created with new stay in σ until delete or the end of the\n    program. The locals of main leave σ with the return of the call, so the\n    final store holds objects only. The program is annotated with the static\n    classes of method calls and deletes before it runs, when it is well typed,\n    and otherwise runs as parsed, with every dispatch by the class tag.        </code>",
- "1000300": "<code>CoreCpp.P α</code>",
- "1000299":
+ "1000322": "<code>CoreCpp.P α</code>",
+ "1000321":
  "<code>CoreCpp.runParser {α : Type} (p : CoreCpp.P α) (input : String) : Except String α</code><span class=\"sep\"></span><code class=\"docstring\">Runs a parser on a string, requiring the whole input to be consumed. </code>",
- "1000298":
+ "1000320":
  "<code>CoreCpp.run (p : CoreCpp.Program) : Except CoreCpp.Error CoreCpp.Val</code>",
- "1000297":
+ "1000319":
  "<code>CoreCpp.renderTrace (log : Array CoreCpp.TraceEntry) : String</code><span class=\"sep\"></span><code class=\"docstring\">Renders the trace as the derivation tree in post-order, indented by depth. </code>",
- "1000296":
+ "1000318":
  "<code>CoreCpp.relExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`RelExpr ::= AddExpr ( ( '&lt;' | '&lt;=' | '&gt;' | '&gt;=' ) AddExpr )*` </code>",
- "1000295":
+ "1000317":
  "<code>CoreCpp.program : CoreCpp.P CoreCpp.Program</code><span class=\"sep\"></span><code class=\"docstring\">`Program ::= Declaration*` </code>",
- "1000294":
+ "1000316":
  "<code>CoreCpp.primary : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`Primary ::= IntLit | 'true' | 'false' | 'nullptr' | 'this' | VarId | '(' Expr ')'\n| 'new' ( ClassType | 'std::vector' '&lt;' Type '&gt;' ) Args` </code>",
- "1000293":
+ "1000315":
  "<code>CoreCpp.postfixExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId Args? | '-&gt;' VarId Args? | Args )*`.\n`Args` after a variable is the call `f(…)`, of the function named `f`, of the\nfunction value bound to `f` or of the method `f` of `this`, and after any other\npostfix expression it is the call of a function value, `callFn`. `.m(…)` and\n`-&gt;m(…)` are method calls, with the static class left for the type checker. </code>",
- "1000292":
+ "1000314":
  "<code>CoreCpp.parseStatement : String → Except String CoreCpp.Cmd</code>",
- "1000291":
+ "1000313":
  "<code>CoreCpp.parseProgram : String → Except String CoreCpp.Program</code>",
- "1000290":
+ "1000312":
  "<code>CoreCpp.parseExpr : String → Except String CoreCpp.Expr</code>",
- "1000289":
+ "1000311":
  "<code>CoreCpp.params : CoreCpp.P (List CoreCpp.Param)</code><span class=\"sep\"></span><code class=\"docstring\">`Params ::= '(' ( Param ( ',' Param )* )? ')'` </code>",
- "1000288":
+ "1000310":
  "<code>CoreCpp.param : CoreCpp.P CoreCpp.Param</code><span class=\"sep\"></span><code class=\"docstring\">`Param ::= Type '&'? VarId`. With `&` the parameter is by reference. </code>",
- "1000287":
+ "1000309":
  "<code>CoreCpp.orExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`OrExpr ::= AndExpr ( '||' AndExpr )*` </code>",
- "1000286":
+ "1000308":
+ "<code>CoreCpp.operatorName : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">The operators a class may overload, the production `Op` of the design. </code>",
+ "1000307":
  "<code>CoreCpp.mulExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`MulExpr ::= UnaryExpr ( ( '*' | '/' | '%' ) UnaryExpr )*` </code>",
- "1000285":
+ "1000306":
  "<code>CoreCpp.MemberItem : Type</code><span class=\"sep\"></span><code class=\"docstring\">The members of a class as the parser reads them, one constructor at a time. </code>",
- "1000284": "<code>CoreCpp.Vis</code>",
- "1000283":
- "<code>CoreCpp.member (cls : String) (vis : CoreCpp.Vis) : CoreCpp.P CoreCpp.MemberItem</code><span class=\"sep\"></span><code class=\"docstring\">`Member ::= 'virtual' ( Type VarId Params 'override'? Block | '~' TypeId '(' ')' Block )\n| '~' TypeId '(' ')' Block | TypeId Params Block | Type VarId ( ';' | Params 'override'? Block )`.\nThe first factoring of the design. A `TypeId` followed by `(` opens the\nconstructor, which must be named after the class, and a `TypeId` followed by\nanything else opens a type. </code>",
- "1000282":
+ "1000305": "<code>CoreCpp.Vis</code>",
+ "1000304":
+ "<code>CoreCpp.member (cls : String) (vis : CoreCpp.Vis) : CoreCpp.P CoreCpp.MemberItem</code><span class=\"sep\"></span><code class=\"docstring\">`Member ::= 'virtual' ( Type '&'? ( VarId Params 'override'? Block | 'operator' Op Params Block )\n| '~' TypeId '(' ')' Block ) | '~' TypeId '(' ')' Block | TypeId Params Block\n| Type '&'? ( VarId ( ';' | Params 'override'? Block ) | 'operator' Op Params Block )`.\nThe first factoring of the design. A `TypeId` followed by `(` opens the\nconstructor, which must be named after the class, and a `TypeId` followed by\nanything else opens a type. The `&` after the type marks a member that\nreturns a reference, so a call to it denotes a location, and it never\nappears on a field. </code>",
+ "1000303":
  "<code>CoreCpp.localDecl : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With\n`&` the declaration is a local reference, UD III. A lambda initialises only a\ntyped declaration, never an `auto` one. </code>",
- "1000281":
+ "1000302":
  "<code>CoreCpp.lex (input : String) : Except String (Array CoreCpp.Token)</code><span class=\"sep\"></span><code class=\"docstring\">The lexer. </code>",
- "1000280":
+ "1000301":
  "<code>CoreCpp.lambda : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`Lambda ::= '[=]' Params '-&gt;' Type Block`. The parameters are by value. </code>",
- "1000279":
+ "1000300":
  "<code>CoreCpp.keywords : List String</code><span class=\"sep\"></span><code class=\"docstring\">Reserved words of the subset handled by this parser. </code>",
- "1000278":
+ "1000299":
  "<code>CoreCpp.function : CoreCpp.P CoreCpp.Fun</code><span class=\"sep\"></span><code class=\"docstring\">`Function ::= Type VarId Params Block` </code>",
- "1000277":
+ "1000298":
  "<code>CoreCpp.forInit : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`ForInit ::= LocalDecl | ExprStatement` </code>",
- "1000276":
+ "1000297":
  "<code>CoreCpp.exprStatement : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`ExprStatement ::= Expr ( '=' Expr )?`, an assignment command or an expression as statement. </code>",
- "1000275":
+ "1000296":
  "<code>CoreCpp.expr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`Expr ::= OrExpr ( '?' Expr ':' Expr )?` </code>",
- "1000274":
+ "1000295":
  "<code>CoreCpp.eqExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`EqExpr ::= RelExpr ( ( '==' | '!=' ) RelExpr )*` </code>",
- "1000273":
- "<code>CoreCpp.declaration : CoreCpp.P (List CoreCpp.Decl)</code><span class=\"sep\"></span><code class=\"docstring\">`Declaration ::= 'namespace' TypeId '{' Declaration* '}' | Class | Function`.\nA namespace holds classes and namespaces. Its declarations are flattened into\nthe program with qualified names. </code>",
- "1000272":
- "<code>CoreCpp.classType : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">`ClassType ::= TypeId ( '::' TypeId )*`, a class name possibly qualified\nby namespaces. </code>",
- "1000271":
+ "1000294":
+ "<code>CoreCpp.declaration : CoreCpp.P (List CoreCpp.Decl)</code><span class=\"sep\"></span><code class=\"docstring\">`Declaration ::= 'namespace' TypeId '{' Declaration* '}'\n| 'template' '&lt;' 'typename' TypeId '&gt;' Class | Class | Function`.\nA namespace holds classes and namespaces. Its declarations are flattened into\nthe program with qualified names. </code>",
+ "1000293":
+ "<code>CoreCpp.classType : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">`ClassType ::= TypeId ( '::' TypeId )* ( '&lt;' Type '&gt;' )?`, a class name\npossibly qualified by namespaces and possibly instantiating a class template.\nThe instantiation is named by the chain the design prints for the type, so\n`Pilha&lt;int&gt;` in the source and the expanded class have the same name, and\n`Templates.instantiate` adds the class before the program is checked. </code>",
+ "1000292":
  "<code>CoreCpp.classDecl : CoreCpp.P CoreCpp.ClassDecl</code><span class=\"sep\"></span><code class=\"docstring\">`Class ::= 'class' TypeId ( ':' 'public' ClassType )? '{' Section* '}' ';'` with\n`Section ::= ( 'public' | 'private' ) ':' Member*`. Members before any section\nlabel are private, as in C++. </code>",
- "1000270": "<code>CoreCpp.TypeError : Type</code>",
- "1000269":
- "<code>CoreCpp.check (p : CoreCpp.Program) : Except CoreCpp.TypeError Unit</code><span class=\"sep\"></span><code class=\"docstring\">A program is well typed when class and function names are distinct, every\nclass and function is well typed and `int main()` exists.\n\n    names distinct    ⊢ Cᵢ for each class    ⊢ fᵢ for each function    main ↦ (int main() { c })\n    ────────────────────────────────────────────────────────────────────────────────────── (T-Program)\n    ⊢ p                                                                            </code>",
- "1000268":
+ "1000291": "<code>CoreCpp.TypeError : Type</code>",
+ "1000290":
+ "<code>CoreCpp.check (p₀ : CoreCpp.Program) : Except CoreCpp.TypeError Unit</code><span class=\"sep\"></span><code class=\"docstring\">A program is well typed when class and function names are distinct up to\noverloading, every class and function is well typed and `int main()` exists.\nA template is not checked, only its instantiations are.\n\n    names distinct up to overloading    ⊢ Cᵢ for each class    ⊢ fᵢ for each function\n    main ↦ (int main() { c })\n    ────────────────────────────────────────────────────────────────────────────── (T-Program)\n    ⊢ p                                                                            </code>",
+ "1000289":
  "<code>CoreCpp.block : CoreCpp.P (List CoreCpp.Cmd)</code><span class=\"sep\"></span><code class=\"docstring\">`Block ::= '{' Statement* '}'` </code>",
- "1000267":
+ "1000288":
  "<code>CoreCpp.basicType : CoreCpp.P CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">`BasicType ::= 'int' | 'bool' | 'void'` </code>",
- "1000266":
+ "1000287":
  "<code>CoreCpp.args : CoreCpp.P (List CoreCpp.Expr)</code><span class=\"sep\"></span><code class=\"docstring\">`Args ::= '(' ( ArgExpr ( ',' ArgExpr )* )? ')'` </code>",
- "1000265":
+ "1000286":
  "<code>CoreCpp.argExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`ArgExpr ::= Lambda | Expr`. The lambda is an argument expression and not\na primary, so it occurs only as argument, as initialiser of a declaration and\nas the expression of `return`. </code>",
- "1000264":
+ "1000285":
  "<code>CoreCpp.andExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`AndExpr ::= EqExpr ( '&&' EqExpr )*` </code>",
- "1000263":
+ "1000284":
  "<code>CoreCpp.addExpr : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">`AddExpr ::= MulExpr ( ( '+' | '-' ) MulExpr )*` </code>",
- "1000262":
+ "1000283":
  "<code>CoreCpp.Vis.priv : CoreCpp.Vis</code><span class=\"sep\"></span><code class=\"docstring\">A private member, visible only inside a member body of the class that\ndeclares it. </code>",
- "1000261":
+ "1000282":
  "<code>CoreCpp.Vis.pub : CoreCpp.Vis</code><span class=\"sep\"></span><code class=\"docstring\">A public member, visible to every expression. </code>",
- "1000260": "<code>List (String × CoreCpp.Val)</code>",
- "1000259":
+ "1000281": "<code>List (String × CoreCpp.Val)</code>",
+ "1000280":
  "<code>CoreCpp.Val.closure (params : List CoreCpp.Param) (ret : CoreCpp.Ty) (body : List CoreCpp.Cmd)\n  (captured : List (String × CoreCpp.Val)) : CoreCpp.Val</code>",
- "1000258":
+ "1000279":
  "<code>CoreCpp.Val.vec (elems : List CoreCpp.Loc) : CoreCpp.Val</code>",
- "1000257": "<code>List (String × CoreCpp.Loc)</code>",
- "1000256":
+ "1000278": "<code>List (String × CoreCpp.Loc)</code>",
+ "1000277":
  "<code>CoreCpp.Val.obj (tag : String) (fields : List (String × CoreCpp.Loc)) : CoreCpp.Val</code>",
- "1000255": "<code>CoreCpp.Val.null : CoreCpp.Val</code>",
- "1000254": "<code>CoreCpp.Val.loc (l : CoreCpp.Loc) : CoreCpp.Val</code>",
- "1000253": "<code>CoreCpp.Val.void : CoreCpp.Val</code>",
- "1000252": "<code>CoreCpp.Val.bool (b : Bool) : CoreCpp.Val</code>",
- "1000251": "<code>CoreCpp.Val.int (n : Int) : CoreCpp.Val</code>",
- "1000250": "<code>CoreCpp.UnOp.neg : CoreCpp.UnOp</code>",
- "1000249": "<code>CoreCpp.UnOp.not : CoreCpp.UnOp</code>",
- "1000248":
- "<code>CoreCpp.Typing.storable (context : String) (t : CoreCpp.Ty) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Requires that a variable, parameter or result type has values. </code>",
- "1000247":
+ "1000276": "<code>CoreCpp.Val.null : CoreCpp.Val</code>",
+ "1000275": "<code>CoreCpp.Val.loc (l : CoreCpp.Loc) : CoreCpp.Val</code>",
+ "1000274": "<code>CoreCpp.Val.void : CoreCpp.Val</code>",
+ "1000273": "<code>CoreCpp.Val.bool (b : Bool) : CoreCpp.Val</code>",
+ "1000272": "<code>CoreCpp.Val.int (n : Int) : CoreCpp.Val</code>",
+ "1000271": "<code>CoreCpp.UnOp.neg : CoreCpp.UnOp</code>",
+ "1000270": "<code>CoreCpp.UnOp.not : CoreCpp.UnOp</code>",
+ "1000269":
+ "<code>CoreCpp.Typing.storable (context : String) (t : CoreCpp.Ty) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Requires that a variable, parameter or result type has values. A `τ&`\nparameter and a local reference bind the location of their argument, so an\nobject type is admissible there and nowhere else, which is how a member takes\nan object without copying it. </code>",
+ "1000268":
  "<code>CoreCpp.Typing.staticClass (t : CoreCpp.Ty) (arrow : Bool) : Option String</code><span class=\"sep\"></span><code class=\"docstring\">The class a receiver expression has, `C` for `e.m` with `e : C` and for\n`e-&gt;m` with `e : C*`, and for `delete e` with `e : C*`. </code>",
- "1000246":
+ "1000267":
+ "<code>CoreCpp.Typing.resolveMethod (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (recv : CoreCpp.Expr) (arrow : Bool) (m : String)\n  (es : List CoreCpp.Expr) : CoreCpp.T (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method a call selects, with the class that declares it, the rules\nT-Method and T-MethodArrow with the overload set of the name. </code>",
+ "1000266":
+ "<code>CoreCpp.Typing.resolveFun (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (f : String) (es : List CoreCpp.Expr) :\n  CoreCpp.T CoreCpp.Fun</code><span class=\"sep\"></span><code class=\"docstring\">The function a call selects out of the overload set of its name. </code>",
+ "1000265":
  "<code>CoreCpp.Typing.related (p : CoreCpp.Program) (t₁ t₂ : CoreCpp.Ty) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">τ₁ ≈ τ₂ in either direction, for comparison and for the branches of `?:`. </code>",
- "1000245":
+ "1000264":
+ "<code>CoreCpp.Typing.refReturns (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (m : String) : List CoreCpp.Cmd → CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Every `return` of a member that returns a reference is a `return e` with\n`e` denoting a location. The walk does not enter the body of a lambda, whose\n`return` is the lambda's own.\n\n    τ has values    every return of c is return e with Γ ⊢ₗ e : τ\n    ─────────────────────────────────────────────────────────────── (T-RetRef)\n    ⊢ τ& m(…) { c } in C                                                          </code>",
+ "1000263":
+ "<code>CoreCpp.Typing.refRets : List CoreCpp.Cmd → List CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">The `return e` of a member that returns a reference becomes `return &e`,\nthe location as a value, which the caller reads or uses as a location. The\nwalk does not enter the body of a lambda. </code>",
+ "1000262": "<code>List (List CoreCpp.Param)</code>",
+ "1000261":
+ "<code>CoreCpp.Typing.pickOverload (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (who : String) (cands : List (List CoreCpp.Param))\n  (es : List CoreCpp.Expr) : CoreCpp.T Nat</code><span class=\"sep\"></span><code class=\"docstring\">The candidate of an overload set that a call selects, by its index. The\ncandidates that accept the arguments are collected, and the choice is the\nexact one when several accept.\n\n    A = the candidates of cand(f, k) that accept e₁, …, eₖ\n    A has one element whose parameters are exactly the types of the arguments, or A is a singleton\n    ─────────────────────────────────────────────────────────────────────────────── (T-Overload)\n    the call of f selects that candidate\n\n    With A empty the error is the one of the single candidate of that arity,\n    when there is one, and `no overload` otherwise. With two or more in A and\n    no exact one the call is ambiguous. Core C++ does not rank conversion\n    sequences, so the rule fits in one line on the board.                        </code>",
+ "1000260":
  "<code>CoreCpp.Typing.methodCall (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (recv : CoreCpp.Expr) (arrow : Bool) (m : String)\n  (es : List CoreCpp.Expr) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The rules T-Method and T-MethodArrow, see `expr`. </code>",
- "1000244":
+ "1000259":
  "<code>CoreCpp.Typing.memberEnv (c : String) (ps : List CoreCpp.Param) : CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">The context of a member body, `this` bound to a pointer to the class and\nthe parameters as variables. </code>",
- "1000243":
+ "1000258":
  "<code>CoreCpp.Typing.lval (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) : CoreCpp.Expr → CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The expressions that denote a location, with their type. A variable, a\ndereferenced pointer, a field of an object, a field through a pointer and an\nelement of a vector. A variable captured by copy inside a lambda denotes no\nwritable location.\n\n    Γ(x) = τ, x not captured   Γ ⊢ e : τ*           Γ ⊢ e : C, C has τ f\n    ──────────────────────── (T-LocVar)  ──────────── (T-LocDeref)  ─────────────────── (T-LocField)\n    Γ ⊢ₗ x : τ                 Γ ⊢ₗ *e : τ          Γ ⊢ₗ e.f : τ\n\n    Γ ⊢ e : C*, C has τ f                Γ ⊢ e : std::vector&lt;τ&gt;    Γ ⊢ i : int\n    ────────────────────── (T-LocArrow)  ─────────────────────────────────── (T-LocIndex)\n    Γ ⊢ₗ e-&gt;f : τ                        Γ ⊢ₗ e[i] : τ                                       </code>",
- "1000242":
+ "1000257":
  "<code>CoreCpp.Typing.lambdaAt (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (ps : List CoreCpp.Param) (r : CoreCpp.Ty)\n  (b : List CoreCpp.Cmd) (τ : CoreCpp.Ty) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -&gt; τ { c } ◁ std::function&lt;τ(τ₁, …, τₖ)&gt;.\n\nΓ' = Γ marked read only, [x₁ ↦ τ₁, …, xₖ ↦ τₖ]    Γ' ⊢ c ⊣ Γ''    τ, τᵢ storable, well formed\n───────────────────────────────────────────────────────────────────────────────────── (T-Lambda)\nΓ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -&gt; τ { c } ◁ std::function&lt;τ(τ₁, …, τₖ)&gt;\n\nThe parameter and result types of the lambda are exactly those of the\nexpected std::function type. The body is checked under Γ with every\nvariable of the enclosing scope marked read only, the copies of `[=]`, and\nwith the parameters of the lambda as ordinary variables.                    </code>",
- "1000241":
+ "1000256":
  "<code>CoreCpp.Typing.fn (p : CoreCpp.Program) (f : CoreCpp.Fun) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">A function is well typed when its parameter and return types have values\nand are well formed, and its body is, under the context of its parameters and\nits return type. A reference parameter has in Γ the type of its referent, as a\nlocal reference does.\n\n    τ, τᵢ storable and well formed    [x₁ ↦ τ₁, …, xₖ ↦ τₖ] ⊢ c ⊣ Γ'\n    ──────────────────────────────────────────────────────────────── (T-Fun)\n    ⊢ τ f (τ₁ x₁, …, τₖ xₖ) { c }                                                  </code>",
- "1000240":
+ "1000255":
  "<code>CoreCpp.Typing.fieldType (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (c f : String) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The type of field f of class C as seen from Γ, or the error. A private\nfield is visible only when Γ(this) is the class that declares it.\n\n    C has τ f declared in K    f public or Γ(this) = K*\n    ──────────────────────────────────────────────────── (Visible)                </code>",
- "1000239":
+ "1000254":
  "<code>CoreCpp.Typing.expr (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) : CoreCpp.Expr → CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ e : τ </code>",
- "1000238":
+ "1000253":
+ "<code>CoreCpp.Typing.distinguishable (ps qs : List CoreCpp.Param) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">Two overloads of one name are declared together only when they differ in\narity or in a parameter of a type other than `std::function`, the check 5 of\nthe design. The restriction keeps a lambda argument from deciding a call,\nwhich would ask for the type of the lambda before the candidate is known.\n\n    arities differ, or ∃ i. pᵢ ≠ qᵢ and neither pᵢ nor qᵢ is std::function\n    ──────────────────────────────────────────────────────────────────── (Distinguishable)\n    the two declarations are overloads                                          </code>",
+ "1000252":
  "<code>CoreCpp.Typing.compat (p : CoreCpp.Program) : CoreCpp.Ty → CoreCpp.Ty → Bool</code><span class=\"sep\"></span><code class=\"docstring\">τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal\ntypes, nullptr against a pointer type, or, by subsumption, a pointer to a\nderived class where a pointer to its base is expected. These and the lambda\nto `std::function` are the only implicit conversions. </code>",
- "1000237":
+ "1000251":
  "<code>CoreCpp.Typing.cmds (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) :\n  List CoreCpp.Cmd → CoreCpp.T CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ c₁ … cₙ ⊣ Γₙ, threading the context through the sequence.\n\n──────────── (T-Seq-Empty)      Γ ⊢ c ⊣ Γ₁    Γ₁ ⊢ cs ⊣ Γ₂\nΓ ⊢ ε ⊣ Γ                       ──────────────────────────── (T-Seq)\n                                Γ ⊢ c cs ⊣ Γ₂                                  </code>",
- "1000236":
+ "1000250":
  "<code>CoreCpp.Typing.cmd (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) : CoreCpp.Cmd → CoreCpp.T CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ c ⊣ Γ', under the return type τᵣ of the enclosing function. </code>",
- "1000235":
+ "1000249":
  "<code>CoreCpp.Typing.cls (p : CoreCpp.Program) (c : CoreCpp.ClassDecl) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">A class is well formed when its base exists and the chain has no cycle,\nits fields have types with values, well formed, and repeat no field of a\nbase, its members have distinct names, each method redefines only a method\nthe base declares virtual and then carries override, with the same\nsignature, the constructor of the base, if any, takes no parameters, and\nevery member body is well typed under `this`.\n\n    B exists, chain acyclic    fields storable, well formed, new in the chain\n    for each method m of C. if some base has m then that m is virtual, m is override and the signatures agree\n    for each override m of C. some base has a virtual m\n    B has no constructor or one with no parameters\n    [this ↦ C*, params] ⊢ body ⊣ Γ' for each method, the constructor and the destructor\n    ───────────────────────────────────────────────────────────────────────────────────── (T-Class)\n    ⊢ class C : public B { … }                                                     </code>",
- "1000234":
+ "1000248":
  "<code>CoreCpp.Typing.checkArgs (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (f : String) (ps : List CoreCpp.Param)\n  (es : List CoreCpp.Expr) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">The arguments of a call against the parameters, by value with ◁ and by\nreference with ⊢ₗ, shared by T-Call, T-New and T-Method. </code>",
- "1000233":
+ "1000247":
  "<code>CoreCpp.Typing.callValue (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (fe : CoreCpp.Expr) (t : CoreCpp.Ty)\n  (es : List CoreCpp.Expr) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The call of a function value of type t with the arguments es, shared by\n`T-CallFn` on a variable and on any other expression. </code>",
- "1000232":
- "<code>CoreCpp.Typing.annotate (p : CoreCpp.Program) : CoreCpp.T CoreCpp.Program</code><span class=\"sep\"></span><code class=\"docstring\">The program with the static classes filled in. Fails only on an ill typed\nprogram, which `check` rejects first. </code>",
- "1000231":
+ "1000246":
+ "<code>CoreCpp.Typing.annotate (p₀ : CoreCpp.Program) : CoreCpp.T CoreCpp.Program</code><span class=\"sep\"></span><code class=\"docstring\">The program with the static classes, the chosen overloads and the\nreference returns filled in. Fails only on an ill typed program, which\n`check` rejects first. </code>",
+ "1000245":
  "<code>CoreCpp.Typing.annExpr (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) : CoreCpp.Expr → CoreCpp.T CoreCpp.Expr</code>",
- "1000230":
+ "1000244":
  "<code>CoreCpp.Typing.annCmds (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) :\n  List CoreCpp.Cmd → CoreCpp.T (List CoreCpp.Cmd)</code>",
- "1000229":
+ "1000243":
  "<code>CoreCpp.Typing.annCmd (p : CoreCpp.Program) (τᵣ : CoreCpp.Ty) (Γ : CoreCpp.TEnv) : CoreCpp.Cmd → CoreCpp.T CoreCpp.Cmd</code>",
- "1000228":
+ "1000242":
  "<code>Unit : Type</code><span class=\"sep\"></span><code class=\"docstring\">The canonical type with one element. This element is written `()`.\n\n`Unit` has a number of uses:\n* It can be used to model control flow that returns from a function call without providing other\n  information.\n* Monadic actions that return `Unit` have side effects without computing values.\n* In polymorphic types, it can be used to indicate that no data is to be stored in a particular\n  field.\n</code>",
- "1000227": "<code>CoreCpp.T (α : Type) : Type</code>",
- "1000226":
+ "1000241": "<code>CoreCpp.T (α : Type) : Type</code>",
+ "1000240":
  "<code>CoreCpp.Typing.accept (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (context : String) (e : CoreCpp.Expr) (τ : CoreCpp.Ty) :\n  CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ e ◁ τ, e is acceptable at type τ. For a lambda, `lambdaAt`. For any\nother expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.\n\n    Γ ⊢ e : τ'    τ' ≈ τ    τ' has values\n    ───────────────────────────────────── (Accept)\n    Γ ⊢ e ◁ τ                                                                      </code>",
- "1000225":
+ "1000239":
  "<code>CoreCpp.Ty.isFn : CoreCpp.Ty → Bool</code><span class=\"sep\"></span><code class=\"docstring\">Function types, the types of closures. </code>",
- "1000224":
+ "1000238":
  "<code>CoreCpp.Ty.default : CoreCpp.Ty → CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">The default value of a type, the one `new` gives to every field and\nelement before the constructor runs. Object types have no value, their default\nis never asked. A field of function type starts empty, `void`, and a call\nthrough it before the constructor assigns a lambda is `error`, as the\n`bad_function_call` of C++. </code>",
- "1000223": "<code>CoreCpp.Ty.nullT : CoreCpp.Ty</code>",
- "1000222": "<code>List CoreCpp.Ty</code>",
- "1000221":
+ "1000237": "<code>CoreCpp.Ty.nullT : CoreCpp.Ty</code>",
+ "1000236": "<code>List CoreCpp.Ty</code>",
+ "1000235":
  "<code>CoreCpp.Ty.fn (ret : CoreCpp.Ty) (params : List CoreCpp.Ty) : CoreCpp.Ty</code>",
- "1000220": "<code>CoreCpp.Ty.vec (t : CoreCpp.Ty) : CoreCpp.Ty</code>",
- "1000219": "<code>CoreCpp.Ty.ptr (t : CoreCpp.Ty) : CoreCpp.Ty</code>",
- "1000218": "<code>CoreCpp.Ty.cls (name : String) : CoreCpp.Ty</code>",
- "1000217": "<code>CoreCpp.Ty.void : CoreCpp.Ty</code>",
- "1000216": "<code>CoreCpp.Ty.bool : CoreCpp.Ty</code>",
- "1000215": "<code>CoreCpp.Ty.int : CoreCpp.Ty</code>",
- "1000214": "<code>CoreCpp.Token.eof : CoreCpp.Token</code>",
- "1000213": "<code>CoreCpp.Token.sym (s : String) : CoreCpp.Token</code>",
- "1000212": "<code>CoreCpp.Token.intLit (n : Nat) : CoreCpp.Token</code>",
- "1000211": "<code>CoreCpp.Token.varId (s : String) : CoreCpp.Token</code>",
- "1000210": "<code>CoreCpp.Token.typeId (s : String) : CoreCpp.Token</code>",
- "1000209": "<code>CoreCpp.Token.kw (s : String) : CoreCpp.Token</code>",
- "1000208": "<code>CoreCpp.TState : Type</code>",
- "1000207":
+ "1000234": "<code>CoreCpp.Ty.vec (t : CoreCpp.Ty) : CoreCpp.Ty</code>",
+ "1000233": "<code>CoreCpp.Ty.ptr (t : CoreCpp.Ty) : CoreCpp.Ty</code>",
+ "1000232": "<code>CoreCpp.Ty.cls (name : String) : CoreCpp.Ty</code>",
+ "1000231": "<code>CoreCpp.Ty.void : CoreCpp.Ty</code>",
+ "1000230": "<code>CoreCpp.Ty.bool : CoreCpp.Ty</code>",
+ "1000229": "<code>CoreCpp.Ty.int : CoreCpp.Ty</code>",
+ "1000228": "<code>CoreCpp.Token.eof : CoreCpp.Token</code>",
+ "1000227": "<code>CoreCpp.Token.sym (s : String) : CoreCpp.Token</code>",
+ "1000226": "<code>CoreCpp.Token.intLit (n : Nat) : CoreCpp.Token</code>",
+ "1000225": "<code>CoreCpp.Token.varId (s : String) : CoreCpp.Token</code>",
+ "1000224": "<code>CoreCpp.Token.typeId (s : String) : CoreCpp.Token</code>",
+ "1000223": "<code>CoreCpp.Token.kw (s : String) : CoreCpp.Token</code>",
+ "1000222":
+ "<code>CoreCpp.Templates.substTy (param : String) (τ : CoreCpp.Ty) : CoreCpp.Ty → CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">`[T := τ]` on a type. </code>",
+ "1000221":
+ "<code>CoreCpp.Templates.substName (param repl n : String) : String</code><span class=\"sep\"></span><code class=\"docstring\">Substitutes the type parameter in a mangled class name, `[T := int]` on\n`No&lt;T&gt;` giving `No&lt;int&gt;`. The parameter may also be the whole name. </code>",
+ "1000220":
+ "<code>CoreCpp.Templates.substClass (param : String) (τ : CoreCpp.Ty) (c : CoreCpp.ClassDecl) : CoreCpp.ClassDecl</code><span class=\"sep\"></span><code class=\"docstring\">The class of the template instantiated at τ, with the name the source\nwrites for it. </code>",
+ "1000219": "<code>optParam Nat 32</code>",
+ "1000218":
+ "<code>CoreCpp.Templates.instantiate (p : CoreCpp.Program) (fuel : Nat := 32) : Except String CoreCpp.Program</code><span class=\"sep\"></span><code class=\"docstring\">Adds one class per instantiation the program mentions, to a fixed point.\nIdempotent, so `check` and `runWith` may both apply it. </code>",
+ "1000217": "<code>CoreCpp.TState : Type</code>",
+ "1000216":
  "<code>CoreCpp.TraceEntry : Type</code><span class=\"sep\"></span><code class=\"docstring\">One recorded judgment instance. </code>",
- "1000206": "<code>Array CoreCpp.TraceEntry</code>",
- "1000205": "<code>Nat</code>",
- "1000204":
+ "1000215": "<code>Array CoreCpp.TraceEntry</code>",
+ "1000214": "<code>Nat</code>",
+ "1000213":
  "<code>CoreCpp.TEnv.self (Γ : CoreCpp.TEnv) : Option String</code><span class=\"sep\"></span><code class=\"docstring\">The current class, the class of `this` when Γ binds it, inside a method,\na constructor or a destructor. </code>",
- "1000203":
+ "1000212":
  "<code>CoreCpp.TEnv.lookup (Γ : CoreCpp.TEnv) (x : String) : Option CoreCpp.Ty</code>",
- "1000202":
+ "1000211":
  "<code>CoreCpp.TEnv.isConst (Γ : CoreCpp.TEnv) (x : String) : Bool</code>",
- "1000201":
+ "1000210":
  "<code>CoreCpp.TEnv.captured (Γ : CoreCpp.TEnv) : CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ with every binding marked read only, the context of a lambda body. </code>",
- "1000200": "<code>CoreCpp.TEnv</code>",
- "1000199":
+ "1000209": "<code>CoreCpp.TEnv</code>",
+ "1000208":
  "<code>CoreCpp.TEnv.bind (Γ : CoreCpp.TEnv) (x : String) (t : CoreCpp.Ty) : CoreCpp.TEnv</code><span class=\"sep\"></span><code class=\"docstring\">Γ[x ↦ τ] </code>",
- "1000198":
+ "1000207":
  "<code>CoreCpp.TEnv : Type</code><span class=\"sep\"></span><code class=\"docstring\">Typing context Γ, a finite map from identifiers to types. </code>",
- "1000197":
+ "1000206":
  "<code>CoreCpp.TBind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A binding of Γ. `const` marks a variable captured by copy in a lambda body,\nwhich the body may read and not write. </code>",
- "1000196":
+ "1000205":
  "<code>CoreCpp.Store.write (σ : CoreCpp.Store) (l : CoreCpp.Loc) (v : CoreCpp.Val) : CoreCpp.Store</code><span class=\"sep\"></span><code class=\"docstring\">σ[ℓ ↦ v] for ℓ ∈ dom σ. </code>",
- "1000195":
+ "1000204":
  "<code>CoreCpp.Store.read (σ : CoreCpp.Store) (l : CoreCpp.Loc) : Option CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">σ(ℓ), or nothing if ℓ ∉ dom σ. </code>",
- "1000194": "<code>List CoreCpp.Loc</code>",
- "1000193":
+ "1000203": "<code>List CoreCpp.Loc</code>",
+ "1000202":
  "<code>CoreCpp.Store.free (σ : CoreCpp.Store) (ls : List CoreCpp.Loc) : CoreCpp.Store</code><span class=\"sep\"></span><code class=\"docstring\">σ ∖ L, removes the locations in L from the domain. Realises scope exit. </code>",
- "1000192":
+ "1000201":
  "<code>CoreCpp.Store.dom (σ : CoreCpp.Store) : List CoreCpp.Loc</code>",
- "1000191": "<code>List CoreCpp.Val</code>",
- "1000190":
+ "1000200": "<code>List CoreCpp.Val</code>",
+ "1000199":
  "<code>CoreCpp.Store.allocMany (σ : CoreCpp.Store) (vs : List CoreCpp.Val) : List CoreCpp.Loc × CoreCpp.Store</code><span class=\"sep\"></span><code class=\"docstring\">Allocates one fresh location per value, in order. </code>",
- "1000189":
+ "1000198":
  "<code>CoreCpp.Store.alloc (σ : CoreCpp.Store) (v : CoreCpp.Val) : CoreCpp.Loc × CoreCpp.Store</code><span class=\"sep\"></span><code class=\"docstring\">Allocates a fresh location ℓ ∉ dom σ holding v. Returns ℓ and σ[ℓ ↦ v]. </code>",
- "1000188": "<code>List (CoreCpp.Loc × CoreCpp.Val)</code>",
- "1000187":
+ "1000197": "<code>List (CoreCpp.Loc × CoreCpp.Val)</code>",
+ "1000196":
+ "<code>CoreCpp.Program.templates (p : CoreCpp.Program) : List (String × CoreCpp.ClassDecl)</code><span class=\"sep\"></span><code class=\"docstring\">The class templates of the program, each with its type parameter. </code>",
+ "1000195":
  "<code>CoreCpp.Program.subclass (p : CoreCpp.Program) (d c : String) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">d is c or derives from c. </code>",
- "1000186":
+ "1000194":
  "<code>CoreCpp.Program.lookupClass (p : CoreCpp.Program) (c : String) : Option CoreCpp.ClassDecl</code>",
- "1000185":
+ "1000193":
  "<code>CoreCpp.Program.hasVirtualDtor (p : CoreCpp.Program) (c : String) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">Some class in the chain of c declares a virtual destructor, so `delete`\nthrough a pointer to c reaches the destructor of the tag. </code>",
- "1000184":
+ "1000192":
+ "<code>CoreCpp.Program.funsNamed (p : CoreCpp.Program) (f : String) : List CoreCpp.Fun</code><span class=\"sep\"></span><code class=\"docstring\">The overload set of the functions named f. </code>",
+ "1000191":
  "<code>CoreCpp.Program.funs (p : CoreCpp.Program) : List CoreCpp.Fun</code>",
- "1000183":
- "<code>CoreCpp.Program.findMethod (p : CoreCpp.Program) (c m : String) : Option (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method m as seen from class c, the nearest declaration in the chain,\nwith the class that declares it. </code>",
- "1000182":
+ "1000190":
+ "<code>CoreCpp.Program.findMethods (p : CoreCpp.Program) (c m : String) : List (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The overload set of the method m as seen from class c, one method per\nsignature, the nearest in the chain of c, each with the class that declares\nit. A method of a derived class replaces the one of a base with the same\nsignature, and a different signature is another overload, without the name\nhiding of C++. </code>",
+ "1000189":
+ "<code>CoreCpp.Program.findMethod (p : CoreCpp.Program) (c m : String) : Option (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method m as seen from class c, the nearest declaration in the chain,\nwith the class that declares it. With m overloaded it is the first of the\noverload set, and `findMethods` gives them all. </code>",
+ "1000188":
  "<code>CoreCpp.Program.findField (p : CoreCpp.Program) (c f : String) : Option (CoreCpp.Field × String)</code><span class=\"sep\"></span><code class=\"docstring\">The field f as seen from class c, with the class that declares it. </code>",
- "1000181":
+ "1000187":
  "<code>CoreCpp.Program.classes (p : CoreCpp.Program) : List CoreCpp.ClassDecl</code>",
- "1000180":
+ "1000186":
  "<code>Nat : Type</code><span class=\"sep\"></span><code class=\"docstring\">The natural numbers, starting at zero.\n\nThis type is special-cased by both the kernel and the compiler, and overridden with an efficient\nimplementation. Both use a fast arbitrary-precision arithmetic library (usually\n[GMP](https://gmplib.org/)); at runtime, `Nat` values that are sufficiently small are unboxed.\n</code>",
- "1000179": "<code>optParam Nat 64</code>",
- "1000178":
+ "1000185": "<code>optParam Nat 64</code>",
+ "1000184":
  "<code>CoreCpp.Program.chain (p : CoreCpp.Program) (c : String) (fuel : Nat := 64) : List CoreCpp.ClassDecl</code><span class=\"sep\"></span><code class=\"docstring\">The chain of a class, the class itself, its base, the base of the base\nand so on. A cycle or an unknown base ends the chain, and the type checker\nrejects both. </code>",
- "1000177": "<code>CoreCpp.Program</code>",
- "1000176":
+ "1000183": "<code>CoreCpp.Program</code>",
+ "1000182":
  "<code>CoreCpp.Program.allFields (p : CoreCpp.Program) (c : String) : List (CoreCpp.Field × String)</code><span class=\"sep\"></span><code class=\"docstring\">Every field of a class, the fields of the root base first, each with the\nclass that declares it. </code>",
- "1000175":
+ "1000181":
  "<code>CoreCpp.Program : Type</code><span class=\"sep\"></span><code class=\"docstring\">A program is a list of declarations. There are no global variables. </code>",
- "1000174": "<code>CoreCpp.P (α : Type) : Type</code>",
- "1000173":
+ "1000180": "<code>CoreCpp.P (α : Type) : Type</code>",
+ "1000179":
  "<code>CoreCpp.P.qualify (n : String) : CoreCpp.P String</code><span class=\"sep\"></span><code class=\"docstring\">A class name as written, qualified by the enclosing namespaces when it\ncarries no `::` of its own. </code>",
- "1000172":
+ "1000178":
+ "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the method returns a reference, `τ& m(…)`, so that a call to it\ndenotes the location the body returns. </code>",
+ "1000177":
  "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the method is declared `override`. </code>",
- "1000171":
+ "1000176":
  "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the method is declared `virtual`. </code>",
- "1000170":
+ "1000175":
  "<code>CoreCpp.Vis</code><span class=\"sep\"></span><code class=\"docstring\">The visibility of the method. </code>",
- "1000169":
+ "1000174":
  "<code>List CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">The body, run with `this` bound to the receiver. </code>",
- "1000168":
+ "1000173":
  "<code>List CoreCpp.Param</code><span class=\"sep\"></span><code class=\"docstring\">The parameters. </code>",
- "1000167":
+ "1000172":
  "<code>CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The result type. </code>",
- "1000166":
+ "1000171":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The name of the method. </code>",
- "1000165": "<code>Char → Bool</code>",
- "1000164":
+ "1000170": "<code>Char → Bool</code>",
+ "1000169":
  "<code>CoreCpp.Lexer.takeWhile (p : Char → Bool) : List Char → String × List Char</code><span class=\"sep\"></span><code class=\"docstring\">Takes the longest prefix of characters satisfying `p`. </code>",
- "1000163":
+ "1000168":
  "<code>CoreCpp.Lexer.skipLine : List Char → List Char</code><span class=\"sep\"></span><code class=\"docstring\">Discards a line comment. </code>",
- "1000162":
+ "1000167":
  "<code>Except.{u, v} (ε : Type u) (α : Type v) : Type (max u v)</code><span class=\"sep\"></span><code class=\"docstring\">`Except ε α` is a type which represents either an error of type `ε` or a successful result with a\nvalue of type `α`.\n\n`Except ε : Type u → Type v` is a `Monad` that represents computations that may throw exceptions:\nthe `pure` operation is `Except.ok` and the `bind` operation returns the first encountered\n`Except.error`.\n</code>",
- "1000161":
+ "1000166":
  "<code>Array.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">`Array α` is the type of [dynamic arrays](https://en.wikipedia.org/wiki/Dynamic_array) with elements\nfrom `α`. This type has special support in the runtime.\n\nArrays perform best when unshared. As long as there is never more than one reference to an array,\nall updates will be performed _destructively_. This results in performance comparable to mutable\narrays in imperative programming languages.\n\nAn array has a size and a capacity. The size is the number of elements present in the array, while\nthe capacity is the amount of memory currently allocated for elements. The size is accessible via\n`Array.size`, but the capacity is not observable from Lean code. `Array.emptyWithCapacity n` creates\nan array which is equal to `#[]`, but internally allocates an array of capacity `n`. When the size\nexceeds the capacity, allocation is required to grow the array.\n\nFrom the point of view of proofs, `Array α` is just a wrapper around `List α`.\n</code>",
- "1000160": "<code>Array CoreCpp.Token</code>",
- "1000159":
+ "1000165": "<code>Array CoreCpp.Token</code>",
+ "1000164":
  "<code>CoreCpp.Lexer.run (cs : List Char) (acc : Array CoreCpp.Token) : Except String (Array CoreCpp.Token)</code>",
- "1000158":
+ "1000163":
  "<code>Char : Type</code><span class=\"sep\"></span><code class=\"docstring\">Characters are Unicode [scalar values](http://www.unicode.org/glossary/#unicode_scalar_value).\n</code>",
- "1000157": "<code>List Char</code>",
- "1000156": "<code>List String</code>",
- "1000155":
+ "1000162": "<code>List Char</code>",
+ "1000161": "<code>List String</code>",
+ "1000160":
  "<code>CoreCpp.Lexer.matchSymbol (syms : List String) (cs : List Char) : Option (String × List Char)</code><span class=\"sep\"></span><code class=\"docstring\">Tries to match one of the symbols at the start of the input. </code>",
- "1000154": "<code>CoreCpp.Token : Type</code>",
- "1000153":
+ "1000159": "<code>CoreCpp.Token : Type</code>",
+ "1000158":
  "<code>CoreCpp.Lexer.identifier (s : String) : CoreCpp.Token</code><span class=\"sep\"></span><code class=\"docstring\">Classifies an identifier by its initial, or as a reserved word. </code>",
- "1000152":
+ "1000157":
  "<code>CoreCpp.Int32.min : Int</code><span class=\"sep\"></span><code class=\"docstring\">Bounds of `int`. </code>",
- "1000151": "<code>CoreCpp.Int32.max : Int</code>",
- "1000150": "<code>CoreCpp.Int32.inRange (n : Int) : Bool</code>",
- "1000149":
+ "1000156": "<code>CoreCpp.Int32.max : Int</code>",
+ "1000155": "<code>CoreCpp.Int32.inRange (n : Int) : Bool</code>",
+ "1000154":
+ "<code>CoreCpp.FunEnv.lookupSig (fs : CoreCpp.FunEnv) (f : String) (sig : Option (List CoreCpp.Ty)) : Option CoreCpp.Fun</code><span class=\"sep\"></span><code class=\"docstring\">The function named f with the signature the type checker chose, or the\nfirst one of the name when the program was not annotated. </code>",
+ "1000153":
  "<code>CoreCpp.FunEnv.lookup (fs : CoreCpp.FunEnv) (f : String) : Option CoreCpp.Fun</code>",
- "1000148":
+ "1000152":
  "<code>CoreCpp.Vis : Type</code><span class=\"sep\"></span><code class=\"docstring\">Visibility of a member. Members before any section label are private, as\nin C++. </code>",
- "1000147":
+ "1000151":
  "<code>CoreCpp.Vis</code><span class=\"sep\"></span><code class=\"docstring\">The visibility of the field. </code>",
- "1000146":
+ "1000150":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The name of the field. </code>",
- "1000145":
+ "1000149":
  "<code>CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The type of the field. </code>",
- "1000144":
+ "1000148":
  "<code>CoreCpp.Expr.vars : CoreCpp.Expr → List String</code><span class=\"sep\"></span><code class=\"docstring\">The variables an expression mentions, the candidates for capture by a\nlambda. A nested lambda contributes its own free variables, its parameters\nexcluded. </code>",
- "1000143":
+ "1000147": "<code>CoreCpp.Expr.locOf (e : CoreCpp.Expr) : CoreCpp.Expr</code>",
+ "1000146":
  "<code>CoreCpp.Expr.callFn (f : CoreCpp.Expr) (args : List CoreCpp.Expr) : CoreCpp.Expr</code>",
- "1000142":
+ "1000145":
  "<code>CoreCpp.Expr.lambda (params : List CoreCpp.Param) (ret : CoreCpp.Ty) (body : List CoreCpp.Cmd) : CoreCpp.Expr</code>",
- "1000141":
+ "1000144":
  "<code>CoreCpp.Expr.index (e i : CoreCpp.Expr) : CoreCpp.Expr</code>",
- "1000140": "<code>CoreCpp.Expr.deref (e : CoreCpp.Expr) : CoreCpp.Expr</code>",
- "1000139":
+ "1000143": "<code>CoreCpp.Expr.deref (e : CoreCpp.Expr) : CoreCpp.Expr</code>",
+ "1000142":
  "<code>CoreCpp.Expr.arrow (e : CoreCpp.Expr) (f : String) : CoreCpp.Expr</code>",
- "1000138":
+ "1000141":
  "<code>CoreCpp.Expr.field (e : CoreCpp.Expr) (f : String) : CoreCpp.Expr</code>",
- "1000137":
- "<code>CoreCpp.Expr.methodCall (recv : CoreCpp.Expr) (arrow : Bool) (m : String) (args : List CoreCpp.Expr)\n  (static : Option String) : CoreCpp.Expr</code>",
- "1000136": "<code>CoreCpp.Expr.this : CoreCpp.Expr</code>",
- "1000135":
+ "1000140":
+ "<code>CoreCpp.Expr.methodCall (recv : CoreCpp.Expr) (arrow : Bool) (m : String) (args : List CoreCpp.Expr)\n  (static : Option String) (sig : Option (List CoreCpp.Ty)) : CoreCpp.Expr</code>",
+ "1000139": "<code>CoreCpp.Expr.this : CoreCpp.Expr</code>",
+ "1000138":
  "<code>CoreCpp.Expr.newVec (t : CoreCpp.Ty) (n : CoreCpp.Expr) : CoreCpp.Expr</code>",
- "1000134":
+ "1000137":
  "<code>CoreCpp.Expr.newObj (c : String) (args : List CoreCpp.Expr) : CoreCpp.Expr</code>",
- "1000133":
- "<code>CoreCpp.Expr.call (f : String) (args : List CoreCpp.Expr) : CoreCpp.Expr</code>",
- "1000132":
+ "1000136":
+ "<code>CoreCpp.Expr.call (f : String) (args : List CoreCpp.Expr) (sig : Option (List CoreCpp.Ty)) : CoreCpp.Expr</code>",
+ "1000135":
  "<code>CoreCpp.Expr.cond (c t e : CoreCpp.Expr) : CoreCpp.Expr</code>",
- "1000131": "<code>CoreCpp.BinOp</code>",
- "1000130":
+ "1000134": "<code>CoreCpp.BinOp</code>",
+ "1000133":
  "<code>CoreCpp.Expr.binop (op : CoreCpp.BinOp) (l r : CoreCpp.Expr) : CoreCpp.Expr</code>",
- "1000129": "<code>CoreCpp.UnOp</code>",
- "1000128":
+ "1000132": "<code>CoreCpp.UnOp</code>",
+ "1000131":
  "<code>CoreCpp.Expr.unop (op : CoreCpp.UnOp) (e : CoreCpp.Expr) : CoreCpp.Expr</code>",
- "1000127": "<code>CoreCpp.Expr.var (x : String) : CoreCpp.Expr</code>",
- "1000126": "<code>CoreCpp.Expr.nullptr : CoreCpp.Expr</code>",
- "1000125": "<code>CoreCpp.Expr.boolLit (b : Bool) : CoreCpp.Expr</code>",
- "1000124": "<code>CoreCpp.Expr.intLit (n : Int) : CoreCpp.Expr</code>",
- "1000123": "<code>CoreCpp.UnOp : Type</code>",
- "1000122":
+ "1000130": "<code>CoreCpp.Expr.var (x : String) : CoreCpp.Expr</code>",
+ "1000129": "<code>CoreCpp.Expr.nullptr : CoreCpp.Expr</code>",
+ "1000128": "<code>CoreCpp.Expr.boolLit (b : Bool) : CoreCpp.Expr</code>",
+ "1000127": "<code>CoreCpp.Expr.intLit (n : Int) : CoreCpp.Expr</code>",
+ "1000126": "<code>CoreCpp.UnOp : Type</code>",
+ "1000125":
  "<code>CoreCpp.Eval.unop : CoreCpp.UnOp → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Unary operators.\n\nρ, σ ⊢ e ⇒ bool b, σ'                    ρ, σ ⊢ e ⇒ int n, σ'\n──────────────────────── (Not)           ────────────────────────── (Neg)\nρ, σ ⊢ !e ⇒ bool ¬b, σ'                  ρ, σ ⊢ −e ⇒ int32 (−n), σ'          </code>",
- "1000121": "<code><span class=\"literal string\">\"⇒\"</span> : String</code>",
- "1000120": "<code>optParam String \"⇒\"</code>",
- "1000119": "<code>CoreCpp.M α</code>",
- "1000118": "<code>α → String</code>",
- "1000117": "<code>Type</code>",
- "1000116":
+ "1000124": "<code><span class=\"literal string\">\"⇒\"</span> : String</code>",
+ "1000123": "<code>optParam String \"⇒\"</code>",
+ "1000122": "<code>CoreCpp.M α</code>",
+ "1000121": "<code>α → String</code>",
+ "1000120": "<code>Type</code>",
+ "1000119":
  "<code>CoreCpp.Eval.traced {α : Type} (rule conf : String) (render : α → String) (k : CoreCpp.M α) (arrow : String := \"⇒\") :\n  CoreCpp.M α</code><span class=\"sep\"></span><code class=\"docstring\">Runs `k` one level deeper and records the conclusion of the rule `rule`,\n`conf arrow render a` in sequent notation, or the error, at the current depth. </code>",
- "1000115":
+ "1000118":
  "<code>CoreCpp.Eval.runMember (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (l : CoreCpp.Loc)\n  (ps : List CoreCpp.Param) (body : List CoreCpp.Cmd) (es : List CoreCpp.Expr) (ret : CoreCpp.Ty) (who : String) :\n  CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The call of a member body, a method, a constructor or a destructor, with\nthis bound to the location ℓ of the receiver and the arguments bound as in\nCall, by value with a fresh copy and by reference with an alias. The return\nfrees the copies and the locals of the body, never the receiver.\n\n    for each i, left to right, with σ'₀ = σ,\n      pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ\n      pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ₗ ℓᵢ, σ'ᵢ\n    ρ_m = [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]    ρ_m, σ'ₖ ⊢ c ⇒ r, ρ', σ''\n    ────────────────────────────────────────────────────────────── (Member)\n    member ℓ (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))          </code>",
- "1000114":
- "<code>CoreCpp.Eval.resolve (fs : CoreCpp.FunEnv) (s t m : String) : CoreCpp.M (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method m of class s, the nearest in the chain of s, dispatched by the\ntag t when that method is virtual. Returns the method and the class that\ndeclares it. </code>",
- "1000113":
+ "1000117":
+ "<code>CoreCpp.Eval.resolve (fs : CoreCpp.FunEnv) (s t m : String) (sig : Option (List CoreCpp.Ty)) :\n  CoreCpp.M (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method m of class s with the signature the type checker chose, the\nnearest in the chain of s, dispatched by the tag t when that method is\nvirtual. The signature picks one member of an overload set, and without it,\nin an unannotated program, the first of the name serves. </code>",
+ "1000116":
  "<code>CoreCpp.Eval.readLoc (σ : CoreCpp.Store) (l : CoreCpp.Loc) : CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">σ(ℓ), or error when ℓ ∉ dom σ. </code>",
- "1000112":
+ "1000115":
  "<code>CoreCpp.Eval.pointee (v : CoreCpp.Val) : CoreCpp.M CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">A pointer value as a live location. nullptr is error, the dereference\nthat C++ leaves undefined. </code>",
- "1000111":
+ "1000114":
  "<code>CoreCpp.Eval.lval (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (e : CoreCpp.Expr) :\n  CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, a\ndereferenced pointer, a field of an object, a field through a pointer and an\nelement of a vector.\n\n    ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'\n    ──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error\n    ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'\n\n    ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]\n    ─────────────────────────────────────────────── (LocField)\n    ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'\n\n    ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]\n    ────────────────────────────────────────────────── (LocArrow)    e-&gt;f is (*e).f\n    ρ, σ ⊢ e-&gt;f ⇒ₗ ℓ_f, σ'\n\n    ρ, σ ⊢ e ⇒ₗ ℓ, σ₁    σ₁(ℓ) = vec [ℓ₀, …, ℓₙ₋₁]    ρ, σ₁ ⊢ i ⇒ int k, σ₂    0 ≤ k &lt; n\n    ──────────────────────────────────────────────────────────────────────────────── (LocIndex)\n    ρ, σ ⊢ e[i] ⇒ₗ ℓₖ, σ₂\n\n    With k outside [0, n) the result is error (out of bounds), where C++\n    leaves it undefined.                                                            </code>",
- "1000110":
+ "1000113":
  "<code>CoreCpp.Eval.int32 (n : Int) : CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Range check for `int`.\n\nn ∈ [−2³¹, 2³¹ − 1]              n ∉ [−2³¹, 2³¹ − 1]\n──────────────────              ──────────────────────\nint32 n = int n                 int32 n = error (overflow)              </code>",
- "1000109":
+ "1000112":
  "<code>CoreCpp.Eval.fresh (ρ ρ' : CoreCpp.Env) : List CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">Locations a block allocated, the owned bindings of ρ' ∖ ρ, for scope exit.\nThe bindings a reference declaration added alias locations that exist before\nor outside the block, and those locations stay in σ. </code>",
- "1000108":
+ "1000111":
  "<code>CoreCpp.Eval.fieldLoc (σ : CoreCpp.Store) (l : CoreCpp.Loc) (f : String) : CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The location of field f of the object stored at ℓ. </code>",
- "1000107":
+ "1000110":
  "<code>CoreCpp.Eval.expr (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (e : CoreCpp.Expr) :\n  CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ e ⇒ v, σ' </code>",
- "1000106":
+ "1000109":
  "<code>CoreCpp.Eval.cmds (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) :\n  List CoreCpp.Cmd → CoreCpp.M (CoreCpp.Ctrl × CoreCpp.Env × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">Command sequences.\n\n────────────────────────── (Seq-Empty)\nρ, σ ⊢ ε ⇒ normal, ρ, σ\n\nρ, σ ⊢ c ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ cs ⇒ r, ρ₂, σ₂\n──────────────────────────────────────────────────── (Seq)   ρ₁ carries the binding of c to the rest\nρ, σ ⊢ c cs ⇒ r, ρ₂, σ₂\n\nρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁\n───────────────────────────── (Seq-Ret)   the return interrupts the sequence\nρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁                                                                </code>",
- "1000105":
+ "1000108":
  "<code>CoreCpp.Eval.cmd (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (c : CoreCpp.Cmd) :\n  CoreCpp.M (CoreCpp.Ctrl × CoreCpp.Env × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ c ⇒ r, ρ', σ' </code>",
- "1000104": "<code>List CoreCpp.Param</code>",
- "1000103":
+ "1000107": "<code>List CoreCpp.Param</code>",
+ "1000106":
  "<code>CoreCpp.Eval.captures (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (ps : List CoreCpp.Param) (b : List CoreCpp.Cmd) :\n  CoreCpp.M (List (String × CoreCpp.Val))</code><span class=\"sep\"></span><code class=\"docstring\">The free variables of a lambda body that the enclosing environment binds,\neach with its current value, the captures of `[=]`. Reading a captured\nvariable whose location left the store is error. </code>",
- "1000102":
+ "1000105": "<code>Option (List CoreCpp.Ty)</code>",
+ "1000104":
+ "<code>CoreCpp.Eval.callMethod (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (recv : CoreCpp.Expr) (arrow : Bool)\n  (m : String) (es : List CoreCpp.Expr) (static : Option String) (sig : Option (List CoreCpp.Ty)) :\n  CoreCpp.M (CoreCpp.Method × CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The receiver, the dispatch and the call of a method, shared by the value\nposition and the location position. The result of a member that returns a\nreference is the location, `loc ℓ`, which the value position reads and the\nlocation position takes as it is. </code>",
+ "1000103":
  "<code>CoreCpp.Eval.binop : CoreCpp.BinOp → CoreCpp.Val → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Arithmetic and relational binary operators, on already evaluated values.\n\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂\n──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})\nρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂\n\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0\n──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})\nρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++\n\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int 0, σ₂\n──────────────────────────────────────────────── (DivZero)\nρ, σ ⊢ e₁ ⊘ e₂ ⇒ error (division by zero)\n\nρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂\n─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, &lt;, &lt;=, &gt;, &gt;=})\nρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂\n\nTwo pointers are equal when they are the same location. nullptr equals\nonly nullptr. There is no order on pointers.\n\nThe left operand is evaluated before the right one, the Core C++ choice\nwhere C++17 does not specify the order.                                        </code>",
- "1000101":
+ "1000102":
  "<code>Prod.{u, v} (α : Type u) (β : Type v) : Type (max u v)</code><span class=\"sep\"></span><code class=\"docstring\">The product type, usually written `α × β`. Product types are also called pair or tuple types.\nElements of this type are pairs in which the first element is an `α` and the second element is a\n`β`.\n\nProducts nest to the right, so `(x, y, z) : α × β × γ` is equivalent to `(x, (y, z)) : α × (β × γ)`.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `×` in identifiers is `Prod`.</code>",
- "1000100":
+ "1000101":
  "<code>CoreCpp.M (α : Type) : Type</code><span class=\"sep\"></span><code class=\"docstring\">The evaluation monad. The state survives an error, so the trace up to the\nfailing rule is kept. </code>",
- "1000099": "<code>List CoreCpp.Expr</code>",
- "1000098":
+ "1000100": "<code>List CoreCpp.Expr</code>",
+ "1000099":
  "<code>CoreCpp.Store : Type</code><span class=\"sep\"></span><code class=\"docstring\">Store σ with the location counter. `next` is the next free location. </code>",
- "1000097": "<code>CoreCpp.Store</code>",
- "1000096":
+ "1000098": "<code>CoreCpp.Store</code>",
+ "1000097":
  "<code>CoreCpp.FunEnv : Type</code><span class=\"sep\"></span><code class=\"docstring\">Function environment, the program seen as a finite map from names. The\nwhole program is threaded, because `new` also needs the class table. </code>",
- "1000095": "<code>CoreCpp.FunEnv</code>",
- "1000094":
+ "1000096": "<code>CoreCpp.FunEnv</code>",
+ "1000095":
  "<code>CoreCpp.Eval.applyClosure (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (v : CoreCpp.Val)\n  (es : List CoreCpp.Expr) : CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The application of a closure to arguments.\n\nv = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])\nρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right, by value\n(ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ                        fresh locations for the copies and the parameters\nρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                the closure environment, nothing else is visible\nρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''\n─────────────────────────────────────────────────────────────── (Apply)\napply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))          the copies, the parameters and the locals leave\n\nWith normal in place of ret v the result is void if τ = void and error\n(missing return) otherwise. A value that is not a closure is error.        </code>",
- "1000093":
+ "1000094":
  "<code>CoreCpp.Error.doubleDelete (l : CoreCpp.Loc) : CoreCpp.Error</code>",
- "1000092":
+ "1000093":
  "<code>CoreCpp.Error.deleteWithoutVirtualDtor (static tag : String) : CoreCpp.Error</code>",
- "1000091":
+ "1000092":
  "<code>CoreCpp.Error.notCallable (v : CoreCpp.Val) : CoreCpp.Error</code>",
- "1000090":
+ "1000091":
  "<code>CoreCpp.Error.missingReturn (f : String) : CoreCpp.Error</code>",
- "1000089":
+ "1000090":
  "<code>CoreCpp.Error.typeError (msg : String) : CoreCpp.Error</code>",
- "1000088": "<code>CoreCpp.Error.arity (f : String) : CoreCpp.Error</code>",
- "1000087":
+ "1000089": "<code>CoreCpp.Error.arity (f : String) : CoreCpp.Error</code>",
+ "1000088":
  "<code>CoreCpp.Error.undeclaredFunction (f : String) : CoreCpp.Error</code>",
- "1000086":
+ "1000087":
  "<code>CoreCpp.Error.undeclaredVariable (x : String) : CoreCpp.Error</code>",
- "1000085":
+ "1000086":
  "<code>CoreCpp.Error.danglingLocation (l : CoreCpp.Loc) : CoreCpp.Error</code>",
- "1000084": "<code>CoreCpp.Error.negativeSize (n : Int) : CoreCpp.Error</code>",
- "1000083":
+ "1000085": "<code>CoreCpp.Error.negativeSize (n : Int) : CoreCpp.Error</code>",
+ "1000084":
  "<code>Int : Type</code><span class=\"sep\"></span><code class=\"docstring\">The integers.\n\nThis type is special-cased by the compiler and overridden with an efficient implementation. The\nruntime has a special representation for `Int` that stores “small” signed numbers directly, while\nlarger numbers use a fast arbitrary-precision arithmetic library (usually\n[GMP](https://gmplib.org/)). A “small number” is an integer that can be encoded with one fewer bits\nthan the platform's pointer size (i.e. 63 bits on 64-bit architectures and 31 bits on 32-bit\narchitectures).\n</code>",
- "1000082": "<code>Int</code>",
- "1000081":
+ "1000083": "<code>Int</code>",
+ "1000082":
  "<code>CoreCpp.Error.outOfBounds (i n : Int) : CoreCpp.Error</code>",
- "1000080": "<code>CoreCpp.Error.nullDereference : CoreCpp.Error</code>",
- "1000079": "<code>CoreCpp.Error.overflow : CoreCpp.Error</code>",
- "1000078":
+ "1000081": "<code>CoreCpp.Error.nullDereference : CoreCpp.Error</code>",
+ "1000080": "<code>CoreCpp.Error.overflow : CoreCpp.Error</code>",
+ "1000079":
  "<code>CoreCpp.Error : Type</code><span class=\"sep\"></span><code class=\"docstring\">The `error` result. It is not a value of the language. No syntax produces,\ntests or catches it. It corresponds in C++ to abnormal program termination. </code>",
- "1000077": "<code>CoreCpp.Error.divisionByZero : CoreCpp.Error</code>",
- "1000076":
+ "1000078": "<code>CoreCpp.Error.divisionByZero : CoreCpp.Error</code>",
+ "1000077":
  "<code>CoreCpp.Env.lookup (ρ : CoreCpp.Env) (x : String) : Option CoreCpp.Loc</code>",
- "1000075":
+ "1000076":
  "<code>CoreCpp.Env.extend (ρ : CoreCpp.Env) (x : String) (l : CoreCpp.Loc) : CoreCpp.Env</code><span class=\"sep\"></span><code class=\"docstring\">ρ[x ↦ ℓ], a binding to a location the declaration allocated. </code>",
- "1000074": "<code>CoreCpp.Env</code>",
- "1000073":
+ "1000075": "<code>CoreCpp.Env</code>",
+ "1000074":
  "<code>CoreCpp.Env.alias (ρ : CoreCpp.Env) (x : String) (l : CoreCpp.Loc) : CoreCpp.Env</code><span class=\"sep\"></span><code class=\"docstring\">ρ[x ↦ ℓ] for a reference, a binding to a location that already exists. </code>",
- "1000072":
+ "1000073":
  "<code>CoreCpp.Env : Type</code><span class=\"sep\"></span><code class=\"docstring\">Environment ρ, a finite map from identifiers to locations. The most recent\nentry wins, which realises shadowing by inner blocks. </code>",
- "1000071":
+ "1000072":
  "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the destructor is declared `virtual`, which makes `delete`\nthrough a pointer to the base well defined. </code>",
- "1000070":
+ "1000071":
  "<code>List CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">The body, run by `delete` before the object leaves the store. </code>",
+ "1000070":
+ "<code>CoreCpp.Decl.tmpl (param : String) (c : CoreCpp.ClassDecl) : CoreCpp.Decl</code>",
  "1000069": "<code>CoreCpp.Fun : Type</code>",
  "1000068": "<code>CoreCpp.Fun</code>",
  "1000067": "<code>CoreCpp.Decl.fn (f : CoreCpp.Fun) : CoreCpp.Decl</code>",
  "1000066":
- "<code>CoreCpp.Decl : Type</code><span class=\"sep\"></span><code class=\"docstring\">Top level declarations. </code>",
+ "<code>CoreCpp.Decl : Type</code><span class=\"sep\"></span><code class=\"docstring\">Top level declarations. A `tmpl T C` is a class template, the class `C`\nwith the type parameter `T`, which is never checked and never run. Only its\ninstantiations are, and `Templates.instantiate` adds one class per\ninstantiation the program mentions. </code>",
  "1000065": "<code>CoreCpp.ClassDecl</code>",
  "1000064":
  "<code>CoreCpp.Decl.cls (c : CoreCpp.ClassDecl) : CoreCpp.Decl</code>",
@@ -948,7 +1033,7 @@
  "1000040":
  "<code>CoreCpp.Cmd.while (c : CoreCpp.Expr) (body : List CoreCpp.Cmd) : CoreCpp.Cmd</code>",
  "1000039":
- "<code>CoreCpp.Expr : Type</code><span class=\"sep\"></span><code class=\"docstring\">Expressions. Function call is included because `Args` is part of\n`PostfixExpr`. `field` is `e.f`, `arrow` is `e-&gt;f`, `deref` is `*e` and\n`index` is `e[i]`. `newObj C` is `new C()` and `newVec τ n` is\n`new std::vector&lt;τ&gt;(n)`. `lambda ps τ c` is `[=](ps) -&gt; τ { c }`, which the\ngrammar admits only as an argument, as the initialiser of a declaration and\nas the expression of `return`. `callFn e args` calls the function value `e`,\nand `call f args` calls the function named `f`, or the function value bound to\n`f` when `f` is a variable in scope, or the method `f` of `this` inside a\nclass. `newObj C args` is `new C(args)`, which allocates the object and runs\nthe constructor. `this` is the location of the receiver inside a method.\n`methodCall e arrow m args static` is `e.m(args)` when `arrow` is false and\n`e-&gt;m(args)` when it is true. The field `static` is the class of the receiver\nas the type checker sees it, filled by `Typing.annotate` and `none` as the\nparser leaves it, the datum the evaluator needs to tell a dispatched call from\na static one. </code>",
+ "<code>CoreCpp.Expr : Type</code><span class=\"sep\"></span><code class=\"docstring\">Expressions. Function call is included because `Args` is part of\n`PostfixExpr`. `field` is `e.f`, `arrow` is `e-&gt;f`, `deref` is `*e` and\n`index` is `e[i]`. `newObj C` is `new C()` and `newVec τ n` is\n`new std::vector&lt;τ&gt;(n)`. `lambda ps τ c` is `[=](ps) -&gt; τ { c }`, which the\ngrammar admits only as an argument, as the initialiser of a declaration and\nas the expression of `return`. `callFn e args` calls the function value `e`,\nand `call f args` calls the function named `f`, or the function value bound to\n`f` when `f` is a variable in scope, or the method `f` of `this` inside a\nclass. `newObj C args` is `new C(args)`, which allocates the object and runs\nthe constructor. `this` is the location of the receiver inside a method.\n`methodCall e arrow m args static` is `e.m(args)` when `arrow` is false and\n`e-&gt;m(args)` when it is true. The field `static` is the class of the receiver\nas the type checker sees it, filled by `Typing.annotate` and `none` as the\nparser leaves it, the datum the evaluator needs to tell a dispatched call from\na static one. The field `sig` of `call` and of `methodCall` is the parameter\ntype list of the overload the type checker chose, `none` as the parser leaves\nit, the datum the evaluator needs to pick one function or method out of an\noverload set. `locOf e` is the location of `e` as a value, an expression no\nprogram writes, which `Typing.annotate` puts on the `return` of a member that\nreturns a reference. </code>",
  "1000038": "<code>CoreCpp.Expr</code>",
  "1000037":
  "<code>CoreCpp.Cmd.ite (c : CoreCpp.Expr) (t e : List CoreCpp.Cmd) : CoreCpp.Cmd</code>",
@@ -968,7 +1053,7 @@
  "1000029":
  "<code>Option CoreCpp.Ctor</code><span class=\"sep\"></span><code class=\"docstring\">The constructor, when the class declares one. </code>",
  "1000028":
- "<code>CoreCpp.Method : Type</code><span class=\"sep\"></span><code class=\"docstring\">A method, defined inside the class. `isVirtual` marks `virtual`, which\nmakes the call dispatch by the class tag of the receiver, and `isOverride`\nmarks `override`, required on a method that redefines a `virtual` one. </code>",
+ "<code>CoreCpp.Method : Type</code><span class=\"sep\"></span><code class=\"docstring\">A method, defined inside the class. `isVirtual` marks `virtual`, which\nmakes the call dispatch by the class tag of the receiver, and `isOverride`\nmarks `override`, required on a method that redefines a `virtual` one. An\noperator member is a method whose name is `operator` followed by the\noperator, `operator+` or `operator[]`, which the type checker reaches by\nrewriting the infix form. </code>",
  "1000027":
  "<code>List CoreCpp.Method</code><span class=\"sep\"></span><code class=\"docstring\">The methods declared by the class itself. </code>",
  "1000026":
@@ -1009,8 +1094,7 @@
  "1000002": "<code>CoreCpp.BinOp.sub : CoreCpp.BinOp</code>",
  "1000001": "<code>CoreCpp.BinOp : Type</code>",
  "1000000": "<code>CoreCpp.BinOp.add : CoreCpp.BinOp</code>",
- "100":
- "<code>CoreCpp.Cmd.declRef (ty : CoreCpp.Ty) (x : String) (init : CoreCpp.Expr) : CoreCpp.Cmd</code>",
+ "100": "<code>Option CoreCpp.Expr</code>",
  "10": "<code>CoreCpp.Token.eof : CoreCpp.Token</code>",
  "1": "<code>String</code>",
  "0": "<code>CoreCpp.Token.kw (s : String) : CoreCpp.Token</code>"}
