@@ -1,4 +1,4 @@
-// Core C++ example, UD VII. The imperative fragment. Basic types, variables,
+// Core C++ example, the imperative fragment. The imperative fragment. Basic types, variables,
 // assignment, a local reference, the loops and first order functions, and
 // nothing that reaches the heap. Every value in the store is basic, and the
 // store grows by declaration and shrinks at scope exit. Exit code 49.

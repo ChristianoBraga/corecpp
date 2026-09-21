@@ -12,12 +12,12 @@ open Informal
 
 set_option verso.blueprint.foldCodeBlocks true
 
-#doc (Manual) "UD V, encapsulation" =>
+#doc (Manual) "Encapsulation" =>
 
 Classes with `public` and `private` sections, methods, constructors run by `new`, destructors run by `delete`, `this`, single inheritance, subsumption, dispatch by the class tag for `virtual` methods and namespaces. An abstract data type is a public signature over a private representation, and visibility is a typing rule. Objects are still records of locations with a tag, created by `new` and never copied, and the destructor runs only on `delete`. The static class of every receiver and of every `delete` is written into the tree by the type checker, since $`\rho` and $`\sigma` carry no types.
 
 :::group "ud5"
-UD V, abstract data types, objects, classes and inheritance.
+Abstract data types, objects, classes and inheritance.
 :::
 
 # Classes and visibility

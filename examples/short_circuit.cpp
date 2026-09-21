@@ -1,4 +1,4 @@
-// Core C++ example, UD II. The right operand of && is not evaluated when the
+// Core C++ example, expressions. The right operand of && is not evaluated when the
 // left one is false, so the division by zero never happens. Exit code 0.
 int main() {
   int z = 0;

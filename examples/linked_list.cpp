@@ -1,4 +1,4 @@
-// Core C++ example, UD II. A class with fields only, a pointer to it as the
+// Core C++ example, recursive types. A class with fields only, a pointer to it as the
 // recursive type, nullptr as the end of the list, and a recursive sum through
 // the pointers. Every object is created with new and reached through a
 // pointer. Exit code 6.

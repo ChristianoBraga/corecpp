@@ -1,4 +1,4 @@
-% Core C++ course, Unit VII. Concatenation of lists as a relation.
+% Logic language example, relations. Concatenation of lists as a relation.
 % The same clauses answer three questions, which is the point of the
 % paradigm. Expected: three answers to the third query.
 append([], L, L).

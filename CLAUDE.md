@@ -1,14 +1,11 @@
 # corecpp
 
-Core C++ is a well behaved subset of C++17 used as the core language of the
-course 09022 Linguagens de Programação at IME (5th year, Engenharia de
-Computação). The course follows Watt's structure, introduces every concept as
-a construction of Core C++, added to the implemented core in the order of the
-syllabus with its natural semantics rules on the board, and uses Lean 4 as the
-programming language in which the semantics is coded. The course proposal
-is `../.claude/proposta-curso.md` and the language design, with the grammar and
-the discrepancy table, is `../.claude/core-cpp-design.md`. Both are in
-Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public since 2026-09-18.
+Core C++ is a well behaved subset of C++17 with a complete formal semantics,
+every construction carrying a typing rule and an evaluation rule in natural
+semantics, implemented in Lean 4. The language design, with the grammar and
+the discrepancy table with C++17, is `../.claude/core-cpp-design.md`, in
+Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public
+since 2026-09-18.
 
 ## Conventions
 
@@ -55,8 +52,9 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
   the code, written in English because the rendered interface of Verso is
   English only. It requires `leanprover/verso-blueprint` at `v4.32.0` and `corecpp`
   from `..`. The package is named `CoreCppBlueprint`, equal to the library,
-  because `vbp` builds `+<package>:olean`. One chapter per UD under
-  `docs/CoreCppBlueprint/Chapters/`, one `:::definition` node per construction
+  because `vbp` builds `+<package>:olean`. One chapter per group of
+  constructions under `docs/CoreCppBlueprint/Chapters/`, with English module
+  names, one `:::definition` node per construction or nonterminal
   with the typing and evaluation rules in KaTeX and `(lean := ...)` naming the
   implementing functions. Only definitions, theorems and types are accepted as
   `lean` targets, never constructors. Build with `lake exe vbp build` inside
@@ -97,26 +95,26 @@ Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public sinc
 - Templates only on classes, instantiated in type position. Overloading by
   argument type, not distinguishing `std::function` parameters. `auto` local.
 - Single translation unit, no preprocessor, methods defined inside the class.
-- Inductive big step semantics. Divergence has no derivation and the course
-  states this limitation (Leroy and Grall).
+- Inductive big step semantics. Divergence has no derivation, a limitation of
+  the style (Leroy and Grall).
 
 ## Status on 2026-09-21
 
-The seven units are implemented and tested. Basic types, expressions,
+The whole design is implemented and tested. Basic types, expressions,
 commands, first order functions, classes with fields, pointers, `nullptr`,
 `std::vector`, local references, reference parameters, lambdas `[=]` and
 `std::function`, classes with methods, constructors, destructors, `delete`,
 `this`, `virtual`, single inheritance and namespaces, overloading, operator
-members, class templates and `auto`. Unit VII adds no construction. It reads
-the imperative, object oriented and functional paradigms as fragments of the
-core, `CoreCpp/Fragment.lean` with the predicate per fragment, and gives the
-logic paradigm a language of its own, `CoreCpp/Logic.lean` with terms,
-unification and SLD resolution. `bin/corecpp fragment <name> <file>` checks a
-fragment and `bin/corecpp prolog <file.pl>` runs a logic program.
+members, class templates and `auto`.
+
+Beside the language, `CoreCpp/Fragment.lean` reads the imperative, object
+oriented and functional paradigms as fragments of the core, one predicate
+over the abstract syntax each, and `CoreCpp/Logic.lean` gives the logic
+paradigm a language of its own, with terms, unification and SLD resolution.
+`bin/corecpp fragment <name> <file>` checks a fragment and `bin/corecpp
+prolog <file.pl>` runs a logic program.
 
 Not implemented, and outside the design. Function templates, partial
 specialisation, objects by value, copy constructors, RAII, exceptions,
 multiple inheritance, the preprocessor and separate compilation. Negation and
 the cut in the logic language.
-
-Worklog and memory of the course live under `../.claude/`.

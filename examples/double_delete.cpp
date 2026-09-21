@@ -1,4 +1,4 @@
-// Core C++ example, UD V. A second delete of the same object is error in Core
+// Core C++ example, delete and destructors. A second delete of the same object is error in Core
 // C++, exit code 134, and undefined behaviour in C++, where g++ may abort,
 // crash or exit normally. The exit codes differ by design.
 class Box {

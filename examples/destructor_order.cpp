@@ -1,4 +1,4 @@
-// Core C++ example, UD V. delete through a base pointer with a virtual
+// Core C++ example, destructors. delete through a base pointer with a virtual
 // destructor runs the destructor of the derived class and then the one of
 // the base, each recording itself in a shared object. Exit code 11.
 class Record {

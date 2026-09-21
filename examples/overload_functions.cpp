@@ -1,4 +1,4 @@
-// Core C++ example, UD VI. Overloading by the type of the arguments. The two
+// Core C++ example, overloading. Overloading by the type of the arguments. The two
 // declarations of twice are one overload set, and each call selects the
 // candidate that accepts its argument. Returns 46.
 int twice(int n) { return 2 * n; }

@@ -1,4 +1,4 @@
-// Core C++ example, UD III. Counts the primes below 20000 by trial division,
+// Core C++ example, commands. Counts the primes below 20000 by trial division,
 // about 2.2 million loop iterations. There are 2262 of them, exit code
 // 2262 mod 256 = 214.
 bool prime(int n) {

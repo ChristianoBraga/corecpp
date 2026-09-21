@@ -1,4 +1,4 @@
-// Core C++ example, UD II. Dereferencing nullptr is error in Core C++. In C++
+// Core C++ example, pointers. Dereferencing nullptr is error in Core C++. In C++
 // it is undefined behaviour, and on most machines the process is killed by
 // SIGSEGV. Exit code 134 in Core C++.
 class Node {

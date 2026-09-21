@@ -4,8 +4,8 @@ import CoreCpp.Pretty
 /-!
 # Fragments of Core C++, one per paradigm
 
-Unit VII reads three of the four paradigms as restrictions of the core, and a
-restriction is a predicate over the abstract syntax, not a grammar of its own.
+Three of the four paradigms are restrictions of the core, and a restriction
+is a predicate over the abstract syntax, not a grammar of its own.
 A program lies in a fragment when no construction it mentions is forbidden
 there, so the three checks are one walk over `Program` with three sets of
 forbidden constructions.
@@ -31,7 +31,7 @@ it a language of its own.
 
 namespace CoreCpp
 
-/-- The three fragments of Core C++ that Unit VII defines. -/
+/-- The three fragments of Core C++, one per paradigm that restricts it. -/
 inductive Frag where
   /-- Basic types, variables, assignment, commands, first order functions. -/
   | imperative
@@ -61,7 +61,7 @@ fragment forbids and `site` the declaration in which it occurs. -/
 structure Reject where
   /-- The fragment the program was checked against. -/
   frag : Frag
-  /-- The forbidden construction, named as the course names it. -/
+  /-- The forbidden construction, named as the language design names it. -/
   what : String
   /-- The declaration in which the construction occurs. -/
   site : String
@@ -74,8 +74,9 @@ instance : ToString Reject := ⟨Reject.toString⟩
 
 namespace Fragment
 
-/-- The constructions each fragment forbids, named as the lectures name them.
-The walk below asks this predicate once per construction it meets. -/
+/-- The constructions each fragment forbids, named as the language design
+names them. The walk below asks this predicate once per construction it
+meets. -/
 def forbids (f : Frag) (what : String) : Bool :=
   match f with
   | .imperative =>

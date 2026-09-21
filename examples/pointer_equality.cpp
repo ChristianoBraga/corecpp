@@ -1,4 +1,4 @@
-// Core C++ example, UD II. Two pointers are equal when they denote the same
+// Core C++ example, pointers. Two pointers are equal when they denote the same
 // object. A field written through one pointer is read through the other,
 // because both denote the same record of locations. Exit code 17.
 class Point {

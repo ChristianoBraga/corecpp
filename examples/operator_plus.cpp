@@ -1,4 +1,4 @@
-// Core C++ example, UD VI. An operator overloaded as a member. The infix
+// Core C++ example, operator overloading. An operator overloaded as a member. The infix
 // *a + *b is the call of Point::operator+, with the left operand as the
 // receiver. The result is a pointer, because objects are never copied.
 // Returns 10.

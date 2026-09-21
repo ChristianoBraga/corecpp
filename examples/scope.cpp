@@ -1,4 +1,4 @@
-// Core C++ example, UD III. The inner x shadows the outer one only inside the
+// Core C++ example, scope and lifetime. The inner x shadows the outer one only inside the
 // block, and its location leaves the store at the closing brace. Exit code 1.
 int main() {
   int x = 1;

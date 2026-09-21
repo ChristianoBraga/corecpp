@@ -11,12 +11,12 @@ open Informal
 
 set_option verso.blueprint.foldCodeBlocks true
 
-#doc (Manual) "UD IV, abstraction" =>
+#doc (Manual) "Abstraction" =>
 
-Functions with parameters by value and by reference, `return` as a control result, lambdas with capture by copy, function values of type `std::function`, and the program. The call evaluates the arguments left to right, allocates a fresh location with a copy for each parameter by value, binds each parameter by reference to the location of its argument, and removes the copies from $`\sigma` on return. The specification of the fragment is `LP/.claude/spec-ud4.md`.
+Functions with parameters by value and by reference, `return` as a control result, lambdas with capture by copy, function values of type `std::function`, and the program. The call evaluates the arguments left to right, allocates a fresh location with a copy for each parameter by value, binds each parameter by reference to the location of its argument, and removes the copies from $`\sigma` on return.
 
 :::group "ud4"
-UD IV, functions, parameters and calls.
+Functions, parameters and calls.
 :::
 
 # Call
@@ -36,7 +36,7 @@ The return frees the copies of the arguments and the locals the body declared, $
 # Parameters by reference
 
 :::definition "param_ref" (parent := "ud4") (lean := "CoreCpp.Param, CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Env.alias") (uses := "fun_call, judg_ty_lval, judg_ev_lval, dom_env")
-A parameter $`\tau_j\&\ x_j` receives the location of its argument, which must denote a location of exactly the type $`\tau_j`. The binding of $`x_j` in the function environment is an alias, as the local reference of UD III, and the return does not free it. In $`\Gamma` the parameter has the type of its referent.
+A parameter $`\tau_j\&\ x_j` receives the location of its argument, which must denote a location of exactly the type $`\tau_j`. The binding of $`x_j` in the function environment is an alias, as in a local reference, and the return does not free it. In $`\Gamma` the parameter has the type of its referent.
 
 $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \ \text{for each } p_i = \tau_i \qquad \Gamma \vdash_{\ell} e_j : \tau_j \ \text{for each } p_j = \tau_j\&}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Call)}`
 
@@ -106,7 +106,7 @@ $$`\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow v, \sigma}{p \Right
 # Properties
 
 :::theorem "progresso" (parent := "ud4") (uses := "judg_ev_expr, judg_ev_cmd, judg_ty_expr, judg_ty_cmd")
-Every derivation of a well typed program ends in a value or in `error`. Every well typed constructor has an evaluation rule, checked by inspection of the rule set. There is no Lean proof, and the course states the property without proving it.
+Every derivation of a well typed program ends in a value or in `error`. Every well typed constructor has an evaluation rule, checked by inspection of the rule set. There is no Lean proof, and the property is stated without proving it.
 :::
 
 :::theorem "determinismo" (parent := "ud4") (uses := "judg_ev_expr, judg_ev_cmd")

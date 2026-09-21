@@ -1,4 +1,4 @@
-// Core C++ example, UD IV. Reference parameters alias the arguments, so the
+// Core C++ example, reference parameters. Reference parameters alias the arguments, so the
 // swap inside swap is visible in main. Exit code 21.
 void swap(int& a, int& b) {
   int t = a;

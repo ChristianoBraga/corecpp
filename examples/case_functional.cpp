@@ -1,6 +1,6 @@
-// Core C++ example, UD VII. The case study of Lecture 29 in the functional
-// fragment. Recursion in place of the loop, and the filter is a function
-// value passed as an argument. Node location is written twice. Exit code 30.
+// Core C++ example, the functional fragment. The same sum of the even
+// numbers, with recursion in place of the loop and the filter as a function
+// value passed as an argument. No location is written twice. Exit code 30.
 int sumTo(std::function<bool(int)> p, int n) {
   return n == 0 ? 0 : (p(n) ? n : 0) + sumTo(p, n - 1);
 }

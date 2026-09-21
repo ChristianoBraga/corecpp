@@ -1,4 +1,4 @@
-// Core C++ example, UD VI. auto copies the type of the initialiser, which
+// Core C++ example, type inference. auto copies the type of the initialiser, which
 // may be a pointer to an instantiation. Node rule of the type checker is new,
 // the initialiser simply has a type auto can copy. Returns 12.
 template<typename T>

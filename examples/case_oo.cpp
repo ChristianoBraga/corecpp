@@ -1,7 +1,7 @@
-// Core C++ example, UD VII. The case study of Lecture 29 in the object
-// oriented fragment. The accumulator is the state of an object, and the
-// filter is a virtual method the derived class redefines, so the criterion
-// is chosen by dispatch and not by a parameter. Exit code 30.
+// Core C++ example, the object oriented fragment. The same sum of the even
+// numbers, with the accumulator as the state of an object and the filter as
+// a virtual method the derived class redefines, so the criterion is chosen
+// by dispatch and not by a parameter. Exit code 30.
 class Adder {
 public:
   int acc;

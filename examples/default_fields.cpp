@@ -1,4 +1,4 @@
-// Core C++ example, UD II. new C() gives every field its default value, 0 for
+// Core C++ example, classes with fields. new C() gives every field its default value, 0 for
 // int, false for bool and nullptr for pointers, as C++ value initialisation
 // does with the empty parentheses. Exit code 101.
 class Rec {

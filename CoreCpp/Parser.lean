@@ -324,8 +324,8 @@ partial def exprStatement : P Cmd := do
   else return .exprStmt l
 
 /-- `LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With
-`&` the declaration is a local reference, UD III. A lambda initialises only a
-typed declaration, never an `auto` one. -/
+`&` the declaration is a local reference. A lambda initialises only a typed
+declaration, never an `auto` one. -/
 partial def localDecl : P Cmd := do
   if ← accept (.kw "auto") then
     let x ← varId

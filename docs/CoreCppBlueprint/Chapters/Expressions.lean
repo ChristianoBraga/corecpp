@@ -11,12 +11,12 @@ open Informal
 
 set_option verso.blueprint.foldCodeBlocks true
 
-#doc (Manual) "UD II, expressions" =>
+#doc (Manual) "Types and expressions" =>
 
-One typing rule and one evaluation rule per construction of `Expr`. The typing rules live in `Typing.expr` and the evaluation rules in `Eval.expr`, each in the comment of the case that implements it. Where C++17 leaves the evaluation order unspecified, Core C++ evaluates left to right. The second half of the chapter holds the composite and recursive types of UD II, objects, pointers and vectors, whose expressions denote locations.
+One typing rule and one evaluation rule per construction of `Expr`. The typing rules live in `Typing.expr` and the evaluation rules in `Eval.expr`, each in the comment of the case that implements it. Where C++17 leaves the evaluation order unspecified, Core C++ evaluates left to right. The second half of the chapter holds the composite and recursive types, objects, pointers and vectors, whose expressions denote locations.
 
 :::group "ud2"
-UD II, values, types and expressions.
+Values, types and expressions.
 :::
 
 # Literals
@@ -130,7 +130,7 @@ $$`\dfrac{}{\Gamma \vdash \mathtt{nullptr} : \mathsf{nullptr\_t}}\;\textsf{(T-Nu
 :::
 
 :::definition "expr_new" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Store.allocMany, CoreCpp.Ty.default") (uses := "judg_ty_expr, judg_ev_expr, dom_classes, dom_store")
-The expression `new C()` allocates one location per field of $`C`, each with the default value of its type, then the record itself, tagged with the class, and evaluates to a pointer to the record. Its type is $`C*`. The empty parentheses are the whole argument list for a class without a constructor. UD V adds the constructor and its arguments, {bpref "cls_new"}[].
+The expression `new C()` allocates one location per field of $`C`, each with the default value of its type, then the record itself, tagged with the class, and evaluates to a pointer to the record. Its type is $`C*`. The empty parentheses are the whole argument list for a class without a constructor. A class with a constructor takes its arguments in those parentheses, {bpref "cls_new"}[].
 
 $$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\, \tau_1\, f_1; \ldots; \tau_n\, f_n; \,\}}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
 

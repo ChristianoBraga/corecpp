@@ -1,4 +1,4 @@
-// Core C++ example, UD VI. Accepted by g++ and rejected by Core C++, the
+// Core C++ example, overloading. Accepted by g++ and rejected by Core C++, the
 // direction the subset allows. C++ ranks the conversion sequences and picks
 // f(B*), the more derived one. Core C++ does not rank them, so a call that
 // two overloads accept without an exact match is ambiguous. g++ returns 2.

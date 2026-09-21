@@ -13,12 +13,12 @@ open Informal
 
 set_option verso.blueprint.foldCodeBlocks true
 
-#doc (Manual) "UD VI, type systems" =>
+#doc (Manual) "Type systems" =>
 
 Overloading of functions and methods by the type of the arguments, operator members, class templates instantiated by substitution, subtyping and type inference. A name denotes an overload set, and a call selects one candidate. An infix operator on an object, and the indexing of an object, are the calls of the members `operator⊕` and `operator[]`, and a member may return $`\tau\&`, which is what makes `v[i] = x` work. A template is expanded before the program is checked, so instantiation costs nothing at run time and a template is never checked, only its instantiations are.
 
 :::group "ud6"
-UD VI, overloading, polymorphism, subtyping and inference.
+Overloading, polymorphism, subtyping and inference.
 :::
 
 # Overloading
@@ -52,7 +52,7 @@ $$`\dfrac{\Gamma \vdash e_1 : C \qquad C \text{ has } \mathtt{operator}\oplus \t
 
 $$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \mathtt{operator[]} \text{ visible from } \Gamma \qquad \Gamma \vdash e.\mathtt{operator[]}(i) : \tau}{\Gamma \vdash e[i] : \tau}\;\textsf{(T-OpIndex)}`
 
-The type checker rewrites both forms into the call of the member, and from there they are ordinary method calls, with the visibility, the overload resolution and the dispatch of UD V. The trace shows the rule `MethodCall` under the infix form, which is the point.
+The type checker rewrites both forms into the call of the member, and from there they are ordinary method calls, with the visibility, the overload resolution and the dispatch of a method. The trace shows the rule `MethodCall` under the infix form, which is the point.
 :::
 
 :::definition "op_refret" (parent := "ud6") (lean := "CoreCpp.Method, CoreCpp.Typing.refReturns, CoreCpp.Typing.refRets, CoreCpp.Eval.callMethod") (uses := "op_member, judg_ev_lval")
@@ -92,7 +92,7 @@ Subsumption is the typing rule of subtyping, and it is the only conversion betwe
 
 $$`\dfrac{\Gamma \vdash e : D* \qquad D \text{ derives from } B}{\Gamma \vdash e : B*}\;\textsf{(T-Sub)}`
 
-It holds in declarations, assignments, arguments, results, comparisons and in the branches of `?:`. Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so `Stack<D*>` is not a subtype of `Stack<B*>`, and the reason is that a `Stack<B*>` accepts an `push` of any `B*`, which a `Stack<D*>` does not. The course states the reason and leaves variance out.
+It holds in declarations, assignments, arguments, results, comparisons and in the branches of `?:`. Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so `Stack<D*>` is not a subtype of `Stack<B*>`, and the reason is that a `Stack<B*>` accepts an `push` of any `B*`, which a `Stack<D*>` does not. Variance is left out of the subset.
 :::
 
 :::definition "inference" (parent := "ud6") (lean := "CoreCpp.Cmd") (uses := "cmd_decl")
@@ -100,5 +100,5 @@ Type inference in Core C++ is local. The rule of `auto` is the one of the earlie
 
 $$`\dfrac{\Gamma \vdash e : \tau \qquad \tau \text{ has values} \qquad \tau \neq \mathtt{nullptr\_t}}{\Gamma \vdash \mathtt{auto}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-Auto)}`
 
-A lambda has no type of its own, so it never initialises an `auto`, which the grammar already guarantees. Inference over a whole program, as Hindley and Milner give it for Haskell, has no rule here, and the course shows it as a contrast.
+A lambda has no type of its own, so it never initialises an `auto`, which the grammar already guarantees. Inference over a whole program, as Hindley and Milner give it for Haskell, has no rule here, and it is shown as a contrast.
 :::

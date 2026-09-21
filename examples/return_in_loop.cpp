@@ -1,4 +1,4 @@
-// Core C++ example, UD III. A return inside a loop interrupts the loop, the
+// Core C++ example, commands. A return inside a loop interrupts the loop, the
 // block and the function. Exit code 7.
 int main() {
   int i = 0;

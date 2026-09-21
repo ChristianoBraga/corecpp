@@ -1,4 +1,4 @@
-// Core C++ example, UD VII. The object oriented fragment. Classes, a virtual
+// Core C++ example, the object oriented fragment. The object oriented fragment. Classes, a virtual
 // method redefined with override, dispatch by the class tag, state reached
 // only through this and through pointers, and delete with a virtual
 // destructor. Node lambda and no function value. Exit code 2.

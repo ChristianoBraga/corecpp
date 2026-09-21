@@ -1,4 +1,4 @@
-// Core C++ example, UD V. delete through a Base* of a Derived object whose
+// Core C++ example, delete and destructors. delete through a Base* of a Derived object whose
 // base has no virtual destructor is error in Core C++, exit code 134, and
 // undefined behaviour in C++, where g++ runs only the destructor of Base and
 // exits with 1. The exit codes differ by design.

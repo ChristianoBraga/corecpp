@@ -1,4 +1,4 @@
-// Core C++ example, UD V. A class with a private field, a constructor and two
+// Core C++ example, classes and methods. A class with a private field, a constructor and two
 // methods. The constructor runs on new, this->value names the field, and the
 // unqualified value inside a method is the field of this. Exit code 42.
 class Counter {

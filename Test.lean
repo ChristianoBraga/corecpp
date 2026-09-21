@@ -86,7 +86,7 @@ int main() { return factorial(5); }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
-/-! ## UD II, classes with fields, pointers, nullptr and vectors -/
+/-! ## Classes with fields, pointers, nullptr and vectors -/
 
 -- a linked list summed through pointers
 #eval prog "class Node { public: int value; Node* next; };
@@ -143,7 +143,7 @@ int main() { Node* p = nullptr; return p->value; }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
-/-! ## UD III, local references and evaluation order -/
+/-! ## Local references and evaluation order -/
 
 -- a reference is a second name for the same location
 #eval prog "int main() { int x = 1; int& y = x; y = y + 41; return x; }"
@@ -183,7 +183,7 @@ int main() { Cell* c = new Cell(); return next(c) + 10 * next(c); }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
-/-! ## UD IV, reference parameters, lambdas and std::function -/
+/-! ## Reference parameters, lambdas and std::function -/
 
 -- swap by reference, the parameters alias the arguments
 #eval prog "void swap(int& a, int& b) { int t = a; a = b; b = t; }
@@ -248,7 +248,7 @@ int main() { return applyTwice([=](int x) -> int { return x * x; }, 3); }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
-/-! ## UD V, classes, methods, inheritance, delete and namespaces -/
+/-! ## Methods, inheritance, delete and namespaces -/
 
 -- a class with a private field, a constructor and methods, this and the unqualified field
 #eval prog "class Counter {
@@ -334,7 +334,7 @@ int main() { C* c = new C(21); return c->twice(); }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
-/-! ## UD VI, overloading, operators, templates and inference -/
+/-! ## Overloading, operators, templates and inference -/
 
 -- overloading by the type of the argument
 #eval prog "int twice(int n) { return 2 * n; }
@@ -423,7 +423,7 @@ int main() { Point* a = new Point(); a->x = twice(3); Point* c = *a + *a; return
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
-/-! ## UD VII, the fragments of the paradigms -/
+/-! ## The fragments of the paradigms -/
 
 def impProg : String :=
   "int gcd(int a, int b) {
@@ -466,7 +466,7 @@ std::function<int(int)> f() { return [=](int x) -> int { return x; }; }
 int main() { C* c = new C(); return f()(c->v); }").map fun p =>
   (fragment .imperative p, fragment .oo p, fragment .functional p)
 
-/-! ## UD VII, the logic language -/
+/-! ## The logic language -/
 
 open Logic
 

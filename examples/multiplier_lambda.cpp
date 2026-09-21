@@ -1,4 +1,4 @@
-// Core C++ example, UD IV. A function returns a lambda that captured k by copy,
+// Core C++ example, closures. A function returns a lambda that captured k by copy,
 // and apply calls it through a std::function parameter. Exit code 42.
 std::function<int(int)> multiplier(int k) {
   return [=](int x) -> int { return k * x; };

@@ -1,5 +1,5 @@
-% Core C++ course, Unit VII. The factorial of Lecture 1, now as a relation,
-% with the built in `is` for the arithmetic. Expected: F = 120.
+% Logic language example, recursion. The factorial as a relation, with the
+% built in `is` for the arithmetic. Expected: F = 120.
 factorial(0, 1).
 factorial(N, F) :-
   N > 0,

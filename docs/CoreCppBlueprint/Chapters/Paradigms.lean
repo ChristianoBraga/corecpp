@@ -11,12 +11,12 @@ open Informal
 
 set_option verso.blueprint.foldCodeBlocks true
 
-#doc (Manual) "UD VII, paradigms" =>
+#doc (Manual) "Paradigms and fragments" =>
 
-The last unit adds no construction to Core C++. Three of the four paradigms are read as restrictions of the core, each a predicate over the abstract syntax, and the restriction buys a property the whole language does not have. The logic paradigm has no counterpart in the core, so it gets a language of its own, a set of Horn clauses whose meaning is given by the SLD resolution judgment, written in the same notation as the rest of the course.
+This chapter adds no construction to Core C++. Three of the four paradigms are read as restrictions of the core, each a predicate over the abstract syntax, and the restriction buys a property the whole language does not have. The logic paradigm has no counterpart in the core, so it gets a language of its own, a set of Horn clauses whose meaning is given by the SLD resolution judgment, written in the same notation as the rest of this blueprint.
 
 :::group "ud7"
-UD VII, the paradigms as fragments of the core and a logic language.
+The paradigms as fragments of the core, and a logic language.
 :::
 
 # Fragments

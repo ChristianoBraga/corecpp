@@ -1,4 +1,4 @@
-// Core C++ example, UD VI. A class template instantiated at two types. Each
+// Core C++ example, class templates. A class template instantiated at two types. Each
 // instantiation is a class of its own, built by substitution before the
 // program is checked, and the two share no subtype relation. Returns 7.
 template<typename T>

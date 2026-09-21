@@ -1,4 +1,4 @@
-// Core C++ example, UD V. An abstract data type, a stack over a vector. The
+// Core C++ example, abstract data types. A stack over a vector. The
 // public section is the signature, the private section the representation,
 // reachable only from the methods of the class. Exit code 42.
 class Stack {

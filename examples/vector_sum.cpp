@@ -1,4 +1,4 @@
-// Core C++ example, UD II. A vector is an object created with new, reached
+// Core C++ example, vectors. A vector is an object created with new, reached
 // through a pointer, and (*v)[i] denotes the location of its element i. The
 // elements start at 0. Exit code 6.
 int main() {

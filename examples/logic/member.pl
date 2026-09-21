@@ -1,6 +1,5 @@
-% Core C++ course, Unit VII. Membership as a relation, over the
-% concatenation of the previous example. Expected: three answers to the
-% second query, one per element.
+% Logic language example, backtracking. Membership as a relation. The second
+% query has three answers, one per element, found by backtracking.
 member(X, [X|_]).
 member(X, [_|T]) :- member(X, T).
 

@@ -1,4 +1,4 @@
-// Core C++ example, UD III. The reference lives in the inner block and the
+// Core C++ example, references. The reference lives in the inner block and the
 // variable it names lives outside it. At the closing brace the binding y
 // disappears and the location of x stays in the store. Exit code 6.
 int main() {

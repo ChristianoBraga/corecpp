@@ -11,12 +11,12 @@ open Informal
 
 set_option verso.blueprint.foldCodeBlocks true
 
-#doc (Manual) "UD III, storage and commands" =>
+#doc (Manual) "Storage and commands" =>
 
-One typing rule and one evaluation rule per construction of `Cmd`. The typing rules live in `Typing.cmd` and the evaluation rules in `Eval.cmd`. Scope is the restoration of $`\rho` at block exit, and lifetime is the removal of the local locations from $`\sigma`. UD III adds the local reference, a second name for an existing location, and fixes the evaluation order of the expressions with effects.
+One typing rule and one evaluation rule per construction of `Cmd`. The typing rules live in `Typing.cmd` and the evaluation rules in `Eval.cmd`. Scope is the restoration of $`\rho` at block exit, and lifetime is the removal of the local locations from $`\sigma`. The chapter also holds the local reference, a second name for an existing location, and the evaluation order of the expressions with effects.
 
 :::group "ud3"
-UD III, variables, update and commands.
+Variables, update and commands.
 :::
 
 # Declaration

@@ -1,4 +1,4 @@
-// Core C++ example, UD III. A reference to a field and a reference to a vector
+// Core C++ example, references. A reference to a field and a reference to a vector
 // element alias locations inside objects, and the writes through them are seen
 // through the object. Exit code 79.
 class P {

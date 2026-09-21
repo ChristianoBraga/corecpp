@@ -2,13 +2,11 @@
 
 <img src="docs/logo.svg" alt="Core C++ logo, a C inside a C followed by ++" width="176">
 
-Core C++ is a well behaved subset of C++17 used as the core language of the
-course 09022, Linguagens de Programação, at IME (Instituto Militar de
-Engenharia, 5th year of Engenharia de Computação). Every concept of the course
-is introduced as a construction of Core C++, added to the implemented core in
-the order of the syllabus, with its typing and evaluation rules in natural
-semantics on the board. This repository holds the Lean 4 implementation of
-those rules.
+Core C++ is a well behaved subset of C++17 with a complete formal semantics.
+Every construction has a typing rule and an evaluation rule, written in
+natural semantics, and this repository holds the Lean 4 implementation of
+those rules, a lexer, a parser, a type checker, an evaluator that prints the
+derivation of each execution, and a command line interpreter.
 
 Every Core C++ program compiles with `g++ -std=c++17`. The subset has an LL(1)
 grammar, a deterministic semantics and no undefined behaviour. Everything
@@ -99,10 +97,9 @@ The blueprint is published at
 The directory [`docs/`](docs/) holds its source, a
 [Verso Blueprint](https://github.com/leanprover/verso-blueprint) of the
 semantics. It states every typing and evaluation rule, one node per
-construction and one chapter per unit of the syllabus, links each node to the
-Lean declarations that implement it, and renders a dependency graph and a
-progress summary. The planned constructions without rules yet appear as
-pending nodes.
+construction or nonterminal and one chapter per group of constructions, links
+each node to the Lean declarations that implement it, and renders a dependency
+graph and a progress summary.
 
 ```
 cd docs
@@ -128,19 +125,20 @@ lives on the branch `gh-pages`, the contents of that directory plus an empty
 - Lambdas capture only by copy, `[=]`, and occur only where C++ converts them
   to a known `std::function`.
 - Divergence has no derivation. The inductive big step semantics does not
-  describe non terminating executions, a limitation stated in the course
-  (Leroy and Grall, Coinductive big-step operational semantics).
+  describe non terminating executions, a limitation of the style (Leroy and
+  Grall, Coinductive big-step operational semantics).
 
 ## Status
 
-The seven units of the course are implemented and tested. Basic types,
-expressions and commands, first order functions with call by value and by
-reference, classes with fields and with methods, constructors, destructors,
-`new`, `delete`, `this`, `virtual`, single inheritance, namespaces, pointers,
-`nullptr`, `std::vector`, local references, lambdas `[=]` and
-`std::function`, overloading, operator members, class templates and `auto`.
-Unit VII adds no construction, and gives instead the fragment of each
-paradigm and a small logic language.
+The whole design is implemented and tested. Basic types, expressions and
+commands, first order functions with call by value and by reference, classes
+with fields and with methods, constructors, destructors, `new`, `delete`,
+`this`, `virtual`, single inheritance, namespaces, pointers, `nullptr`,
+`std::vector`, local references, lambdas `[=]` and `std::function`,
+overloading, operator members, class templates and `auto`. Beside the
+language, the repository carries the fragment of each paradigm, a predicate
+over the abstract syntax, and a small logic language with unification and SLD
+resolution.
 
 Outside the design, and therefore not implemented. Function templates,
 partial specialisation, objects by value, copy constructors, RAII,

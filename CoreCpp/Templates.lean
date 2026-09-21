@@ -4,7 +4,7 @@ import CoreCpp.Syntax
 # Class template instantiation
 
 A class template is expanded by substitution before the program is checked
-and before it runs, the rule `Inst` of the UD VI specification.
+and before it runs, the rule `Inst` of the language design.
 
     p has template<typename T> class C { … }    C<τ> mentioned in p    C<τ> not in the class table
     ────────────────────────────────────────────────────────────────────────────────── (Inst)

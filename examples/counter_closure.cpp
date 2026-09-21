@@ -1,4 +1,4 @@
-// Core C++ example, UD IV. The lambda captures the pointer c by copy, and the
+// Core C++ example, closures. The lambda captures the pointer c by copy, and the
 // object it points to outlives the block of counter, so each call updates the
 // same counter. The result is 2 + 3 + 1. Exit code 6.
 class Box {

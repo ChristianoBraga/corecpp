@@ -1,4 +1,4 @@
-// Core C++ example, UD III. A reference to a pointer variable. Assigning
+// Core C++ example, references. A reference to a pointer variable. Assigning
 // through q changes p, and the object created through q is reached through p.
 // Exit code 3.
 class P {

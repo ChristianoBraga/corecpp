@@ -1,4 +1,4 @@
-// Core C++ example, UD V. Single inheritance, a virtual method redefined with
+// Core C++ example, inheritance and dispatch. Single inheritance, a virtual method redefined with
 // override, subsumption of Square* to Shape*, dispatch by the class tag of
 // the object, and a namespace. The virtual destructor lets delete through the
 // base pointer reach the object. Exit code 16.

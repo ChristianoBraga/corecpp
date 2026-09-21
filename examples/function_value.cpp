@@ -1,4 +1,4 @@
-// Core C++ example, UD IV. A function value is copied into another variable and
+// Core C++ example, function values. A function value is copied into another variable and
 // called through it. Exit code 7.
 int main() {
   std::function<int(int, int)> g = [=](int a, int b) -> int { return a - b; };

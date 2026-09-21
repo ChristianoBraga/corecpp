@@ -1,9 +1,9 @@
 /-!
-# A small logic language, for Unit VII
+# A small logic language
 
-The logic paradigm has no counterpart in Core C++, so the course gives it a
-language of its own, small enough to fit one lecture and written in the same
-notation as the rest. A program is a set of Horn clauses, a query is a list of
+The logic paradigm has no counterpart in Core C++, so it gets a language of
+its own, small enough to state in a page and written in the same notation as
+the rest. A program is a set of Horn clauses, a query is a list of
 atoms, and the meaning of a query is given by the SLD resolution judgment
 
     P, θ ⊢ G ⇒ θ'
