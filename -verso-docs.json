@@ -161,7 +161,7 @@
  "348":
  "<code>CoreCpp.Fragment.declBad (f : CoreCpp.Frag) : CoreCpp.Decl → Option (String × String)</code><span class=\"sep\"></span><code class=\"docstring\">The first construction of the declaration that the fragment forbids,\nwith the site at which it occurs. </code>",
  "347":
- "<code>CoreCpp.Fragment.forbids (f : CoreCpp.Frag) (what : String) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">The constructions each fragment forbids, named as the lectures name them.\nThe walk below asks this predicate once per construction it meets. </code>",
+ "<code>CoreCpp.Fragment.forbids (f : CoreCpp.Frag) (what : String) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">The constructions each fragment forbids, named as the language design\nnames them. The walk below asks this predicate once per construction it\nmeets. </code>",
  "346":
  "<code>CoreCpp.Frag.ofString? : String → Option CoreCpp.Frag</code><span class=\"sep\"></span><code class=\"docstring\">The fragment of that name, for the command line. </code>",
  "345": "<code>CoreCpp.Frag</code>",
@@ -172,7 +172,7 @@
  "342":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The declaration in which the construction occurs. </code>",
  "341":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The forbidden construction, named as the course names it. </code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The forbidden construction, named as the language design names it. </code>",
  "340":
  "<code>CoreCpp.Frag</code><span class=\"sep\"></span><code class=\"docstring\">The fragment the program was checked against. </code>",
  "34":
@@ -182,7 +182,7 @@
  "338":
  "<code>CoreCpp.Frag.oo : CoreCpp.Frag</code><span class=\"sep\"></span><code class=\"docstring\">The imperative fragment with classes, objects, dispatch and the heap. </code>",
  "337":
- "<code>CoreCpp.Frag : Type</code><span class=\"sep\"></span><code class=\"docstring\">The three fragments of Core C++ that Unit VII defines. </code>",
+ "<code>CoreCpp.Frag : Type</code><span class=\"sep\"></span><code class=\"docstring\">The three fragments of Core C++, one per paradigm that restricts it. </code>",
  "336":
  "<code>CoreCpp.Frag.imperative : CoreCpp.Frag</code><span class=\"sep\"></span><code class=\"docstring\">Basic types, variables, assignment, commands, first order functions. </code>",
  "335":
@@ -557,7 +557,7 @@
  "143":
  "<code>CoreCpp.forInit : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`ForInit ::= LocalDecl | ExprStatement` </code>",
  "142":
- "<code>CoreCpp.localDecl : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With\n`&` the declaration is a local reference, UD III. A lambda initialises only a\ntyped declaration, never an `auto` one. </code>",
+ "<code>CoreCpp.localDecl : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With\n`&` the declaration is a local reference. A lambda initialises only a typed\ndeclaration, never an `auto` one. </code>",
  "141":
  "<code>CoreCpp.statement : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`Statement`, a command or an expression statement, chosen by the first token. </code>",
  "140":
@@ -692,7 +692,7 @@
  "1000362":
  "<code>CoreCpp.member (cls : String) (vis : CoreCpp.Vis) : CoreCpp.P CoreCpp.MemberItem</code><span class=\"sep\"></span><code class=\"docstring\">`Member ::= 'virtual' ( Type '&'? ( VarId Params 'override'? Block | 'operator' Op Params Block )\n| '~' TypeId '(' ')' Block ) | '~' TypeId '(' ')' Block | TypeId Params Block\n| Type '&'? ( VarId ( ';' | Params 'override'? Block ) | 'operator' Op Params Block )`.\nThe first factoring of the design. A `TypeId` followed by `(` opens the\nconstructor, which must be named after the class, and a `TypeId` followed by\nanything else opens a type. The `&` after the type marks a member that\nreturns a reference, so a call to it denotes a location, and it never\nappears on a field. </code>",
  "1000361":
- "<code>CoreCpp.localDecl : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With\n`&` the declaration is a local reference, UD III. A lambda initialises only a\ntyped declaration, never an `auto` one. </code>",
+ "<code>CoreCpp.localDecl : CoreCpp.P CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">`LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With\n`&` the declaration is a local reference. A lambda initialises only a typed\ndeclaration, never an `auto` one. </code>",
  "1000360":
  "<code>CoreCpp.lex (input : String) : Except String (Array CoreCpp.Token)</code><span class=\"sep\"></span><code class=\"docstring\">The lexer. </code>",
  "1000359":
@@ -880,7 +880,7 @@
  "1000251":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The declaration in which the construction occurs. </code>",
  "1000250":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The forbidden construction, named as the course names it. </code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The forbidden construction, named as the language design names it. </code>",
  "1000249":
  "<code>CoreCpp.Frag</code><span class=\"sep\"></span><code class=\"docstring\">The fragment the program was checked against. </code>",
  "1000248":
@@ -1027,7 +1027,7 @@
  "1000167":
  "<code>CoreCpp.Fragment.funBad (f : CoreCpp.Frag) (fn : CoreCpp.Fun) : Option String</code><span class=\"sep\"></span><code class=\"docstring\">The first construction of the function that the fragment forbids. </code>",
  "1000166":
- "<code>CoreCpp.Fragment.forbids (f : CoreCpp.Frag) (what : String) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">The constructions each fragment forbids, named as the lectures name them.\nThe walk below asks this predicate once per construction it meets. </code>",
+ "<code>CoreCpp.Fragment.forbids (f : CoreCpp.Frag) (what : String) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">The constructions each fragment forbids, named as the language design\nnames them. The walk below asks this predicate once per construction it\nmeets. </code>",
  "1000165":
  "<code>CoreCpp.Fragment.exprBad (f : CoreCpp.Frag) : CoreCpp.Expr → Option String</code><span class=\"sep\"></span><code class=\"docstring\">The first construction of the expression that the fragment forbids. </code>",
  "1000164":
@@ -1044,7 +1044,7 @@
  "1000158":
  "<code>CoreCpp.Frag.oo : CoreCpp.Frag</code><span class=\"sep\"></span><code class=\"docstring\">The imperative fragment with classes, objects, dispatch and the heap. </code>",
  "1000157":
- "<code>CoreCpp.Frag : Type</code><span class=\"sep\"></span><code class=\"docstring\">The three fragments of Core C++ that Unit VII defines. </code>",
+ "<code>CoreCpp.Frag : Type</code><span class=\"sep\"></span><code class=\"docstring\">The three fragments of Core C++, one per paradigm that restricts it. </code>",
  "1000156":
  "<code>CoreCpp.Frag.imperative : CoreCpp.Frag</code><span class=\"sep\"></span><code class=\"docstring\">Basic types, variables, assignment, commands, first order functions. </code>",
  "1000155":
