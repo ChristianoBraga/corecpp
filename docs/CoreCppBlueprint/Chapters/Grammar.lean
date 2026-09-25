@@ -55,7 +55,13 @@ The grammar is LL(1).
 :::
 
 :::proof "gram_ll1"
-Two left factorings make it so. In `Member`, a token `TypeId` opens both a constructor and the type of a field or method, and the next token decides, `(` for a constructor and any other for a type. In `Statement`, a type token opens `LocalDecl` and a `VarId`, `this`, `*`, `(` or a literal opens `ExprStatement`. The FIRST sets are disjoint because types start with a reserved word or a `TypeId`, and expressions start with a `VarId`, `this`, `new`, a literal, `(`, `!`, `-` or `*`. No expression starts with a `TypeId`. The theorem `CoreCpp.Grammar.isLL1_grammar` checks the property by computation. The module `CoreCpp/LL1.lean` translates an EBNF grammar to BNF, computes the nullable nonterminals, FIRST and FOLLOW as least fixed points, and builds the predictive parsing table. The module `CoreCpp/Grammar.lean` states the grammar of {bpref "gram_full"}[] rule by rule over token classes. The theorem evaluates its table with `native_decide` and finds no entry with two productions. The same table drives the nonrecursive predictive parser `CoreCpp.LL1.Grammar.parse`, which accepts every program of `examples/`, as the recursive descent parser does.
+The proof is a computation. The theorem `CoreCpp.Grammar.isLL1_grammar` builds the predictive parsing table of the grammar of {bpref "gram_full"}[] and checks that no entry holds two productions. The tactic `native_decide` evaluates the check.
+
+Two modules carry the computation. The module `CoreCpp/Grammar.lean` states the grammar rule by rule over token classes. The module `CoreCpp/LL1.lean` translates it from EBNF to BNF. It then computes the nullable nonterminals, FIRST and FOLLOW as least fixed points, and fills the table.
+
+Two left factorings explain the result. In `Member`, a `TypeId` opens both a constructor and the type of a field or method. The next token decides, `(` for a constructor and any other token for a type. In `Statement`, a type opens `LocalDecl` and an expression opens `ExprStatement`. A type starts with `int`, `bool`, `void`, `std::function`, `std::vector` or a `TypeId`. An expression starts with a `VarId`, an `IntLit`, `true`, `false`, `nullptr`, `this`, `new`, `(`, `!`, `-` or `*`, and never with a `TypeId`. The two FIRST sets are therefore disjoint.
+
+The same table drives the nonrecursive predictive parser `CoreCpp.LL1.Grammar.parse`. It accepts every program of `examples/`, as the recursive descent parser does.
 :::
 
 # Abstract syntax and parser
