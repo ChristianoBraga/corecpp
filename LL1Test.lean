@@ -119,3 +119,403 @@ def jhuExpr : Grammar String := bnf "E" [
 #guard (run jhuExpr "").toOption.isNone
 #guard (jhuExpr.tree (tokens "i - n") [0, 4, 8, 7, 2, 4, 9, 7, 3]).isSome
 
+/-! # Grammars of real programming languages
+
+The published EBNF of three languages of Wirth, transcribed with the
+translation of `LL1.lean`, over the token classes `ident` and `number`.
+
+* PL/0, Wikipedia, https://en.wikipedia.org/wiki/PL/0, section Grammar, and
+  the three programs of section Examples.
+* Oberon-0, Wirth, Compiler Construction, revised edition of May 2017,
+  chapter 6, p. 30, and the module `Samples` of the same page,
+  https://people.inf.ethz.ch/wirth/CompilerConstruction/CompilerConstruction1.pdf
+* Oberon-07, Wirth, The Programming Language Oberon, revision 3.5.2016,
+  Appendix, https://people.inf.ethz.ch/wirth/Oberon/Oberon07.Report.pdf
+-/
+
+section Real
+
+private def t (a : String) : Ebnf String := .t a
+private def n (A : String) : Ebnf String := .n A
+private def seq (es : List (Ebnf String)) : Ebnf String := .seq es
+private def alt (es : List (Ebnf String)) : Ebnf String := .alt es
+private def star (e : Ebnf String) : Ebnf String := .star e
+private def opt (e : Ebnf String) : Ebnf String := .opt e
+private def ts (as : List String) : Ebnf String := alt (as.map t)
+
+/-- A scanner for the tests. Letters start an identifier, digits a number,
+symbols are tried in the order given, longest first, and a word among the
+keywords is the keyword. With `fold` the keywords are case insensitive. -/
+def scan (keywords : List String) (fold : Bool) (syms : List String) (src : String) :
+    Except String (List String) :=
+  let norm (w : String) := if fold then w.toLower else w
+  let rec go : Nat → List Char → List String → Except String (List String)
+    | 0, _, acc => .ok acc.reverse
+    | _ + 1, [], acc => .ok acc.reverse
+    | f + 1, c :: cs, acc =>
+      if c.isWhitespace then go f cs acc
+      else if c.isAlpha then
+        let w := String.ofList (c :: cs.takeWhile Char.isAlphanum)
+        let rest := cs.dropWhile Char.isAlphanum
+        match keywords.find? (norm · == norm w) with
+        | some k => go f rest (k :: acc)
+        | none => go f rest ("ident" :: acc)
+      else if c.isDigit then go f (cs.dropWhile Char.isDigit) ("number" :: acc)
+      else
+        match syms.find? (fun s => (c :: cs).take s.length == s.toList) with
+        | some s => go f ((c :: cs).drop s.length) (s :: acc)
+        | none => .error s!"unexpected character {c}"
+  go (src.length + 1) src.toList []
+
+def accepts (g : Grammar String) (toks : Except String (List String)) : Bool :=
+  match toks with
+  | .ok ts => (g.parse g.table id ts).toOption.isSome
+  | .error _ => false
+
+/-! ## PL/0 -/
+
+def pl0Rules : List (Rule String) := [
+  ⟨"program", seq [n "block", t "."]⟩,
+  ⟨"block", seq [
+    opt (seq [t "const", t "ident", t "=", t "number",
+      star (seq [t ",", t "ident", t "=", t "number"]), t ";"]),
+    opt (seq [t "var", t "ident", star (seq [t ",", t "ident"]), t ";"]),
+    star (seq [t "procedure", t "ident", t ";", n "block", t ";"]),
+    n "statement"]⟩,
+  ⟨"statement", opt (alt [
+    seq [t "ident", t ":=", n "expression"],
+    seq [t "call", t "ident"],
+    seq [t "?", t "ident"],
+    seq [t "!", n "expression"],
+    seq [t "begin", n "statement", star (seq [t ";", n "statement"]), t "end"],
+    seq [t "if", n "condition", t "then", n "statement"],
+    seq [t "while", n "condition", t "do", n "statement"]])⟩,
+  ⟨"condition", alt [
+    seq [t "odd", n "expression"],
+    seq [n "expression", ts ["=", "#", "<", "<=", ">", ">="], n "expression"]]⟩,
+  ⟨"expression", seq [opt (ts ["+", "-"]), n "term", star (seq [ts ["+", "-"], n "term"])]⟩,
+  ⟨"term", seq [n "factor", star (seq [ts ["*", "/"], n "factor"])]⟩,
+  ⟨"factor", alt [t "ident", t "number", seq [t "(", n "expression", t ")"]]⟩]
+
+def pl0 : Grammar String := translate "program" pl0Rules
+
+def pl0Scan := scan ["const", "var", "procedure", "call", "begin", "end", "if", "then",
+  "while", "do", "odd"] true [":=", "<=", ">=", ".", ",", ";", "=", "#", "<", ">", "+", "-",
+  "*", "/", "(", ")", "?", "!"]
+
+def pl0Squares := "VAR x, squ;
+
+PROCEDURE square;
+BEGIN
+   squ:= x * x
+END;
+
+BEGIN
+   x := 1;
+   WHILE x <= 10 DO
+   BEGIN
+      CALL square;
+      ! squ;
+      x := x + 1
+   END
+END."
+
+def pl0Primes := "const max = 100;
+var arg, ret;
+
+procedure isprime;
+var i;
+begin
+	ret := 1;
+	i := 2;
+	while i < arg do
+	begin
+		if arg / i * i = arg then
+		begin
+			ret := 0;
+			i := arg
+		end;
+		i := i + 1
+	end
+end;
+
+procedure primes;
+begin
+	arg := 2;
+	while arg < max do
+	begin
+		call isprime;
+		if ret = 1 then write arg;
+		arg := arg + 1
+	end
+end;
+
+call primes
+."
+
+def pl0Compilerbau := "VAR x, y, z, q, r, n, f;
+
+PROCEDURE multiply;
+VAR a, b;
+BEGIN
+  a := x;
+  b := y;
+  z := 0;
+  WHILE b > 0 DO
+  BEGIN
+    IF ODD b THEN z := z + a;
+    a := 2 * a;
+    b := b / 2
+  END
+END;
+
+PROCEDURE divide;
+VAR w;
+BEGIN
+  r := x;
+  q := 0;
+  w := y;
+  WHILE w <= r DO w := 2 * w;
+  WHILE w > y DO
+  BEGIN
+    q := 2 * q;
+    w := w / 2;
+    IF w <= r THEN
+    BEGIN
+      r := r - w;
+      q := q + 1
+    END
+  END
+END;
+
+PROCEDURE gcd;
+VAR f, g;
+BEGIN
+  f := x;
+  g := y;
+  WHILE f # g DO
+  BEGIN
+    IF f < g THEN g := g - f;
+    IF g < f THEN f := f - g
+  END;
+  z := f
+END;
+
+PROCEDURE fact;
+BEGIN
+  IF n > 1 THEN
+  BEGIN
+    f := n * f;
+    n := n - 1;
+    CALL fact
+  END
+END;
+
+BEGIN
+  ?x; ?y; CALL multiply; !z;
+  ?x; ?y; CALL divide; !q; !r;
+  ?x; ?y; CALL gcd; !z;
+  ?n; f := 1; CALL fact; !f
+END."
+
+#guard pl0.isLL1
+#guard accepts pl0 (pl0Scan pl0Squares)
+#guard accepts pl0 (pl0Scan pl0Compilerbau)
+-- The primes program writes `write arg`, which the grammar lacks. The article
+-- says that `write` corresponds to `!`.
+#guard !accepts pl0 (pl0Scan pl0Primes)
+#guard accepts pl0 (pl0Scan (pl0Primes.replace "write arg" "! arg"))
+#guard !accepts pl0 (pl0Scan "begin x := end.")
+
+/-! ## Oberon-0 -/
+
+def oberon0Rules (factored : Bool) : List (Rule String) := [
+  ⟨"selector", star (alt [seq [t ".", t "ident"], seq [t "[", n "expression", t "]"]])⟩,
+  ⟨"factor", alt [seq [t "ident", n "selector"], t "number",
+    seq [t "(", n "expression", t ")"], seq [t "~", n "factor"]]⟩,
+  ⟨"term", seq [n "factor", star (seq [ts ["*", "DIV", "MOD", "&"], n "factor"])]⟩,
+  ⟨"SimpleExpression", seq [opt (ts ["+", "-"]), n "term",
+    star (seq [ts ["+", "-", "OR"], n "term"])]⟩,
+  ⟨"expression", seq [n "SimpleExpression",
+    opt (seq [ts ["=", "#", "<", "<=", ">", ">="], n "SimpleExpression"])]⟩,
+  ⟨"assignment", seq [t "ident", n "selector", t ":=", n "expression"]⟩,
+  ⟨"ActualParameters", seq [t "(", opt (seq [n "expression",
+    star (seq [t ",", n "expression"])]), t ")"]⟩,
+  ⟨"ProcedureCall", seq [t "ident", n "selector", opt (n "ActualParameters")]⟩,
+  ⟨"IfStatement", seq [t "IF", n "expression", t "THEN", n "StatementSequence",
+    star (seq [t "ELSIF", n "expression", t "THEN", n "StatementSequence"]),
+    opt (seq [t "ELSE", n "StatementSequence"]), t "END"]⟩,
+  ⟨"WhileStatement", seq [t "WHILE", n "expression", t "DO", n "StatementSequence", t "END"]⟩,
+  ⟨"RepeatStatement", seq [t "REPEAT", n "StatementSequence", t "UNTIL", n "expression"]⟩,
+  ⟨"statement", opt (alt (
+    (if factored then
+      [seq [t "ident", n "selector",
+        alt [seq [t ":=", n "expression"], opt (n "ActualParameters")]]]
+    else [n "assignment", n "ProcedureCall"]) ++
+    [n "IfStatement", n "WhileStatement"]))⟩,
+  ⟨"StatementSequence", seq [n "statement", star (seq [t ";", n "statement"])]⟩,
+  ⟨"IdentList", seq [t "ident", star (seq [t ",", t "ident"])]⟩,
+  ⟨"ArrayType", seq [t "ARRAY", n "expression", t "OF", n "type"]⟩,
+  ⟨"FieldList", opt (seq [n "IdentList", t ":", n "type"])⟩,
+  ⟨"RecordType", seq [t "RECORD", n "FieldList", star (seq [t ";", n "FieldList"]), t "END"]⟩,
+  ⟨"type", alt [t "ident", n "ArrayType", n "RecordType"]⟩,
+  ⟨"FPSection", seq [opt (t "VAR"), n "IdentList", t ":", n "type"]⟩,
+  ⟨"FormalParameters", seq [t "(", opt (seq [n "FPSection",
+    star (seq [t ";", n "FPSection"])]), t ")"]⟩,
+  ⟨"ProcedureHeading", seq [t "PROCEDURE", t "ident", opt (n "FormalParameters")]⟩,
+  ⟨"ProcedureBody", seq [n "declarations",
+    opt (seq [t "BEGIN", n "StatementSequence"]), t "END", t "ident"]⟩,
+  ⟨"ProcedureDeclaration", seq [n "ProcedureHeading", t ";", n "ProcedureBody"]⟩,
+  ⟨"declarations", seq [
+    opt (seq [t "CONST", star (seq [t "ident", t "=", n "expression", t ";"])]),
+    opt (seq [t "TYPE", star (seq [t "ident", t "=", n "type", t ";"])]),
+    opt (seq [t "VAR", star (seq [n "IdentList", t ":", n "type", t ";"])]),
+    star (seq [n "ProcedureDeclaration", t ";"])]⟩,
+  ⟨"module", seq [t "MODULE", t "ident", t ";", n "declarations",
+    opt (seq [t "BEGIN", n "StatementSequence"]), t "END", t "ident", t "."]⟩]
+
+def oberon0 : Grammar String := translate "module" (oberon0Rules false)
+def oberon0Factored : Grammar String := translate "module" (oberon0Rules true)
+
+def oberonScan := scan ["DIV", "MOD", "OR", "OF", "THEN", "DO", "UNTIL", "END", "ELSE",
+  "ELSIF", "IF", "WHILE", "REPEAT", "ARRAY", "RECORD", "CONST", "TYPE", "VAR", "PROCEDURE",
+  "BEGIN", "MODULE"] false [":=", "<=", ">=", "*", "&", "+", "-", "=", "#", "<", ">", ".",
+  ",", ":", ")", "]", "(", "[", "~", ";"]
+
+def oberon0Samples := "MODULE Samples;
+      PROCEDURE Multiply*;
+         VAR x, y, z: INTEGER;
+      BEGIN OpenInput; ReadInt(x); ReadInt(y); z := 0;
+         WHILE x > 0 DO
+             IF x MOD 2 = 1 THEN z := z + y END ;
+             y := 2*y; x := x DIV 2
+         END ;
+         WriteInt(x, 4); WriteInt(y, 4); WriteInt(z, 6); WriteLn
+      END Multiply;
+      PROCEDURE Divide*;
+         VAR x, y, r, q, w: INTEGER;
+      BEGIN OpenInput; ReadInt(x); ReadInt(y); r := x; q := 0; w := y;
+         WHILE w <= r DO w := 2*w END ;
+         WHILE w > y DO
+              q := 2*q; w := w DIV 2;
+              IF w <= r THEN r := r - w; q := q + 1 END
+         END ;
+         WriteInt(x.4); WriteInt(y, 4); WriteInt(q, 4); WriteInt(r, 4); WriteLn
+      END Divide;
+      PROCEDURE Sum*;
+         VAR n, s: INTEGER;
+      BEGIN OpenInput; s:= 0;
+         WHILE ~eot() DO ReadInt(n); WriteInt(n, 4); s := s + n END ;
+         WriteInt(s, 6); WriteLn
+      END Sum;
+
+   END Samples."
+
+-- As published, `assignment` and `ProcedureCall` both start with `ident`, the
+-- only conflict of the grammar.
+#guard !oberon0.isLL1
+/-- The conflicts, each named by its rule and lookahead, without the index of
+the auxiliary nonterminal. -/
+def conflictsAt (g : Grammar String) : List (String × Look String) :=
+  g.conflicts.map fun ((A, a), _) => ((A.splitOn ".").head!, a)
+
+#guard conflictsAt oberon0 == [("statement", some "ident")]
+-- Factored as `ident selector ( ":=" expression | [ActualParameters] )`, the
+-- grammar is LL(1).
+#guard oberon0Factored.isLL1
+-- The module of the book uses three forms outside the syntax of the same
+-- page, the export mark `*`, the function call `eot()` in a factor and the
+-- typing slip `x.4`. Without them the module is accepted.
+#guard !accepts oberon0Factored (oberonScan oberon0Samples)
+#guard accepts oberon0Factored (oberonScan (((oberon0Samples.replace "*;" ";").replace
+  "eot()" "eot").replace "x.4" "x, 4"))
+
+/-! ## Oberon-07 -/
+
+def oberon07Rules : List (Rule String) := [
+  ⟨"qualident", seq [opt (seq [t "ident", t "."]), t "ident"]⟩,
+  ⟨"identdef", seq [t "ident", opt (t "*")]⟩,
+  ⟨"ConstDeclaration", seq [n "identdef", t "=", n "ConstExpression"]⟩,
+  ⟨"ConstExpression", n "expression"⟩,
+  ⟨"TypeDeclaration", seq [n "identdef", t "=", n "type"]⟩,
+  ⟨"type", alt [n "qualident", n "ArrayType", n "RecordType", n "PointerType",
+    n "ProcedureType"]⟩,
+  ⟨"ArrayType", seq [t "ARRAY", n "length", star (seq [t ",", n "length"]), t "OF", n "type"]⟩,
+  ⟨"length", n "ConstExpression"⟩,
+  ⟨"RecordType", seq [t "RECORD", opt (seq [t "(", n "BaseType", t ")"]),
+    opt (n "FieldListSequence"), t "END"]⟩,
+  ⟨"BaseType", n "qualident"⟩,
+  ⟨"FieldListSequence", seq [n "FieldList", star (seq [t ";", n "FieldList"])]⟩,
+  ⟨"FieldList", seq [n "IdentList", t ":", n "type"]⟩,
+  ⟨"IdentList", seq [n "identdef", star (seq [t ",", n "identdef"])]⟩,
+  ⟨"PointerType", seq [t "POINTER", t "TO", n "type"]⟩,
+  ⟨"ProcedureType", seq [t "PROCEDURE", opt (n "FormalParameters")]⟩,
+  ⟨"VariableDeclaration", seq [n "IdentList", t ":", n "type"]⟩,
+  ⟨"expression", seq [n "SimpleExpression", opt (seq [n "relation", n "SimpleExpression"])]⟩,
+  ⟨"relation", ts ["=", "#", "<", "<=", ">", ">=", "IN", "IS"]⟩,
+  ⟨"SimpleExpression", seq [opt (ts ["+", "-"]), n "term",
+    star (seq [n "AddOperator", n "term"])]⟩,
+  ⟨"AddOperator", ts ["+", "-", "OR"]⟩,
+  ⟨"term", seq [n "factor", star (seq [n "MulOperator", n "factor"])]⟩,
+  ⟨"MulOperator", ts ["*", "/", "DIV", "MOD", "&"]⟩,
+  ⟨"factor", alt [t "number", t "string", t "NIL", t "TRUE", t "FALSE", n "set",
+    seq [n "designator", opt (n "ActualParameters")],
+    seq [t "(", n "expression", t ")"], seq [t "~", n "factor"]]⟩,
+  ⟨"designator", seq [n "qualident", star (n "selector")]⟩,
+  ⟨"selector", alt [seq [t ".", t "ident"], seq [t "[", n "ExpList", t "]"], t "^",
+    seq [t "(", n "qualident", t ")"]]⟩,
+  ⟨"set", seq [t "{", opt (seq [n "element", star (seq [t ",", n "element"])]), t "}"]⟩,
+  ⟨"element", seq [n "expression", opt (seq [t "..", n "expression"])]⟩,
+  ⟨"ExpList", seq [n "expression", star (seq [t ",", n "expression"])]⟩,
+  ⟨"ActualParameters", seq [t "(", opt (n "ExpList"), t ")"]⟩,
+  ⟨"statement", opt (alt [n "assignment", n "ProcedureCall", n "IfStatement",
+    n "CaseStatement", n "WhileStatement", n "RepeatStatement", n "ForStatement"])⟩,
+  ⟨"assignment", seq [n "designator", t ":=", n "expression"]⟩,
+  ⟨"ProcedureCall", seq [n "designator", opt (n "ActualParameters")]⟩,
+  ⟨"StatementSequence", seq [n "statement", star (seq [t ";", n "statement"])]⟩,
+  ⟨"IfStatement", seq [t "IF", n "expression", t "THEN", n "StatementSequence",
+    star (seq [t "ELSIF", n "expression", t "THEN", n "StatementSequence"]),
+    opt (seq [t "ELSE", n "StatementSequence"]), t "END"]⟩,
+  ⟨"CaseStatement", seq [t "CASE", n "expression", t "OF", n "case",
+    star (seq [t "|", n "case"]), t "END"]⟩,
+  ⟨"case", opt (seq [n "CaseLabelList", t ":", n "StatementSequence"])⟩,
+  ⟨"CaseLabelList", seq [n "LabelRange", star (seq [t ",", n "LabelRange"])]⟩,
+  ⟨"LabelRange", seq [n "label", opt (seq [t "..", n "label"])]⟩,
+  ⟨"label", alt [t "number", t "string", n "qualident"]⟩,
+  ⟨"WhileStatement", seq [t "WHILE", n "expression", t "DO", n "StatementSequence",
+    star (seq [t "ELSIF", n "expression", t "DO", n "StatementSequence"]), t "END"]⟩,
+  ⟨"RepeatStatement", seq [t "REPEAT", n "StatementSequence", t "UNTIL", n "expression"]⟩,
+  ⟨"ForStatement", seq [t "FOR", t "ident", t ":=", n "expression", t "TO", n "expression",
+    opt (seq [t "BY", n "ConstExpression"]), t "DO", n "StatementSequence", t "END"]⟩,
+  ⟨"ProcedureDeclaration", seq [n "ProcedureHeading", t ";", n "ProcedureBody", t "ident"]⟩,
+  ⟨"ProcedureHeading", seq [t "PROCEDURE", n "identdef", opt (n "FormalParameters")]⟩,
+  ⟨"ProcedureBody", seq [n "DeclarationSequence",
+    opt (seq [t "BEGIN", n "StatementSequence"]),
+    opt (seq [t "RETURN", n "expression"]), t "END"]⟩,
+  ⟨"DeclarationSequence", seq [
+    opt (seq [t "CONST", star (seq [n "ConstDeclaration", t ";"])]),
+    opt (seq [t "TYPE", star (seq [n "TypeDeclaration", t ";"])]),
+    opt (seq [t "VAR", star (seq [n "VariableDeclaration", t ";"])]),
+    star (seq [n "ProcedureDeclaration", t ";"])]⟩,
+  ⟨"FormalParameters", seq [t "(", opt (seq [n "FPSection",
+    star (seq [t ";", n "FPSection"])]), t ")", opt (seq [t ":", n "qualident"])]⟩,
+  ⟨"FPSection", seq [opt (t "VAR"), t "ident", star (seq [t ",", t "ident"]), t ":",
+    n "FormalType"]⟩,
+  ⟨"FormalType", seq [star (seq [t "ARRAY", t "OF"]), n "qualident"]⟩,
+  ⟨"module", seq [t "MODULE", t "ident", t ";", opt (n "ImportList"),
+    n "DeclarationSequence", opt (seq [t "BEGIN", n "StatementSequence"]),
+    t "END", t "ident", t "."]⟩,
+  ⟨"ImportList", seq [t "IMPORT", n "import", star (seq [t ",", n "import"]), t ";"]⟩,
+  ⟨"import", seq [t "ident", opt (seq [t ":=", t "ident"])]⟩]
+
+def oberon07 : Grammar String := translate "module" oberon07Rules
+
+-- Three conflicts. In `statement`, `assignment` and `ProcedureCall` both start
+-- with a designator. In `qualident`, `[ident "."] ident` cannot tell a module
+-- prefix from the identifier itself on `ident`. In `designator`, the selector
+-- `"(" qualident ")"` of a type guard and `ActualParameters` both start with `(`.
+#guard !oberon07.isLL1
+#guard setEq (conflictsAt oberon07)
+  [("statement", some "ident"), ("designator", some "("), ("qualident", some "ident")]
+
+end Real
