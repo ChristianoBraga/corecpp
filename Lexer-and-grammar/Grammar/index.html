@@ -5556,7 +5556,7 @@ window.onload = async () => {
                       <div class="declaration decl theorem" data-decl="CoreCpp.Grammar.isLL1_grammar" data-kind="theorem">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">theorem</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/a5cf2ac8d3b596f8714bdd4d55efa06b4fc374cf/CoreCpp/Grammar.lean#L136-L139">CoreCpp/Grammar.lean</a></span></div>
+      <span class="bp_external_decl_kind">theorem</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/6d12c8ed505c24ec8a7b380e6efa2133f6b7dbd2/CoreCpp/Grammar.lean#L136-L139">CoreCpp/Grammar.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5579,7 +5579,7 @@ trusts the compiled evaluation. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.LL1.Grammar.isLL1" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/a5cf2ac8d3b596f8714bdd4d55efa06b4fc374cf/CoreCpp/LL1.lean#L343-L346">CoreCpp/LL1.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/6d12c8ed505c24ec8a7b380e6efa2133f6b7dbd2/CoreCpp/LL1.lean#L343-L346">CoreCpp/LL1.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5604,7 +5604,7 @@ FIRST(α FOLLOW(A)) and FIRST(β FOLLOW(A)) are disjoint. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.LL1.Grammar.table" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/a5cf2ac8d3b596f8714bdd4d55efa06b4fc374cf/CoreCpp/LL1.lean#L328-L337">CoreCpp/LL1.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/6d12c8ed505c24ec8a7b380e6efa2133f6b7dbd2/CoreCpp/LL1.lean#L328-L337">CoreCpp/LL1.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5627,7 +5627,7 @@ FIRST(α FOLLOW(A)) and FIRST(β FOLLOW(A)) are disjoint. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.LL1.Grammar.parse" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/a5cf2ac8d3b596f8714bdd4d55efa06b4fc374cf/CoreCpp/LL1.lean#L357-L382">CoreCpp/LL1.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/6d12c8ed505c24ec8a7b380e6efa2133f6b7dbd2/CoreCpp/LL1.lean#L357-L382">CoreCpp/LL1.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5665,7 +5665,13 @@ together, and the output is the leftmost derivation. </pre></div>
                 </div>
               <div class="bp_content bp_kind_proof_content proof_content">
                 <p>
-                  Two left factorings make it so. In <code>Member</code>, a token <code>TypeId</code> opens both a constructor and the type of a field or method, and the next token decides, <code>(</code> for a constructor and any other for a type. In <code>Statement</code>, a type token opens <code>LocalDecl</code> and a <code>VarId</code>, <code>this</code>, <code>*</code>, <code>(</code> or a literal opens <code>ExprStatement</code>. The FIRST sets are disjoint because types start with a reserved word or a <code>TypeId</code>, and expressions start with a <code>VarId</code>, <code>this</code>, <code>new</code>, a literal, <code>(</code>, <code>!</code>, <code>-</code> or <code>*</code>. No expression starts with a <code>TypeId</code>. The theorem <code>CoreCpp.Grammar.isLL1_grammar</code> checks the property by computation. The module <code>CoreCpp/LL1.lean</code> translates an EBNF grammar to BNF, computes the nullable nonterminals, FIRST and FOLLOW as least fixed points, and builds the predictive parsing table. The module <code>CoreCpp/Grammar.lean</code> states the grammar of <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-gram-005Ffull-statement" data-bp-preview-title="Definition 1.2.1" data-bp-preview-key="gram_full--statement"><a href="Lexer-and-grammar/Grammar/#--informal-preview-gram_full--statement" title="gram_full">Definition 1.2.1</a></span></span> rule by rule over token classes. The theorem evaluates its table with <code>native_decide</code> and finds no entry with two productions. The same table drives the nonrecursive predictive parser <code>CoreCpp.LL1.Grammar.parse</code>, which accepts every program of <code>examples/</code>, as the recursive descent parser does.</p>
+                  The proof is a computation. The theorem <code>CoreCpp.Grammar.isLL1_grammar</code> builds the predictive parsing table of the grammar of <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-gram-005Ffull-statement" data-bp-preview-title="Definition 1.2.1" data-bp-preview-key="gram_full--statement"><a href="Lexer-and-grammar/Grammar/#--informal-preview-gram_full--statement" title="gram_full">Definition 1.2.1</a></span></span> and checks that no entry holds two productions. The tactic <code>native_decide</code> evaluates the check.</p>
+                <p>
+                  Two modules carry the computation. The module <code>CoreCpp/Grammar.lean</code> states the grammar rule by rule over token classes. The module <code>CoreCpp/LL1.lean</code> translates it from EBNF to BNF. It then computes the nullable nonterminals, FIRST and FOLLOW as least fixed points, and fills the table.</p>
+                <p>
+                  Two left factorings explain the result. In <code>Member</code>, a <code>TypeId</code> opens both a constructor and the type of a field or method. The next token decides, <code>(</code> for a constructor and any other token for a type. In <code>Statement</code>, a type opens <code>LocalDecl</code> and an expression opens <code>ExprStatement</code>. A type starts with <code>int</code>, <code>bool</code>, <code>void</code>, <code>std::function</code>, <code>std::vector</code> or a <code>TypeId</code>. An expression starts with a <code>VarId</code>, an <code>IntLit</code>, <code>true</code>, <code>false</code>, <code>nullptr</code>, <code>this</code>, <code>new</code>, <code>(</code>, <code>!</code>, <code>-</code> or <code>*</code>, and never with a <code>TypeId</code>. The two FIRST sets are therefore disjoint.</p>
+                <p>
+                  The same table drives the nonrecursive predictive parser <code>CoreCpp.LL1.Grammar.parse</code>. It accepts every program of <code>examples/</code>, as the recursive descent parser does.</p>
                 </div>
               </div>
             </section>
