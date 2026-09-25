@@ -224,7 +224,7 @@ partial def unaryExpr : P Expr := do
   | .sym "*" => advance; return .deref (← unaryExpr)
   | _ => postfixExpr
 
-/-- `PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId Args? | '->' VarId Args? | Args )*`.
+/-- `PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId | '->' VarId | Args )*`.
 `Args` after a variable is the call `f(…)`, of the function named `f`, of the
 function value bound to `f` or of the method `f` of `this`, and after any other
 postfix expression it is the call of a function value, `callFn`. `.m(…)` and
@@ -323,8 +323,8 @@ partial def exprStatement : P Cmd := do
     return .assign l r
   else return .exprStmt l
 
-/-- `LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With
-`&` the declaration is a local reference. A lambda initialises only a typed
+/-- `LocalDecl ::= 'auto' VarId '=' Expr | Type VarId '=' ArgExpr`. With the
+`&` that ends `Type` the declaration is a local reference. A lambda initialises only a typed
 declaration, never an `auto` one. -/
 partial def localDecl : P Cmd := do
   if ← accept (.kw "auto") then

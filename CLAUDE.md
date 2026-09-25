@@ -27,12 +27,16 @@ since 2026-09-18.
   Γ ⊢ e : τ and Γ ⊢ c ⊣ Γ'. Sequent style as in Kahn (1987), hypotheses left
   of ⊢, subject right of it, result after ⇒.
 - One parser function per grammar nonterminal, one evaluator function per
-  judgment. The grammar is LL(1) by construction, verified by inspection so far.
+  judgment. The grammar is LL(1), checked by `Grammar.isLL1_grammar`.
 
 ## Layout
 
 - `CoreCpp/Templates.lean`, class template instantiation by substitution,
   applied by `check` and by `runWith` before anything else, idempotent.
+- `CoreCpp/LL1.lean`, EBNF to BNF, nullable, FIRST, FOLLOW, the predictive
+  parsing table and the table driven parser, generic in the terminals.
+  `CoreCpp/Grammar.lean`, the blueprint grammar over token classes, its table
+  and the theorem `isLL1_grammar`, proved by `native_decide`.
 - `CoreCpp/Token.lean`, `Lexer.lean` (hand written finite automaton, longest
   match, `std::function` and `std::vector` as single tokens, uppercase initial
   for type identifiers), `Syntax.lean` (AST), `Parser.lean` (recursive

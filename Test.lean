@@ -507,3 +507,19 @@ def factProg : String :=
 #eval (Logic.parse "p(1). ?- p(2).").map fun (cs, qs) => qs.map fun q => Logic.query cs q
 #eval (Logic.parse "q(X) :- q(X). ?- q(1).").map fun (cs, qs) =>
   qs.map fun q => (Logic.query cs q (depth := 50)).length
+
+/-! ## LL(1) table and predictive parser -/
+
+#eval Grammar.grammar.conflicts
+#eval Grammar.derive "int main() { return a.f(1)(2); }"
+#eval Grammar.derive "int main() { return 1 +; }"
+#eval show IO Unit from do
+  let files ← System.FilePath.readDir "examples"
+  let mut agree := 0
+  for f in files do
+    if f.path.extension != some "cpp" then continue
+    let src ← IO.FS.readFile f.path
+    let ll := match Grammar.derive src with | .ok _ => true | .error _ => false
+    if (parseProgram src).isOk == ll then agree := agree + 1
+    else IO.println s!"{f.fileName} disagrees"
+  IO.println s!"{agree} examples, both parsers agree"
