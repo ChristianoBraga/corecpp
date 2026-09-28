@@ -1,5 +1,5 @@
 name = "corecpp"
-defaultTargets = ["CoreCpp", "corecpp"]
+defaultTargets = ["CoreCpp", "corecpp", "Preproc", "ccpp-pre"]
 
 [[lean_lib]]
 name = "CoreCpp"
@@ -12,3 +12,12 @@ root = "Main"
 name = "ebnf2lean"
 srcDir = "tools"
 root = "Ebnf2Lean"
+
+[[lean_lib]]
+name = "Preproc"
+srcDir = "preproc"
+
+[[lean_exe]]
+name = "ccpp-pre"
+srcDir = "preproc"
+root = "PreprocMain"

@@ -45,6 +45,13 @@ since 2026-09-18.
   trip.
   `CoreCpp/Ebnf.lean`, grammars in EBNF files, reading, printing and a scanner
   driven by the terminals of a grammar.
+- `preproc/`, Preproc, the preprocessor of Core C++, a separate language that
+  reads lines and never lexes Core C++. `preproc/Preproc.lean` is the library,
+  `preproc/PreprocMain.lean` the executable `ccpp-pre`, run through
+  `bin/ccpp-pre`, `preproc/include/` the headers of Core C++, and
+  `preproc/ccpp-preproc.md` the design. Its programs are also valid inputs of
+  the preprocessor of `g++`. `tests/Preproc.lean` checks it on
+  `tests/preproc/`.
 - `tests/ll1/`, tests of the LL(1) construction. One EBNF file per grammar in
   `grammars/`, programs in their own language in `programs/`, one Lean test
   per group, `Classic.lean` (Wikipedia, Hovemeyer), `Wirth.lean` (PL/0,

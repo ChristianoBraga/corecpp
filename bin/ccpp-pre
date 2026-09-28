@@ -1,0 +1,9 @@
+#!/bin/sh
+# Preproc, the preprocessor of Core C++. Builds the executable when needed and
+# runs it. File arguments are resolved from the caller's working directory.
+DIR=$(cd "$(dirname "$0")/.." && pwd)
+BIN="$DIR/.lake/build/bin/ccpp-pre"
+if [ ! -x "$BIN" ] || [ -n "$(find "$DIR/preproc" -name '*.lean' -newer "$BIN" 2>/dev/null)" ]; then
+  (cd "$DIR" && lake build ccpp-pre >/dev/null) || { echo "ccpp-pre: build failed" >&2; exit 1; }
+fi
+exec "$BIN" "$@"

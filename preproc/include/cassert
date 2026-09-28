@@ -1,0 +1,3 @@
+#ifndef CCPP_H_CASSERT
+#define CCPP_H_CASSERT
+#endif
