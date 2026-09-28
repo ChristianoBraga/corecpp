@@ -12,12 +12,12 @@ juxtaposition.
     seq     = { factor } ;
     factor  = identifier | terminal | "[" alt "]" | "{" alt "}" | "(" alt ")" ;
 
-A terminal is written between double or single quotes. An identifier that is
-the left side of some rule is a nonterminal, and any other identifier is a
-token class, a terminal such as `ident` or `NAME` that the scanner produces.
-`[ X ]` is an option, `{ X }` a repetition, and an empty sequence is ε.
-Comments are written `(* … *)`. The first rule gives the start symbol unless
-the caller names another.
+A terminal stands between double or single quotes. An identifier that is the
+left side of some rule is a nonterminal. Any other identifier is a token
+class, a terminal such as `ident` or `NAME` that the scanner produces. `[ X ]`
+is an option, `{ X }` a repetition, and an empty sequence is ε. A comment
+stands between `(*` and `*)`. The first rule gives the start symbol unless the
+caller names another.
 -/
 
 namespace CoreCpp.EbnfFile
@@ -155,8 +155,8 @@ def load (path : System.FilePath) : IO (List (Rule String)) := do
   | .ok rs => return rs
   | .error e => throw (IO.userError s!"{path}: {e}")
 
-/-- The grammar of an EBNF file, translated directly to BNF or, with `dfa`,
-through one DFA per rule. The start symbol is `start`, by default the left
+/-- The grammar of an EBNF file in BNF. The translation is direct, or through
+one DFA per rule with `dfa`. The start symbol is `start`, by default the left
 side of the first rule. -/
 def loadGrammar (path : System.FilePath) (start : Option String := none) (dfa := false) :
     IO (Grammar String) := do
@@ -172,9 +172,8 @@ def quote (a : String) : String :=
 
 mutual
 
-/-- An expression in EBNF. Token classes print as bare identifiers. A nested
-alternative is always parenthesised, so reading the text back gives the same
-auxiliary nonterminals. -/
+/-- An expression in EBNF. Token classes print as bare identifiers, and a nested
+alternative is always parenthesised. -/
 def render (classes : List String) : Ebnf String → String
   | .t a => if classes.contains a then a else quote a
   | .n A => A
@@ -207,11 +206,12 @@ def renderRules (classes : List String) (rs : List (Rule String)) : String :=
 def literals (g : Grammar String) (classes : List String) : List String :=
   g.terminals.filter (!classes.contains ·)
 
-/-- A scanner for the programs of a grammar. White space separates tokens. A
-word of letters, digits and `_` that starts with a letter is a literal of the
-grammar when it spells one, with `fold` ignoring case, and the class `ident`
-otherwise. A run of digits is the class `number`. Any other text is the
-longest literal of the grammar that starts there. -/
+/-- A scanner for the programs of a grammar. It skips white space. A word of
+letters, digits and `_` that starts with a letter gives the literal of the
+grammar it spells, with `fold` ignoring case. Any other word gives the token
+class named by `ident`. A run of digits gives the token class named by
+`number`. Any other text gives the longest literal without a letter that
+starts there. -/
 def scan (g : Grammar String) (classes : List String) (ident number : String)
     (fold : Bool) (src : String) : Except String (List String) :=
   let lits := literals g classes

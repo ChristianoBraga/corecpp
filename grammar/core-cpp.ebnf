@@ -9,9 +9,9 @@ Declaration = "namespace" TypeId "{" { Declaration } "}"
             | Class
             | Function
             ;
-Class = "class" TypeId [ ":" "public" ClassType ] "{" { Section } "}" ";" ;
+Class = "class" TypeId [ ":" "public" ClassType ] "{" { Member } { Section } "}" ";" ;
 Section = ( "public" | "private" ) ":" { Member } ;
-Member = "virtual" ( Type VarId Params Block | "~" TypeId "(" ")" Block )
+Member = "virtual" ( Type [ "&" ] MemberRest | "~" TypeId "(" ")" Block )
        | "~" TypeId "(" ")" Block
        | ( BasicType | "std::function" "<" Type "(" [ Type { "," Type } ] ")" ">" | "std::vector" "<" Type ">" [ "*" ] ) [ "&" ] MemberRest
        | TypeId ( Params Block | ClassTypeRest [ "*" ] [ "&" ] MemberRest )
@@ -34,8 +34,11 @@ Op = "+"
    ;
 Function = Type VarId Params Block ;
 Params = "(" [ Param { "," Param } ] ")" ;
-Param = Type VarId ;
-Type = ( BasicType | ( ClassType | "std::vector" "<" Type ">" ) [ "*" ] | "std::function" "<" Type "(" [ Type { "," Type } ] ")" ">" ) [ "&" ] ;
+Param = Type [ "&" ] VarId ;
+Type = BasicType
+     | ( ClassType | "std::vector" "<" Type ">" ) [ "*" ]
+     | "std::function" "<" Type "(" [ Type { "," Type } ] ")" ">"
+     ;
 BasicType = "int"
           | "bool"
           | "void"
@@ -53,7 +56,7 @@ Statement = Block
           | ExprStatement ";"
           ;
 LocalDecl = "auto" VarId "=" Expr
-          | Type VarId "=" ArgExpr
+          | Type [ "&" ] VarId "=" ArgExpr
           ;
 ForInit = LocalDecl
         | ExprStatement

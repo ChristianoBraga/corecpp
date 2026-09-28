@@ -4,11 +4,11 @@ import CoreCpp.LL1
 /-!
 # Terminals of the grammar of Core C++
 
-The token classes over which the grammar of Core C++ is written, their
-reading from the EBNF file `grammar/core-cpp.ebnf`, and the printing of the
-rules as the Lean module `CoreCpp/GrammarRules.lean`. In the file, `TypeId`,
-`VarId` and `IntLit` are token classes, a quoted literal with a letter is a
-reserved word, and any other quoted literal is a symbol.
+The token classes of the grammar of Core C++, their reading from the EBNF
+file `grammar/core-cpp.ebnf`, and the printing of the rules as the Lean
+module `CoreCpp/GrammarRules.lean`. In the file, `TypeId`, `VarId` and
+`IntLit` are token classes. A quoted literal with a letter is a reserved word,
+and any other quoted literal is a symbol.
 -/
 
 namespace CoreCpp.Grammar
@@ -25,8 +25,9 @@ inductive Term where
   | intLit
   deriving Repr, BEq, DecidableEq, Hashable
 
-/-- The class of a token. The end of input has no class, since the parser
-reads the end marker from the end of the list. -/
+/-- The class of a token. The end token maps to a symbol that the grammar
+lacks. `derive` drops that token, and the parser reads the end marker from
+the end of the list. -/
 def Term.ofToken : Token → Term
   | .kw s => .kw s
   | .sym s => .sym s

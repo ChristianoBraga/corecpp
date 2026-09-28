@@ -3,14 +3,14 @@ import Std.Data.HashMap
 /-!
 # LL(1) grammars and the table driven predictive parser
 
-A generic construction over a type of terminals `T`. A grammar in EBNF is
-translated to BNF, the nullable nonterminals and the sets FIRST and FOLLOW are
-computed as least fixed points, the predictive parsing table is built from
-them, and the grammar is LL(1) when no entry of the table holds two
-productions. The parser is the nonrecursive predictive parser, a stack of
-grammar symbols driven by the table, whose output is the leftmost derivation
-of the input. The construction follows Aho, Lam, Sethi and Ullman, Compilers,
-Principles, Techniques, and Tools, second edition, section 4.4.
+A generic construction over a type of terminals `T`. The module translates a
+grammar in EBNF to BNF, directly or through one DFA per rule. It computes the
+nullable nonterminals, FIRST and FOLLOW as least fixed points. It builds the
+predictive parsing table from them. The grammar is LL(1) when no entry of the
+table holds two productions. The nonrecursive predictive parser drives a stack
+of grammar symbols by the table and outputs the leftmost derivation of the
+input. The construction follows section 4.4 of Aho, Lam, Sethi and Ullman,
+Compilers, Principles, Techniques, and Tools, second edition.
 -/
 
 namespace CoreCpp.LL1
@@ -63,7 +63,9 @@ structure TrState (T : Type) where
 
 abbrev Tr (T : Type) := StateM (TrState T)
 
-/-- A fresh auxiliary nonterminal, named after the rule that needs it. -/
+/-- An auxiliary nonterminal `owner.k`, named after the rule that needs it. The
+name is fresh when no rule name contains a dot, as in every grammar that
+`CoreCpp.EbnfFile` reads. -/
 def fresh (owner : String) : Tr T String := do
   let s ← get
   set { s with next := s.next + 1 }
@@ -74,10 +76,11 @@ def emit (A : String) (rhs : List (Sym T)) : Tr T Unit :=
 
 mutual
 
-/-- The symbols of `e` in a sequence. A sequence is spliced, and an
-alternative, a repetition and an option become an auxiliary nonterminal.
+/-- The symbols of `e` in a sequence. The translation splices a sequence. An
+alternative, a repetition and an option each become an auxiliary nonterminal.
 The repetition `X*` becomes `R → X R | ε` and the option `X?` becomes
-`O → X | ε`, both right recursive, so the translation adds no left recursion. -/
+`O → X | ε`. The repetition is right recursive, so it adds no left recursion
+when its body is not nullable. -/
 def symbols (owner : String) : Ebnf T → Tr T (List (Sym T))
   | .t a => return [.t a]
   | .n A => return [.n A]
@@ -125,12 +128,14 @@ def translate (start : String) (rules : List (Rule T)) : Grammar T :=
 /-! ## Translation through a DFA per rule
 
 The second translation reads each rule as a regular expression over grammar
-symbols, as the parser generator `pgen` of CPython does. The expression goes
-to an NFA by the construction of Thompson, the NFA to a DFA by the subset
-construction, and the DFA to a right linear grammar with one nonterminal per
-state. A state `q` with an arc labelled `X` to `q'` gives `q → X q'`, and a
-final state gives `q → ε`. Two arcs of a state never carry the same symbol, so
-the grammar has no common prefix inside a rule. -/
+symbols, as the parser generator `pgen` of CPython does. The construction of
+Thompson turns the expression into an NFA, and the subset construction turns
+the NFA into a DFA (Aho, Lam, Sethi and Ullman, section 3.7). The DFA treats
+each grammar symbol as one label. It then gives one nonterminal per state. A
+state `q` with an arc labelled `X` to `q'` gives `q → X q'`, and a final state
+gives `q → ε`. The label `X` may itself be a nonterminal. Two arcs of a state
+never carry the same symbol, so the grammar has no common prefix inside a
+rule. -/
 
 /-- An NFA over grammar symbols, arcs labelled by a symbol or by ε. -/
 structure Nfa (T : Type) where
@@ -208,11 +213,11 @@ def Nfa.toDfa (a : Nfa T) (start : Nat) :
         | some j => (seen, todo, tr ++ [(i, l, j)])
         | none => (seen.push target, todo ++ [seen.size], tr ++ [(i, l, seen.size)])) (seen, todo, tr)
       go k todo seen tr
-  go (2 ^ (min a.size 20) + 1) [0] #[a.closure [start]] []
+  go (2 ^ a.size + 1) [0] #[a.closure [start]] []
 
 variable [DecidableEq T] in
-/-- The right linear grammar of the DFA of one rule. The initial state keeps
-the name of the rule, and state `i` is named `A#i`. -/
+/-- The productions of the DFA of one rule. The initial state keeps
+the name `A` of the rule, and state `i` takes the name `A#i`. -/
 def ruleDfa (r : Rule T) : List (Production T) :=
   let (a, (s, f)) := (do
       let s ← Nfa.new
@@ -226,7 +231,8 @@ def ruleDfa (r : Rule T) : List (Production T) :=
     finals.map fun i => ⟨name i, []⟩
 
 variable [DecidableEq T] in
-/-- The grammar of a list of EBNF rules through their DFAs. -/
+/-- The grammar of a list of EBNF rules through their DFAs. Each left side has
+one rule, since the names of the states depend only on it. -/
 def translateDfa (start : String) (rules : List (Rule T)) : Grammar T :=
   ⟨start, rules.flatMap ruleDfa⟩
 
@@ -247,9 +253,9 @@ def SetMap.addAll [BEq V] (m : SetMap V) (A : String) (vs : List V) : SetMap V :
   else (A, new) :: m.filter (·.1 != A)
 
 /-- Iterate `f` from `x` until the value stops changing, at most `fuel` times.
-Every step iterated here only adds elements, and a step that changes the
-value adds at least one pair of a nonterminal and a lookahead, so the fuel of
-`Grammar.fuel` suffices to reach the least fixed point. -/
+Every step iterated here only adds elements. A step that changes the value
+adds at least one pair of a nonterminal and a lookahead. The fuel of
+`Grammar.fuel` therefore suffices to reach the least fixed point. -/
 def iterate [BEq α] (f : α → α) : Nat → α → α
   | 0, x => x
   | k + 1, x => let y := f x; if y == x then x else iterate f k y
@@ -340,9 +346,9 @@ def Grammar.table (g : Grammar T) : Table T :=
 def Grammar.conflicts (g : Grammar T) : Table T :=
   g.table.filter (·.2.length ≥ 2)
 
-/-- The grammar is LL(1) when its table has no conflict, that is, when for
-every nonterminal `A` and any two of its productions `A → α` and `A → β`,
-FIRST(α FOLLOW(A)) and FIRST(β FOLLOW(A)) are disjoint. -/
+/-- The grammar is LL(1) when its table has no conflict. Equivalently, any two
+productions of a nonterminal have disjoint `predict` sets. The set of `A → α`
+is FIRST(α), together with FOLLOW(A) when α is nullable. -/
 def Grammar.isLL1 (g : Grammar T) : Bool := g.conflicts.isEmpty
 
 /-! ## The parser -/
@@ -355,10 +361,14 @@ inductive Tree (α : Type) where
   deriving Repr
 
 /-- The nonrecursive predictive parser. The stack starts with the start symbol.
-A terminal on top must match the next token and both go. A nonterminal `A` on
-top is replaced by the right side of the production at `A` and the lookahead,
-whose index is output. The input is accepted when stack and input end
-together, and the output is the leftmost derivation. -/
+A terminal on top must match the next token, and the parser pops it and
+consumes the token. For a nonterminal `A` on top, the table gives a production
+for `A` and the lookahead, the first one when the entry holds several. The
+parser replaces `A` by the right side of that production and outputs its
+index. The parser accepts when stack and input end together, and its output
+is the leftmost derivation. It runs within a fuel bound and fails with
+`parser fuel exhausted` when the bound runs out. Deeply nested nullable
+nonterminals can exhaust it on a valid input. -/
 def Grammar.parse [Hashable T] (g : Grammar T) (tb : Table T) (cls : α → T) (input : List α) :
     Except String (List Nat) :=
   let prods := g.prods.toArray

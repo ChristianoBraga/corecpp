@@ -5,16 +5,18 @@ import CoreCpp.Syntax
 /-!
 # Core C++ parser, subset
 
-Recursive descent, one function per nonterminal, over the `Array Token`
-produced by the lexer. Each function reads the next token and chooses the
-production by it. The subset covers basic, class, pointer, vector and function
+Recursive descent over the `Array Token` that the lexer produces. Each
+nonterminal has its own function, except `Section`, `MemberRest` and
+`ClassTypeRest`, which `classDecl`, `member` and `classType` read inline. A
+function chooses the production by the next token, and `member` and
+`classType` also look at the token after it. The subset covers basic, class, pointer, vector and function
 types, expressions, lambdas in their three positions, commands, `delete`,
 classes with sections, fields, methods, constructors, destructors and single
 inheritance, namespaces and functions with parameters by value and by
 reference. Two left factorings keep the grammar LL(1). In `Member` a `TypeId`
-opens a constructor when `(` follows it and a type otherwise, and in
-`Statement` a type token opens a declaration and any other token an
-expression statement.
+opens a constructor when `(` follows it and a type otherwise. In
+`ExprStatement` an assignment and an expression statement share the prefix
+`Expr`, and the token `=` decides.
 
 A namespace is flattened at parse time. Inside `namespace N { … }` every class
 declared is named `N::C`, and every unqualified class name mentioned in a type
@@ -323,8 +325,8 @@ partial def exprStatement : P Cmd := do
     return .assign l r
   else return .exprStmt l
 
-/-- `LocalDecl ::= 'auto' VarId '=' Expr | Type VarId '=' ArgExpr`. With the
-`&` that ends `Type` the declaration is a local reference. A lambda initialises only a typed
+/-- `LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With
+`&` the declaration is a local reference. A lambda initialises only a typed
 declaration, never an `auto` one. -/
 partial def localDecl : P Cmd := do
   if ← accept (.kw "auto") then
@@ -432,9 +434,9 @@ def operatorName : P String := do
     else fail "expected an operator that a class may overload"
   | _ => fail "expected an operator that a class may overload"
 
-/-- `Member ::= 'virtual' ( Type '&'? ( VarId Params 'override'? Block | 'operator' Op Params Block )
-| '~' TypeId '(' ')' Block ) | '~' TypeId '(' ')' Block | TypeId Params Block
-| Type '&'? ( VarId ( ';' | Params 'override'? Block ) | 'operator' Op Params Block )`.
+/-- `Member ::= 'virtual' ( Type '&'? MemberRest | '~' TypeId '(' ')' Block )
+| '~' TypeId '(' ')' Block | TypeId Params Block | Type '&'? MemberRest` with
+`MemberRest ::= VarId ( ';' | Params 'override'? Block ) | 'operator' Op Params Block`.
 The first factoring of the design. A `TypeId` followed by `(` opens the
 constructor, which must be named after the class, and a `TypeId` followed by
 anything else opens a type. The `&` after the type marks a member that
@@ -483,7 +485,7 @@ partial def member (cls : String) (vis : Vis) : P MemberItem := do
     else afterType false (← type)
   | _ => afterType false (← type)
 
-/-- `Class ::= 'class' TypeId ( ':' 'public' ClassType )? '{' Section* '}' ';'` with
+/-- `Class ::= 'class' TypeId ( ':' 'public' ClassType )? '{' Member* Section* '}' ';'` with
 `Section ::= ( 'public' | 'private' ) ':' Member*`. Members before any section
 label are private, as in C++. -/
 partial def classDecl : P ClassDecl := do

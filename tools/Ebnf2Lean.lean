@@ -5,8 +5,8 @@ import CoreCpp.GrammarTerm
 # The generator of `CoreCpp/GrammarRules.lean`
 
 `lake exe ebnf2lean [input] [output]` reads the grammar of Core C++ from an
-EBNF file, by default `grammar/core-cpp.ebnf`, and writes the Lean module that
-defines `CoreCpp.Grammar.rules`, by default `CoreCpp/GrammarRules.lean`.
+EBNF file, `grammar/core-cpp.ebnf` by default. It writes the Lean module that
+defines `CoreCpp.Grammar.rules`, `CoreCpp/GrammarRules.lean` by default.
 -/
 
 open CoreCpp.EbnfFile CoreCpp.Grammar

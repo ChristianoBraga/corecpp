@@ -5,9 +5,9 @@ import CoreCpp
 
 `grammar/core-cpp.ebnf` is the source of the grammar. `lake exe ebnf2lean`
 writes it as `CoreCpp/GrammarRules.lean`, whose `rules` the theorem
-`isLL1_grammar` is about. The checks below confirm that the committed module
-is the output of the generator on the file, and that printing `rules` in EBNF
-gives the text of the file back. Run from the root of the repository with
+`isLL1_grammar` is about. The checks below confirm that the committed module is the
+output of the generator on the file. They also confirm that printing `rules`
+in EBNF gives the text of the file back. Run from the root of the repository with
 `lake env lean tests/Grammar.lean`.
 -/
 
