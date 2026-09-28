@@ -508,6 +508,17 @@ def factProg : String :=
 #eval (Logic.parse "q(X) :- q(X). ?- q(1).").map fun (cs, qs) =>
   qs.map fun q => (Logic.query cs q (depth := 50)).length
 
+/-! ## Lexical agreement with C++ -/
+
+-- Each program is rejected, since C++ would read it otherwise.
+#eval lex "bool and = true;"
+#eval lex "return 010;"
+#eval lex "return 2147483648;"
+#eval parseProgram "int main() { return 5--2; }"
+-- The largest literal and a unary minus after a binary one remain.
+#eval lex "return 2147483647;"
+#eval parseProgram "int main() { return 5 - -2; }"
+
 /-! ## LL(1) table and predictive parser -/
 
 #eval Grammar.grammar.conflicts

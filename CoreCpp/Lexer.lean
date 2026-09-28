@@ -5,7 +5,12 @@ import CoreCpp.Token
 
 A function from `String` to `Array Token`, written as a finite automaton over
 the list of characters with the longest match rule. The uppercase and
-lowercase convention is realised here, in `identifier`.
+lowercase convention is realised here, in `identifier`. The lexer rejects what
+C++ would read otherwise, so that every Core C++ program is a C++ program with
+the same meaning. It rejects a keyword or alternative representation of C++
+outside the subset, an integer literal with a leading `0`, which C++ reads in
+octal, and an integer literal above 2147483647, to which C++ gives a type
+wider than `int`.
 -/
 
 namespace CoreCpp
@@ -50,7 +55,11 @@ partial def run (cs : List Char) (acc : Array Token) : Except String (Array Toke
     else if c == '/' && rest.head? == some '/' then run (skipLine rest) acc
     else if c.isDigit then
       let (digits, rest') := takeWhile Char.isDigit cs
-      run rest' (acc.push (.intLit digits.toNat!))
+      if digits.length > 1 && digits.front == '0' then
+        .error s!"integer literal {digits} starts with 0, which C++ reads in octal"
+      else if digits.toNat! > 2147483647 then
+        .error s!"integer literal {digits} exceeds 2147483647, the largest int"
+      else run rest' (acc.push (.intLit digits.toNat!))
     else if isIdentStart c then
       -- `std::function` and `std::vector` are single tokens
       if cs.take 13 == "std::function".toList then
@@ -59,7 +68,9 @@ partial def run (cs : List Char) (acc : Array Token) : Except String (Array Toke
         run (cs.drop 11) (acc.push (.kw "std::vector"))
       else
         let (name, rest') := takeWhile isIdentChar cs
-        run rest' (acc.push (identifier name))
+        if cppReserved.contains name && !keywords.contains name then
+          .error s!"'{name}' is a reserved word of C++ outside the subset"
+        else run rest' (acc.push (identifier name))
     else
       match matchSymbol symbols3 cs with
       | some (s, rest') => run rest' (acc.push (.sym s))
