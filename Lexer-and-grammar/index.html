@@ -5389,7 +5389,7 @@ window.onload = async () => {
             <div class="split-toc">
               <div class="title">
                 <label for="--verso-manual-toc-Core-C______--Lexer-and-grammar" class="toggle-split-toc"><input type="checkbox" class="toggle-split-toc" id="--verso-manual-toc-Core-C______--Lexer-and-grammar" checked="checked"></label><span class="number">1.</span> <span class="current"><a href="Lexer-and-grammar/#Core-C______--Lexer-and-grammar">Lexer and grammar</a></span></div>
-              <table><tr class="numbered"><td class="num">1.1.</td><td><a href="Lexer-and-grammar/Lexer/#Core-C______--Lexer-and-grammar--Lexer">Lexer</a></td></tr><tr class="numbered"><td class="num">1.2.</td><td><a href="Lexer-and-grammar/Grammar/#Core-C______--Lexer-and-grammar--Grammar">Grammar</a></td></tr><tr class="numbered"><td class="num">1.3.</td><td><a href="Lexer-and-grammar/Abstract-syntax-and-parser/#Core-C______--Lexer-and-grammar--Abstract-syntax-and-parser">Abstract syntax and parser</a></td></tr></table></div>
+              <table><tr class="numbered"><td class="num">1.1.</td><td><a href="Lexer-and-grammar/Lexer/#Core-C______--Lexer-and-grammar--Lexer">Lexer</a></td></tr><tr class="numbered"><td class="num">1.2.</td><td><a href="Lexer-and-grammar/Grammar/#Core-C______--Lexer-and-grammar--Grammar">Grammar</a></td></tr><tr class="numbered"><td class="num">1.3.</td><td><a href="Lexer-and-grammar/Abstract-syntax-and-parser/#Core-C______--Lexer-and-grammar--Abstract-syntax-and-parser">Abstract syntax and parser</a></td></tr><tr class="numbered"><td class="num">1.4.</td><td><a href="Lexer-and-grammar/Preprocessor/#Core-C______--Lexer-and-grammar--Preprocessor">Preprocessor</a></td></tr></table></div>
             </div>
           </div>
         <div class="last"></div>
@@ -5402,7 +5402,7 @@ window.onload = async () => {
             <h1>
               1. Lexer and grammar<span class="permalink-widget inline"><a href="find/?domain=Verso.Genre.Manual.section&amp;name=Core-C______--Lexer-and-grammar" title="Permalink">🔗</a></span></h1>
             <p>
-              Core C++ has an LL(1) grammar over tokens. Three lexical and syntactic conventions remove the ambiguities of C++. Type identifiers start with an uppercase letter and variable identifiers with a lowercase one, which decides in the lexer whether <code>&lt;</code> opens a template argument or compares. Template instantiation occurs only in type position. Methods are defined inside the class. The lexer is a hand written finite automaton with the longest match rule, and the parser is recursive descent with one function per nonterminal.</p>
+              Core C++ has an LL(1) grammar over tokens. Three lexical and syntactic conventions remove the ambiguities of C++. Type identifiers start with an uppercase letter and variable identifiers with a lowercase letter or <code>_</code>. The lexer classifies an identifier by its initial, and the parser uses the class to tell whether <code>&lt;</code> opens a template argument or compares. Template instantiation occurs only in type position. Methods are defined inside the class. The lexer is a hand written finite automaton with the longest match rule, and the parser is recursive descent.</p>
             <ol class="section-toc">
               <li>
                 <a href="Lexer-and-grammar/Lexer/#Core-C______--Lexer-and-grammar--Lexer"><span class="number">1.1.</span> Lexer</a></li>
@@ -5410,6 +5410,8 @@ window.onload = async () => {
                 <a href="Lexer-and-grammar/Grammar/#Core-C______--Lexer-and-grammar--Grammar"><span class="number">1.2.</span> Grammar</a></li>
               <li>
                 <a href="Lexer-and-grammar/Abstract-syntax-and-parser/#Core-C______--Lexer-and-grammar--Abstract-syntax-and-parser"><span class="number">1.3.</span> Abstract syntax and parser</a></li>
+              <li>
+                <a href="Lexer-and-grammar/Preprocessor/#Core-C______--Lexer-and-grammar--Preprocessor"><span class="number">1.4.</span> Preprocessor</a></li>
               </ol>
             </section>
           <nav class="prev-next-buttons">
