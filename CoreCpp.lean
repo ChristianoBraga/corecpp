@@ -12,5 +12,3 @@ import CoreCpp.Pretty
 import CoreCpp.Templates
 import CoreCpp.Typing
 import CoreCpp.Eval
-import CoreCpp.Fragment
-import CoreCpp.Logic

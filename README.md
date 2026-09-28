@@ -24,8 +24,6 @@ C++17 leaves undefined is rejected statically or is the runtime result
 | `CoreCpp/Eval.lean` | Evaluator in natural semantics, one function per judgment, each rule in the comment of the case that implements it |
 | `CoreCpp/Pretty.lean` | Printing of syntax and semantic domains |
 | `CoreCpp/Templates.lean` | Expansion of class templates by substitution, before checking |
-| `CoreCpp/Fragment.lean` | The fragment of each paradigm, a predicate over the abstract syntax |
-| `CoreCpp/Logic.lean` | A small logic language, terms, unification and SLD resolution |
 | `Main.lean`, `bin/corecpp` | Command line interpreter |
 | `CoreCpp/LL1.lean`, `CoreCpp/Grammar.lean` | LL(1) construction and table driven parser, and the grammar of Core C++ with the theorem that it is LL(1) |
 | `grammar/core-cpp.ebnf`, `CoreCpp/GrammarRules.lean` | The grammar of Core C++ in EBNF, and the Lean module that `lake exe ebnf2lean` generates from it |
@@ -37,7 +35,6 @@ C++17 leaves undefined is rejected statically or is the runtime result
 | `tests/Grammar.lean` | Round trip between `grammar/core-cpp.ebnf` and `CoreCpp/GrammarRules.lean` |
 | `tests/ll1/` | Tests of the LL(1) construction, grammars in `grammars/*.ebnf`, programs in `programs/` |
 | `examples/` | One program per concept, all accepted by `g++`, expected result in the header comment |
-| `examples/logic/` | Programs of the logic language, run with `bin/corecpp prolog` |
 | `docs/` | The blueprint of the semantics, see below |
 
 The judgments follow the sequent style of Kahn (1987). The hypotheses ρ and σ
@@ -62,8 +59,6 @@ lake env lean tests/Grammar.lean
 lake env lean tests/Preproc.lean
 lake env lean tests/ll1/Classic.lean   # also Wirth.lean, Java.lean, Python.lean
 bin/corecpp [ast|check|run|trace] <file.cpp | ->
-bin/corecpp fragment [imperative|oo|functional] <file.cpp | ->
-bin/corecpp prolog <file.pl | ->
 ```
 
 The mode `run` is the default. The exit code of `run` and `trace` is the value
@@ -79,10 +74,7 @@ The mode `ast` prints the abstract syntax tree, `check` type checks, and
 a line of inference, the conclusion under it and the rule name at the right. A
 legend names the environments ρᵢ, the stores σⱼ and the subjects too long for
 a judgment, so every judgment fits one line, and a subtree too wide for the
-page is written apart under a name 𝒟ₖ. The mode `fragment` says whether a
-program lies in the fragment of a paradigm, and names the offending
-construction when it does not. The mode `prolog` reads a logic program and
-answers its queries.
+page is written apart under a name 𝒟ₖ.
 
 ```
 $ echo 'int main() { int x = 1; return x; }' | bin/corecpp trace -
@@ -147,21 +139,15 @@ commands, first order functions with call by value and by reference, classes
 with fields and with methods, constructors, destructors, `new`, `delete`,
 `this`, `virtual`, single inheritance, namespaces, pointers, `nullptr`,
 `std::vector`, local references, lambdas `[=]` and `std::function`,
-overloading, operator members, class templates and `auto`. Beside the
-language, the repository carries the fragment of each paradigm, a predicate
-over the abstract syntax, and a small logic language with unification and SLD
-resolution.
+overloading, operator members, class templates and `auto`.
 
 Outside the design, and therefore not implemented. Function templates,
 partial specialisation, objects by value, copy constructors, RAII,
-exceptions, multiple inheritance, the preprocessor and separate compilation.
-In the logic language, negation, the cut, assert and retract.
+exceptions, multiple inheritance and separate compilation.
 
 ## References
 
 - Gilles Kahn, Natural Semantics, STACS 1987, LNCS 247, Springer.
 - David A. Watt, Programming Language Concepts and Paradigms, Prentice Hall, 1990.
 - Xavier Leroy and Hervé Grall, Coinductive big-step operational semantics, Information and Computation 207 (2009).
-- J. A. Robinson, A Machine-Oriented Logic Based on the Resolution Principle, Journal of the ACM 12 (1965).
-- Robert Kowalski, Predicate Logic as Programming Language, IFIP Congress (1974).
 - ISO/IEC 14882:2017, Programming Languages, C++.

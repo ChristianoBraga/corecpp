@@ -12,7 +12,7 @@ since 2026-09-18.
 - Code, comments, docstrings, identifiers, error messages and grammar
   nonterminals are always in English. Prose replies to Christiano are in
   Portuguese.
-- The identifiers of every Core C++ program and of every logic program are
+- The identifiers of every Core C++ program are
   English too, in `examples/`, in `tests/Test.lean` and in every snippet of the
   blueprint. A class is `Stack`, `Node`, `Shape` or `Account`, a field is
   `value`, `next` or `balance`, a method is `push`, `pop` or `deposit`.
@@ -132,14 +132,6 @@ commands, first order functions, classes with fields, pointers, `nullptr`,
 `this`, `virtual`, single inheritance and namespaces, overloading, operator
 members, class templates and `auto`.
 
-Beside the language, `CoreCpp/Fragment.lean` reads the imperative, object
-oriented and functional paradigms as fragments of the core, one predicate
-over the abstract syntax each, and `CoreCpp/Logic.lean` gives the logic
-paradigm a language of its own, with terms, unification and SLD resolution.
-`bin/corecpp fragment <name> <file>` checks a fragment and `bin/corecpp
-prolog <file.pl>` runs a logic program.
-
 Not implemented, and outside the design. Function templates, partial
 specialisation, objects by value, copy constructors, RAII, exceptions,
-multiple inheritance, the preprocessor and separate compilation. Negation and
-the cut in the logic language.
+multiple inheritance and separate compilation.

@@ -9,9 +9,6 @@ import CoreCpp
     corecpp trace <file>   as run, printing the derivation before the result
     corecpp <file>         same as run
 
-    corecpp fragment imperative|oo|functional <file>
-                           whether the program lies in the fragment of the paradigm
-    corecpp prolog <file>  run the queries of a logic program
 
 `<file>` may be `-` for standard input, so that
 
@@ -31,9 +28,7 @@ too wide for the page written apart as named derivations.
 open CoreCpp
 
 def usage : String :=
-  "usage: corecpp [ast|check|run|trace] <file.cpp | ->\n" ++
-  "       corecpp fragment [imperative|oo|functional] <file.cpp | ->\n" ++
-  "       corecpp prolog <file.pl | ->"
+  "usage: corecpp [ast|check|run|trace] <file.cpp | ->"
 
 def readSource (path : String) : IO String :=
   if path == "-" then do
@@ -84,31 +79,10 @@ def dispatch (cmd path : String) : IO UInt32 := do
     IO.println (renderTrace log)
     IO.println ""
     report r
-  | "prolog" =>
-    let src ← readSource path
-    match Logic.parse src with
-    | .error e => IO.eprintln s!"{path}: {e}"; return 1
-    | .ok (cs, qs) =>
-      if qs.isEmpty then
-        IO.eprintln s!"{path}: the file has no query"
-        return 1
-      for q in qs do
-        IO.println (Logic.answersToString q (Logic.query cs q))
-      return 0
   | _ => IO.eprintln usage; return 64
-
-/-- The fragment modes, `corecpp fragment <name> <file>`. -/
-def dispatchFragment (name path : String) : IO UInt32 := do
-  let some f := Frag.ofString? name
-    | IO.eprintln usage; return 64
-  let some p ← load path | return 1
-  match fragment f p with
-  | .ok () => IO.println s!"in the {f} fragment"; return 0
-  | .error r => IO.eprintln (toString r); return 1
 
 def main (args : List String) : IO UInt32 := do
   match args with
-  | ["fragment", name, path] => dispatchFragment name path
   | [cmd, path] => dispatch cmd path
   | [path]      => dispatch "run" path
   | _           => IO.eprintln usage; return 64
