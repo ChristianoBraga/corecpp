@@ -1,0 +1,7 @@
+(* The first grammar that https://en.wikipedia.org/wiki/LL_parser gives as not LL(1), *)
+(* S -> A a b and A -> a | ε. *)
+
+S = A "a" "b" ;
+A = "a"
+  |
+  ;

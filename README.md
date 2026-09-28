@@ -27,7 +27,10 @@ C++17 leaves undefined is rejected statically or is the runtime result
 | `CoreCpp/Fragment.lean` | The fragment of each paradigm, a predicate over the abstract syntax |
 | `CoreCpp/Logic.lean` | A small logic language, terms, unification and SLD resolution |
 | `Main.lean`, `bin/corecpp` | Command line interpreter |
-| `Test.lean` | Tests, run with `lake env lean Test.lean` |
+| `CoreCpp/LL1.lean`, `CoreCpp/Grammar.lean` | LL(1) construction and table driven parser, and the grammar of Core C++ with the theorem that it is LL(1) |
+| `CoreCpp/Ebnf.lean` | Reading and printing of grammars in EBNF files, and a scanner driven by a grammar |
+| `tests/Test.lean` | Tests of Core C++, run with `lake env lean tests/Test.lean` |
+| `tests/ll1/` | Tests of the LL(1) construction, grammars in `grammars/*.ebnf`, programs in `programs/` |
 | `examples/` | One program per concept, all accepted by `g++`, expected result in the header comment |
 | `examples/logic/` | Programs of the logic language, run with `bin/corecpp prolog` |
 | `docs/` | The blueprint of the semantics, see below |
@@ -48,7 +51,8 @@ interpreter has no dependencies.
 
 ```
 lake build
-lake env lean Test.lean
+lake env lean tests/Test.lean
+lake env lean tests/ll1/Classic.lean   # also Wirth.lean, Java.lean, Python.lean
 bin/corecpp [ast|check|run|trace] <file.cpp | ->
 bin/corecpp fragment [imperative|oo|functional] <file.cpp | ->
 bin/corecpp prolog <file.pl | ->

@@ -13,7 +13,7 @@ since 2026-09-18.
   nonterminals are always in English. Prose replies to Christiano are in
   Portuguese.
 - The identifiers of every Core C++ program and of every logic program are
-  English too, in `examples/`, in `Test.lean` and in every snippet of the
+  English too, in `examples/`, in `tests/Test.lean` and in every snippet of the
   blueprint. A class is `Stack`, `Node`, `Shape` or `Account`, a field is
   `value`, `next` or `balance`, a method is `push`, `pop` or `deposit`.
 - RULE ZERO of `~/.claude/CLAUDE.md` applies. Short replies, active voice, no
@@ -37,6 +37,14 @@ since 2026-09-18.
   parsing table and the table driven parser, generic in the terminals.
   `CoreCpp/Grammar.lean`, the blueprint grammar over token classes, its table
   and the theorem `isLL1_grammar`, proved by `native_decide`.
+  `CoreCpp/Ebnf.lean`, grammars in EBNF files, reading, printing and a scanner
+  driven by the terminals of a grammar.
+- `tests/ll1/`, tests of the LL(1) construction. One EBNF file per grammar in
+  `grammars/`, programs in their own language in `programs/`, one Lean test
+  per group, `Classic.lean` (Wikipedia, Hovemeyer), `Wirth.lean` (PL/0,
+  Oberon-0, Oberon-07), `Java.lean` (JLS 7) and `Python.lean` (CPython 3.8,
+  which runs `python3` on `python38tok.py`). Run each from the root with
+  `lake env lean tests/ll1/<name>.lean`. No test file lives at the root.
 - `CoreCpp/Token.lean`, `Lexer.lean` (hand written finite automaton, longest
   match, `std::function` and `std::vector` as single tokens, uppercase initial
   for type identifiers), `Syntax.lean` (AST), `Parser.lean` (recursive
@@ -49,7 +57,7 @@ since 2026-09-18.
   subjects named in a legend and the wide subtrees written apart as 𝒟ₖ.
   The wrapper rebuilds when sources change. It lives in `bin/` because the
   macOS filesystem does not distinguish `corecpp` from `CoreCpp`.
-- `Test.lean`, `#eval` tests. Run with `lake env lean Test.lean`. `bin/compare`
+- `tests/Test.lean`, `#eval` tests. Run with `lake env lean tests/Test.lean`. `bin/compare`
   compiles every example with `g++ -std=c++17` and compares the exit codes
   with `bin/corecpp run`.
 - `docs/`, the Verso Blueprint package with the semantic rules and pointers to

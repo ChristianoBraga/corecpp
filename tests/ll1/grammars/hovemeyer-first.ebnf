@@ -1,0 +1,13 @@
+(* The FIRST example of Hovemeyer, Lecture 9, LL(1) parsing, Johns Hopkins 601.428/628, 2022, *)
+(* https://jhucompilers.github.io/fall2022/lectures/lecture09-public.pdf *)
+
+A = "a"
+  | B
+  | C
+  ;
+B = "b"
+  |
+  ;
+C = "c" "e"
+  | "d" "e"
+  ;
