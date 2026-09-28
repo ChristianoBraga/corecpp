@@ -57,7 +57,7 @@ The grammar is LL(1).
 :::proof "gram_ll1"
 The proof is a computation. The theorem `CoreCpp.Grammar.isLL1_grammar` builds the predictive parsing table of the grammar of {bpref "gram_full"}[] and checks that no entry holds two productions.
 
-Two modules carry the computation. The module `CoreCpp/Grammar.lean` states the grammar rule by rule over token classes. The module `CoreCpp/LL1.lean` translates it from EBNF to BNF. It then computes the nullable nonterminals, FIRST and FOLLOW as least fixed points, and fills the table.
+The grammar comes from the file `grammar/core-cpp.ebnf`, rule by rule over token classes. The generator `lake exe ebnf2lean` writes the file as the module `CoreCpp/GrammarRules.lean`, and the theorem is about the rules of that module. The module `CoreCpp/LL1.lean` translates them from EBNF to BNF. It then computes the nullable nonterminals, FIRST and FOLLOW as least fixed points, and fills the table.
 
 Two left factorings explain the result. In `Member`, a `TypeId` opens both a constructor and the type of a field or method. The next token decides, `(` for a constructor and any other token for a type. In `Statement`, a type opens `LocalDecl` and an expression opens `ExprStatement`. A type starts with `int`, `bool`, `void`, `std::function`, `std::vector` or a `TypeId`. An expression starts with a `VarId`, an `IntLit`, `true`, `false`, `nullptr`, `this`, `new`, `(`, `!`, `-` or `*`, and never with a `TypeId`. The two FIRST sets are therefore disjoint.
 

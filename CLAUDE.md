@@ -35,8 +35,14 @@ since 2026-09-18.
   applied by `check` and by `runWith` before anything else, idempotent.
 - `CoreCpp/LL1.lean`, EBNF to BNF, nullable, FIRST, FOLLOW, the predictive
   parsing table and the table driven parser, generic in the terminals.
-  `CoreCpp/Grammar.lean`, the blueprint grammar over token classes, its table
-  and the theorem `isLL1_grammar`, proved by `native_decide`.
+  `grammar/core-cpp.ebnf`, the blueprint grammar over token classes, is the
+  source of the grammar. `lake exe ebnf2lean` (`tools/Ebnf2Lean.lean`) writes
+  it as `CoreCpp/GrammarRules.lean`, never edited by hand, and
+  `CoreCpp/GrammarTerm.lean` holds the terminals and the Lean printer.
+  `CoreCpp/Grammar.lean` has the table and the theorem `isLL1_grammar`,
+  proved by `native_decide` on the generated rules. After an edit of the EBNF
+  file, run `lake exe ebnf2lean`, and `tests/Grammar.lean` checks the round
+  trip.
   `CoreCpp/Ebnf.lean`, grammars in EBNF files, reading, printing and a scanner
   driven by the terminals of a grammar.
 - `tests/ll1/`, tests of the LL(1) construction. One EBNF file per grammar in

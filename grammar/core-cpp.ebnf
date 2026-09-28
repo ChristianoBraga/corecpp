@@ -1,0 +1,86 @@
+(* The grammar of Core C++, section 1.2 of the blueprint, node gram_full. *)
+(* TypeId, VarId and IntLit are token classes. A quoted literal with a letter is a *)
+(* reserved word and any other quoted literal is a symbol. The start symbol is Program. *)
+(* CoreCpp/GrammarRules.lean is generated from this file by lake exe ebnf2lean. *)
+
+Program = { Declaration } ;
+Declaration = "namespace" TypeId "{" { Declaration } "}"
+            | "template" "<" "typename" TypeId ">" Class
+            | Class
+            | Function
+            ;
+Class = "class" TypeId [ ":" "public" ClassType ] "{" { Section } "}" ";" ;
+Section = ( "public" | "private" ) ":" { Member } ;
+Member = "virtual" ( Type VarId Params Block | "~" TypeId "(" ")" Block )
+       | "~" TypeId "(" ")" Block
+       | ( BasicType | "std::function" "<" Type "(" [ Type { "," Type } ] ")" ">" | "std::vector" "<" Type ">" [ "*" ] ) [ "&" ] MemberRest
+       | TypeId ( Params Block | ClassTypeRest [ "*" ] [ "&" ] MemberRest )
+       ;
+MemberRest = VarId ( ";" | Params [ "override" ] Block )
+           | "operator" Op Params Block
+           ;
+Op = "+"
+   | "-"
+   | "*"
+   | "/"
+   | "%"
+   | "=="
+   | "!="
+   | "<"
+   | "<="
+   | ">"
+   | ">="
+   | "[" "]"
+   ;
+Function = Type VarId Params Block ;
+Params = "(" [ Param { "," Param } ] ")" ;
+Param = Type VarId ;
+Type = ( BasicType | ( ClassType | "std::vector" "<" Type ">" ) [ "*" ] | "std::function" "<" Type "(" [ Type { "," Type } ] ")" ">" ) [ "&" ] ;
+BasicType = "int"
+          | "bool"
+          | "void"
+          ;
+ClassType = TypeId ClassTypeRest ;
+ClassTypeRest = { "::" TypeId } [ "<" Type { "," Type } ">" ] ;
+Block = "{" { Statement } "}" ;
+Statement = Block
+          | "if" "(" Expr ")" Block [ "else" Block ]
+          | "while" "(" Expr ")" Block
+          | "for" "(" ForInit ";" Expr ";" ExprStatement ")" Block
+          | "return" [ ArgExpr ] ";"
+          | "delete" Expr ";"
+          | LocalDecl ";"
+          | ExprStatement ";"
+          ;
+LocalDecl = "auto" VarId "=" Expr
+          | Type VarId "=" ArgExpr
+          ;
+ForInit = LocalDecl
+        | ExprStatement
+        ;
+ExprStatement = Expr [ "=" Expr ] ;
+Expr = OrExpr [ "?" Expr ":" Expr ] ;
+OrExpr = AndExpr { "||" AndExpr } ;
+AndExpr = EqExpr { "&&" EqExpr } ;
+EqExpr = RelExpr { ( "==" | "!=" ) RelExpr } ;
+RelExpr = AddExpr { ( "<" | "<=" | ">" | ">=" ) AddExpr } ;
+AddExpr = MulExpr { ( "+" | "-" ) MulExpr } ;
+MulExpr = UnaryExpr { ( "*" | "/" | "%" ) UnaryExpr } ;
+UnaryExpr = ( "!" | "-" | "*" ) UnaryExpr
+          | PostfixExpr
+          ;
+PostfixExpr = Primary { ( "[" Expr "]" | "." VarId | "->" VarId | Args ) } ;
+Primary = IntLit
+        | "true"
+        | "false"
+        | "nullptr"
+        | "this"
+        | VarId
+        | "(" Expr ")"
+        | "new" ( ClassType | "std::vector" "<" Type ">" ) Args
+        ;
+Args = "(" [ ArgExpr { "," ArgExpr } ] ")" ;
+ArgExpr = Lambda
+        | Expr
+        ;
+Lambda = "[=]" Params "->" Type Block ;

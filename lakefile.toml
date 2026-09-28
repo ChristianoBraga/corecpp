@@ -7,3 +7,8 @@ name = "CoreCpp"
 [[lean_exe]]
 name = "corecpp"
 root = "Main"
+
+[[lean_exe]]
+name = "ebnf2lean"
+srcDir = "tools"
+root = "Ebnf2Lean"

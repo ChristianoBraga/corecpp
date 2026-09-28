@@ -28,8 +28,11 @@ C++17 leaves undefined is rejected statically or is the runtime result
 | `CoreCpp/Logic.lean` | A small logic language, terms, unification and SLD resolution |
 | `Main.lean`, `bin/corecpp` | Command line interpreter |
 | `CoreCpp/LL1.lean`, `CoreCpp/Grammar.lean` | LL(1) construction and table driven parser, and the grammar of Core C++ with the theorem that it is LL(1) |
+| `grammar/core-cpp.ebnf`, `CoreCpp/GrammarRules.lean` | The grammar of Core C++ in EBNF, and the Lean module that `lake exe ebnf2lean` generates from it |
+| `CoreCpp/GrammarTerm.lean`, `tools/Ebnf2Lean.lean` | The terminals of the grammar and the generator |
 | `CoreCpp/Ebnf.lean` | Reading and printing of grammars in EBNF files, and a scanner driven by a grammar |
 | `tests/Test.lean` | Tests of Core C++, run with `lake env lean tests/Test.lean` |
+| `tests/Grammar.lean` | Round trip between `grammar/core-cpp.ebnf` and `CoreCpp/GrammarRules.lean` |
 | `tests/ll1/` | Tests of the LL(1) construction, grammars in `grammars/*.ebnf`, programs in `programs/` |
 | `examples/` | One program per concept, all accepted by `g++`, expected result in the header comment |
 | `examples/logic/` | Programs of the logic language, run with `bin/corecpp prolog` |
@@ -51,7 +54,9 @@ interpreter has no dependencies.
 
 ```
 lake build
+lake exe ebnf2lean        # after an edit of grammar/core-cpp.ebnf
 lake env lean tests/Test.lean
+lake env lean tests/Grammar.lean
 lake env lean tests/ll1/Classic.lean   # also Wirth.lean, Java.lean, Python.lean
 bin/corecpp [ast|check|run|trace] <file.cpp | ->
 bin/corecpp fragment [imperative|oo|functional] <file.cpp | ->
