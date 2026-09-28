@@ -4,6 +4,7 @@ import CoreCpp.Syntax
 import CoreCpp.Parser
 import CoreCpp.LL1
 import CoreCpp.Grammar
+import CoreCpp.Ebnf
 import CoreCpp.Semantics
 import CoreCpp.Pretty
 import CoreCpp.Templates
