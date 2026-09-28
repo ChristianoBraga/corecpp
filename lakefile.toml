@@ -1,6 +1,11 @@
 name = "corecpp"
 defaultTargets = ["CoreCpp", "corecpp", "Preproc", "ccpp-pre"]
 
+[[require]]
+name = "ll1"
+git = "https://github.com/ChristianoBraga/ll1-lean"
+rev = "main"
+
 [[lean_lib]]
 name = "CoreCpp"
 

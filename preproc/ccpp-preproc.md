@@ -42,7 +42,7 @@ Cond  = Test FlagId NL Group [ "#else" NL Group ] "#endif" NL ;
 Test  = "#ifdef" | "#ifndef" ;
 ```
 
-The construction of `core-cpp/CoreCpp/LL1.lean` finds this grammar LL(1), with 14 productions. `Header` ranges over the headers that Core C++ provides.
+The library `LL1` of the package `ll1-lean` finds this grammar LL(1), with 14 productions. `Header` ranges over the headers that Core C++ provides.
 
 ## Lexical rules
 

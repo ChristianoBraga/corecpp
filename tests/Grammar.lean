@@ -11,7 +11,7 @@ in EBNF gives the text of the file back. Run from the root of the repository wit
 `lake env lean tests/Grammar.lean`.
 -/
 
-open CoreCpp.LL1 CoreCpp.EbnfFile CoreCpp.Grammar
+open LL1 LL1.EbnfFile CoreCpp.Grammar
 
 def check (b : Bool) (what : String) : IO Unit :=
   unless b do throw (IO.userError s!"failed: {what}")

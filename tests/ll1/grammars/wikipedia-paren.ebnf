@@ -1,7 +1,0 @@
-(* The grammar of the section Concrete example of https://en.wikipedia.org/wiki/LL_parser *)
-(* with its rules 1 S -> F, 2 S -> ( S + F ) and 3 F -> a. *)
-
-S = F
-  | "(" S "+" F ")"
-  ;
-F = "a" ;

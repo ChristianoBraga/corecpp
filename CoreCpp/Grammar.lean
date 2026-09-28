@@ -1,6 +1,6 @@
 import CoreCpp.Token
 import CoreCpp.Lexer
-import CoreCpp.LL1
+import LL1
 import CoreCpp.GrammarTerm
 import CoreCpp.GrammarRules
 
@@ -18,7 +18,7 @@ tokens of the lexer.
 
 namespace CoreCpp.Grammar
 
-open CoreCpp.LL1
+open LL1
 
 /-- The grammar in BNF. -/
 def grammar : LL1.Grammar Term := translate "Program" rules

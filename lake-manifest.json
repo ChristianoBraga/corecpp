@@ -1,6 +1,16 @@
 {"version": "1.2.0",
  "packagesDir": ".lake/packages",
- "packages": [],
+ "packages":
+ [{"url": "https://github.com/ChristianoBraga/ll1-lean",
+   "type": "git",
+   "subDir": null,
+   "scope": "",
+   "rev": "b92aff5790596cf46d72b2ff20633a2e03ca9ec9",
+   "name": "ll1",
+   "manifestFile": "lake-manifest.json",
+   "inputRev": "main",
+   "inherited": false,
+   "configFile": "lakefile.toml"}],
  "name": "corecpp",
  "lakeDir": ".lake",
  "fixedToolchain": false}

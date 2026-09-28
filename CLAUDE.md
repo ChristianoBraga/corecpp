@@ -33,9 +33,10 @@ since 2026-09-18.
 
 - `CoreCpp/Templates.lean`, class template instantiation by substitution,
   applied by `check` and by `runWith` before anything else, idempotent.
-- `CoreCpp/LL1.lean`, EBNF to BNF, nullable, FIRST, FOLLOW, the predictive
-  parsing table and the table driven parser, generic in the terminals.
-  `grammar/core-cpp.ebnf`, the blueprint grammar over token classes, is the
+- The LL(1) construction and the EBNF reader come from the package `ll1`,
+  https://github.com/ChristianoBraga/ll1-lean, a lake dependency, with the
+  namespaces `LL1` and `LL1.EbnfFile`. Its tests on other languages live
+  there. `grammar/core-cpp.ebnf`, the blueprint grammar over token classes, is the
   source of the grammar. `lake exe ebnf2lean` (`tools/Ebnf2Lean.lean`) writes
   it as `CoreCpp/GrammarRules.lean`, never edited by hand, and
   `CoreCpp/GrammarTerm.lean` holds the terminals and the Lean printer.
@@ -43,8 +44,6 @@ since 2026-09-18.
   proved by `native_decide` on the generated rules. After an edit of the EBNF
   file, run `lake exe ebnf2lean`, and `tests/Grammar.lean` checks the round
   trip.
-  `CoreCpp/Ebnf.lean`, grammars in EBNF files, reading, printing and a scanner
-  driven by the terminals of a grammar.
 - `preproc/`, Preproc, the preprocessor of Core C++, a separate language that
   reads lines and never lexes Core C++. `preproc/Preproc.lean` is the library,
   `preproc/PreprocMain.lean` the executable `ccpp-pre`, run through
@@ -52,12 +51,7 @@ since 2026-09-18.
   `preproc/ccpp-preproc.md` the design. Its programs are also valid inputs of
   the preprocessor of `g++`. `tests/Preproc.lean` checks it on
   `tests/preproc/`.
-- `tests/ll1/`, tests of the LL(1) construction. One EBNF file per grammar in
-  `grammars/`, programs in their own language in `programs/`, one Lean test
-  per group, `Classic.lean` (Wikipedia, Hovemeyer), `Wirth.lean` (PL/0,
-  Oberon-0, Oberon-07), `Java.lean` (JLS 7) and `Python.lean` (CPython 3.8,
-  which runs `python3` on `python38tok.py`). Run each from the root with
-  `lake env lean tests/ll1/<name>.lean`. No test file lives at the root.
+- No test file lives at the root.
 - `CoreCpp/Token.lean`, `Lexer.lean` (hand written finite automaton, longest
   match, `std::function` and `std::vector` as single tokens, uppercase initial
   for type identifiers), `Syntax.lean` (AST), `Parser.lean` (recursive
@@ -90,7 +84,7 @@ since 2026-09-18.
   worktree, commit and push.
 - `examples/*.cpp`, one per concept, all compile with `g++ -std=c++17`, with the
   expected result in the header comment.
-- Toolchain `leanprover/lean4:v4.32.2`, no dependencies. `lake build` works. The
+- Toolchain `leanprover/lean4:v4.32.2`, one dependency, `ll1`. `lake build` works. The
   BAIF hook that blocks bare `lake build` exempts projects without Mathlib.
 
 ## Language decisions in force

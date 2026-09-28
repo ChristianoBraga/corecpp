@@ -1,4 +1,4 @@
-import CoreCpp.Ebnf
+import LL1
 import CoreCpp.GrammarTerm
 
 /-!
@@ -9,7 +9,7 @@ EBNF file, `grammar/core-cpp.ebnf` by default. It writes the Lean module that
 defines `CoreCpp.Grammar.rules`, `CoreCpp/GrammarRules.lean` by default.
 -/
 
-open CoreCpp.EbnfFile CoreCpp.Grammar
+open LL1.EbnfFile CoreCpp.Grammar
 
 def main (args : List String) : IO UInt32 := do
   let input := args.getD 0 "grammar/core-cpp.ebnf"

@@ -3,7 +3,7 @@ import CoreCpp.GrammarTerm
 
 namespace CoreCpp.Grammar
 
-open CoreCpp.LL1
+open LL1
 
 /-- The rules of the grammar of Core C++, generated from `grammar/core-cpp.ebnf`. -/
 def rules : List (Rule Term) := [

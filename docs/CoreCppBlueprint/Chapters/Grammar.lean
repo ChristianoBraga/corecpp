@@ -5,7 +5,7 @@ import CoreCpp.Token
 import CoreCpp.Lexer
 import CoreCpp.Syntax
 import CoreCpp.Parser
-import CoreCpp.LL1
+import LL1
 import CoreCpp.Grammar
 import Preproc
 
@@ -55,18 +55,18 @@ A statement is a command or an expression followed by `;`. Assignment is a comma
 The parser rejects five forms that the grammar derives and the subset excludes. A class template has one type parameter, and `new std::vector` takes exactly one argument. A lambda parameter is by value, a field is not a reference, and a namespace holds only classes, templates and namespaces. The parser also checks the names of the constructor and the destructor against their class. A class has at most one of each, and its constructor is public.
 :::
 
-:::theorem "gram_ll1" (parent := "ud1") (lean := "CoreCpp.Grammar.isLL1_grammar, CoreCpp.LL1.Grammar.isLL1, CoreCpp.LL1.Grammar.table, CoreCpp.LL1.Grammar.parse")
+:::theorem "gram_ll1" (parent := "ud1") (lean := "CoreCpp.Grammar.isLL1_grammar, LL1.Grammar.isLL1, LL1.Grammar.table, LL1.Grammar.parse")
 The grammar is LL(1).
 :::
 
 :::proof "gram_ll1"
 The proof is a computation. The theorem `CoreCpp.Grammar.isLL1_grammar` builds the predictive parsing table of the grammar of {bpref "gram_full"}[] and checks that no entry holds two productions.
 
-The grammar comes from the file `grammar/core-cpp.ebnf`, rule by rule over token classes. The generator `lake exe ebnf2lean` writes the file as the module `CoreCpp/GrammarRules.lean`, and the theorem is about the rules of that module. The module `CoreCpp/LL1.lean` translates them from EBNF to BNF. It then computes the nullable nonterminals, FIRST and FOLLOW as least fixed points, and fills the table.
+The grammar comes from the file `grammar/core-cpp.ebnf`, rule by rule over token classes. The generator `lake exe ebnf2lean` writes the file as the module `CoreCpp/GrammarRules.lean`, and the theorem is about the rules of that module. The library `LL1` of the package `ll1-lean` translates them from EBNF to BNF. It then computes the nullable nonterminals, FIRST and FOLLOW as least fixed points, and fills the table.
 
 Two left factorings explain the result. In `Member`, a `TypeId` opens both a constructor and the type of a field or method. The next token decides, `(` for a constructor and any other token for a type. In `ExprStatement`, an assignment and an expression statement share the prefix `Expr`, and the token `=` decides. In `Statement`, the FIRST sets of `LocalDecl` and `ExprStatement` are disjoint. A local declaration starts with `auto`, `int`, `bool`, `void`, `std::function`, `std::vector` or a `TypeId`. An expression starts with a `VarId`, an `IntLit`, `true`, `false`, `nullptr`, `this`, `new`, `(`, `!`, `-` or `*`, and never with a `TypeId`.
 
-The same table drives the nonrecursive predictive parser `CoreCpp.LL1.Grammar.parse`.
+The same table drives the nonrecursive predictive parser `LL1.Grammar.parse`.
 :::
 
 # Abstract syntax and parser

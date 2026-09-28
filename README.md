@@ -25,15 +25,13 @@ C++17 leaves undefined is rejected statically or is the runtime result
 | `CoreCpp/Pretty.lean` | Printing of syntax and semantic domains |
 | `CoreCpp/Templates.lean` | Expansion of class templates by substitution, before checking |
 | `Main.lean`, `bin/corecpp` | Command line interpreter |
-| `CoreCpp/LL1.lean`, `CoreCpp/Grammar.lean` | LL(1) construction and table driven parser, and the grammar of Core C++ with the theorem that it is LL(1) |
+| `CoreCpp/Grammar.lean` | The grammar of Core C++ with the theorem that it is LL(1), by the package [ll1-lean](https://github.com/ChristianoBraga/ll1-lean) |
 | `grammar/core-cpp.ebnf`, `CoreCpp/GrammarRules.lean` | The grammar of Core C++ in EBNF, and the Lean module that `lake exe ebnf2lean` generates from it |
 | `CoreCpp/GrammarTerm.lean`, `tools/Ebnf2Lean.lean` | The terminals of the grammar and the generator |
-| `CoreCpp/Ebnf.lean` | Reading and printing of grammars in EBNF files, and a scanner driven by a grammar |
 | `preproc/` | Preproc, the preprocessor of Core C++, a language of its own run before the compiler, with the headers of Core C++ in `preproc/include` and the design in `ccpp-preproc.md` |
 | `bin/ccpp-pre` | The preprocessor, `bin/ccpp-pre [-D CCPP_X=]... <file> [-o out]` |
 | `tests/Test.lean` | Tests of Core C++, run with `lake env lean tests/Test.lean` |
 | `tests/Grammar.lean` | Round trip between `grammar/core-cpp.ebnf` and `CoreCpp/GrammarRules.lean` |
-| `tests/ll1/` | Tests of the LL(1) construction, grammars in `grammars/*.ebnf`, programs in `programs/` |
 | `examples/` | One program per concept, all accepted by `g++`, expected result in the header comment |
 | `docs/` | The blueprint of the semantics, see below |
 
@@ -49,7 +47,7 @@ stand left of ⊢, the subject right of it and the result after ⇒.
 ## Usage
 
 The toolchain is `leanprover/lean4:v4.32.2`, installed through `elan`. The
-interpreter has no dependencies.
+interpreter depends only on the package [ll1-lean](https://github.com/ChristianoBraga/ll1-lean).
 
 ```
 lake build
@@ -57,7 +55,6 @@ lake exe ebnf2lean        # after an edit of grammar/core-cpp.ebnf
 lake env lean tests/Test.lean
 lake env lean tests/Grammar.lean
 lake env lean tests/Preproc.lean
-lake env lean tests/ll1/Classic.lean   # also Wirth.lean, Java.lean, Python.lean
 bin/corecpp [ast|check|run|trace] <file.cpp | ->
 ```
 
