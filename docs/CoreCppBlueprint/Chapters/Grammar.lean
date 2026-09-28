@@ -39,7 +39,7 @@ An identifier is classified by its initial after the reserved words are excluded
 :::definition "lex_automaton" (parent := "ud1") (lean := "CoreCpp.lex, CoreCpp.Lexer.run, CoreCpp.Lexer.takeWhile, CoreCpp.Lexer.matchSymbol, CoreCpp.Lexer.skipLine") (uses := "lex_tokens, lex_conventions")
 The lexer maps a string to an array of tokens ended by `eof`. It discards white space and line comments, reads the longest run of digits as an integer literal, the longest run of identifier characters as an identifier, and tries the symbols of three, two and one characters in that order. Any other character is a lexical error.
 
-The lexer also rejects what C++ would read otherwise, so that every Core C++ program is a C++ program with the same meaning. It rejects a keyword of C++ or an alternative representation such as `and` outside the reserved words of the subset (N4659 §5.11 [lex.key], Tables 5 and 6). It rejects an integer literal with a leading `0`, which C++ reads in octal, and one above 2147483647, to which C++ gives a type wider than `int`. It reads `--` and `++` as tokens that no production uses, so `5--2` fails as in C++, where the longest match gives `--`.
+The lexer also rejects what C++ would read otherwise, so that every Core C++ program is a C++ program with the same meaning. It rejects a keyword of C++ or an alternative representation such as `and` outside the reserved words of the subset (N4659 §5.11, Tables 5 and 6). It rejects an integer literal with a leading `0`, which C++ reads in octal, and one above 2147483647, to which C++ gives a type wider than `int`. It reads `--` and `++` as tokens that no production uses, so `5--2` fails as in C++, where the longest match gives `--`.
 :::
 
 # Grammar
