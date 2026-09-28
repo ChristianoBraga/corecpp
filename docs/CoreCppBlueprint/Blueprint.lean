@@ -10,7 +10,6 @@ import CoreCppBlueprint.Chapters.Commands
 import CoreCppBlueprint.Chapters.Abstraction
 import CoreCppBlueprint.Chapters.Encapsulation
 import CoreCppBlueprint.Chapters.TypeSystems
-import CoreCppBlueprint.Chapters.Paradigms
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -27,7 +26,6 @@ Core C++ is a subset of C++17 with an LL(1) grammar, a deterministic semantics a
 {include 0 CoreCppBlueprint.Chapters.Abstraction}
 {include 0 CoreCppBlueprint.Chapters.Encapsulation}
 {include 0 CoreCppBlueprint.Chapters.TypeSystems}
-{include 0 CoreCppBlueprint.Chapters.Paradigms}
 
 {blueprint_graph}
 {blueprint_summary}
