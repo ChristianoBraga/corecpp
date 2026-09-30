@@ -1,20 +1,24 @@
 (* The grammar of Core C++, section 1.2 of the blueprint, node gram_full. *)
-(* TypeId, VarId and IntLit are token classes. A quoted literal with a letter is a *)
+(* TypeId, VarId, NsId and IntLit are token classes. NsId is an identifier of *)
+(* either case whose next token is ::. A quoted literal with a letter is a *)
 (* reserved word and any other quoted literal is a symbol. The start symbol is Program. *)
 (* CoreCpp/GrammarRules.lean is generated from this file by lake exe ebnf2lean. *)
 
 Program = { Declaration } ;
-Declaration = "namespace" ( TypeId "{" { Declaration } "}" | "std" "{" { LibDecl } "}" )
-            | "template" "<" "typename" TypeId ">" Class
+Declaration = "namespace" Name "{" { Declaration } "}"
+            | "template" "<" "typename" TypeId { "," "typename" TypeId } ">"
+              "class" ( TypeId ClassRest | VarId ";" )
             | Class
             | Function
             ;
-Class = "class" TypeId [ ":" "public" ClassType ] "{" { Member } { Section } "}" ";" ;
+Name = TypeId | VarId ;
+Class = "class" TypeId ClassRest ;
+ClassRest = [ ":" "public" ClassType ] "{" { Member } { Section } "}" ";" ;
 Section = ( "public" | "private" ) ":" { Member } ;
 Member = "virtual" ( Type [ "&" ] MemberRest | "~" TypeId "(" ")" Block )
        | "~" TypeId "(" ")" Block
-       | ( BasicType | LibType [ "*" ] ) [ "&" ] MemberRest
-       | TypeId ( Params Block | ClassTypeRest [ "*" ] [ "&" ] MemberRest )
+       | ( BasicType | NsId "::" QualTail [ "*" ] ) [ "&" ] MemberRest
+       | TypeId ( Params Block | [ TemplateArgs ] [ "*" ] [ "&" ] MemberRest )
        ;
 MemberRest = VarId ( ";" | Params [ "override" ] Block )
            | "operator" Op Params Block
@@ -33,21 +37,23 @@ Op = "+"
    | "[" "]"
    ;
 Function = Type VarId Params ( Block | ";" ) ;
-LibDecl = "template" "<" "typename" TypeId { "," "typename" TypeId } ">" "class" VarId ";" ;
 Params = "(" [ Param { "," Param } ] ")" ;
 Param = Type [ "&" ] VarId ;
 Type = BasicType
      | ClassType [ "*" ]
-     | LibType [ "*" ]
      ;
-LibType = "std" "::" VarId "<" TemplateArg { "," TemplateArg } ">" ;
 TemplateArg = Type [ "(" [ Type { "," Type } ] ")" ] ;
 BasicType = "int"
           | "bool"
           | "void"
           ;
-ClassType = TypeId ClassTypeRest ;
-ClassTypeRest = { "::" TypeId } [ "<" Type { "," Type } ">" ] ;
+ClassType = NsId "::" QualTail
+          | TypeId [ TemplateArgs ]
+          ;
+QualTail = NsId "::" QualTail
+         | Name [ TemplateArgs ]
+         ;
+TemplateArgs = "<" TemplateArg { "," TemplateArg } ">" ;
 Block = "{" { Statement } "}" ;
 Statement = Block
           | "if" "(" Expr ")" Block [ "else" Block ]
@@ -83,7 +89,7 @@ Primary = IntLit
         | "this"
         | VarId
         | "(" Expr ")"
-        | "new" ( ClassType | LibType ) Args
+        | "new" ClassType Args
         ;
 Args = "(" [ ArgExpr { "," ArgExpr } ] ")" ;
 ArgExpr = Lambda

@@ -6,7 +6,7 @@ import LL1
 
 The token classes of the grammar of Core C++, their reading from the EBNF
 file `grammar/core-cpp.ebnf`, and the printing of the rules as the Lean
-module `CoreCpp/GrammarRules.lean`. In the file, `TypeId`, `VarId` and
+module `CoreCpp/GrammarRules.lean`. In the file, `TypeId`, `VarId`, `NsId` and
 `IntLit` are token classes. A quoted literal with a letter is a reserved word,
 and any other quoted literal is a symbol.
 -/
@@ -22,6 +22,7 @@ inductive Term where
   | sym (s : String)
   | typeId
   | varId
+  | nsId
   | intLit
   deriving Repr, BEq, DecidableEq, Hashable
 
@@ -33,16 +34,18 @@ def Term.ofToken : Token → Term
   | .sym s => .sym s
   | .typeId _ => .typeId
   | .varId _ => .varId
+  | .nsId _ => .nsId
   | .intLit _ => .intLit
   | .eof => .sym "<eof>"
 
 /-- The token classes of the EBNF file. -/
-def classes : List String := ["TypeId", "VarId", "IntLit"]
+def classes : List String := ["TypeId", "VarId", "NsId", "IntLit"]
 
 /-- The terminal of a terminal of the EBNF file. -/
 def Term.ofString (a : String) : Term :=
   if a == "TypeId" then .typeId
   else if a == "VarId" then .varId
+  else if a == "NsId" then .nsId
   else if a == "IntLit" then .intLit
   else if a.any Char.isAlpha then .kw a
   else .sym a
@@ -52,6 +55,7 @@ def Term.toStr : Term → String
   | .kw s | .sym s => s
   | .typeId => "TypeId"
   | .varId => "VarId"
+  | .nsId => "NsId"
   | .intLit => "IntLit"
 
 mutual
@@ -85,6 +89,7 @@ def leanTerm : Term → String
   | .sym s => s!"(.sym {s.quote})"
   | .typeId => ".typeId"
   | .varId => ".varId"
+  | .nsId => ".nsId"
   | .intLit => ".intLit"
 
 mutual

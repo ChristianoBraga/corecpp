@@ -53,7 +53,8 @@ since 2026-09-18.
   `tests/preproc/`.
 - No test file lives at the root.
 - `CoreCpp/Token.lean`, `Lexer.lean` (hand written finite automaton, longest
-  match, `std` reserved, uppercase initial for type identifiers), `Syntax.lean` (AST), `Parser.lean` (recursive
+  match, uppercase initial for type identifiers, a pass that marks an
+  identifier before `::` as a namespace identifier), `Syntax.lean` (AST), `Parser.lean` (recursive
   descent), `Semantics.lean` (Loc, Val, Error, Env, Store, Ctrl),
   `Pretty.lean`, `Typing.lean` (static semantics), `Eval.lean` (evaluator in the
   monad `M := ExceptT Error (StateM TState)` carrying the derivation trace).

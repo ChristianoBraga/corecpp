@@ -6,17 +6,23 @@ import CoreCpp.Syntax
 # Core C++ parser, subset
 
 Recursive descent over the `Array Token` that the lexer produces. Each
-nonterminal has its own function, except `Section`, `MemberRest` and
-`ClassTypeRest`, which `classDecl`, `member` and `classType` read inline. A
-function chooses the production by the next token, and `member` and
-`classType` also look at the token after it. The subset covers basic, class, pointer, library and function
-types, expressions, lambdas in their three positions, commands, `delete`,
-classes with sections, fields, methods, constructors, destructors and single
-inheritance, namespaces and functions with parameters by value and by
-reference. Two left factorings keep the grammar LL(1). In `Member` a `TypeId`
-opens a constructor when `(` follows it and a type otherwise. In
-`ExprStatement` an assignment and an expression statement share the prefix
-`Expr`, and the token `=` decides.
+nonterminal has its own function, except `Section` and `MemberRest`, which
+`classRest` and `member` read inline. A function chooses the production by the
+next token, and `member` also looks at the token after it. The subset covers
+basic, class, pointer, library and function types, expressions, lambdas in
+their three positions, commands, `delete`, classes with sections, fields,
+methods, constructors, destructors and single inheritance, namespaces and
+functions with parameters by value and by reference. Three left factorings
+keep the grammar LL(1). In `Member` a `TypeId` opens a constructor when `(`
+follows it and a type otherwise. In `ExprStatement` an assignment and an
+expression statement share the prefix `Expr`, and the token `=` decides. In
+`Declaration` a class with a body and a class declared without one share the
+keyword `class`, and the case of the name decides.
+
+The library carries no syntax of its own. `namespace std` is an ordinary
+namespace and `std::vector<int>` an ordinary qualified name, which the lexer
+opens by marking `std` as an `NsId`, and the case of the last component says
+whether the name is a class of the program or one of the library.
 
 A namespace is flattened at parse time. Inside `namespace N { … }` every class
 declared is named `N::C`, and every unqualified class name mentioned in a type
@@ -93,6 +99,20 @@ def typeId : P String := do
   | .typeId x => advance; return x
   | _ => fail "expected type identifier"
 
+/-- A namespace identifier, an identifier the lexer marked because `::`
+follows it. -/
+def nsId : P String := do
+  match ← peek with
+  | .nsId x => advance; return x
+  | _ => fail "expected namespace identifier"
+
+/-- A name of either case, the head of a namespace and the last component of a
+qualified name. -/
+def name : P String := do
+  match ← peek with
+  | .typeId x | .varId x => advance; return x
+  | _ => fail "expected a name"
+
 end P
 
 open P
@@ -108,42 +128,65 @@ def basicType : P Ty := do
 /-- The tokens that open a `Type`, and therefore a declaration. No expression
 starts with one of them. -/
 def isTypeStart : Token → Bool
-  | .kw "int" | .kw "bool" | .kw "void" | .kw "std" | .typeId _ => true
+  | .kw "int" | .kw "bool" | .kw "void" | .nsId _ | .typeId _ => true
   | _ => false
 
 mutual
 
-/-- `ClassType ::= TypeId ( '::' TypeId )* ( '<' Type '>' )?`, a class name
-possibly qualified by namespaces and possibly instantiating a class template.
-The instantiation is named by the chain the design prints for the type, so
-`Stack<int>` in the source and the expanded class have the same name, and
-`Templates.instantiate` adds the class before the program is checked. -/
-partial def classType : P String := do
-  let mut n ← typeId
-  while (← peek) == .sym "::" && (match ← peekAt 1 with | .typeId _ => true | _ => false) do
-    advance
-    n := n ++ "::" ++ (← typeId)
-  let base ← qualify n
-  if (← peek) == .sym "<" then
-    advance
-    let a ← type
-    if (← peek) == .sym "," then fail "a class template of this subset has one type parameter"
-    expectSym ">"
-    return s!"{base}<{a}>"
-  return base
-
-/-- `LibType ::= 'std' '::' VarId '<' TemplateArg ( ',' TemplateArg )* '>'`, an
-instance of a template of the library, which a header of Core C++ declares. -/
-partial def libType : P Ty := do
-  expect (.kw "std")
-  expectSym "::"
-  let n ← varId
+/-- `TemplateArgs ::= '<' TemplateArg ( ',' TemplateArg )* '>'`. -/
+partial def templateArgs : P (List Ty) := do
   expectSym "<"
   let mut ts := [← templateArg]
   while ← acceptSym "," do
     ts := ts ++ [← templateArg]
   expectSym ">"
-  return .lib s!"std::{n}" ts
+  return ts
+
+/-- `QualTail ::= NsId '::' QualTail | Name TemplateArgs?`, the rest of a
+qualified name after a namespace. The case of the last component says which
+type it is. An uppercase one names a class of the program, so `Geometry::Shape`
+is a class type, and a lowercase one names a class of the library, whose names
+are lowercase, so `std::vector<int>` is a library type. -/
+partial def qualTail (pre : String) : P Ty := do
+  match ← peek with
+  | .nsId n => advance; expectSym "::"; qualTail (pre ++ n ++ "::")
+  | .typeId n =>
+    advance
+    let base := pre ++ n
+    if (← peek) == .sym "<" then
+      let ts ← templateArgs
+      if ts.length != 1 then fail "a class template of this subset has one type parameter"
+      return .cls s!"{base}<{ts.head!}>"
+    return .cls base
+  | .varId n =>
+    advance
+    let base := pre ++ n
+    if (← peek) == .sym "<" then return .lib base (← templateArgs)
+    fail s!"{base} names a class of the library, which takes its arguments in angle brackets"
+  | _ => fail "expected a name after ::"
+
+/-- `ClassType ::= NsId '::' QualTail | TypeId TemplateArgs?`, a class name
+possibly qualified by namespaces and possibly instantiating a class template.
+The instantiation is named by the chain the design prints for the type, so
+`Stack<int>` in the source and the expanded class have the same name, and
+`Templates.instantiate` adds the class before the program is checked. -/
+partial def classType : P Ty := do
+  match ← peek with
+  | .nsId n => advance; expectSym "::"; qualTail (n ++ "::")
+  | _ =>
+    let n ← typeId
+    let base ← qualify n
+    if (← peek) == .sym "<" then
+      let ts ← templateArgs
+      if ts.length != 1 then fail "a class template of this subset has one type parameter"
+      return .cls s!"{base}<{ts.head!}>"
+    return .cls base
+
+/-- The name of a class type, for the places that take no library type. -/
+partial def className : P String := do
+  match ← classType with
+  | .cls n => return n
+  | t => fail s!"{t} is a type of the library, not a class of the program"
 
 /-- `TemplateArg ::= Type ( '(' ( Type ( ',' Type )* )? ')' )?`, a type or a
 function type, as `int(int)` in `std::function<int(int)>`. -/
@@ -158,15 +201,12 @@ partial def templateArg : P Ty := do
     expectSym ")"
   return .fn t ps
 
-/-- `Type ::= BasicType | ClassType '*'? | LibType '*'?`. -/
+/-- `Type ::= BasicType | ClassType '*'?`. -/
 partial def type : P Ty := do
   match ← peek with
-  | .typeId _ =>
+  | .typeId _ | .nsId _ =>
     let c ← classType
-    if ← acceptSym "*" then return .ptr (.cls c) else return .cls c
-  | .kw "std" =>
-    let t ← libType
-    if ← acceptSym "*" then return .ptr t else return t
+    if ← acceptSym "*" then return .ptr c else return c
   | _ => basicType
 
 end
@@ -272,7 +312,7 @@ partial def postfixExpr : P Expr := do
   return e
 
 /-- `Primary ::= IntLit | 'true' | 'false' | 'nullptr' | 'this' | VarId | '(' Expr ')'
-| 'new' ( ClassType | LibType ) Args` -/
+| 'new' ClassType Args` -/
 partial def primary : P Expr := do
   match ← peek with
   | .intLit n  => advance; return .intLit n
@@ -284,14 +324,9 @@ partial def primary : P Expr := do
   | .sym "("   => advance; let e ← expr; expectSym ")"; return e
   | .kw "new"  =>
     advance
-    match ← peek with
-    | .typeId _ =>
-      let c ← classType
-      return .newObj c (← args)
-    | .kw "std" =>
-      let t ← libType
-      return .newLib t (← args)
-    | _ => fail "expected a class or a type of the library after new"
+    match ← classType with
+    | .cls c => return .newObj c (← args)
+    | t => return .newLib t (← args)
   | _ => fail "expected primary expression"
 
 /-- `Args ::= '(' ( ArgExpr ( ',' ArgExpr )* )? ')'` -/
@@ -443,21 +478,6 @@ def function : P Decl := do
   let b ← block
   return .fn ⟨t, f, ps, b⟩
 
-/-- `LibDecl ::= 'template' '<' 'typename' TypeId ( ',' 'typename' TypeId )* '>'
-'class' VarId ';'`, a template of `namespace std`. -/
-def libDecl : P Decl := do
-  expect (.kw "template")
-  expectSym "<"
-  expect (.kw "typename")
-  let mut ps := [← typeId]
-  while ← acceptSym "," do
-    expect (.kw "typename")
-    ps := ps ++ [← typeId]
-  expectSym ">"
-  expect (.kw "class")
-  let n ← varId
-  expectSym ";"
-  return .libTmpl s!"std::{n}" ps
 
 /-- The members of a class as the parser reads them, one constructor at a time. -/
 inductive MemberItem where
@@ -527,15 +547,13 @@ partial def member (cls : String) (vis : Vis) : P MemberItem := do
     else afterType false (← type)
   | _ => afterType false (← type)
 
-/-- `Class ::= 'class' TypeId ( ':' 'public' ClassType )? '{' Member* Section* '}' ';'` with
-`Section ::= ( 'public' | 'private' ) ':' Member*`. Members before any section
-label are private, as in C++. -/
-partial def classDecl : P ClassDecl := do
-  expect (.kw "class")
-  let name ← qualify (← typeId)
+/-- `ClassRest ::= ( ':' 'public' ClassType )? '{' Member* Section* '}' ';'` with
+`Section ::= ( 'public' | 'private' ) ':' Member*`, the class after its name.
+Members before any section label are private, as in C++. -/
+partial def classRest (name : String) : P ClassDecl := do
   let base ← if ← acceptSym ":" then
       expect (.kw "public")
-      pure (some (← classType))
+      pure (some (← className))
     else pure none
   expectSym "{"
   let mut vis : Vis := .priv
@@ -563,12 +581,20 @@ partial def classDecl : P ClassDecl := do
   expectSym ";"
   return ⟨name, base, fields, methods, ctor, dtor⟩
 
+/-- `Class ::= 'class' TypeId ClassRest`. -/
+partial def classDecl : P ClassDecl := do
+  expect (.kw "class")
+  classRest (← qualify (← typeId))
+
 mutual
 
-/-- `Declaration ::= 'namespace' TypeId '{' Declaration* '}'
-| 'template' '<' 'typename' TypeId '>' Class | Class | Function`.
-A namespace holds classes and namespaces. Its declarations are flattened into
-the program with qualified names. -/
+/-- `Declaration ::= 'namespace' Name '{' Declaration* '}'
+| 'template' '<' 'typename' TypeId ( ',' 'typename' TypeId )* '>'
+  'class' ( TypeId ClassRest | VarId ';' ) | Class | Function`.
+A namespace holds classes, templates and namespaces, and its name is of either
+case, since the library opens `namespace std`. Its declarations are flattened
+into the program with qualified names. A class declared without a body is a
+class of the library, named in lowercase, which an intrinsic implements. -/
 partial def declaration : P (List Decl) := do
   match ← peek with
   | .kw "class" => return [.cls (← classDecl)]
@@ -576,23 +602,32 @@ partial def declaration : P (List Decl) := do
     advance
     expectSym "<"
     expect (.kw "typename")
-    let t ← typeId
+    let mut ps := [← typeId]
+    while ← acceptSym "," do
+      expect (.kw "typename")
+      ps := ps ++ [← typeId]
     expectSym ">"
-    return [.tmpl t (← classDecl)]
+    expect (.kw "class")
+    -- After `class` the case of the name decides. A type identifier opens a
+    -- class of the program, with its body. A variable identifier opens a
+    -- class declared without a body, which the library names in lowercase and
+    -- an intrinsic implements.
+    match ← peek with
+    | .varId n =>
+      advance
+      expectSym ";"
+      if ps.length == 0 then fail "a class template declares at least one parameter"
+      return [.libTmpl (← qualify n) ps]
+    | _ =>
+      if ps.length != 1 then fail "a class template of this subset has one type parameter"
+      return [.tmpl ps.head! (← classRest (← qualify (← typeId)))]
   | .kw "namespace" =>
     let h ← inHeader
     advance
-    if ← accept (.kw "std") then
-      -- C++ leaves a program that adds declarations to namespace std undefined
-      -- (N4659 §20.5.4.2.1, paragraph 1), so only a header of Core C++ opens it.
-      if !h then fail "namespace std belongs to the headers of Core C++"
-      expectSym "{"
-      let mut acc : List Decl := []
-      while !(← acceptSym "}") do
-        if (← peek) == .eof then fail "unclosed namespace std"
-        acc := acc ++ [← libDecl]
-      return acc
-    let n ← typeId
+    let n ← name
+    -- C++ leaves a program that adds declarations to namespace std undefined
+    -- (N4659 §20.5.4.2.1, paragraph 1), so only a header of Core C++ opens it.
+    if n == "std" && !h then fail "namespace std belongs to the headers of Core C++"
     expectSym "{"
     let outer := (← get).ns
     modify fun s => { s with ns := outer ++ n ++ "::" }

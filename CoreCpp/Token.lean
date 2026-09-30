@@ -1,9 +1,12 @@
 /-!
 # Core C++ tokens
 
-Five token classes, as in section 3 of the language design. Reserved words,
-type identifiers (initial uppercase), variable identifiers (initial lowercase),
-integer literals, operators and punctuation.
+Six token classes. Reserved words, type identifiers (initial uppercase),
+variable identifiers (initial lowercase), namespace identifiers, integer
+literals, operators and punctuation. A namespace identifier is an identifier
+whose next token is `::`, of either case, which the lexer marks in a pass over
+the token array. It is what lets a qualified name of the library, `std::vector`,
+open a type where the case convention alone would read a variable.
 -/
 
 namespace CoreCpp
@@ -12,6 +15,7 @@ inductive Token where
   | kw     (s : String)   -- reserved word
   | typeId (s : String)   -- type identifier, initial uppercase
   | varId  (s : String)   -- variable identifier, initial lowercase
+  | nsId   (s : String)   -- namespace identifier, an identifier before `::`
   | intLit (n : Nat)      -- decimal integer literal
   | sym    (s : String)   -- operator or punctuation
   | eof
@@ -21,6 +25,7 @@ def Token.toString : Token → String
   | .kw s     => s
   | .typeId s => s
   | .varId s  => s
+  | .nsId s   => s
   | .intLit n => Nat.repr n
   | .sym s    => s
   | .eof      => "<end of input>"
@@ -32,7 +37,7 @@ def keywords : List String :=
   ["int", "bool", "void", "if", "else", "while", "for", "return",
    "true", "false", "auto", "delete", "new", "nullptr", "this",
    "class", "public", "private", "virtual", "override", "namespace",
-   "template", "typename", "operator", "std"]
+   "template", "typename", "operator"]
 
 /-- The keywords of C++17 (N4659 §5.11 [lex.key], Table 5) and the alternative
 representations (Table 6). A Core C++ program uses none of them outside

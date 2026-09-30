@@ -4,7 +4,8 @@ import CoreCpp.Token
 # Core C++ lexer
 
 A function from `String` to `Array Token`, written as a finite automaton over
-the list of characters with the longest match rule. The uppercase and
+the list of characters with the longest match rule, followed by one pass over
+the token array that marks the namespace identifiers. The uppercase and
 lowercase convention is realised here, in `identifier`. The lexer rejects what
 C++ would read otherwise, so that every Core C++ program is a C++ program with
 the same meaning. It rejects a keyword or alternative representation of C++
@@ -76,10 +77,20 @@ partial def run (cs : List Char) (acc : Array Token) : Except String (Array Toke
           | some (s, rest') => run rest' (acc.push (.sym s))
           | none => .error s!"unexpected character '{c}'"
 
+/-- Marks as a namespace identifier every identifier whose next token is `::`.
+The pass runs over the token array, so it sees neither the white space nor the
+comments the automaton has already dropped, and `std :: vector` is marked as
+`std::vector` is. -/
+def qualifiers (ts : Array Token) : Array Token :=
+  ts.mapIdx fun i t =>
+    match t, ts[i + 1]? with
+    | .typeId n, some (.sym "::") | .varId n, some (.sym "::") => .nsId n
+    | _, _ => t
+
 end Lexer
 
 /-- The lexer. -/
 def lex (input : String) : Except String (Array Token) :=
-  Lexer.run input.toList #[]
+  (Lexer.run input.toList #[]).map Lexer.qualifiers
 
 end CoreCpp
