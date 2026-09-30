@@ -1,1 +1,0 @@
-window.docContents[41].resolve({"/Dependency-Graph/#Core-C_________-sem___ntica-natural--Dependency-Graph":{"contents":"\n\n","context":"Core C++, semântica natural","header":"Dependency Graph","id":"/Dependency-Graph/#Core-C_________-sem___ntica-natural--Dependency-Graph"}});
