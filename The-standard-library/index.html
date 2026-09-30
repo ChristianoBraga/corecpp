@@ -5402,7 +5402,11 @@ window.onload = async () => {
             <h1>
               8. The standard library<span class="permalink-widget inline"><a href="find/?domain=Verso.Genre.Manual.section&amp;name=Core-C______--The-standard-library" title="Permalink">🔗</a></span></h1>
             <p>
-              The headers of Core C++ declare the entities of the library without a body, the class templates <code>std::vector</code> and <code>std::function</code> and the function <code>assert</code>. Each declaration names an intrinsic, a set of judgments in natural semantics that the rules of the language use as premises. The intrinsics live in <code>CoreCpp/Std/</code>, apart from the type checker and the evaluator, which know no intrinsic by name. A use of an undeclared entity is a type error, so a program uses the library only through its <code>#include</code>. Nothing of this is built into the syntax. The grammar has no production and the lexer no reserved word for the library, <code>namespace std</code> is an ordinary namespace and <code>std::vector</code> an ordinary qualified name, and what tells a class of the library from one of the program is the case of its name, lowercase for the first and uppercase for the second.</p>
+              The headers of Core C++ declare the entities of the library without a body, the class templates <code>std::vector</code> and <code>std::function</code> and the function <code>assert</code>. Each declaration names an intrinsic, a set of judgments in natural semantics that the rules of the language use as premises.</p>
+            <p>
+              The intrinsics live in <code>CoreCpp/Std/</code>, apart from the type checker and the evaluator, which know no intrinsic by name. A use of an undeclared entity is a type error, so a program uses the library only through its <code>#include</code>.</p>
+            <p>
+              Nothing of this is built into the syntax. The grammar has no production and the lexer no reserved word for the library, <code>namespace std</code> is an ordinary namespace and <code>std::vector</code> an ordinary qualified name, and what tells a class of the library from one of the program is the case of its name, lowercase for the first and uppercase for the second.</p>
             <ol class="section-toc">
               <li>
                 <a href="The-standard-library/Interface/#Core-C______--The-standard-library--Interface"><span class="number">8.1.</span> Interface</a></li>
