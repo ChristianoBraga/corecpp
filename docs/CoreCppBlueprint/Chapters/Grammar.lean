@@ -128,9 +128,13 @@ Every line satisfies five rules, the lines of a branch that is not selected and 
 :::definition "pp_meaning" (parent := "ud1") (lean := "Preproc.run, Preproc.runItem, Preproc.translate") (uses := "pp_language, pp_headers")
 The flag environment $`\varphi` is a finite set of flags, initially the flags given as `-D CCPP_X=`. The judgement $`\varphi \vdash G \Rightarrow t, \varphi'` gives the output lines $`t` of a group and the environment after it. $`H(h)` is the contents of the Core C++ header $`h`.
 
-$$`\dfrac{}{\varphi \vdash \texttt{\#define}\ F \Rightarrow \varepsilon, \varphi \cup \{F\}}\;\textsf{(P-Define)} \qquad \dfrac{\varphi \vdash H(h) \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#include}\ \texttt{<}h\texttt{>} \Rightarrow t, \varphi'}\;\textsf{(P-Include)}`
+$$`\dfrac{}{\varphi \vdash \texttt{\#define}\ F \Rightarrow \varepsilon, \varphi \cup \{F\}}\;\textsf{(P-Define)}`
 
-$$`\dfrac{F \in \varphi \qquad \varphi \vdash G_1 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefT)} \qquad \dfrac{F \notin \varphi \qquad \varphi \vdash G_2 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefF)}`
+$$`\dfrac{\varphi \vdash H(h) \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#include}\ \texttt{<}h\texttt{>} \Rightarrow t, \varphi'}\;\textsf{(P-Include)}`
+
+$$`\dfrac{F \in \varphi \qquad \varphi \vdash G_1 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefT)}`
+
+$$`\dfrac{F \notin \varphi \qquad \varphi \vdash G_2 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefF)}`
 
 The directive `#ifndef` swaps the premises $`F \in \varphi` and $`F \notin \varphi`, and a missing `#else` stands for an empty $`G_2`. A text line gives itself. The output keeps one line for each source line outside the headers, an empty one for every directive line and every line of a branch that is not selected.
 

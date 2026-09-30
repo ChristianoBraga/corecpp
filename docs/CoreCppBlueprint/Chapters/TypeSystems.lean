@@ -66,11 +66,15 @@ A member may return $`\tau\&`. Every `return` of its body is then over an expres
 
 $$`\dfrac{\tau \text{ has values} \qquad \text{every return of } c \text{ is return } e \text{ with } \Gamma \vdash_{\ell} e : \tau}{\vdash \tau\&\ m(\ldots)\ \{c\} \text{ in } C}\;\textsf{(T-RetRef)}`
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\&\ \mathtt{operator[]} \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocOpIndex)} \qquad \dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\&\ m(\ldots) \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-LocMethod)}`
+$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\&\ \mathtt{operator[]} \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocOpIndex)}`
+
+$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\&\ m(\ldots) \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-LocMethod)}`
 
 The annotation rewrites the `return e` of such a member as `return &e`, the location as a value, an expression no program writes. Its type is the type of the location it denotes.
 
-$$`\dfrac{\Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \&e : \tau}\;\textsf{(T-LocOf)} \qquad \dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \&e \Rightarrow \mathsf{loc}\ \ell, \sigma'}\;\textsf{(LocOf)}`
+$$`\dfrac{\Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \&e : \tau}\;\textsf{(T-LocOf)}`
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \&e \Rightarrow \mathsf{loc}\ \ell, \sigma'}\;\textsf{(LocOf)}`
 
 $$`\dfrac{\text{the member } m \text{ of } C \text{ returns } \tau\& \qquad \text{member } \ell\ (e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\ \ell', \sigma'}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell', \sigma'}\;\textsf{(MethodLoc)}`
 

@@ -65,7 +65,9 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 :::definition "std_vector" (parent := "ud7") (lean := "CoreCpp.Std.vector, CoreCpp.Std.elementOk") (uses := "std_library, std_uses")
 The header `<vector>` declares `template <typename T> class vector;` in `namespace std`. A vector is an object, created with `new` and reached by pointer. Its value $`\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}]` holds one location per element. The element type has values and a default, so it is not a class, a type of the library, a function type, `void` or $`\mathsf{nullptr\_t}`. A vector therefore holds pointers to objects and never objects.
 
-$$`\dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{new} : \mathsf{int} \to \mathtt{std{:}{:}vector}\langle\tau\rangle*}\;\textsf{(TV-New)} \qquad \dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{operator[]} : \mathsf{int} \to \tau}\;\textsf{(TV-Index)}`
+$$`\dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{new} : \mathsf{int} \to \mathtt{std{:}{:}vector}\langle\tau\rangle*}\;\textsf{(TV-New)}`
+
+$$`\dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{operator[]} : \mathsf{int} \to \tau}\;\textsf{(TV-Index)}`
 
 The use `operator[]` gives a location, so `v[i]` may stand on the left of an assignment and bind a reference.
 
@@ -95,5 +97,7 @@ The header `<cassert>` declares `void assert(bool condition);`. In C++ `assert` 
 
 $$`\dfrac{}{\Gamma \vdash_{\mathit{assert}} \mathtt{call} : \mathsf{bool} \to \mathsf{void}}\;\textsf{(TA-Call)}`
 
-$$`\dfrac{}{\sigma \vdash_{\mathit{assert}} \mathtt{call}(\mathtt{true}) \Rightarrow \mathsf{void}, \sigma}\;\textsf{(A-True)} \qquad \dfrac{}{\sigma \vdash_{\mathit{assert}} \mathtt{call}(\mathtt{false}) \Rightarrow \mathsf{error}}\;\textsf{(A-False)}`
+$$`\dfrac{}{\sigma \vdash_{\mathit{assert}} \mathtt{call}(\mathtt{true}) \Rightarrow \mathsf{void}, \sigma}\;\textsf{(A-True)}`
+
+$$`\dfrac{}{\sigma \vdash_{\mathit{assert}} \mathtt{call}(\mathtt{false}) \Rightarrow \mathsf{error}}\;\textsf{(A-False)}`
 :::

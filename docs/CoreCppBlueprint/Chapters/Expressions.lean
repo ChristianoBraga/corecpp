@@ -142,7 +142,9 @@ The implementations are `partial`, so Lean records opaque constants that carry t
 :::definition "expr_null" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr") (uses := "judg_ty_expr, judg_ev_expr, dom_val")
 The literal `nullptr` has the internal type $`\mathsf{nullptr\_t}`, compatible with every pointer type and with no other. Its value is $`\mathsf{null}`.
 
-$$`\dfrac{}{\Gamma \vdash \mathtt{nullptr} : \mathsf{nullptr\_t}}\;\textsf{(T-Null)} \qquad \dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sigma}\;\textsf{(Null)}`
+$$`\dfrac{}{\Gamma \vdash \mathtt{nullptr} : \mathsf{nullptr\_t}}\;\textsf{(T-Null)}`
+
+$$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sigma}\;\textsf{(Null)}`
 
 The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
@@ -160,7 +162,9 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 :::definition "expr_deref" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.lval, CoreCpp.Eval.pointee") (uses := "judg_ty_lval, judg_ev_lval, expr_null")
 The dereference `*e` denotes the location the pointer holds. When the pointer is $`\mathsf{null}` the result is `error`, where C++17 leaves the dereference undefined.
 
-$$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash_{\ell} {*e} : \tau}\;\textsf{(T-LocDeref)} \qquad \dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma'}{\rho, \sigma \vdash {*e} \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocDeref)}`
+$$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash_{\ell} {*e} : \tau}\;\textsf{(T-LocDeref)}`
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma'}{\rho, \sigma \vdash {*e} \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocDeref)}`
 
 Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
@@ -168,7 +172,9 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 :::definition "expr_field" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Typing.fieldType, CoreCpp.Eval.lval, CoreCpp.Eval.fieldLoc") (uses := "judg_ty_lval, judg_ev_lval, expr_deref, dom_classes")
 The field access `e.f` denotes the location of the field $`f` in the record that $`e` denotes, and `e->f` abbreviates `(*e).f`, so a null pointer is `error`. The type of the field comes from the class table.
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f}{\Gamma \vdash_{\ell} e.f : \tau}\;\textsf{(T-LocField)} \qquad \dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f}{\Gamma \vdash_{\ell} e\mathtt{->}f : \tau}\;\textsf{(T-LocArrow)}`
+$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f}{\Gamma \vdash_{\ell} e.f : \tau}\;\textsf{(T-LocField)}`
+
+$$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f}{\Gamma \vdash_{\ell} e\mathtt{->}f : \tau}\;\textsf{(T-LocArrow)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e.f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocField)}`
 
@@ -180,7 +186,11 @@ The implementations are `partial`, so Lean records opaque constants that carry t
 :::definition "expr_read" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.readLoc") (uses := "expr_deref, expr_field, std_uses")
 Reading `*e`, `e.f` or `e->f` as a value is reading the content of the location it denotes, one rule for the three forms. Three typing rules give the value the type of the location. An element `v[i]` of a vector is a use of the library, {bpref "std_uses"}[].
 
-$$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash {*e} : \tau}\;\textsf{(T-Deref)} \qquad \dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f}{\Gamma \vdash e.f : \tau}\;\textsf{(T-Field)} \qquad \dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f}{\Gamma \vdash e\mathtt{->}f : \tau}\;\textsf{(T-Arrow)}`
+$$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash {*e} : \tau}\;\textsf{(T-Deref)}`
+
+$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f}{\Gamma \vdash e.f : \tau}\;\textsf{(T-Field)}`
+
+$$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f}{\Gamma \vdash e\mathtt{->}f : \tau}\;\textsf{(T-Arrow)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in \mathrm{dom}\,\sigma'}{\rho, \sigma \vdash e \Rightarrow \sigma'(\ell), \sigma'}\;\textsf{(Read)}, \quad e \in \{{*e'},\ e'.f,\ e'\mathtt{->}f\}`
 
