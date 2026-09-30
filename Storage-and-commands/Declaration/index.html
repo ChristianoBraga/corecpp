@@ -5537,6 +5537,8 @@ window.onload = async () => {
                   <code class="bp_math display">\dfrac{\Gamma \vdash e : \tau \qquad \tau \neq \mathsf{void}}{\Gamma \vdash \mathtt{auto}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-Auto)}</code></p>
                 <p>
                   <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma' \qquad (\ell, \sigma'') = \mathrm{alloc}(\sigma', v)}{\rho, \sigma \vdash \tau\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma''}\;\textsf{(Decl)}</code></p>
+                <p>
+                  The implementations are <code>partial</code>, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.</p>
                 </div>
               </div>
             <div class="bp_wrapper bp_code_panel_wrapper">
@@ -5560,7 +5562,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.cmd" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/37e0aa7dead00edc17d0335a4fa2158fd505d6cd/CoreCpp/Typing.lean#L695-L789">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/50f6a197f2d644605cd020d75b31070a0c3c9ce3/CoreCpp/Typing.lean#L695-L789">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5583,7 +5585,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.cmd" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/37e0aa7dead00edc17d0335a4fa2158fd505d6cd/CoreCpp/Eval.lean#L664-L792">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/50f6a197f2d644605cd020d75b31070a0c3c9ce3/CoreCpp/Eval.lean#L671-L799">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
