@@ -91,13 +91,13 @@ For every well typed program, the method a call resolves to by the static class 
 :::
 
 :::definition "cls_delete" (parent := "ud5") (lean := "CoreCpp.Typing.cmd, CoreCpp.Eval.cmd, CoreCpp.Program.hasVirtualDtor") (uses := "cls_member, cls_dispatch, judg_ty_cmd, judg_ev_cmd, dom_store, dom_erro")
-The command `delete e` applies to a pointer to a class or to a vector. On an object it runs the destructors of the chain from the tag up to the root, each with `this` bound to the object, and removes the record and the field locations from $`\sigma`. A second `delete`, a `delete` through a pointer to a base without a virtual destructor in its chain, and any later access are `error`, the three cases C++17 leaves undefined. `delete nullptr` does nothing, as in C++.
+The command `delete e` applies to a pointer to a class or to an object type of the library, whose rule `DeleteLib` is in {bpref "std_uses"}[]. On an object it runs the destructors of the chain from the tag up to the root, each with `this` bound to the object, and removes the record and the field locations from $`\sigma`. A second `delete`, a `delete` through a pointer to a base without a virtual destructor in its chain, and any later access are `error`, the three cases C++17 leaves undefined. `delete nullptr` does nothing, as in C++.
 
-$$`\dfrac{\Gamma \vdash e : C*}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\;\textsf{(T-Delete)} \qquad \dfrac{\Gamma \vdash e : \mathsf{std{:}{:}vector}\langle\tau\rangle*}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\;\textsf{(T-DeleteVec)}`
+$$`\dfrac{\Gamma \vdash e : C*}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\;\textsf{(T-Delete)} \qquad \dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle* \qquad L\langle\bar{\tau}\rangle \text{ an object type} \qquad \Gamma \vdash_L \mathtt{delete} : \to \mathsf{void}}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\;\textsf{(T-DeleteLib)}`
 
 $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n] \qquad S \text{ the static class of } e \\ S = T \text{ or the chain of } S \text{ has a virtual destructor} \qquad \text{the destructors of the chain of } T \text{ run from } T \text{ up, giving } \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell, \ell_1, \ldots, \ell_n\}}\;\textsf{(Delete)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{vec}\,[\ell_1, \ldots, \ell_n]}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_0 \setminus \{\ell, \ell_1, \ldots, \ell_n\}}\;\textsf{(DeleteVec)} \qquad \dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{null}, \sigma_0}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_0}\;\textsf{(DeleteNull)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{null}, \sigma_0}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_0}\;\textsf{(DeleteNull)}`
 :::
 
 # Static classes and namespaces

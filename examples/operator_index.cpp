@@ -1,4 +1,5 @@
 // Core C++ example, operator overloading. operator[] returns int&, so v[i] denotes a
+#include <vector>
 // location and stands on the left of an assignment. Indexing an object is
 // the call of a member, and the reference return is what makes the
 // assignment legitimate. Returns 30.

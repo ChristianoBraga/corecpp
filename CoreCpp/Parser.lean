@@ -9,7 +9,7 @@ Recursive descent over the `Array Token` that the lexer produces. Each
 nonterminal has its own function, except `Section`, `MemberRest` and
 `ClassTypeRest`, which `classDecl`, `member` and `classType` read inline. A
 function chooses the production by the next token, and `member` and
-`classType` also look at the token after it. The subset covers basic, class, pointer, vector and function
+`classType` also look at the token after it. The subset covers basic, class, pointer, library and function
 types, expressions, lambdas in their three positions, commands, `delete`,
 classes with sections, fields, methods, constructors, destructors and single
 inheritance, namespaces and functions with parameters by value and by
@@ -31,6 +31,8 @@ structure PState where
   pos  : Nat := 0
   /-- The prefix of the enclosing namespaces, `N::M::`, empty at top level. -/
   ns   : String := ""
+  /-- Whether each token comes from a header of Core C++. -/
+  hdr  : Array Bool := #[]
 
 abbrev P := StateT PState (Except String)
 
@@ -52,6 +54,11 @@ carries no `::` of its own. -/
 def qualify (n : String) : P String := do
   let s ← get
   return if (n.splitOn "::").length > 1 then n else s.ns ++ n
+
+/-- Whether the next token comes from a header of Core C++. -/
+def inHeader : P Bool := do
+  let s ← get
+  return s.hdr.getD s.pos false
 
 def fail (msg : String) : P α := do
   let t ← peek
@@ -95,7 +102,7 @@ def basicType : P Ty := do
 /-- The tokens that open a `Type`, and therefore a declaration. No expression
 starts with one of them. -/
 def isTypeStart : Token → Bool
-  | .kw "int" | .kw "bool" | .kw "void" | .kw "std::vector" | .kw "std::function" | .typeId _ => true
+  | .kw "int" | .kw "bool" | .kw "void" | .kw "std" | .typeId _ => true
   | _ => false
 
 mutual
@@ -119,30 +126,41 @@ partial def classType : P String := do
     return s!"{base}<{a}>"
   return base
 
-/-- `Type ::= BasicType | ClassType '*'? | 'std::vector' '<' Type '>' '*'?
-| 'std::function' '<' Type '(' ( Type ( ',' Type )* )? ')' '>'`. -/
+/-- `LibType ::= 'std' '::' VarId '<' TemplateArg ( ',' TemplateArg )* '>'`, an
+instance of a template of the library, which a header of Core C++ declares. -/
+partial def libType : P Ty := do
+  expect (.kw "std")
+  expectSym "::"
+  let n ← varId
+  expectSym "<"
+  let mut ts := [← templateArg]
+  while ← acceptSym "," do
+    ts := ts ++ [← templateArg]
+  expectSym ">"
+  return .lib s!"std::{n}" ts
+
+/-- `TemplateArg ::= Type ( '(' ( Type ( ',' Type )* )? ')' )?`, a type or a
+function type, as `int(int)` in `std::function<int(int)>`. -/
+partial def templateArg : P Ty := do
+  let t ← type
+  if !(← acceptSym "(") then return t
+  let mut ps : List Ty := []
+  if !(← acceptSym ")") then
+    ps := [← type]
+    while ← acceptSym "," do
+      ps := ps ++ [← type]
+    expectSym ")"
+  return .fn t ps
+
+/-- `Type ::= BasicType | ClassType '*'? | LibType '*'?`. -/
 partial def type : P Ty := do
   match ← peek with
   | .typeId _ =>
     let c ← classType
     if ← acceptSym "*" then return .ptr (.cls c) else return .cls c
-  | .kw "std::vector" =>
-    advance; expectSym "<"
-    let t ← type
-    expectSym ">"
-    if ← acceptSym "*" then return .ptr (.vec t) else return .vec t
-  | .kw "std::function" =>
-    advance; expectSym "<"
-    let r ← type
-    expectSym "("
-    let mut ps : List Ty := []
-    if !(← acceptSym ")") then
-      ps := [← type]
-      while ← acceptSym "," do
-        ps := ps ++ [← type]
-      expectSym ")"
-    expectSym ">"
-    return .fn r ps
+  | .kw "std" =>
+    let t ← libType
+    if ← acceptSym "*" then return .ptr t else return t
   | _ => basicType
 
 end
@@ -248,7 +266,7 @@ partial def postfixExpr : P Expr := do
   return e
 
 /-- `Primary ::= IntLit | 'true' | 'false' | 'nullptr' | 'this' | VarId | '(' Expr ')'
-| 'new' ( ClassType | 'std::vector' '<' Type '>' ) Args` -/
+| 'new' ( ClassType | LibType ) Args` -/
 partial def primary : P Expr := do
   match ← peek with
   | .intLit n  => advance; return .intLit n
@@ -264,14 +282,10 @@ partial def primary : P Expr := do
     | .typeId _ =>
       let c ← classType
       return .newObj c (← args)
-    | .kw "std::vector" =>
-      advance; expectSym "<"
-      let t ← type
-      expectSym ">"
-      match ← args with
-      | [n] => return .newVec t n
-      | _ => fail "new std::vector takes exactly one argument, the size"
-    | _ => fail "expected class or std::vector after new"
+    | .kw "std" =>
+      let t ← libType
+      return .newLib t (← args)
+    | _ => fail "expected a class or a type of the library after new"
   | _ => fail "expected primary expression"
 
 /-- `Args ::= '(' ( ArgExpr ( ',' ArgExpr )* )? ')'` -/
@@ -409,13 +423,35 @@ partial def statement : P Cmd := do
 
 end
 
-/-- `Function ::= Type VarId Params Block` -/
-def function : P Fun := do
+/-- `Function ::= Type VarId Params ( Block | ';' )`. A function without a
+body is a declaration of the library, as `void assert(bool condition);` of
+`<cassert>`, and only a header holds it. -/
+def function : P Decl := do
+  let h ← inHeader
   let t ← type
   let f ← varId
   let ps ← params
+  if ← acceptSym ";" then
+    if !h then fail s!"the declaration of {f} without a body belongs to a header of Core C++"
+    return .libFn f t ps
   let b ← block
-  return ⟨t, f, ps, b⟩
+  return .fn ⟨t, f, ps, b⟩
+
+/-- `LibDecl ::= 'template' '<' 'typename' TypeId ( ',' 'typename' TypeId )* '>'
+'class' VarId ';'`, a template of `namespace std`. -/
+def libDecl : P Decl := do
+  expect (.kw "template")
+  expectSym "<"
+  expect (.kw "typename")
+  let mut ps := [← typeId]
+  while ← acceptSym "," do
+    expect (.kw "typename")
+    ps := ps ++ [← typeId]
+  expectSym ">"
+  expect (.kw "class")
+  let n ← varId
+  expectSym ";"
+  return .libTmpl s!"std::{n}" ps
 
 /-- The members of a class as the parser reads them, one constructor at a time. -/
 inductive MemberItem where
@@ -538,7 +574,18 @@ partial def declaration : P (List Decl) := do
     expectSym ">"
     return [.tmpl t (← classDecl)]
   | .kw "namespace" =>
+    let h ← inHeader
     advance
+    if ← accept (.kw "std") then
+      -- C++ leaves a program that adds declarations to namespace std undefined
+      -- (N4659 §20.5.4.2.1, paragraph 1), so only a header of Core C++ opens it.
+      if !h then fail "namespace std belongs to the headers of Core C++"
+      expectSym "{"
+      let mut acc : List Decl := []
+      while !(← acceptSym "}") do
+        if (← peek) == .eof then fail "unclosed namespace std"
+        acc := acc ++ [← libDecl]
+      return acc
     let n ← typeId
     expectSym "{"
     let outer := (← get).ns
@@ -552,7 +599,7 @@ partial def declaration : P (List Decl) := do
     expectSym "}"
     modify fun s => { s with ns := outer }
     return acc
-  | _ => return [.fn (← function)]
+  | _ => return [← function]
 
 end
 
@@ -573,5 +620,18 @@ def runParser (p : P α) (input : String) : Except String α := do
 def parseExpr      : String → Except String Expr    := runParser expr
 def parseStatement : String → Except String Cmd    := runParser statement
 def parseProgram   : String → Except String Program := runParser program
+
+/-- Parses the output of Preproc, a list of lines each marked with whether it
+comes from a header. No token spans two lines, so each line is lexed alone. -/
+def parseUnit (lines : List (String × Bool)) : Except String Program := do
+  let mut toks : Array Token := #[]
+  let mut hdr : Array Bool := #[]
+  for (l, h) in lines do
+    let ts := (← lex l).pop
+    toks := toks ++ ts
+    hdr := hdr ++ Array.replicate ts.size h
+  let (a, s) ← program.run { toks := toks.push .eof, hdr }
+  if s.toks.getD s.pos .eof == .eof then return a
+  else throw s!"unconsumed input from token {s.pos} ('{s.toks.getD s.pos .eof}')"
 
 end CoreCpp

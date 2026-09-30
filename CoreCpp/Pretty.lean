@@ -73,7 +73,12 @@ partial def Expr.toString (e : Expr) : String :=
     | _, _ => s!"{paren 8 r}{if arrow then "->" else "."}{m}({", ".intercalate (as.map Expr.toString)})"
   | .this => "this"
   | .newObj c as => s!"new {c}({", ".intercalate (as.map Expr.toString)})"
-  | .newVec t n => s!"new std::vector<{t}>({Expr.toString n})"
+  | .newLib t as => s!"new {t}({", ".intercalate (as.map Expr.toString)})"
+  | .intrinsic l u as =>
+    match u, as with
+    | "operator[]", [r, i] => s!"{paren 8 r}[{Expr.toString i}]"
+    | "operator()", r :: rest => s!"{paren 8 r}({", ".intercalate (rest.map Expr.toString)})"
+    | _, _ => s!"{l}({", ".intercalate (as.map Expr.toString)})"
   | .field e f => s!"{paren 8 e}.{f}"
   | .arrow e f => s!"{paren 8 e}->{f}"
   | .deref e   => s!"*{paren 7 e}"
@@ -110,7 +115,7 @@ partial def Val.toString : Val → String
   | .loc l  => Loc.toString l
   | .null   => "nullptr"
   | .obj c fs => s!"{c}\{{", ".intercalate (fs.map fun (f, l) => s!"{f} ↦ {Loc.toString l}")}}"
-  | .vec ls => s!"vector[{", ".intercalate (ls.map Loc.toString)}]"
+  | .lib n ls => s!"{n}[{", ".intercalate (ls.map Loc.toString)}]"
   | .closure ps _ _ cap =>
     s!"closure({", ".intercalate (ps.map Param.toString)})[{", ".intercalate (cap.map fun (x, v) => s!"{x} ↦ {Val.toString v}")}]"
 
@@ -141,6 +146,7 @@ def Error.toString : Error → String
   | .typeError msg         => s!"type error at run time, {msg}"
   | .missingReturn f       => s!"function {f} ended without return"
   | .notCallable v         => s!"call of a value that is not a function, {v}"
+  | .library msg           => msg
   | .deleteWithoutVirtualDtor s t => s!"delete through {s}* of an object of class {t} without a virtual destructor"
   | .doubleDelete l        => s!"delete of a location already freed, {Loc.toString l}"
 

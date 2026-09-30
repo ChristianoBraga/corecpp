@@ -6,8 +6,8 @@ import Preproc
 The programs of `tests/preproc/accepted/` run under several sets of flags.
 Without `#include`, the lines that Preproc keeps are the lines that
 `g++ -E -P -undef -x c++ -std=c++17` keeps, blank lines aside. With `#include`,
-compiling the program with `g++` and running the output of Preproc with
-`bin/corecpp` give the same exit status. Every program of
+compiling the program with `g++` and running it with
+`bin/corecpp`, which runs Preproc first, give the same exit status. Every program of
 `tests/preproc/rejected/` violates a rule of Preproc and fails. Run from the
 root of the repository with `lake env lean tests/Preproc.lean`.
 -/
@@ -43,14 +43,12 @@ def sameSelection (path : String) (flags : List String) : IO Unit := do
   check (out.exitCode == 0) s!"g++ -E on {path}"
   check (nonblank t == nonblank out.stdout) s!"selection of {path} under {flags}"
 
-/-- The exit status of `g++` on the program equals that of `bin/corecpp` on its output. -/
+/-- The exit status of `g++` on the program equals that of `bin/corecpp` on it. -/
 def sameStatus (path : String) (flags : List String) : IO Unit := do
-  let t ← preprocess path flags
-  IO.FS.writeFile "/tmp/preproc-test.i.cpp" t
   let c ← sh "g++" (#["-std=c++17", "-o", "/tmp/preproc-test"] ++ defines flags ++ #[path])
   check (c.exitCode == 0) s!"g++ on {path}"
   let g ← sh "/tmp/preproc-test" #[]
-  let r ← sh "bin/corecpp" #["run", "/tmp/preproc-test.i.cpp"]
+  let r ← sh "bin/corecpp" (#["run"] ++ defines flags ++ #[path])
   check (g.exitCode == r.exitCode) s!"status of {path} under {flags}, g++ {g.exitCode}, corecpp {r.exitCode}"
 
 #eval show IO Unit from do

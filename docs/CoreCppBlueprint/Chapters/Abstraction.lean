@@ -13,7 +13,7 @@ set_option verso.blueprint.foldCodeBlocks true
 
 #doc (Manual) "Abstraction" =>
 
-Functions with parameters by value and by reference, `return` as a control result, lambdas with capture by copy, function values of type `std::function`, and the program. The call evaluates the arguments left to right, allocates a fresh location with a copy for each parameter by value, binds each parameter by reference to the location of its argument, and removes the copies from $`\sigma` on return.
+Functions with parameters by value and by reference, `return` as a control result, lambdas with capture by copy, function values, and the program. The call evaluates the arguments left to right, allocates a fresh location with a copy for each parameter by value, binds each parameter by reference to the location of its argument, and removes the copies from $`\sigma` on return.
 
 :::group "ud4"
 Functions, parameters and calls.
@@ -48,11 +48,11 @@ Two reference parameters bound to the same argument alias each other, and a writ
 # Lambdas and function values
 
 :::definition "fun_accept" (parent := "ud4") (lean := "CoreCpp.Typing.accept, CoreCpp.Typing.lambdaAt, CoreCpp.TBind, CoreCpp.TEnv.captured") (uses := "judg_ty_expr, judg_ty_cmd, dom_tenv")
-A lambda has no type of its own. The judgment $`\Gamma \vdash e \lhd \tau`, $`e` is acceptable at $`\tau`, checks a lambda against the `std::function` type expected where it occurs, as argument, as initialiser of a declaration and as `return` expression, and for any other expression it is $`\Gamma \vdash e : \tau'` with $`\tau' \approx \tau`. The body is checked under $`\Gamma` with every variable of the enclosing scope marked read only, the copies of `[=]`, and with the parameters of the lambda as ordinary variables. The rule `T-LocVar` requires a variable that is not read only, so an assignment to a captured variable, or a reference to it, is a type error.
+A lambda has no type of its own. The judgment $`\Gamma \vdash e \lhd \tau`, $`e` is acceptable at $`\tau`, checks a lambda against the type of the library expected where it occurs, a type to which its function type converts, `std::function` in {bpref "std_function"}[], as argument, as initialiser of a declaration and as `return` expression, and for any other expression it is $`\Gamma \vdash e : \tau'` with $`\tau' \approx \tau`. The body is checked under $`\Gamma` with every variable of the enclosing scope marked read only, the copies of `[=]`, and with the parameters of the lambda as ordinary variables. The rule `T-LocVar` requires a variable that is not read only, so an assignment to a captured variable, or a reference to it, is a type error.
 
 $$`\dfrac{\Gamma \vdash e : \tau' \qquad \tau' \approx \tau \qquad \tau' \text{ has values}}{\Gamma \vdash e \lhd \tau}\;\textsf{(Accept)}`
 
-$$`\dfrac{\begin{array}{c} \Gamma' = \Gamma \text{ marked read only}, [x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k] \\ \Gamma' \vdash c \dashv \Gamma'' \qquad \tau, \tau_i \text{ storable and well formed} \end{array}}{\Gamma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \lhd \mathtt{std{:}{:}function}\langle \tau(\tau_1, \ldots, \tau_k) \rangle}\;\textsf{(T-Lambda)}`
+$$`\dfrac{\begin{array}{c} \Gamma' = \Gamma \text{ marked read only}, [x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k] \\ \Gamma' \vdash c \dashv \Gamma'' \qquad \tau, \tau_i \text{ storable and well formed} \qquad \Gamma \vdash_L \tau(\tau_1, \ldots, \tau_k) \hookrightarrow L\langle\bar{\tau}\rangle \end{array}}{\Gamma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \lhd L\langle\bar{\tau}\rangle}\;\textsf{(T-Lambda)}`
 
 Outside its three positions a lambda is a type error, and `auto x = [=]…` is a syntax error, because the grammar admits a lambda only as an argument expression.
 :::
@@ -63,10 +63,10 @@ A lambda evaluates to a closure with copies of the free variables of its body th
 $$`\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{free variables of } c \text{ bound in } \rho, \text{ minus the } x_i \\ \rho(y_j) = \ell_j \qquad \ell_j \in \mathrm{dom}\,\sigma \qquad w_j = \sigma(\ell_j) \end{array}}{\rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \Rightarrow \mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma}\;\textsf{(Lambda)}`
 :::
 
-:::definition "fun_callfn" (parent := "ud4") (lean := "CoreCpp.Typing.callValue, CoreCpp.Eval.applyClosure") (uses := "lambda, fun_call, judg_ev_expr, dom_store")
-A call through a function value evaluates the function expression to a closure, the arguments by value and left to right, allocates fresh locations for the captured copies and for the parameters, runs the body in an environment with those bindings only, and frees them on return. When the callee is a variable `f` of function type, `f(…)` is this rule and not the call of the function named `f`.
+:::definition "fun_callfn" (parent := "ud4") (lean := "CoreCpp.Typing.callValue, CoreCpp.Eval.applyClosure, CoreCpp.Eval.applyVals") (uses := "lambda, fun_call, judg_ev_expr, dom_store")
+A call through a function value evaluates the function expression to a closure, the arguments by value and left to right, allocates fresh locations for the captured copies and for the parameters, runs the body in an environment with those bindings only, and frees them on return. When the callee is a variable `f` of function type, `f(…)` is this rule and not the call of the function named `f`. The type checker rewrites the call into the use `operator()` of {bpref "std_uses"}[]. The rule `F-Call` of {bpref "std_function"}[] then takes the application of the closure to the values, the premises of `CallFn` after the arguments, as its premise $`\mathrm{apply}`.
 
-$$`\dfrac{\Gamma \vdash e : \mathtt{std{:}{:}function}\langle \tau(\tau_1, \ldots, \tau_k) \rangle \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash e(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallFn)}`
+$$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash e(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallFn)}`
 
 $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma_0 \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad (\ell'_j, \cdot) = \mathrm{alloc}(w_j) \qquad (\ell_i, \cdot) = \mathrm{alloc}(v_i) \\ [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma' \vdash c \Rightarrow \mathsf{ret}\,v, \rho'', \sigma'' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell'_j, \ell_i\} \cup (\rho'' \setminus \rho_c))}\;\textsf{(CallFn)}`
 

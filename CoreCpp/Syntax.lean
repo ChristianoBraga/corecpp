@@ -12,15 +12,15 @@ are flattened by the parser into qualified class names, `N::C`.
 namespace CoreCpp
 
 /-- Types. `cls` is a class type, reached only through a pointer, `ptr` a
-pointer type, `vec` the type of `std::vector<τ>`, also reached only through a
-pointer, `fn ret params` the type `std::function<ret(params)>` of function
-values, and `nullT` the type of `nullptr`, which converts to any pointer type
+pointer type, `lib n args` an instance of a class template `n` of the library,
+such as `std::vector<int>`, `fn ret params` the function type `ret(params)`, the
+argument of `std::function`, and `nullT` the type of `nullptr`, which converts to any pointer type
 and never names a variable. -/
 inductive Ty where
   | int | bool | void
   | cls (name : String)
   | ptr (t : Ty)
-  | vec (t : Ty)
+  | lib (name : String) (args : List Ty)
   | fn (ret : Ty) (params : List Ty)
   | nullT
   deriving Repr, BEq, Inhabited
@@ -32,20 +32,21 @@ partial def Ty.toString : Ty → String
   | .int => "int" | .bool => "bool" | .void => "void"
   | .cls c => c
   | .ptr t => s!"{t.toString}*"
-  | .vec t => s!"std::vector<{t.toString}>"
-  | .fn r ps => s!"std::function<{r.toString}({", ".intercalate (ps.map Ty.toString)})>"
+  | .lib n ts => s!"{n}<{", ".intercalate (ts.map Ty.toString)}>"
+  | .fn r ps => s!"{r.toString}({", ".intercalate (ps.map Ty.toString)})"
   | .nullT => "nullptr_t"
 
 instance : ToString Ty := ⟨Ty.toString⟩
 
-/-- Object types are class and vector types. Their values live in the store
-and are never copied, so no variable, parameter or result has an object
-type. -/
+/-- Class types are object types. Their values live in the store and are
+never copied, so no variable, parameter or result has an object type. The
+library says which of its types are object types too, see `Std.isObject`. -/
 def Ty.isObject : Ty → Bool
-  | .cls _ | .vec _ => true
+  | .cls _ => true
   | _ => false
 
-/-- Function types, the types of closures. -/
+/-- Function types `τ(τ₁, …, τₖ)`, the types of lambdas and the template
+argument of `std::function`. No variable has a function type. -/
 def Ty.isFn : Ty → Bool
   | .fn .. => true
   | _ => false
@@ -72,8 +73,8 @@ mutual
 
 /-- Expressions. Function call is included because `Args` is part of
 `PostfixExpr`. `field` is `e.f`, `arrow` is `e->f`, `deref` is `*e` and
-`index` is `e[i]`. `newObj C` is `new C()` and `newVec τ n` is
-`new std::vector<τ>(n)`. `lambda ps τ c` is `[=](ps) -> τ { c }`, which the
+`index` is `e[i]`. `newObj C` is `new C()` and `newLib τ args` is `new τ(args)`
+for a type τ of the library, `new std::vector<int>(3)` for instance. `lambda ps τ c` is `[=](ps) -> τ { c }`, which the
 grammar admits only as an argument, as the initialiser of a declaration and
 as the expression of `return`. `callFn e args` calls the function value `e`,
 and `call f args` calls the function named `f`, or the function value bound to
@@ -89,7 +90,10 @@ type list of the overload the type checker chose, `none` as the parser leaves
 it, the datum the evaluator needs to pick one function or method out of an
 overload set. `locOf e` is the location of `e` as a value, an expression no
 program writes, which `Typing.annotate` puts on the `return` of a member that
-returns a reference. -/
+returns a reference. `intrinsic L u args` is a use `u` of the entity `L` of the
+library, an expression no program writes, which `Typing.annotate` puts where a
+program indexes, calls or applies an entity of the library. For a member, the
+receiver is the first argument. -/
 inductive Expr where
   | intLit  (n : Int)
   | boolLit (b : Bool)
@@ -100,7 +104,7 @@ inductive Expr where
   | cond    (c t e : Expr)
   | call    (f : String) (args : List Expr) (sig : Option (List Ty))
   | newObj  (c : String) (args : List Expr)
-  | newVec  (t : Ty) (n : Expr)
+  | newLib  (t : Ty) (args : List Expr)
   | this
   | methodCall (recv : Expr) (arrow : Bool) (m : String) (args : List Expr) (static : Option String) (sig : Option (List Ty))
   | field   (e : Expr) (f : String)
@@ -110,6 +114,7 @@ inductive Expr where
   | lambda  (params : List Param) (ret : Ty) (body : List Cmd)
   | callFn  (f : Expr) (args : List Expr)
   | locOf   (e : Expr)
+  | intrinsic (lib : String) (use : String) (args : List Expr)
   deriving Repr, BEq, Inhabited
 
 /-- Commands. A block is a list of commands. `exprStmt` is the statement that
@@ -141,10 +146,10 @@ excluded. -/
 partial def Expr.vars : Expr → List String
   | .var x => [x]
   | .this => ["this"]
-  | .unop _ e | .deref e | .field e _ | .arrow e _ | .newVec _ e | .locOf e => e.vars
+  | .unop _ e | .deref e | .field e _ | .arrow e _ | .locOf e => e.vars
   | .binop _ a b | .index a b => a.vars ++ b.vars
   | .cond a b c => a.vars ++ b.vars ++ c.vars
-  | .call _ es _ | .newObj _ es => es.flatMap Expr.vars
+  | .call _ es _ | .newObj _ es | .newLib _ es | .intrinsic _ _ es => es.flatMap Expr.vars
   | .callFn f es => f.vars ++ es.flatMap Expr.vars
   | .methodCall f _ _ es _ _ => f.vars ++ es.flatMap Expr.vars
   | .lambda ps _ b => (b.flatMap Cmd.vars).filter fun x => !(ps.any (·.name == x))
@@ -259,6 +264,8 @@ inductive Decl where
   | cls  (c : ClassDecl)
   | fn   (f : Fun)
   | tmpl (param : String) (c : ClassDecl)
+  | libTmpl (name : String) (params : List String)
+  | libFn (name : String) (ret : Ty) (params : List Param)
   deriving Repr, BEq, Inhabited
 
 /-- A program is a list of declarations. There are no global variables. -/
@@ -273,6 +280,14 @@ def Program.classes (p : Program) : List ClassDecl :=
 /-- The class templates of the program, each with its type parameter. -/
 def Program.templates (p : Program) : List (String × ClassDecl) :=
   p.filterMap fun | .tmpl t c => some (t, c) | _ => none
+
+/-- The declarations of the library, the templates of `namespace std` and the
+functions without a body, each with its number of parameters. -/
+def Program.libDecls (p : Program) : List (String × Nat) :=
+  p.filterMap fun
+    | .libTmpl n ps => some (n, ps.length)
+    | .libFn n _ ps => some (n, ps.length)
+    | _ => none
 
 /-- The template named c, with its type parameter. -/
 def Program.lookupTemplate (p : Program) (c : String) : Option (String × ClassDecl) :=

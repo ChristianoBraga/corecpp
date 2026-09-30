@@ -1,4 +1,5 @@
 // Core C++ example, lambdas. A lambda passed directly as the argument of a
+#include <functional>
 // std::function parameter, applied twice. Exit code 81.
 int applyTwice(std::function<int(int)> f, int x) {
   return f(f(x));

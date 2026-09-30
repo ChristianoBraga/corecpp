@@ -53,11 +53,15 @@ since 2026-09-18.
   `tests/preproc/`.
 - No test file lives at the root.
 - `CoreCpp/Token.lean`, `Lexer.lean` (hand written finite automaton, longest
-  match, `std::function` and `std::vector` as single tokens, uppercase initial
-  for type identifiers), `Syntax.lean` (AST), `Parser.lean` (recursive
+  match, `std` reserved, uppercase initial for type identifiers), `Syntax.lean` (AST), `Parser.lean` (recursive
   descent), `Semantics.lean` (Loc, Val, Error, Env, Store, Ctrl),
   `Pretty.lean`, `Typing.lean` (static semantics), `Eval.lean` (evaluator in the
   monad `M := ExceptT Error (StateM TState)` carrying the derivation trace).
+- `CoreCpp/Std/`, the library. The headers declare `std::vector`,
+  `std::function` and `assert` without a body, and each declaration names an
+  intrinsic (`Std/Intrinsic.lean`), its typing and evaluation judgements. The
+  type checker rewrites every use into an `Expr.intrinsic` node, and the
+  evaluator knows no intrinsic by name. `bin/corecpp` runs Preproc first.
 - `Main.lean`, the executable. `bin/corecpp [ast|check|run|trace] <file | ->`.
   `trace` renders the derivation as on the board, premises over the line of
   inference, conclusion under it, rule at the right, with ρ, σ and the long
@@ -113,9 +117,10 @@ since 2026-09-18.
   expression. No `[&]`.
 - Templates only on classes, instantiated in type position. Overloading by
   argument type, not distinguishing `std::function` parameters. `auto` local.
-- Single translation unit, no preprocessor, methods defined inside the class.
+- Single translation unit, methods defined inside the class. Preproc runs
+  before the compiler.
 - Inductive big step semantics. Divergence has no derivation, a limitation of
-  the style (Leroy and Grall).
+  the style (Kahn, RR-0601, §4.4, p. 11).
 
 ## Status on 2026-09-21
 

@@ -32,7 +32,7 @@ def keywords : List String :=
   ["int", "bool", "void", "if", "else", "while", "for", "return",
    "true", "false", "auto", "delete", "new", "nullptr", "this",
    "class", "public", "private", "virtual", "override", "namespace",
-   "template", "typename", "operator"]
+   "template", "typename", "operator", "std"]
 
 /-- The keywords of C++17 (N4659 §5.11 [lex.key], Table 5) and the alternative
 representations (Table 6). A Core C++ program uses none of them outside

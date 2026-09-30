@@ -2,6 +2,7 @@ import CoreCpp.Syntax
 import CoreCpp.Semantics
 import CoreCpp.Pretty
 import CoreCpp.Typing
+import CoreCpp.Std
 
 /-!
 # Core C++ evaluator in natural semantics
@@ -102,6 +103,24 @@ def traced (rule : String) (ante : TraceAnte) (render : α → TraceCons) (k : M
   match res with
   | .ok a    => pure a
   | .error e => throw e
+
+/-- As `traced`, for a premise of the library, whose rule name the library
+gives with its result. -/
+def tracedLib (fallback : String) (ante : TraceAnte) (render : α → TraceCons) (k : M (String × α))
+    (arrow : String := "⇒") : M α := do
+  modify fun s => { s with depth := s.depth + 1 }
+  let res : Except Error (String × α) ← tryCatch (do let a ← k; pure (.ok a)) (fun e => pure (.error e))
+  modify fun s => { s with depth := s.depth - 1 }
+  let s ← get
+  if s.enabled then
+    let (rule, cons) := match res with
+      | .ok (r, a) => (r, render a)
+      | .error e   => (fallback, { head := s!"error ({e})" })
+    modify fun s =>
+      { s with log := s.log.push ⟨s.depth, rule, { ante with arrow := arrow }, cons⟩ }
+  match res with
+  | .ok (_, a) => pure a
+  | .error e   => throw e
 
 def confE (e : Expr) (ρ : Env) (σ : Store) : TraceAnte :=
   { env := ρ.toString, store := σ.toString, subject := toString e }
@@ -293,20 +312,28 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
     -- A member that returns a reference gives the location, read here
     -- because the call stands in a position that asks for a value.
     if md.retRef then return (← readLoc σ' (← pointee v), σ') else return (v, σ')
-  /-  ρ, σ ⊢ n ⇒ int k, σ₁    k ≥ 0
-      (ℓᵢ, σ'ᵢ) = alloc σ'ᵢ₋₁ (default τ) for 1 ≤ i ≤ k,  σ'₀ = σ₁    one location per element
-      (ℓ, σ₂) = alloc σ'ₖ (vec [ℓ₁, …, ℓₖ])
-      ─────────────────────────────────────────────────────────── (NewVec)
-      ρ, σ ⊢ new std::vector<τ>(n) ⇒ loc ℓ, σ₂
+  /-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ    σₖ ⊢_L new⟨τ̄⟩(v₁, …, vₖ) ⇒ v, σ′
+      ─────────────────────────────────────────────────────────────────────── (NewLib)
+      ρ, σ ⊢ new L⟨τ̄⟩(e₁, …, eₖ) ⇒ v, σ′
 
-      With k < 0 the result is error (negative size).                               -/
-  | .newVec t n => traced "NewVec" (confE e ρ σ) showV do
-    let (v, σ₁) ← expr fs ρ σ n
-    let .int k := v | throw (.typeError s!"vector size {v} is not an int")
-    if k < 0 then throw (.negativeSize k)
-    let (ls, σ₂) := σ₁.allocMany (List.replicate k.toNat t.default)
-    let (l, σ₃) := σ₂.alloc (.vec ls)
-    return (.loc l, σ₃)
+      The last premise is a judgement of the library, V-New for std::vector.        -/
+  | .newLib t es => traced "NewLib" (confE e ρ σ) showV do
+    let .lib n ts := t | throw (.typeError s!"{t} is not a type of the library")
+    let (vs, σ₁) ← args fs ρ σ es
+    let (r, σ₂) ← libUse fs ρ σ₁ n .new ts vs
+    let .val v := r | throw (.typeError s!"new {t} gave a location")
+    return (v, σ₂)
+  /-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ    σₖ ⊢_L u(v₁, …, vₖ) ⇒ r, σ′
+      ─────────────────────────────────────────────────────────────────── (Lib)
+      ρ, σ ⊢ L.u(e₁, …, eₖ) ⇒ v, σ′
+
+      The annotated use of the library, with v = r when r is a value and v = σ′(r)
+      when r is a location. For a member the receiver is e₁.                          -/
+  | .intrinsic l u es => traced "Lib" (confE e ρ σ) showV do
+    let (vs, σ₁) ← args fs ρ σ es
+    match ← libUse fs ρ σ₁ (libName l vs u) (Std.Use.ofString u) [] vs with
+    | (.val v, σ₂) => return (v, σ₂)
+    | (.loc l', σ₂) => return (← readLoc σ₂ l', σ₂)
   /-  ρ, σ ⊢ e ⇒ v, σ'    op v = v'
       ─────────────────────────────── (Unary)
       ρ, σ ⊢ op e ⇒ v', σ'                                                      -/
@@ -478,27 +505,40 @@ partial def runMember (fs : FunEnv) (ρ : Env) (σ : Store) (l : Loc) (ps : List
   | .normal, .void => return (.void, σ''')
   | .normal, _     => throw (.missingReturn who)
 
-/-- The application of a closure to arguments.
+/-- The values of arguments, left to right. -/
+partial def args (fs : FunEnv) (ρ : Env) (σ : Store) : List Expr → M (List Val × Store)
+  | [] => return ([], σ)
+  | e :: es => do
+    let (v, σ₁) ← expr fs ρ σ e
+    let (vs, σ₂) ← args fs ρ σ₁ es
+    return (v :: vs, σ₂)
 
-    v = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])
-    ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right, by value
-    (ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ                        fresh locations for the copies and the parameters
-    ρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                the closure environment, nothing else is visible
-    ρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''
-    ─────────────────────────────────────────────────────────────── (Apply)
-    apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))          the copies, the parameters and the locals leave
+/-- The entity of the library a use reaches. A member reaches the entity its
+receiver belongs to, whose value carries its name. -/
+partial def libName (l : String) (vs : List Val) (u : String) : String :=
+  match Std.Use.ofString u, vs with
+  | .member _, .lib n _ :: _ => n
+  | _, _ => l
 
-    With normal in place of ret v the result is void if τ = void and error
-    (missing return) otherwise. A value that is not a closure is error.        -/
-partial def applyClosure (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (es : List Expr) : M (Val × Store) := do
+/-- σ ⊢_L u(v̄) ⇒ r, σ′, the premise of the library, with the application of a
+closure as the one judgement of the language it may use. -/
+partial def libUse (fs : FunEnv) (ρ : Env) (σ : Store) (n : String) (u : Std.Use) (ts : List Ty)
+    (vs : List Val) : M (Std.Result × Store) := do
+  let some L := Std.lookup n | throw (.typeError s!"{n} has no semantics in Core C++")
+  let argList := ", ".intercalate (vs.map toString)
+  let subject := s!"{n}.{u.toString}({argList})"
+  let ante : TraceAnte := { env := ρ.toString, store := σ.toString, subject }
+  let render : Std.Result × Store → TraceCons := fun
+    | (.val v, σ') => showV (v, σ')
+    | (.loc l, σ') => showL (l, σ')
+  tracedLib n ante render (L.eval (fun v vs σ => applyVals fs σ v vs) u ts vs σ)
+
+/-- The application of a closure to values, the judgement the library uses
+through `apply`. -/
+partial def applyVals (fs : FunEnv) (σ : Store) (v : Val) (vs : List Val) : M (Val × Store) := do
   let .closure ps r b cap := v | throw (.notCallable v)
-  if ps.length != es.length then throw (.arity "lambda")
+  if ps.length != vs.length then throw (.arity "lambda")
   let mut σ := σ
-  let mut vs : List Val := []
-  for a in es do
-    let (v, σ') ← expr fs ρ σ a
-    σ := σ'
-    vs := vs ++ [v]
   let mut ρc : Env := []
   let mut ls : List Loc := []
   for (y, w) in cap do
@@ -518,6 +558,24 @@ partial def applyClosure (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (es : L
   | .normal, .void => return (.void, σ''')
   | .normal, _     => throw (.missingReturn "lambda")
 
+/-- The application of a closure to arguments.
+
+    v = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])
+    ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right, by value
+    (ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ                        fresh locations for the copies and the parameters
+    ρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                the closure environment, nothing else is visible
+    ρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''
+    ─────────────────────────────────────────────────────────────── (Apply)
+    apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))          the copies, the parameters and the locals leave
+
+    With normal in place of ret v the result is void if τ = void and error
+    (missing return) otherwise. A value that is not a closure is error.        -/
+partial def applyClosure (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (es : List Expr) : M (Val × Store) := do
+  let .closure ps _ _ _ := v | throw (.notCallable v)
+  if ps.length != es.length then throw (.arity "lambda")
+  let (vs, σ₁) ← args fs ρ σ es
+  applyVals fs σ₁ v vs
+
 /-- ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, a
 dereferenced pointer, a field of an object, a field through a pointer and an
 element of a vector.
@@ -534,12 +592,7 @@ element of a vector.
     ────────────────────────────────────────────────── (LocArrow)    e->f is (*e).f
     ρ, σ ⊢ e->f ⇒ₗ ℓ_f, σ'
 
-    ρ, σ ⊢ e ⇒ₗ ℓ, σ₁    σ₁(ℓ) = vec [ℓ₀, …, ℓₙ₋₁]    ρ, σ₁ ⊢ i ⇒ int k, σ₂    0 ≤ k < n
-    ──────────────────────────────────────────────────────────────────────────────── (LocIndex)
-    ρ, σ ⊢ e[i] ⇒ₗ ℓₖ, σ₂
-
-    With k outside [0, n) the result is error (out of bounds), where C++
-    leaves it undefined.                                                            -/
+    An element of a vector is a use of the library, the rule LocLib.             -/
 partial def lval (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × Store) :=
   match e with
   /-  ρ(x) = ℓ                      x ∉ ρ    ρ(this) = ℓ    σ(ℓ) = obj C [… x ↦ ℓ_x …]
@@ -568,13 +621,16 @@ partial def lval (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × St
     let (md, v, σ') ← callMethod fs ρ σ recv arrow m es static sig
     if !md.retRef then throw (.typeError s!"{m} does not return a reference")
     return (← pointee v, σ')
-  | .index e₁ i => traced "LocIndex" (confE e ρ σ) showL (arrow := "⇒ₗ") do
-    let (l, σ₁) ← lval fs ρ σ e₁
-    let .vec ls ← readLoc σ₁ l | throw (.typeError s!"{e₁} is not a vector")
-    let (v, σ₂) ← expr fs ρ σ₁ i
-    let .int k := v | throw (.typeError s!"index {v} is not an int")
-    if k < 0 || k ≥ ls.length then throw (.outOfBounds k ls.length)
-    return (ls[k.toNat]!, σ₂)
+  /-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ    σₖ ⊢_L u(v₁, …, vₖ) ⇒ ℓ, σ′
+      ───────────────────────────────────────────────────────────────── (LocLib)
+      ρ, σ ⊢ L.u(e₁, …, eₖ) ⇒ₗ ℓ, σ′
+
+      A use of the library that gives a location, V-Index for std::vector.          -/
+  | .intrinsic l u es => traced "LocLib" (confE e ρ σ) showL (arrow := "⇒ₗ") do
+    let (vs, σ₁) ← args fs ρ σ es
+    match ← libUse fs ρ σ₁ (libName l vs u) (Std.Use.ofString u) [] vs with
+    | (.loc l', σ₂) => return (l', σ₂)
+    | (.val v, _) => throw (.typeError s!"{e} gives the value {v}, not a location")
   | _ => throw (.typeError s!"expression does not denote a location: {e}")
 
 /-- The location of field f of the object stored at ℓ. -/
@@ -685,9 +741,9 @@ partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env
       ───────────────────────────────────────────────────────────────────────────── (Delete)
       ρ, σ ⊢ delete e ⇒ normal, ρ, σ₁ ∖ {ℓ, ℓ₁, …, ℓₙ}
 
-      ρ, σ ⊢ e ⇒ loc ℓ, σ₀    σ₀(ℓ) = vec [ℓ₁, …, ℓₙ]         ρ, σ ⊢ e ⇒ null, σ₀
-      ─────────────────────────────────────────────── (DeleteVec)   ────────────────────────────── (DeleteNull)
-      ρ, σ ⊢ delete e ⇒ normal, ρ, σ₀ ∖ {ℓ, ℓ₁, …, ℓₙ}              ρ, σ ⊢ delete e ⇒ normal, ρ, σ₀
+      ρ, σ ⊢ e ⇒ loc ℓ, σ₀    σ₀(ℓ) = lib L ℓ̄    σ₀ ⊢_L delete(σ₀(ℓ)) ⇒ void, σ₁      ρ, σ ⊢ e ⇒ null, σ₀
+      ──────────────────────────────────────────────────────────── (DeleteLib)   ──────────────────────────── (DeleteNull)
+      ρ, σ ⊢ delete e ⇒ normal, ρ, σ₁ ∖ {ℓ}                                     ρ, σ ⊢ delete e ⇒ normal, ρ, σ₀
 
       With ℓ ∉ dom σ₀ the result is error (double delete), and with S ≠ T and no
       virtual destructor in the chain of S it is error, the two cases C++17
@@ -699,7 +755,9 @@ partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env
     | .loc l =>
       match σ₀.read l with
       | none => throw (.doubleDelete l)
-      | some (.vec ls) => return (.normal, ρ, σ₀.free (l :: ls))
+      | some w@(.lib n _) =>
+        let (_, σ₁) ← libUse fs ρ σ₀ n .delete [] [w]
+        return (.normal, ρ, σ₁.free [l])
       | some (.obj tag flds) =>
         let s := static.getD tag
         if s != tag && !fs.hasVirtualDtor s then throw (.deleteWithoutVirtualDtor s tag)

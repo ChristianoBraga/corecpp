@@ -1,6 +1,7 @@
 import CoreCpp.Syntax
 import CoreCpp.Pretty
 import CoreCpp.Templates
+import CoreCpp.Std
 
 /-!
 # Static semantics of Core C++, subset
@@ -130,6 +131,8 @@ inductive TypeError where
   | refReturnNotLvalue (m : String) (e : Expr)
   | operatorArity (c m : String)
   | instantiation (msg : String)
+  | library (msg : String)
+  | undeclaredLibrary (name : String)
   deriving Repr
 
 def TypeError.toString : TypeError → String
@@ -176,6 +179,8 @@ def TypeError.toString : TypeError → String
   | .refReturnNotLvalue m e => s!"{m} returns a reference, and {e} does not denote a location"
   | .operatorArity c m    => s!"the operator {m} of {c} does not have the arity of the operator"
   | .instantiation msg    => msg
+  | .library msg          => msg
+  | .undeclaredLibrary n  => s!"{n} is not declared, its header is missing"
 
 instance : ToString TypeError := ⟨TypeError.toString⟩
 
@@ -186,7 +191,7 @@ namespace Typing
 /-- Requires a type that has values, neither void nor an object type. -/
 def value (e : Expr) (t : Ty) : T Ty :=
   if t == .void then .error (.voidValue e)
-  else if t.isObject then .error (.objectValue e t)
+  else if Std.isObject t then .error (.objectValue e t)
   else .ok t
 
 /-- τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal
@@ -209,7 +214,7 @@ which would ask for the type of the lambda before the candidate is known.
     the two declarations are overloads                                          -/
 def distinguishable (ps qs : List Param) : Bool :=
   ps.length != qs.length ||
-    (ps.zip qs).any fun (a, b) => a.ty != b.ty && !a.ty.isFn && !b.ty.isFn
+    (ps.zip qs).any fun (a, b) => a.ty != b.ty && !Std.convertible a.ty && !Std.convertible b.ty
 
 /-- τ₁ ≈ τ₂ in either direction, for comparison and for the branches of `?:`. -/
 def related (p : Program) (t₁ t₂ : Ty) : Bool := compat p t₁ t₂ || compat p t₂ t₁
@@ -219,30 +224,50 @@ parameter and a local reference bind the location of their argument, so an
 object type is admissible there and nowhere else, which is how a member takes
 an object without copying it. -/
 def storable (context : String) (t : Ty) : T Unit :=
-  if t.isObject || t == .nullT then .error (.objectByValue context t) else .ok ()
+  if Std.isObject t || t == .nullT then .error (.objectByValue context t)
+  else if t.isFn then .error (.functionStored context t)
+  else .ok ()
 
 /-- Requires a type a binding may have, an object type included when the
 binding is a reference. -/
 def bindable (context : String) (byRef : Bool) (t : Ty) : T Unit :=
-  if byRef && t.isObject then .ok () else storable context t
+  if byRef && Std.isObject t then .ok () else storable context t
 
-/-- Fields and vector elements hold basic values and pointers, never function
-values, which have no default value in this subset. -/
+/-- Fields hold values with a default, the value `new` gives them before the
+constructor runs, so never a value of a type of the library without one, a
+`std::function` for instance. -/
 def noFunction (context : String) (t : Ty) : T Unit :=
-  match t with
-  | .fn .. => .error (.functionStored context t)
-  | _ => .ok ()
+  if Std.hasDefault t then .ok () else .error (.functionStored context t)
 
-/-- A type mentioned in a declaration names only declared classes, and a
-function type has a storable or void result and storable parameters. -/
+/-- The intrinsic of a type of the library, which a header must declare. -/
+def intrinsicOf (p : Program) (n : String) : T Std.Statics := do
+  unless p.libDecls.any (·.1 == n) do throw (.undeclaredLibrary n)
+  let some L := Std.statics n | throw (.library s!"{n} has no semantics in Core C++")
+  return L
+
+/-- Γ ⊢_L u : τ̄ₐ → τ, the signature of the use u of the library entity n at the
+template arguments ts. -/
+def libSig (p : Program) (n : String) (u : Std.Use) (ts : List Ty) : T Std.Sig := do
+  let L ← intrinsicOf p n
+  (L.sig u ts).mapError TypeError.library
+
+/-- A type mentioned in a declaration names only declared classes and declared
+templates of the library, an instance of the library is well formed by the
+rules of its intrinsic, Γ ⊢_L L⟨τ̄⟩ ok, and a function type has a storable or
+void result and storable parameters. -/
 partial def wellFormed (p : Program) : Ty → T Unit
   | .cls c => if (p.lookupClass c).isSome then .ok () else .error (.unknownClass c)
-  | .ptr t | .vec t => wellFormed p t
+  | .ptr t => wellFormed p t
+  | .lib n ts => do
+    let L ← intrinsicOf p n
+    if ts.length != L.arity then throw (.library s!"{n} has {L.arity} template arguments, not {ts.length}")
+    (L.instOk ts).mapError TypeError.library
+    for t in ts do wellFormed p t
   | .fn r ps => do
-    if r != .void then storable "result of a std::function" r
+    if r != .void then storable "result of a function type" r
     wellFormed p r
     for t in ps do
-      storable "parameter of a std::function" t
+      storable "parameter of a function type" t
       wellFormed p t
   | _ => .ok ()
 
@@ -309,7 +334,7 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
         ──────────────────────────────────────────────────────────────────── (T-Eq, ⋈ ∈ {==, !=})
         Γ ⊢ e₁ ⋈ e₂ : bool                                                         -/
     | .eq | .ne =>
-      if related p t₁ t₂ && t₁ != .void && !t₁.isObject && !t₁.isFn then .ok .bool
+      if related p t₁ t₂ && t₁ != .void && !Std.isObject t₁ && !(t₁ matches .lib .. | .fn ..) then .ok .bool
       else .error (.mismatch s!"operands of {op.toString}" t₁ t₂)
     /-  Γ ⊢ e₁ : int    Γ ⊢ e₂ : int
         ──────────────────────────── (T-Rel, ⋈ ∈ {<, <=, >, >=})
@@ -341,7 +366,14 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
     match Γ.lookup f with
     | some t => callValue p Γ (.var f) t es
     | none =>
-      if (p.funsNamed f).isEmpty then
+      if (p.funsNamed f).isEmpty && p.libDecls.any (·.1 == f) then
+        /-  f declared by a header    Γ ⊢_f call : τ₁ × … × τₖ → τ    Γ ⊢ eᵢ ◁ τᵢ
+            ──────────────────────────────────────────────────────────── (T-CallLib)
+            Γ ⊢ f(e₁, …, eₖ) : τ                                                          -/
+        let s ← libSig p f .call []
+        libArgs p Γ f s es
+        return s.ret
+      else if (p.funsNamed f).isEmpty then
         /-  f ∉ Γ    f not a function    Γ(this) = C*    Γ ⊢ this->f(e₁, …, eₖ) : τ
             ──────────────────────────────────────────────────────────────────── (T-CallThis)
             Γ ⊢ f(e₁, …, eₖ) : τ                                                        -/
@@ -362,6 +394,8 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
       ────────────── (T-LocOf)      internal, the annotation of the return of a
       Γ ⊢ &e : τ                    member that returns a reference              -/
   | .locOf e => lval p Γ e
+  /-  The annotated use of the library, as T-CallLib, T-CallFn and T-IndexLib.       -/
+  | .intrinsic l u es => return (← intrinsicSig p Γ l u es).ret
   /-  C ↦ class C { … C(p₁ x₁, …, pₖ xₖ) { c } … }    arguments as in T-Call
       ──────────────────────────────────────────────────────────────── (T-New)
       Γ ⊢ new C(e₁, …, eₖ) : C*
@@ -386,16 +420,15 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
       A private method is visible only when Γ(this) is the class that
       declares it. The method is the nearest one in the chain of C.              -/
   | .methodCall recv arrow m es _ _ => methodCall p Γ recv arrow m es
-  /-  Γ ⊢ n : int    τ has values    τ not a function type
-      ──────────────────────────────────────────────────── (T-NewVec)
-      Γ ⊢ new std::vector<τ>(n) : std::vector<τ>*                                  -/
-  | .newVec t n => do
-    let tn ← expr p Γ n
-    if tn != .int then throw (.mismatch "size of std::vector" .int tn)
-    storable "element of std::vector" t
-    noFunction "element of std::vector" t
+  /-  Γ ⊢ L⟨τ̄⟩ ok    Γ ⊢_L new : τ₁ × … × τₖ → τ    Γ ⊢ eᵢ ◁ τᵢ
+      ─────────────────────────────────────────────────────── (T-NewLib)
+      Γ ⊢ new L⟨τ̄⟩(e₁, …, eₖ) : τ                                                  -/
+  | .newLib t es => do
+    let .lib n ts := t | throw (.library s!"{t} is not a type of the library")
     wellFormed p t
-    return .ptr (.vec t)
+    let s ← libSig p n .new ts
+    libArgs p Γ s!"new {t}" s es
+    return s.ret
   /-  Γ ⊢ e : C    C ↦ class C { … τ f; … }
       ──────────────────────────────────── (T-Field)
       Γ ⊢ e.f : τ                                                                  -/
@@ -417,8 +450,8 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
     let t ← expr p Γ e
     let .ptr t' := t | throw (.notPointer e t)
     return t'
-  /-  Γ ⊢ e : std::vector<τ>    Γ ⊢ i : int
-      ─────────────────────────────────────── (T-Index)
+  /-  Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator[] : τ₁ → τ    Γ ⊢ i ◁ τ₁
+      ─────────────────────────────────────────────────── (T-IndexLib)
       Γ ⊢ e[i] : τ                                                                 -/
   /-  Γ ⊢ e : C    C has operator[] visible from Γ    Γ ⊢ e.operator[](i) : τ
       ──────────────────────────────────────────────────────────────────── (T-OpIndex)
@@ -426,21 +459,47 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
   | .index e i => do
     let t ← expr p Γ e
     match t with
-    | .vec t' =>
-      let ti ← expr p Γ i
-      if ti != .int then throw (.mismatch "index" .int ti)
-      return t'
+    | .lib n ts =>
+      let s ← libSig p n (.member "operator[]") ts
+      libArgs p Γ s!"index of {e}" s [i]
+      return s.ret
     | .cls _ => methodCall p Γ e false "operator[]" [i]
     | _ => throw (.notVector e t)
 
-/-- The call of a function value of type t with the arguments es, shared by
-`T-CallFn` on a variable and on any other expression. -/
+/-- The call of a value of type t with the arguments es, shared by `T-CallFn`
+on a variable and on any other expression. The value has a type of the
+library with a member `operator()`, a `std::function` for instance.
+
+    Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator() : τ₁ × … × τₖ → τ    Γ ⊢ eᵢ ◁ τᵢ
+    ──────────────────────────────────────────────────────────── (T-CallFn)
+    Γ ⊢ e(e₁, …, eₖ) : τ                                                          -/
 partial def callValue (p : Program) (Γ : TEnv) (fe : Expr) (t : Ty) (es : List Expr) : T Ty := do
-  let .fn r ps := t | throw (.notFunction fe t)
-  if ps.length != es.length then throw (.arity fe.toString ps.length es.length)
-  for (τ, e) in ps.zip es do
-    accept p Γ s!"argument of {fe}" e τ
-  return r
+  let .lib n ts := t | throw (.notFunction fe t)
+  let s ← libSig p n (.member "operator()") ts
+  libArgs p Γ fe.toString s es
+  return s.ret
+
+/-- The signature of an annotated use of the library, the template arguments
+read from the type of the receiver for a member. -/
+partial def intrinsicSig (p : Program) (Γ : TEnv) (l u : String) (es : List Expr) : T Std.Sig := do
+  match Std.Use.ofString u, es with
+  | .member m, recv :: rest =>
+    let t ← expr p Γ recv
+    let .lib n ts := t | throw (.library s!"{recv} does not have a type of the library")
+    let s ← libSig p n (.member m) ts
+    libArgs p Γ s!"{recv}" s rest
+    return s
+  | use, _ =>
+    let s ← libSig p l use []
+    libArgs p Γ l s es
+    return s
+
+/-- The arguments of a use of the library against the parameters of its
+signature, each by Γ ⊢ eᵢ ◁ τᵢ. -/
+partial def libArgs (p : Program) (Γ : TEnv) (context : String) (s : Std.Sig) (es : List Expr) : T Unit := do
+  if s.params.length != es.length then throw (.arity context s.params.length es.length)
+  for (τ, e) in s.params.zip es do
+    accept p Γ s!"argument of {context}" e τ
 
 /-- Γ ⊢ e ◁ τ, e is acceptable at type τ. For a lambda, `lambdaAt`. For any
 other expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.
@@ -455,24 +514,26 @@ partial def accept (p : Program) (Γ : TEnv) (context : String) (e : Expr) (τ :
     let t ← value e (← expr p Γ e)
     if !compat p t τ then throw (.mismatch context τ t)
 
-/-- Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ◁ std::function<τ(τ₁, …, τₖ)>.
+/-- Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ◁ L⟨τ̄⟩, a lambda where a type of the
+library to which its function type converts is expected.
 
     Γ' = Γ marked read only, [x₁ ↦ τ₁, …, xₖ ↦ τₖ]    Γ' ⊢ c ⊣ Γ''    τ, τᵢ storable, well formed
+    Γ ⊢_L τ(τ₁, …, τₖ) ↪ L⟨τ̄⟩
     ───────────────────────────────────────────────────────────────────────────────────── (T-Lambda)
-    Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ◁ std::function<τ(τ₁, …, τₖ)>
+    Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ◁ L⟨τ̄⟩
 
-    The parameter and result types of the lambda are exactly those of the
-    expected std::function type. The body is checked under Γ with every
-    variable of the enclosing scope marked read only, the copies of `[=]`, and
-    with the parameters of the lambda as ordinary variables.                    -/
+    The lambda has the function type τ(τ₁, …, τₖ), and the conversion is a
+    judgement of the library, the one of `std::function` for instance. The body
+    is checked under Γ with every variable of the enclosing scope marked read
+    only, the copies of `[=]`, and with the parameters of the lambda as
+    ordinary variables.                                                           -/
 partial def lambdaAt (p : Program) (Γ : TEnv) (ps : List Param) (r : Ty) (b : List Cmd) (τ : Ty) : T Unit := do
-  let .fn r' pts := τ | throw (.lambdaMismatch τ)
-  if pts.length != ps.length then throw (.arity "lambda" pts.length ps.length)
-  if r != r' then throw (.mismatch "result of the lambda" r' r)
+  let .lib n ts := τ | throw (.lambdaMismatch τ)
+  let L ← intrinsicOf p n
+  unless L.convFrom ts (.fn r (ps.map (·.ty))) do throw (TypeError.lambdaMismatch τ)
   if r != .void then storable "result of the lambda" r
   wellFormed p r
-  for (q, t) in ps.zip pts do
-    if q.ty != t then throw (.mismatch s!"parameter {q.name} of the lambda" t q.ty)
+  for q in ps do
     storable s!"parameter {q.name} of the lambda" q.ty
     wellFormed p q.ty
   let Γ' := ps.reverse.foldl (fun Γ q => Γ.bind q.name q.ty) Γ.captured
@@ -566,16 +627,16 @@ partial def fieldType (p : Program) (Γ : TEnv) (c f : String) : T Ty := do
   return fd.ty
 
 /-- The expressions that denote a location, with their type. A variable, a
-dereferenced pointer, a field of an object, a field through a pointer and an
-element of a vector. A variable captured by copy inside a lambda denotes no
+dereferenced pointer, a field of an object, a field through a pointer, and a
+use of the library or a member that gives a location. A variable captured by copy inside a lambda denotes no
 writable location.
 
     Γ(x) = τ, x not captured   Γ ⊢ e : τ*           Γ ⊢ e : C, C has τ f
     ──────────────────────── (T-LocVar)  ──────────── (T-LocDeref)  ─────────────────── (T-LocField)
     Γ ⊢ₗ x : τ                 Γ ⊢ₗ *e : τ          Γ ⊢ₗ e.f : τ
 
-    Γ ⊢ e : C*, C has τ f                Γ ⊢ e : std::vector<τ>    Γ ⊢ i : int
-    ────────────────────── (T-LocArrow)  ─────────────────────────────────── (T-LocIndex)
+    Γ ⊢ e : C*, C has τ f                Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator[] : τ₁ → τ, a location    Γ ⊢ i ◁ τ₁
+    ────────────────────── (T-LocArrow)  ─────────────────────────────────────────────────── (T-LocIndexLib)
     Γ ⊢ₗ e->f : τ                        Γ ⊢ₗ e[i] : τ                                       -/
 partial def lval (p : Program) (Γ : TEnv) : Expr → T Ty
   | .var x =>
@@ -599,7 +660,9 @@ partial def lval (p : Program) (Γ : TEnv) : Expr → T Ty
   | e@(.index recv i) => do
     let t ← expr p Γ recv
     match t with
-    | .vec _ => expr p Γ e
+    | .lib n ts =>
+      let s ← libSig p n (.member "operator[]") ts
+      if s.retLoc then expr p Γ e else throw (.notLvalue e)
     | .cls _ =>
       let (md, _) ← resolveMethod p Γ recv false "operator[]" [i]
       if md.retRef then return md.ret else throw (.notLvalue e)
@@ -607,6 +670,9 @@ partial def lval (p : Program) (Γ : TEnv) : Expr → T Ty
   | e@(.methodCall recv arrow m es _ _) => do
     let (md, _) ← resolveMethod p Γ recv arrow m es
     if md.retRef then return md.ret else throw (.notLvalue e)
+  | e@(.intrinsic l u es) => do
+    let s ← intrinsicSig p Γ l u es
+    if s.retLoc then return s.ret else throw (.notLvalue e)
   | e => .error (.notLvalue e)
 
 /-- Γ ⊢ c ⊣ Γ', under the return type τᵣ of the enclosing function. -/
@@ -692,13 +758,17 @@ partial def cmd (p : Program) (τᵣ : Ty) (Γ : TEnv) : Cmd → T TEnv
   | .exprStmt e => do
     let _ ← expr p Γ e
     return Γ
-  /-  Γ ⊢ e : C*                    Γ ⊢ e : std::vector<τ>*
-      ──────────────── (T-Delete)   ──────────────────────── (T-DeleteVec)
+  /-  Γ ⊢ e : C*                    Γ ⊢ e : L⟨τ̄⟩*    L⟨τ̄⟩ an object type    Γ ⊢_L delete ok
+      ──────────────── (T-Delete)   ────────────────────────────────────────── (T-DeleteLib)
       Γ ⊢ delete e ⊣ Γ              Γ ⊢ delete e ⊣ Γ                              -/
   | .delete e _ => do
     let t ← expr p Γ e
     match t with
-    | .ptr (.cls _) | .ptr (.vec _) => return Γ
+    | .ptr (.cls _) => return Γ
+    | .ptr t'@(.lib n ts) =>
+      if !Std.isObject t' then throw (.notDeletable e t)
+      let _ ← libSig p n .delete ts
+      return Γ
     | _ => throw (.notDeletable e t)
 
 /-- Γ ⊢ c₁ … cₙ ⊣ Γₙ, threading the context through the sequence.
@@ -851,6 +921,17 @@ def check (p₀ : Program) : Except TypeError Unit := do
         throw (.indistinguishable f.name)
     if (p.funsNamed f.name |>.filter fun g => sigOf g.params == sigOf f.params).length > 1 then
       throw (.duplicateFunction f.name)
+  -- every declaration of a header has an intrinsic that agrees with it
+  for d in p do
+    match d with
+    | .libTmpl n ps =>
+      let some L := Std.statics n | throw (.library s!"{n} has no semantics in Core C++")
+      if L.arity != ps.length then throw (.library s!"{n} has {L.arity} template parameters, not {ps.length}")
+    | .libFn f r ps =>
+      let some L := Std.statics f | throw (.library s!"{f} has no semantics in Core C++")
+      let s ← (L.sig .call []).mapError TypeError.library
+      if s.params != ps.map (·.ty) || s.ret != r then throw (.library s!"the declaration of {f} disagrees with its semantics")
+    | _ => pure ()
   let cnames := p.classes.map (·.name) ++ p.templates.map (·.2.name)
   for c in cnames do
     if (cnames.filter (· == c)).length > 1 then throw (.duplicateClass c)
@@ -908,11 +989,18 @@ partial def annExpr (p : Program) (Γ : TEnv) : Expr → T Expr
     if (Γ.lookup f).isNone && (p.funsNamed f).isEmpty then
       if let some c := Γ.self then
         if !(p.findMethods c f).isEmpty then return ← annMethod p Γ .this true f es'
-    if (Γ.lookup f).isSome then return .call f es' none
+    if let some t := Γ.lookup f then
+      if let .lib n _ := t then return .intrinsic n "operator()" (.var f :: es')
+      return .call f es' none
+    if (p.funsNamed f).isEmpty && p.libDecls.any (·.1 == f) then return .intrinsic f "call" es'
     return .call f es' (some (sigOf (← resolveFun p Γ f es').params))
-  | .callFn f es => return .callFn (← annExpr p Γ f) (← es.mapM (annExpr p Γ))
+  | .callFn f es => do
+    let f' ← annExpr p Γ f
+    let es' ← es.mapM (annExpr p Γ)
+    if let .lib n _ ← expr p Γ f' then return .intrinsic n "operator()" (f' :: es')
+    return .callFn f' es'
   | .newObj c es => return .newObj c (← es.mapM (annExpr p Γ))
-  | .newVec t n => return .newVec t (← annExpr p Γ n)
+  | .newLib t es => return .newLib t (← es.mapM (annExpr p Γ))
   | .field e f => return .field (← annExpr p Γ e) f
   | .arrow e f => return .arrow (← annExpr p Γ e) f
   | .deref e => return .deref (← annExpr p Γ e)
@@ -920,9 +1008,10 @@ partial def annExpr (p : Program) (Γ : TEnv) : Expr → T Expr
   | .index e i => do
     let e' ← annExpr p Γ e
     let i' ← annExpr p Γ i
-    if let .cls _ ← expr p Γ e' then
-      return ← annMethod p Γ e' false "operator[]" [i']
-    return .index e' i'
+    match ← expr p Γ e' with
+    | .cls _ => annMethod p Γ e' false "operator[]" [i']
+    | .lib n _ => return .intrinsic n "operator[]" [e', i']
+    | _ => return .index e' i'
   | .lambda ps r b =>
     let Γ' := ps.reverse.foldl (fun Γ q => Γ.bind q.name q.ty) Γ.captured
     return .lambda ps r (← annCmds p r Γ' b)
@@ -983,6 +1072,7 @@ def annotate (p₀ : Program) : T Program := do
       let Γ : TEnv := f.params.reverse.map fun q => (q.name, ⟨q.ty, false⟩)
       return .fn { f with body := ← annCmds p f.ret Γ f.body }
     | .tmpl t c => return .tmpl t c
+    | d@(.libTmpl ..) | d@(.libFn ..) => return d
     | .cls c => do
       let methods ← c.methods.mapM fun m => do
         let body ← annCmds p m.ret (memberEnv c.name m.params) m.body

@@ -4,7 +4,7 @@
 (* CoreCpp/GrammarRules.lean is generated from this file by lake exe ebnf2lean. *)
 
 Program = { Declaration } ;
-Declaration = "namespace" TypeId "{" { Declaration } "}"
+Declaration = "namespace" ( TypeId "{" { Declaration } "}" | "std" "{" { LibDecl } "}" )
             | "template" "<" "typename" TypeId ">" Class
             | Class
             | Function
@@ -13,7 +13,7 @@ Class = "class" TypeId [ ":" "public" ClassType ] "{" { Member } { Section } "}"
 Section = ( "public" | "private" ) ":" { Member } ;
 Member = "virtual" ( Type [ "&" ] MemberRest | "~" TypeId "(" ")" Block )
        | "~" TypeId "(" ")" Block
-       | ( BasicType | "std::function" "<" Type "(" [ Type { "," Type } ] ")" ">" | "std::vector" "<" Type ">" [ "*" ] ) [ "&" ] MemberRest
+       | ( BasicType | LibType [ "*" ] ) [ "&" ] MemberRest
        | TypeId ( Params Block | ClassTypeRest [ "*" ] [ "&" ] MemberRest )
        ;
 MemberRest = VarId ( ";" | Params [ "override" ] Block )
@@ -32,13 +32,16 @@ Op = "+"
    | ">="
    | "[" "]"
    ;
-Function = Type VarId Params Block ;
+Function = Type VarId Params ( Block | ";" ) ;
+LibDecl = "template" "<" "typename" TypeId { "," "typename" TypeId } ">" "class" VarId ";" ;
 Params = "(" [ Param { "," Param } ] ")" ;
 Param = Type [ "&" ] VarId ;
 Type = BasicType
-     | ( ClassType | "std::vector" "<" Type ">" ) [ "*" ]
-     | "std::function" "<" Type "(" [ Type { "," Type } ] ")" ">"
+     | ClassType [ "*" ]
+     | LibType [ "*" ]
      ;
+LibType = "std" "::" VarId "<" TemplateArg { "," TemplateArg } ">" ;
+TemplateArg = Type [ "(" [ Type { "," Type } ] ")" ] ;
 BasicType = "int"
           | "bool"
           | "void"
@@ -80,7 +83,7 @@ Primary = IntLit
         | "this"
         | VarId
         | "(" Expr ")"
-        | "new" ( ClassType | "std::vector" "<" Type ">" ) Args
+        | "new" ( ClassType | LibType ) Args
         ;
 Args = "(" [ ArgExpr { "," ArgExpr } ] ")" ;
 ArgExpr = Lambda

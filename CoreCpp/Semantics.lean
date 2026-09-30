@@ -10,8 +10,9 @@ Locations ℓ, values v, environment ρ, store σ, control results r and the
 * σ : ℓ → v, the store, maps locations to values. The domain of σ is the set of
   live locations. Locations are never reused.
 * An object is a record of locations with a class tag, stored at its own
-  location. A pointer value is the location of an object. A vector is an
-  object whose record is the list of the locations of its elements.
+  location. A pointer value is the location of an object. A value of the
+  library, such as a vector, carries the name of its template and a list of
+  locations, whose meaning its module of `CoreCpp.Std` gives.
 * A closure is the value of a lambda expression, its parameters, its body
   and the read only copies of the variables it captured.
 * Inside a method, `this` is bound in ρ to the location of the receiver, an
@@ -26,8 +27,8 @@ abbrev Loc := Nat
 /-- Values. `int` is a 32-bit two's complement integer, stored as an `Int` with
 the range invariant checked at every operation. `loc` is a pointer to the
 object stored at ℓ, `null` the value of `nullptr`, `obj` an object with its
-class tag and one location per field, `vec` a vector with one location per
-element, and `closure ps τ c cap` the value of `[=](ps) -> τ { c }`, with the
+class tag and one location per field, `lib L ℓ̄` a value of the library entity
+`L` with its locations, and `closure ps τ c cap` the value of `[=](ps) -> τ { c }`, with the
 values the lambda captured by copy, one per free variable of the body. -/
 inductive Val where
   | int  (n : Int)
@@ -36,7 +37,7 @@ inductive Val where
   | loc  (l : Loc)
   | null
   | obj  (tag : String) (fields : List (String × Loc))
-  | vec  (elems : List Loc)
+  | lib  (tag : String) (locs : List Loc)
   | closure (params : List Param) (ret : Ty) (body : List Cmd) (captured : List (String × Val))
   deriving Repr, BEq, Inhabited
 
@@ -73,6 +74,7 @@ inductive Error where
   | notCallable (v : Val)
   | deleteWithoutVirtualDtor (static tag : String)
   | doubleDelete (l : Loc)
+  | library (msg : String)       -- an error that a rule of `CoreCpp.Std` gives
   deriving Repr, BEq, Inhabited
 
 /-- A binding of ρ. `owned` records whether the declaration that created the

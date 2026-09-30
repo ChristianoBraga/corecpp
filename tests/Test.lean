@@ -2,6 +2,12 @@ import CoreCpp
 
 open CoreCpp
 
+/-- A program with the declarations of the headers `<vector>` and `<functional>`
+when it uses the standard library, as `#include` gives them. -/
+def parseStd (s : String) : Except String Program :=
+  let std := "namespace std { template <typename T> class vector; template <typename F> class function; }"
+  parseUnit ((if (s.splitOn "std::").length > 1 then [(std, true)] else []) ++ [(s, false)])
+
 /-! ## Lexer and parser -/
 
 #eval lex "int x = 10; // comment\nx = x + 1;"
@@ -15,7 +21,7 @@ open CoreCpp
 #eval parseStatement "for (int i = 2; i <= n; i = i + 1) { acc = acc * i; }"
 #eval parseStatement "int x;"
 
-#eval parseProgram "int factorial(int n) {
+#eval parseStd "int factorial(int n) {
   int acc = 1;
   for (int i = 2; i <= n; i = i + 1) {
     acc = acc * i;
@@ -35,7 +41,7 @@ int main() {
 /-! ## Evaluator -/
 
 def prog (s : String) : Except String (Except Error Val) :=
-  (parseProgram s).map run
+  (parseStd s).map run
 
 #eval prog "int factorial(int n) {
   int acc = 1;
@@ -76,13 +82,13 @@ int main() { return factorial(5); }"
 #eval prog "int main() { int x = 1; x = x + 41; return x; }"
 
 -- type checking
-#eval (parseProgram "int main() { bool b = true; int x = b + 1; return x; }").map check
-#eval (parseProgram "int f(int n) { return n; } int main() { return f(true); }").map check
-#eval (parseProgram "int main() { int x = 1; return x; }").map check
+#eval (parseStd "int main() { bool b = true; int x = b + 1; return x; }").map check
+#eval (parseStd "int f(int n) { return n; } int main() { return f(true); }").map check
+#eval (parseStd "int main() { int x = 1; return x; }").map check
 
 -- derivation trace of a small program
 #eval do
-  let p ← parseProgram "int main() { int x = 1; x = x + 41; return x; }"
+  let p ← parseStd "int main() { int x = 1; x = x + 41; return x; }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
@@ -127,19 +133,19 @@ int main() { Node* p = nullptr; return p->value; }"
 #eval prog "int main() { std::vector<int>* v = new std::vector<int>(0 - 1); return 0; }"
 
 -- objects never live in variables, only behind pointers
-#eval (parseProgram "class P { public: int x; }; int main() { P a = new P(); return 0; }").map check
+#eval (parseStd "class P { public: int x; }; int main() { P a = new P(); return 0; }").map check
 -- an unknown field
-#eval (parseProgram "class P { public: int x; }; int main() { P* a = new P(); return a->y; }").map check
+#eval (parseStd "class P { public: int x; }; int main() { P* a = new P(); return a->y; }").map check
 -- nullptr has no type of its own for a variable
-#eval (parseProgram "int main() { auto p = nullptr; return 0; }").map check
+#eval (parseStd "int main() { auto p = nullptr; return 0; }").map check
 -- a field of class type would be an object by value
-#eval (parseProgram "class Q { public: int y; }; class P { public: Q q; }; int main() { return 0; }").map check
+#eval (parseStd "class Q { public: int y; }; class P { public: Q q; }; int main() { return 0; }").map check
 -- pointers admit equality and nothing else
-#eval (parseProgram "class P { public: int x; }; int main() { P* a = new P(); return a + 1; }").map check
+#eval (parseStd "class P { public: int x; }; int main() { P* a = new P(); return a + 1; }").map check
 
 -- the trace of a field update
 #eval do
-  let p ← parseProgram "class P { public: int x; }; int main() { P* a = new P(); a->x = 3; return a->x; }"
+  let p ← parseStd "class P { public: int x; }; int main() { P* a = new P(); a->x = 3; return a->x; }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
@@ -173,13 +179,13 @@ int next(Cell* c) { c->n = c->n + 1; return c->n; }
 int main() { Cell* c = new Cell(); return next(c) + 10 * next(c); }"
 
 -- the initialiser of a reference must denote a location
-#eval (parseProgram "int main() { int& r = 5; return r; }").map check
+#eval (parseStd "int main() { int& r = 5; return r; }").map check
 -- the referent has the declared type
-#eval (parseProgram "int main() { int x = 1; bool& b = x; return 0; }").map check
+#eval (parseStd "int main() { int x = 1; bool& b = x; return 0; }").map check
 
 -- the trace of an aliasing write
 #eval do
-  let p ← parseProgram "int main() { int x = 1; int& y = x; y = 2; return x; }"
+  let p ← parseStd "int main() { int x = 1; int& y = x; y = 2; return x; }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
@@ -226,25 +232,25 @@ int main() { return applyTwice([=](int x) -> int { return x * x; }, 3); }"
   std::function<int(int, int)> h = g; return h(10, 3); }"
 
 -- a captured variable is read only inside the lambda
-#eval (parseProgram "int main() { int n = 1; std::function<int()> f = [=]() -> int { n = 2; return n; }; return f(); }").map check
+#eval (parseStd "int main() { int n = 1; std::function<int()> f = [=]() -> int { n = 2; return n; }; return f(); }").map check
 -- and cannot be aliased by a reference either
-#eval (parseProgram "int main() { int n = 1; std::function<int()> f = [=]() -> int { int& r = n; r = 3; return n; }; return f(); }").map check
+#eval (parseStd "int main() { int n = 1; std::function<int()> f = [=]() -> int { int& r = n; r = 3; return n; }; return f(); }").map check
 -- a lambda is not an auto initialiser, by the grammar
-#eval parseProgram "int main() { auto f = [=](int x) -> int { return x; }; return f(1); }"
+#eval parseStd "int main() { auto f = [=](int x) -> int { return x; }; return f(1); }"
 -- a lambda is not an operand, by the grammar
-#eval parseProgram "int main() { return 1 + [=]() -> int { return 1; }; }"
+#eval parseStd "int main() { return 1 + [=]() -> int { return 1; }; }"
 -- the argument of a reference parameter denotes a location
-#eval (parseProgram "void inc(int& r) { r = r + 1; } int main() { inc(5); return 0; }").map check
+#eval (parseStd "void inc(int& r) { r = r + 1; } int main() { inc(5); return 0; }").map check
 -- only function values are called
-#eval (parseProgram "int main() { int x = 1; return x(2); }").map check
+#eval (parseStd "int main() { int x = 1; return x(2); }").map check
 -- the lambda has exactly the parameter types of the std::function
-#eval (parseProgram "int main() { std::function<int(int)> f = [=](bool b) -> int { return 1; }; return f(1); }").map check
+#eval (parseStd "int main() { std::function<int(int)> f = [=](bool b) -> int { return 1; }; return f(1); }").map check
 -- no field of function type in this subset
-#eval (parseProgram "class C { public: std::function<int()> f; }; int main() { return 0; }").map check
+#eval (parseStd "class C { public: std::function<int()> f; }; int main() { return 0; }").map check
 
 -- the trace of a call through a closure
 #eval do
-  let p ← parseProgram "int main() { int n = 2; std::function<int(int)> f = [=](int x) -> int { return x + n; }; return f(40); }"
+  let p ← parseStd "int main() { int n = 2; std::function<int(int)> f = [=](int x) -> int { return x + n; }; return f(40); }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
@@ -313,23 +319,23 @@ int main() { B* b = new D(); delete b; return 0; }"
 #eval prog "class C { public: int x; }; int main() { C* p = new C(); delete p; return p->x; }"
 
 -- a private member is not visible outside the class
-#eval (parseProgram "class C { private: int x; public: C() { x = 1; } }; int main() { C* p = new C(); return p->x; }").map check
+#eval (parseStd "class C { private: int x; public: C() { x = 1; } }; int main() { C* p = new C(); return p->x; }").map check
 -- a non virtual method is not redefined
-#eval (parseProgram "class B { public: int f() { return 1; } }; class D : public B { public: int f() { return 2; } }; int main() { return 0; }").map check
+#eval (parseStd "class B { public: int f() { return 1; } }; class D : public B { public: int f() { return 2; } }; int main() { return 0; }").map check
 -- override needs a virtual method in a base
-#eval (parseProgram "class B { public: int f() { return 1; } }; class D : public B { public: int g() override { return 2; } }; int main() { return 0; }").map check
+#eval (parseStd "class B { public: int f() { return 1; } }; class D : public B { public: int g() override { return 2; } }; int main() { return 0; }").map check
 -- a base with a parameterised constructor cannot be derived from, there is no initialiser list
-#eval (parseProgram "class B { public: int x; B(int v) { x = v; } }; class D : public B { public: int y; }; int main() { return 0; }").map check
+#eval (parseStd "class B { public: int x; B(int v) { x = v; } }; class D : public B { public: int y; }; int main() { return 0; }").map check
 -- this outside a class
-#eval (parseProgram "int main() { return this->x; }").map check
+#eval (parseStd "int main() { return this->x; }").map check
 -- a Base* is not a Derived*
-#eval (parseProgram "class B { public: int x; }; class D : public B { public: int y; }; int main() { B* b = new D(); D* d = b; return 0; }").map check
+#eval (parseStd "class B { public: int x; }; class D : public B { public: int y; }; int main() { B* b = new D(); D* d = b; return 0; }").map check
 -- the constructor is named after the class, by the grammar
-#eval parseProgram "class C { public: D() { } }; int main() { return 0; }"
+#eval parseStd "class C { public: D() { } }; int main() { return 0; }"
 
 -- the trace of a constructor and a method call
 #eval do
-  let p ← parseProgram "class C { private: int v; public: C(int x) { v = x; } int twice() { return v * 2; } };
+  let p ← parseStd "class C { private: int v; public: C(int x) { v = x; } int twice() { return v * 2; } };
 int main() { C* c = new C(21); return c->twice(); }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
@@ -387,36 +393,36 @@ return p->pop() + p->pop(); }"
 int main() { auto c = new Box<int>(42); auto n = c->get(); return n; }"
 
 -- a member takes an object by reference, never by value
-#eval (parseProgram "class P { public: int x; int sum(P o) { return x + o.x; } }; int main() { return 0; }").map check
+#eval (parseStd "class P { public: int x; int sum(P o) { return x + o.x; } }; int main() { return 0; }").map check
 
 -- two overloads that differ only in a std::function parameter are rejected
-#eval (parseProgram "int g(std::function<int(int)> h) { return h(1); }
+#eval (parseStd "int g(std::function<int(int)> h) { return h(1); }
 int g(std::function<bool(bool)> h) { return 0; }
 int main() { return 0; }").map check
 
 -- two candidates and no exact match is an ambiguous call
-#eval (parseProgram "class A { public: int a; }; class B : public A { public: int b; }; class C : public B { public: int c; };
+#eval (parseStd "class A { public: int a; }; class B : public A { public: int b; }; class C : public B { public: int c; };
 int f(A* x) { return 1; }
 int f(B* x) { return 2; }
 int main() { C* z = new C(); return f(z); }").map check
 
 -- an operator[] that returns a value does not denote a location
-#eval (parseProgram "class C { public: int v; int operator[](int i) { return v; } };
+#eval (parseStd "class C { public: int v; int operator[](int i) { return v; } };
 int main() { C* c = new C(); (*c)[0] = 1; return 0; }").map check
 
 -- a member that returns a reference returns a location
-#eval (parseProgram "class C { private: int v; public: int& at() { return 1; } };
+#eval (parseStd "class C { private: int v; public: int& at() { return 1; } };
 int main() { return 0; }").map check
 
 -- an instantiation of a name that is not a template
-#eval (parseProgram "int main() { Stack<int>* p = new Stack<int>(2); return 0; }").map check
+#eval (parseStd "int main() { Stack<int>* p = new Stack<int>(2); return 0; }").map check
 
 -- the grammar admits one type parameter
-#eval parseProgram "template<typename T> class C { public: T v; }; int main() { C<int, bool>* p = nullptr; return 0; }"
+#eval parseStd "template<typename T> class C { public: T v; }; int main() { C<int, bool>* p = nullptr; return 0; }"
 
 -- the trace of an overloaded call and of an operator member
 #eval do
-  let p ← parseProgram "class Point { public: int x; Point* operator+(Point& o) { Point* r = new Point(); r->x = x + o.x; return r; } };
+  let p ← parseStd "class Point { public: int x; Point* operator+(Point& o) { Point* r = new Point(); r->x = x + o.x; return r; } };
 int twice(int n) { return 2 * n; }
 bool twice(bool b) { return b; }
 int main() { Point* a = new Point(); a->x = twice(3); Point* c = *a + *a; return c->x; }"
@@ -429,10 +435,10 @@ int main() { Point* a = new Point(); a->x = twice(3); Point* c = *a + *a; return
 #eval lex "bool and = true;"
 #eval lex "return 010;"
 #eval lex "return 2147483648;"
-#eval parseProgram "int main() { return 5--2; }"
+#eval parseStd "int main() { return 5--2; }"
 -- The largest literal and a unary minus after a binary one remain.
 #eval lex "return 2147483647;"
-#eval parseProgram "int main() { return 5 - -2; }"
+#eval parseStd "int main() { return 5 - -2; }"
 
 /-! ## LL(1) table and predictive parser -/
 
@@ -449,3 +455,12 @@ int main() { Point* a = new Point(); a->x = twice(3); Point* c = *a + *a; return
     if (parseProgram src).isOk == ll then agree := agree + 1
     else IO.println s!"{f.fileName} disagrees"
   IO.println s!"{agree} examples, both parsers agree"
+
+/-! ## Declarations that only a header holds -/
+
+-- namespace std in a program, which C++ leaves undefined, is a syntax error
+#eval parseProgram "namespace std { template <typename T> class vector; } int main() { return 0; }"
+-- so is a function without a body
+#eval parseProgram "void assert(bool condition); int main() { assert(true); return 0; }"
+-- the same declarations from a header are accepted
+#eval (parseUnit [("void assert(bool condition);", true), ("int main() { assert(1 == 1); return 0; }", false)]).map run

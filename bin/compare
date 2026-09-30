@@ -6,8 +6,7 @@ files=${@:-examples/*.cpp}
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 for f in $files; do
   name=$(basename "$f" .cpp)
-  printf '#include <functional>\n#include <vector>\n' > "$tmp/$name.cpp"
-  cat "$f" >> "$tmp/$name.cpp"
+  cp "$f" "$tmp/$name.cpp"
   if g++ -std=c++17 -o "$tmp/$name" "$tmp/$name.cpp" 2>"$tmp/$name.err"; then
     "$tmp/$name" >/dev/null 2>&1; gxx=$?
   else gxx="reject"; fi

@@ -10,6 +10,7 @@ import CoreCppBlueprint.Chapters.Commands
 import CoreCppBlueprint.Chapters.Abstraction
 import CoreCppBlueprint.Chapters.Encapsulation
 import CoreCppBlueprint.Chapters.TypeSystems
+import CoreCppBlueprint.Chapters.Library
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -26,6 +27,15 @@ Core C++ is a subset of C++17 with an LL(1) grammar, a deterministic semantics a
 {include 0 CoreCppBlueprint.Chapters.Abstraction}
 {include 0 CoreCppBlueprint.Chapters.Encapsulation}
 {include 0 CoreCppBlueprint.Chapters.TypeSystems}
+{include 0 CoreCppBlueprint.Chapters.Library}
+
+# References
+
+* Gilles Kahn, Natural Semantics, STACS 1987, LNCS 247, Springer.
+* Gilles Kahn, Natural semantics, Research Report RR-0601, INRIA, 1987, [HAL](https://inria.hal.science/inria-00075953).
+* Bjarne Stroustrup, The C++ Programming Language, 4th edition, Addison-Wesley, 2013.
+* ISO/IEC 14882:2017, Programming Languages, C++, cited as N4659, the final working draft of WG21, [open-std.org](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf).
+* ISO/IEC 9899:2011, Programming Languages, C, cited as N1570, the committee draft of WG14, [open-std.org](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf).
 
 {blueprint_graph}
 {blueprint_summary}

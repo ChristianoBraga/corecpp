@@ -1,4 +1,5 @@
 // Core C++ example, abstract data types. A stack over a vector. The
+#include <vector>
 // public section is the signature, the private section the representation,
 // reachable only from the methods of the class. Exit code 42.
 class Stack {

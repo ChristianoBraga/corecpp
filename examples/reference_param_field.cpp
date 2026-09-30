@@ -1,4 +1,5 @@
 // Core C++ example, reference parameters. A reference parameter may be bound to a field or to
+#include <vector>
 // a vector element, because both denote locations. Exit code 21.
 class P {
 public:

@@ -26,9 +26,9 @@ Overloading, polymorphism, subtyping and inference.
 :::definition "overload_set" (parent := "ud6") (lean := "CoreCpp.sigOf, CoreCpp.Program.funsNamed, CoreCpp.Program.findMethods, CoreCpp.Typing.distinguishable") (uses := "fun_decl, cls_decl")
 A name denotes an overload set, the functions of the program with that name, or the methods of that name along the chain of a class, one per signature. A method of a derived class replaces the one of a base with the same signature, and a different signature is another overload, so the subset has no name hiding. Two declarations of one name live together only when they differ.
 
-$$`\dfrac{\text{arities differ, or } \exists i.\ p_i \neq q_i \text{ and neither } p_i \text{ nor } q_i \text{ is } \mathtt{std::function}}{\text{the two declarations are overloads}}\;\textsf{(Distinguishable)}`
+$$`\dfrac{\text{arities differ, or } \exists i.\ p_i \neq q_i \text{ and neither } p_i \text{ nor } q_i \text{ is convertible}}{\text{the two declarations are overloads}}\;\textsf{(Distinguishable)}`
 
-The restriction on `std::function` is the check 5 of the design. It keeps a lambda argument from deciding a call, which would ask for the type of the lambda before the candidate that gives it is known.
+A type is convertible when the library marks it so, as `std::function` of {bpref "std_function"}[]. The restriction is the check 5 of the design. It keeps a lambda argument from deciding a call, which would ask for the type of the lambda before the candidate that gives it is known.
 :::
 
 :::definition "overload_pick" (parent := "ud6") (lean := "CoreCpp.Typing.pickOverload, CoreCpp.Typing.resolveFun, CoreCpp.Typing.resolveMethod") (uses := "overload_set, fun_call, cls_method")

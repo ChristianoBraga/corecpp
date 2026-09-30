@@ -90,7 +90,7 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigm
 # Loops
 
 :::definition "cmd_while" (parent := "ud3") (lean := "CoreCpp.Typing.cmd, CoreCpp.Eval.cmd") (uses := "cmd_block, judg_ev_expr")
-The rule `While-T` recurs on its own conclusion. A `return` in the body interrupts the loop. The divergence of `while (true) {}` has no derivation, a limitation of inductive big step semantics (Leroy and Grall).
+The rule `While-T` recurs on its own conclusion. A `return` in the body interrupts the loop. The divergence of `while (true) {}` has no derivation, a limitation of inductive big step semantics (Kahn, RR-0601, §4.4, p. 11).
 
 $$`\dfrac{\Gamma \vdash e : \mathsf{bool} \qquad \Gamma \vdash \{c\} \dashv \Gamma}{\Gamma \vdash \mathtt{while}\ (e)\ \{c\} \dashv \Gamma}\;\textsf{(T-While)}`
 
@@ -112,7 +112,7 @@ $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash c_0 \Rightarrow \mathsf{normal}, 
 # Evaluation order
 
 :::definition "eval_order" (parent := "ud3") (lean := "CoreCpp.Eval.expr, CoreCpp.Eval.cmd, CoreCpp.Eval.lval") (uses := "expr_arith, cmd_assign, fun_call")
-Once a call inside an expression may write the store, the order in which the operands are evaluated is part of the meaning. Core C++ fixes one order for every construction and the interpreter implements it. In the binary operators, the left operand before the right one, rule `Binary`. In a call, the arguments left to right, rule `Call`. In the assignment, the right side before the left one, rule `Assign`. In the indexing, the vector before the index, rule `LocIndex`. The first two are choices of Core C++ where C++17 fixes no order, the last two are the orders C++17 fixes. For `f() + g()` with effects, C++17 also admits the derivation that evaluates `g()` first, and Core C++ has no such derivation, because `Binary` has one order of premises. The example `call_order.cpp` returns 21 in Core C++, and 21 or 12 under a C++ compiler.
+Once a call inside an expression may write the store, the order in which the operands are evaluated is part of the meaning. Core C++ fixes one order for every construction and the interpreter implements it. In the binary operators, the left operand before the right one, rule `Binary`. In a call, the arguments left to right, rule `Call`. In the assignment, the right side before the left one, rule `Assign`. In the indexing of a vector, the receiver before the index, rule `LocLib`. The first two are choices of Core C++ where C++17 fixes no order, the last two are the orders C++17 fixes. For `f() + g()` with effects, C++17 also admits the derivation that evaluates `g()` first, and Core C++ has no such derivation, because `Binary` has one order of premises. The example `call_order.cpp` returns 21 in Core C++, and 21 or 12 under a C++ compiler.
 :::
 
 # Expression statement

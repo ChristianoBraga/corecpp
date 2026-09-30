@@ -70,7 +70,7 @@ partial def substName (param repl : String) (n : String) : String :=
 partial def substTy (param : String) (τ : Ty) : Ty → Ty
   | .cls n => if n == param then τ else .cls (substName param τ.toString n)
   | .ptr t => .ptr (substTy param τ t)
-  | .vec t => .vec (substTy param τ t)
+  | .lib n ts => .lib n (ts.map (substTy param τ))
   | .fn r ps => .fn (substTy param τ r) (ps.map (substTy param τ))
   | t => t
 
@@ -88,7 +88,7 @@ partial def substExpr (param : String) (τ : Ty) : Expr → Expr
   | .call f es s => .call f (es.map (substExpr param τ)) s
   | .callFn f es => .callFn (substExpr param τ f) (es.map (substExpr param τ))
   | .newObj c es => .newObj (substName param τ.toString c) (es.map (substExpr param τ))
-  | .newVec t n => .newVec (substTy param τ t) (substExpr param τ n)
+  | .newLib t es => .newLib (substTy param τ t) (es.map (substExpr param τ))
   | .methodCall r a m es st sg =>
     .methodCall (substExpr param τ r) a m (es.map (substExpr param τ)) st sg
   | .field e f => .field (substExpr param τ e) f
@@ -136,7 +136,8 @@ def substClass (param : String) (τ : Ty) (c : ClassDecl) : ClassDecl :=
 /-- The class names a type mentions. -/
 partial def tyNames : Ty → List String
   | .cls n => [n]
-  | .ptr t | .vec t => tyNames t
+  | .ptr t => tyNames t
+  | .lib _ ts => ts.flatMap tyNames
   | .fn r ps => tyNames r ++ ps.flatMap tyNames
   | _ => []
 
@@ -150,7 +151,7 @@ partial def exprNames : Expr → List String
   | .callFn f es => exprNames f ++ es.flatMap exprNames
   | .methodCall r _ _ es _ _ => exprNames r ++ es.flatMap exprNames
   | .newObj c es => c :: es.flatMap exprNames
-  | .newVec t n => tyNames t ++ exprNames n
+  | .newLib t es => tyNames t ++ es.flatMap exprNames
   | .lambda ps r b => ps.flatMap (fun q => tyNames q.ty) ++ tyNames r ++ b.flatMap cmdNames
   | _ => []
 
@@ -175,7 +176,8 @@ def classNames (c : ClassDecl) : List String :=
 
 def declNames : Decl → List String
   | .cls c => classNames c
-  | .tmpl _ _ => []
+  | .tmpl _ _ | .libTmpl .. => []
+  | .libFn _ r ps => tyNames r ++ ps.flatMap (fun q => tyNames q.ty)
   | .fn f => tyNames f.ret ++ f.params.flatMap (fun q => tyNames q.ty) ++ f.body.flatMap cmdNames
 
 /-- The type a mangled name denotes, the inverse of `Ty.toString` on the
@@ -188,8 +190,9 @@ partial def readTy (s : String) : Option Ty :=
     else if core == "bool" then some .bool
     else if core == "void" then some .void
     else if core == "" || core.contains '(' then none
-    else if core.startsWith "std::vector<" && core.endsWith ">" then
-      (readTy ((core.drop "std::vector<".length).toString.dropRight 1)).map Ty.vec
+    else if core.startsWith "std::" && core.endsWith ">" && core.contains '<' then
+      let (n, args) := splitName core
+      (args.mapM readTy).map (Ty.lib n)
     else some (.cls core)
   base.map fun t => (List.replicate stars ()).foldl (fun t _ => Ty.ptr t) t
 

@@ -13,19 +13,19 @@ Preproc supports four things.
 1. Conditional compilation on flags.
 2. The inclusion of a subset of the standard library.
 3. The inclusion of a subset of the STL.
-4. The macro `assert` of `<cassert>`.
+4. The function `assert` of `<cassert>`.
 
 A flag has no value and never reaches the code. Preproc selects lines and replaces each `#include` by the contents of a header. It substitutes nothing else.
 
 ## Pipeline
 
 ```
-bin/ccpp-pre -D CCPP_DEBUG= prog.cpp -o prog.i.cpp  Preproc
-bin/corecpp run prog.i.cpp                          Core C++
+bin/ccpp-pre -D CCPP_DEBUG= prog.cpp -o prog.i.cpp  Preproc alone
+bin/corecpp run -D CCPP_DEBUG= prog.cpp             Preproc, then Core C++
 g++ -std=c++17 -D CCPP_DEBUG= prog.cpp              C++, with the headers of g++
 ```
 
-The library `Preproc` (`preproc/Preproc.lean`) implements the language, and the executable `ccpp-pre` (`preproc/PreprocMain.lean`, run through `bin/ccpp-pre`) reads the command line. `tests/Preproc.lean` tests it on the programs of `tests/preproc/`. Preproc reads files as sequences of lines, and it never lexes or parses Core C++. Its output T(p) is a Core C++ program without directives, and the Core C++ compiler reads it without knowing Preproc. The surface between the two is empty.
+The library `Preproc` (`preproc/Preproc.lean`) implements the language, and the executable `ccpp-pre` (`preproc/PreprocMain.lean`, run through `bin/ccpp-pre`) reads the command line. `tests/Preproc.lean` tests it on the programs of `tests/preproc/`. Preproc reads files as sequences of lines, and it never lexes or parses Core C++. Its output T(p) is a Core C++ program without directives. The surface between the two languages is empty. The driver `bin/corecpp` runs Preproc and passes the lines of T(p) to the parser, each marked with whether it comes from a header. Only a header may open `namespace std` or declare a function without a body. The output of `bin/ccpp-pre` carries no marks, so `bin/corecpp` rejects it when it includes a header.
 
 ## Grammar
 
@@ -98,33 +98,17 @@ A C++ header too may be included more than once "with no effect different from b
 
 | Library | Header | Contents in Core C++ |
 | --- | --- | --- |
-| standard library | `<cassert>` | a guard, since `assert` is a statement of Core C++ |
+| standard library | `<cassert>` | `void assert(bool condition);` |
 | standard library | `<cstdlib>` | a possible addition |
-| STL | `<vector>` | a guard, since `std::vector` is built into Core C++ |
-| STL | `<functional>` | a guard, since `std::function` is built into Core C++ |
+| STL | `<vector>` | `namespace std { template <typename T> class vector; }` |
+| STL | `<functional>` | `namespace std { template <typename F> class function; }` |
 | STL | `<optional>`, `<array>`, `<map>` | possible additions |
 
 C++ allows a header only outside any declaration or definition, and before the first reference to its entities (N4659 §20.5.2.2 [using.headers], paragraph 3). Preproc does not check this. An `#include` inside a function body puts declarations inside a block, and the Core C++ compiler rejects them by its own grammar.
 
 ## Assert
 
-The C++ header `<cassert>` has the contents of the C header `<assert.h>` (N4659 §22.3.1 [cassert.syn]). With `NDEBUG` undefined, a failed `assert` writes a diagnostic and calls `abort` (N1570 §7.2.1.1). Core C++ is to read `assert(e)` as a statement, which it does not do yet.
-
-```
-Γ ⊢ e : bool
-──────────────────── (T-Assert)
-Γ ⊢ assert(e) ⊣ Γ
-
-ρ, σ ⊢ e ⇒ true, σ′
-─────────────────────────────────── (E-AssertTrue)
-ρ, σ ⊢ assert(e) ⇒ normal, ρ, σ′
-
-ρ, σ ⊢ e ⇒ false, σ′
-─────────────────────────── (E-AssertFalse)
-ρ, σ ⊢ assert(e) ⇒ error
-```
-
-An `error` of e propagates. Core C++ ends an `error` with exit code 134 (`core-cpp/Main.lean`, line 59), and the shell reports 134 for a process that `abort` ends.
+The C++ header `<cassert>` has the contents of the C header `<assert.h>` (N4659 §22.3.1 [cassert.syn]). With `NDEBUG` undefined, a failed `assert` writes a diagnostic and calls `abort` (N1570 §7.2.1.1). The header of Core C++ declares `assert` as a function without a body. Its semantics is an intrinsic of the library, `CoreCpp/Std/Assert.lean`, and a failed assertion gives `error`. Core C++ ends an `error` with exit code 134, and the shell reports 134 for a process that `abort` ends.
 
 ## Correctness
 
@@ -133,12 +117,12 @@ Take a Preproc program p whose output T(p) Core C++ accepts. The property is tha
 1. The C++ preprocessor selects the same lines as Preproc (N4659 §19.1 [cpp.cond], paragraphs 11 and 12), and rule 5 keeps the flags out of the code.
 2. For the names the subset admits, each Core C++ header agrees with the `g++` header of the same name. This is one obligation per header. `bin/compare` tests it by running `g++` on p and `bin/corecpp` on T(p).
 
-A built-in name such as `std::vector` stays in scope without its header in Core C++. Such a program falls outside the property, since `g++` rejects it.
+A name of the library is in scope only after its `#include`. Without it the type checker of Core C++ rejects the program, as `g++` does.
 
 ## Open points
 
 1. The line numbers of T(p) differ from those of p after an inclusion, and Core C++ has no `#line`.
-2. Every Core C++ file is a C++ file, headers included. Adding declarations to namespace `std` makes a C++ program undefined (N4659 §20.5.4.2.1 [namespace.std], paragraph 1). A Core C++ header that declares a library name in `std` would therefore break the principle. The headers of the table hold only guards until Core C++ settles how it declares library names.
+2. Every Core C++ file is a C++ file, headers included. Adding declarations to namespace `std` makes a C++ program undefined (N4659 §20.5.4.2.1 [namespace.std], paragraph 1). The headers of the table declare library names in `std`, as the headers of a C++ implementation do, and `g++` never reads them. The parser rejects `namespace std` outside the headers.
 
 ## Left out
 

@@ -1,4 +1,5 @@
 import CoreCpp
+import Preproc
 
 /-!
 # corecpp, the Core C++ command line interpreter
@@ -9,6 +10,9 @@ import CoreCpp
     corecpp trace <file>   as run, printing the derivation before the result
     corecpp <file>         same as run
 
+Every mode first runs Preproc on the file, with the headers of Core C++ from
+`preproc/include` and the flags of the options `-D CCPP_X=`, which go before
+the file.
 
 `<file>` may be `-` for standard input, so that
 
@@ -28,7 +32,7 @@ too wide for the page written apart as named derivations.
 open CoreCpp
 
 def usage : String :=
-  "usage: corecpp [ast|check|run|trace] <file.cpp | ->"
+  "usage: corecpp [ast|check|run|trace] [-D CCPP_X=]... <file.cpp | ->"
 
 def readSource (path : String) : IO String :=
   if path == "-" then do
@@ -36,9 +40,17 @@ def readSource (path : String) : IO String :=
     stdin.readToEnd
   else IO.FS.readFile path
 
-def load (path : String) : IO (Option Program) := do
-  let src ← readSource path
-  match parseProgram src with
+/-- The headers of Core C++. The executable is `.lake/build/bin/corecpp` in the repository. -/
+def includeDir : IO System.FilePath := do
+  let app ← IO.appPath
+  let root := app.parent.bind (·.parent) |>.bind (·.parent) |>.bind (·.parent)
+  return (root.getD ".") / "preproc" / "include"
+
+def load (flags : List String) (path : String) : IO (Option Program) := do
+  let lines ← match ← Preproc.translateLines (← includeDir) flags path (← readSource path) with
+    | .ok t => pure t
+    | .error e => IO.eprintln e; return none
+  match parseUnit lines with
   | .ok p => return some p
   | .error e => IO.eprintln s!"{path}: {e}"; return none
 
@@ -59,21 +71,21 @@ def report (r : Except Error Val) : IO UInt32 := do
   | .error e => IO.eprintln s!"main() ⇒ error ({e})"
   return exitCode r
 
-def dispatch (cmd path : String) : IO UInt32 := do
+def dispatch (cmd : String) (flags : List String) (path : String) : IO UInt32 := do
   match cmd with
   | "ast" =>
-    let some p ← load path | return 1
+    let some p ← load flags path | return 1
     IO.println (toString (repr p))
     return 0
   | "check" =>
-    let some p ← load path | return 1
+    let some p ← load flags path | return 1
     if ← typed p then IO.println "well typed"; return 0 else return 1
   | "run" =>
-    let some p ← load path | return 1
+    let some p ← load flags path | return 1
     if !(← typed p) then return 1
     report (run p)
   | "trace" =>
-    let some p ← load path | return 1
+    let some p ← load flags path | return 1
     if !(← typed p) then return 1
     let (r, log) := runWith true p
     IO.println (renderTrace log)
@@ -81,8 +93,20 @@ def dispatch (cmd path : String) : IO UInt32 := do
     report r
   | _ => IO.eprintln usage; return 64
 
+/-- The flags of the options `-D CCPP_X=` or `-DCCPP_X=`, and the other arguments. -/
+def flagsOf : List String → Option (List String × List String)
+  | [] => some ([], [])
+  | "-D" :: d :: rest => cons d rest
+  | a :: rest => if a.startsWith "-D" && a.length > 2 then cons (a.drop 2).toString rest
+    else (flagsOf rest).map fun (fs, as) => (fs, a :: as)
+where
+  cons (d : String) (rest : List String) : Option (List String × List String) :=
+    match d.splitOn "=" with
+    | [f, ""] => if Preproc.isFlag f then (flagsOf rest).map fun (fs, as) => (f :: fs, as) else none
+    | _ => none
+
 def main (args : List String) : IO UInt32 := do
-  match args with
-  | [cmd, path] => dispatch cmd path
-  | [path]      => dispatch "run" path
-  | _           => IO.eprintln usage; return 64
+  match flagsOf args with
+  | some (flags, [cmd, path]) => dispatch cmd flags path
+  | some (flags, [path])      => dispatch "run" flags path
+  | _                         => IO.eprintln usage; return 64

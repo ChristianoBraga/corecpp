@@ -13,7 +13,7 @@ set_option verso.blueprint.foldCodeBlocks true
 
 #doc (Manual) "Types and expressions" =>
 
-One typing rule and one evaluation rule per construction of `Expr`. The typing rules live in `Typing.expr` and the evaluation rules in `Eval.expr`, each in the comment of the case that implements it. Where C++17 leaves the evaluation order unspecified, Core C++ evaluates left to right. The second half of the chapter holds the composite and recursive types, objects, pointers and vectors, whose expressions denote locations.
+One typing rule and one evaluation rule per construction of `Expr`. The typing rules live in `Typing.expr` and the evaluation rules in `Eval.expr`, each in the comment of the case that implements it. Where C++17 leaves the evaluation order unspecified, Core C++ evaluates left to right. The second half of the chapter holds the composite and recursive types, objects and pointers, whose expressions denote locations.
 
 :::group "ud2"
 Values, types and expressions.
@@ -121,7 +121,7 @@ $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sig
 $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-F)}`
 :::
 
-# Objects, pointers and vectors
+# Objects and pointers
 
 :::definition "expr_null" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr") (uses := "judg_ty_expr, judg_ev_expr, dom_val")
 The literal `nullptr` has the internal type $`\mathsf{nullptr\_t}`, compatible with every pointer type and with no other. Its value is $`\mathsf{null}`.
@@ -135,14 +135,6 @@ The expression `new C()` allocates one location per field of $`C`, each with the
 $$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\, \tau_1\, f_1; \ldots; \tau_n\, f_n; \,\}}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
 
 $$`\dfrac{\begin{array}{c} C \mapsto \mathtt{class}\ C\ \{\, \tau_1\, f_1; \ldots; \tau_n\, f_n; \,\} \qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(New)}`
-:::
-
-:::definition "expr_newvec" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Typing.storable") (uses := "judg_ty_expr, judg_ev_expr, dom_val, dom_store")
-The expression `new std::vector<τ>(n)` evaluates the size, allocates one location per element with the default value of $`\tau`, then the vector record, and evaluates to a pointer to it. A negative size is `error`. The element type has values, so there are no vectors of objects, only of pointers to them.
-
-$$`\dfrac{\Gamma \vdash n : \mathsf{int} \qquad \tau \text{ has values}}{\Gamma \vdash \mathtt{new}\ \mathtt{std{:}{:}vector}\langle\tau\rangle(n) : \mathtt{std{:}{:}vector}\langle\tau\rangle *}\;\textsf{(T-NewVec)}`
-
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash n \Rightarrow \mathsf{int}\,k, \sigma_1 \qquad k \ge 0 \qquad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma'_{i-1}, \mathrm{default}\,\tau),\ 1 \le i \le k,\ \sigma'_0 = \sigma_1 \\ (\ell, \sigma_2) = \mathrm{alloc}(\sigma'_k, \mathsf{vec}\,[\ell_1, \ldots, \ell_k]) \end{array}}{\rho, \sigma \vdash \mathtt{new}\ \mathtt{std{:}{:}vector}\langle\tau\rangle(n) \Rightarrow \mathsf{loc}\,\ell, \sigma_2}\;\textsf{(NewVec)}`
 :::
 
 :::definition "expr_deref" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.lval, CoreCpp.Eval.pointee") (uses := "judg_ty_lval, judg_ev_lval, expr_null")
@@ -161,16 +153,8 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \sigma'(
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e\mathtt{->}f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocArrow)}`
 :::
 
-:::definition "expr_index" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.lval") (uses := "judg_ty_lval, judg_ev_lval, expr_deref")
-The indexing `e[i]` denotes the location of element $`i` of the vector $`e` denotes. The vector is evaluated before the index, the order C++17 fixes for `operator[]`. An index outside $`[0, n)` is `error`, where C++17 leaves it undefined. This is the completeness principle at work, a vector knows its size and every access is checked.
+:::definition "expr_read" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.readLoc") (uses := "expr_deref, expr_field, std_uses")
+Reading `*e`, `e.f` or `e->f` as a value is reading the content of the location it denotes, one rule for the three forms. The typing rules `T-Deref`, `T-Field` and `T-Arrow` give the value the type of the location. An element `v[i]` of a vector is a use of the library, {bpref "std_uses"}[].
 
-$$`\dfrac{\Gamma \vdash e : \mathtt{std{:}{:}vector}\langle\tau\rangle \qquad \Gamma \vdash i : \mathsf{int}}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocIndex)}`
-
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma_1 \qquad \sigma_1(\ell) = \mathsf{vec}\,[\ell_0, \ldots, \ell_{n-1}] \\ \rho, \sigma_1 \vdash i \Rightarrow \mathsf{int}\,k, \sigma_2 \qquad 0 \le k < n \end{array}}{\rho, \sigma \vdash e[i] \Rightarrow_{\ell} \ell_k, \sigma_2}\;\textsf{(LocIndex)}`
-:::
-
-:::definition "expr_read" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.readLoc") (uses := "expr_deref, expr_field, expr_index")
-Reading `*e`, `e.f`, `e->f` or `e[i]` as a value is reading the content of the location it denotes, one rule for the four forms. The typing rules `T-Deref`, `T-Field`, `T-Arrow` and `T-Index` give the value the type of the location.
-
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in \mathrm{dom}\,\sigma'}{\rho, \sigma \vdash e \Rightarrow \sigma'(\ell), \sigma'}\;\textsf{(Read)}, \quad e \in \{{*e'},\ e'.f,\ e'\mathtt{->}f,\ e'[i]\}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in \mathrm{dom}\,\sigma'}{\rho, \sigma \vdash e \Rightarrow \sigma'(\ell), \sigma'}\;\textsf{(Read)}, \quad e \in \{{*e'},\ e'.f,\ e'\mathtt{->}f\}`
 :::

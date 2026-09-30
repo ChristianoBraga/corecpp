@@ -1,4 +1,5 @@
 // Core C++ example, closures. The capture [=] copies n when the lambda is
+#include <functional>
 // evaluated, so the later assignment to n is not seen by sum. Exit code 6.
 int main() {
   int n = 5;

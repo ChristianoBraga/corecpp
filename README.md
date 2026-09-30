@@ -24,6 +24,7 @@ C++17 leaves undefined is rejected statically or is the runtime result
 | `CoreCpp/Eval.lean` | Evaluator in natural semantics, one function per judgment, each rule in the comment of the case that implements it |
 | `CoreCpp/Pretty.lean` | Printing of syntax and semantic domains |
 | `CoreCpp/Templates.lean` | Expansion of class templates by substitution, before checking |
+| `CoreCpp/Std.lean`, `CoreCpp/Std/` | The library, one intrinsic per declaration of a header, with its typing and evaluation judgements |
 | `Main.lean`, `bin/corecpp` | Command line interpreter |
 | `CoreCpp/Grammar.lean` | The grammar of Core C++ with the theorem that it is LL(1), by the package [ll1-lean](https://github.com/ChristianoBraga/ll1-lean) |
 | `grammar/core-cpp.ebnf`, `CoreCpp/GrammarRules.lean` | The grammar of Core C++ in EBNF, and the Lean module that `lake exe ebnf2lean` generates from it |
@@ -126,8 +127,8 @@ lives on the branch `gh-pages`, the contents of that directory plus an empty
 - Lambdas capture only by copy, `[=]`, and occur only where C++ converts them
   to a known `std::function`.
 - Divergence has no derivation. The inductive big step semantics does not
-  describe non terminating executions, a limitation of the style (Leroy and
-  Grall, Coinductive big-step operational semantics).
+  describe non terminating executions, a limitation of the style (Kahn,
+  RR-0601, §4.4, p. 11).
 
 ## Status
 
@@ -135,8 +136,8 @@ The whole design is implemented and tested. Basic types, expressions and
 commands, first order functions with call by value and by reference, classes
 with fields and with methods, constructors, destructors, `new`, `delete`,
 `this`, `virtual`, single inheritance, namespaces, pointers, `nullptr`,
-`std::vector`, local references, lambdas `[=]` and `std::function`,
-overloading, operator members, class templates and `auto`.
+local references, lambdas `[=]`, the library `std::vector`, `std::function`
+and `assert` through the headers of `preproc/include`, overloading, operator members, class templates and `auto`.
 
 Outside the design, and therefore not implemented. Function templates,
 partial specialisation, objects by value, copy constructors, RAII,
@@ -145,6 +146,7 @@ exceptions, multiple inheritance and separate compilation.
 ## References
 
 - Gilles Kahn, Natural Semantics, STACS 1987, LNCS 247, Springer.
-- David A. Watt, Programming Language Concepts and Paradigms, Prentice Hall, 1990.
-- Xavier Leroy and Hervé Grall, Coinductive big-step operational semantics, Information and Computation 207 (2009).
-- ISO/IEC 14882:2017, Programming Languages, C++.
+- Gilles Kahn, Natural semantics, Research Report RR-0601, INRIA, 1987, https://inria.hal.science/inria-00075953
+- Bjarne Stroustrup, The C++ Programming Language, 4th edition, Addison-Wesley, 2013.
+- ISO/IEC 14882:2017, Programming Languages, C++, in the final working draft N4659 of WG21, https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf
+- ISO/IEC 9899:2011, Programming Languages, C, in the committee draft N1570 of WG14, https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf

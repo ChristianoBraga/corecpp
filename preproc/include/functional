@@ -1,3 +1,6 @@
 #ifndef CCPP_H_FUNCTIONAL
 #define CCPP_H_FUNCTIONAL
+namespace std {
+template <typename F> class function;
+}
 #endif

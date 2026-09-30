@@ -1,4 +1,5 @@
 // Core C++ example, function values. A function value is copied into another variable and
+#include <functional>
 // called through it. Exit code 7.
 int main() {
   std::function<int(int, int)> g = [=](int a, int b) -> int { return a - b; };

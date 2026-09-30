@@ -203,7 +203,10 @@ partial def Item.size : Item → Nat
     2 + (t.map Item.size).sum + (if hasElse then 1 + (e.map Item.size).sum else 0)
   | _ => 1
 
-def blank (is : List Item) : List String := List.replicate ((is.map Item.size).sum) ""
+/-- An output line, and whether it comes from a header. -/
+abbrev OutLine := String × Bool
+
+def blank (is : List Item) : List OutLine := List.replicate ((is.map Item.size).sum) ("", false)
 
 /-- The environment of the translation, the directory of the Core C++ headers
 and the depth of inclusion, which bounds a cycle of headers without a guard. -/
@@ -215,17 +218,17 @@ abbrev M := ExceptT String IO
 
 mutual
 
-partial def run (env : Env) (φ : List String) : List Item → M (List String × List String)
+partial def run (env : Env) (φ : List String) : List Item → M (List OutLine × List String)
   | [] => return ([], φ)
   | i :: is => do
     let (t, φ) ← runItem env φ i
     let (ts, φ) ← run env φ is
     return (t ++ ts, φ)
 
-partial def runItem (env : Env) (φ : List String) : Item → M (List String × List String)
-  | .text s => return ([s], φ)
+partial def runItem (env : Env) (φ : List String) : Item → M (List OutLine × List String)
+  | .text s => return ([(s, env.depth > 0)], φ)
   -- (P-Define)  φ ⊢ #define F ⇒ ε, φ ∪ {F}
-  | .define f => return ([""], if φ.contains f then φ else φ ++ [f])
+  | .define f => return ([("", false)], if φ.contains f then φ else φ ++ [f])
   -- (P-Include)  φ ⊢ H(h) ⇒ t, φ′ gives φ ⊢ #include <h> ⇒ t, φ′
   | .include loc h => do
     if env.depth ≥ 64 then throw (loc.err s!"headers nested more than 64 deep at <{h}>")
@@ -240,18 +243,25 @@ partial def runItem (env : Env) (φ : List String) : Item → M (List String × 
     let selected := (φ.contains f) != neg
     let (t, φ) ← if selected then run env φ thenI else pure (blank thenI, φ)
     let (e, φ) ← if selected then pure (blank elseI, φ) else run env φ elseI
-    return ([""] ++ t ++ (if hasElse then [""] ++ e else []) ++ [""], φ)
+    return ([("", false)] ++ t ++ (if hasElse then [("", false)] ++ e else []) ++ [("", false)], φ)
 
 end
 
-/-- The output T(p) of a file under the flags φ₀. -/
-def translate (includeDir : System.FilePath) (φ₀ : List String) (file src : String) :
-    IO (Except String String) := do
+/-- The lines of the output T(p) of a file under the flags φ₀, each marked with
+whether it comes from a header. -/
+def translateLines (includeDir : System.FilePath) (φ₀ : List String) (file src : String) :
+    IO (Except String (List OutLine)) := do
   match parse file src with
   | .error e => return .error e
   | .ok is =>
     match ← (run ⟨includeDir, 0⟩ φ₀ is).run with
-    | .ok (t, _) => return .ok ("\n".intercalate t ++ "\n")
+    | .ok (t, _) => return .ok t
     | .error e => return .error e
+
+/-- The output T(p) of a file under the flags φ₀. -/
+def translate (includeDir : System.FilePath) (φ₀ : List String) (file src : String) :
+    IO (Except String String) := do
+  return (← translateLines includeDir φ₀ file src).map fun t =>
+    "\n".intercalate (t.map (·.1)) ++ "\n"
 
 end Preproc

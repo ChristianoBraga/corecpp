@@ -1,3 +1,6 @@
 #ifndef CCPP_H_VECTOR
 #define CCPP_H_VECTOR
+namespace std {
+template <typename T> class vector;
+}
 #endif

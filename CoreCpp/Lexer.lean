@@ -61,16 +61,10 @@ partial def run (cs : List Char) (acc : Array Token) : Except String (Array Toke
         .error s!"integer literal {digits} exceeds 2147483647, the largest int"
       else run rest' (acc.push (.intLit digits.toNat!))
     else if isIdentStart c then
-      -- `std::function` and `std::vector` are single tokens
-      if cs.take 13 == "std::function".toList then
-        run (cs.drop 13) (acc.push (.kw "std::function"))
-      else if cs.take 11 == "std::vector".toList then
-        run (cs.drop 11) (acc.push (.kw "std::vector"))
-      else
-        let (name, rest') := takeWhile isIdentChar cs
-        if cppReserved.contains name && !keywords.contains name then
-          .error s!"'{name}' is a reserved word of C++ outside the subset"
-        else run rest' (acc.push (identifier name))
+      let (name, rest') := takeWhile isIdentChar cs
+      if cppReserved.contains name && !keywords.contains name then
+        .error s!"'{name}' is a reserved word of C++ outside the subset"
+      else run rest' (acc.push (identifier name))
     else
       match matchSymbol symbols3 cs with
       | some (s, rest') => run rest' (acc.push (.sym s))
