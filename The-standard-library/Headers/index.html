@@ -5498,7 +5498,9 @@ window.onload = async () => {
                 <p>
                   The header <code>&lt;vector&gt;</code> declares <code>template &lt;typename T&gt; class vector;</code> in <code>namespace std</code>. A vector is an object, created with <code>new</code> and reached by pointer. Its value <code class="bp_math inline">\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}]</code> holds one location per element. The element type has values and a default, so it is not a class, a type of the library, a function type, <code>void</code> or <code class="bp_math inline">\mathsf{nullptr\_t}</code>. A vector therefore holds pointers to objects and never objects.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{new} : \mathsf{int} \to \mathtt{std{:}{:}vector}\langle\tau\rangle*}\;\textsf{(TV-New)} \qquad \dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{operator[]} : \mathsf{int} \to \tau}\;\textsf{(TV-Index)}</code></p>
+                  <code class="bp_math display">\dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{new} : \mathsf{int} \to \mathtt{std{:}{:}vector}\langle\tau\rangle*}\;\textsf{(TV-New)}</code></p>
+                <p>
+                  <code class="bp_math display">\dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{operator[]} : \mathsf{int} \to \tau}\;\textsf{(TV-Index)}</code></p>
                 <p>
                   The use <code>operator[]</code> gives a location, so <code>v[i]</code> may stand on the left of an assignment and bind a reference.</p>
                 <p>
@@ -5532,7 +5534,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Std.vector" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/50f6a197f2d644605cd020d75b31070a0c3c9ce3/CoreCpp/Std/Vector.lean#L25-L68">CoreCpp/Std/Vector.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/5ed7003db85acfdebba7938a6a29cab4613ef3d0/CoreCpp/Std/Vector.lean#L25-L68">CoreCpp/Std/Vector.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5551,7 +5553,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Std.elementOk" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/50f6a197f2d644605cd020d75b31070a0c3c9ce3/CoreCpp/Std/Vector.lean#L14-L23">CoreCpp/Std/Vector.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/5ed7003db85acfdebba7938a6a29cab4613ef3d0/CoreCpp/Std/Vector.lean#L14-L23">CoreCpp/Std/Vector.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5690,7 +5692,7 @@ function type. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Std.function" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/50f6a197f2d644605cd020d75b31070a0c3c9ce3/CoreCpp/Std/Function.lean#L16-L46">CoreCpp/Std/Function.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/5ed7003db85acfdebba7938a6a29cab4613ef3d0/CoreCpp/Std/Function.lean#L16-L46">CoreCpp/Std/Function.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5800,7 +5802,9 @@ function type. </pre></div>
                 <p>
                   <code class="bp_math display">\dfrac{}{\Gamma \vdash_{\mathit{assert}} \mathtt{call} : \mathsf{bool} \to \mathsf{void}}\;\textsf{(TA-Call)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{}{\sigma \vdash_{\mathit{assert}} \mathtt{call}(\mathtt{true}) \Rightarrow \mathsf{void}, \sigma}\;\textsf{(A-True)} \qquad \dfrac{}{\sigma \vdash_{\mathit{assert}} \mathtt{call}(\mathtt{false}) \Rightarrow \mathsf{error}}\;\textsf{(A-False)}</code></p>
+                  <code class="bp_math display">\dfrac{}{\sigma \vdash_{\mathit{assert}} \mathtt{call}(\mathtt{true}) \Rightarrow \mathsf{void}, \sigma}\;\textsf{(A-True)}</code></p>
+                <p>
+                  <code class="bp_math display">\dfrac{}{\sigma \vdash_{\mathit{assert}} \mathtt{call}(\mathtt{false}) \Rightarrow \mathsf{error}}\;\textsf{(A-False)}</code></p>
                 </div>
               </div>
             <div class="bp_wrapper bp_code_panel_wrapper">
@@ -5822,7 +5826,7 @@ function type. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Std.assert" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/50f6a197f2d644605cd020d75b31070a0c3c9ce3/CoreCpp/Std/Assert.lean#L14-L31">CoreCpp/Std/Assert.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/5ed7003db85acfdebba7938a6a29cab4613ef3d0/CoreCpp/Std/Assert.lean#L14-L31">CoreCpp/Std/Assert.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

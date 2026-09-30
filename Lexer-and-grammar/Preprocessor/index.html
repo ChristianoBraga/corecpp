@@ -6042,9 +6042,13 @@ in a comment, or open a literal. </pre></div>
                 <p>
                   The flag environment <code class="bp_math inline">\varphi</code> is a finite set of flags, initially the flags given as <code>-D CCPP_X=</code>. The judgement <code class="bp_math inline">\varphi \vdash G \Rightarrow t, \varphi'</code> gives the output lines <code class="bp_math inline">t</code> of a group and the environment after it. <code class="bp_math inline">H(h)</code> is the contents of the Core C++ header <code class="bp_math inline">h</code>.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{}{\varphi \vdash \texttt{\#define}\ F \Rightarrow \varepsilon, \varphi \cup \{F\}}\;\textsf{(P-Define)} \qquad \dfrac{\varphi \vdash H(h) \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#include}\ \texttt{&lt;}h\texttt{&gt;} \Rightarrow t, \varphi'}\;\textsf{(P-Include)}</code></p>
+                  <code class="bp_math display">\dfrac{}{\varphi \vdash \texttt{\#define}\ F \Rightarrow \varepsilon, \varphi \cup \{F\}}\;\textsf{(P-Define)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{F \in \varphi \qquad \varphi \vdash G_1 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefT)} \qquad \dfrac{F \notin \varphi \qquad \varphi \vdash G_2 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefF)}</code></p>
+                  <code class="bp_math display">\dfrac{\varphi \vdash H(h) \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#include}\ \texttt{&lt;}h\texttt{&gt;} \Rightarrow t, \varphi'}\;\textsf{(P-Include)}</code></p>
+                <p>
+                  <code class="bp_math display">\dfrac{F \in \varphi \qquad \varphi \vdash G_1 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefT)}</code></p>
+                <p>
+                  <code class="bp_math display">\dfrac{F \notin \varphi \qquad \varphi \vdash G_2 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefF)}</code></p>
                 <p>
                   The directive <code>#ifndef</code> swaps the premises <code class="bp_math inline">F \in \varphi</code> and <code class="bp_math inline">F \notin \varphi</code>, and a missing <code>#else</code> stands for an empty <code class="bp_math inline">G_2</code>. A text line gives itself. The output keeps one line for each source line outside the headers, an empty one for every directive line and every line of a branch that is not selected.</p>
                 <p>
