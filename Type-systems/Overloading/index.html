@@ -5532,7 +5532,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.sigOf" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L334-L336">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L334-L336">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5554,7 +5554,7 @@ member of an overload set. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Program.funsNamed" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L348-L350">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L348-L350">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5577,7 +5577,7 @@ member of an overload set. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Program.findMethods" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L338-L346">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L338-L346">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5604,7 +5604,7 @@ hiding of C++. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.distinguishable" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L220-L230">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L220-L230">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5758,7 +5758,7 @@ which would ask for the type of the lambda before the candidate is known.
                 <p>
                   A call collects the candidates of its arity that accept the arguments, each argument by value acceptable at the type of its parameter and each argument of a reference parameter denoting a location of that type. The choice is the exact candidate when several accept.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{\begin{array}{c} A = \text{the candidates of } \mathrm{cand}(f, k) \text{ that accept } e_1, \ldots, e_k \\ A \text{ has one element whose parameters are exactly the types of the arguments, or } A \text{ is a singleton} \end{array}}{\text{the call of } f \text{ selects that candidate}}\;\textsf{(T-Overload)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} A = \text{the candidates of } \mathrm{cand}(f, k) \text{ that accept } e_1, \ldots, e_k \\ A \text{ has one element whose parameters are} \\ \text{exactly the types of the arguments, or } A \text{ is a singleton} \end{array}}{\text{the call of } f \text{ selects that candidate}}\;\textsf{(T-Overload)}</code></p>
                 <p>
                   With <code class="bp_math inline">A</code> empty the error is the one of the single candidate of that arity, when there is one, and no overload otherwise. With two or more in <code class="bp_math inline">A</code> and no exact one the call is ambiguous. Core C++ does not rank conversion sequences as C++ does, so the rule fits in one line on the board and the error is predictable.</p>
                 <p>
@@ -5788,7 +5788,7 @@ which would ask for the type of the lambda before the candidate is known.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.pickOverload" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L567-L598">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L567-L598">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5826,7 +5826,7 @@ exact one when several accept.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.resolveFun" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L600-L605">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L600-L605">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5850,7 +5850,7 @@ exact one when several accept.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.resolveMethod" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L607-L629">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L607-L629">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5995,7 +5995,7 @@ T-Method and T-MethodArrow with the overload set of the name. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.FunEnv.lookupSig" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Semantics.lean#L152-L157">CoreCpp/Semantics.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Semantics.lean#L152-L157">CoreCpp/Semantics.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6020,7 +6020,7 @@ first one of the name when the program was not annotated. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.resolve" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L471-L484">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L471-L484">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6047,7 +6047,7 @@ in an unannotated program, the first of the name serves. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.annotate" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L1086-L1105">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L1086-L1105">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

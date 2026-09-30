@@ -5546,7 +5546,7 @@ window.onload = async () => {
                 <p>
                   The class is well formed when the base exists and the chain is acyclic, the fields have types with values and repeat no field of a base, the members have distinct names, a method that redefines a method of a base finds it <code>virtual</code> there, carries <code>override</code> and keeps the signature, the constructor of the base takes no parameters, and every member body is well typed under <code>this</code>.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{\begin{array}{c} B \text{ exists, chain acyclic} \qquad \text{fields storable, well formed, new in the chain} \\ \text{each redefined } m \text{ is virtual in the base, marked override, same signature} \qquad B \text{ has no constructor or one without parameters} \\ [\mathtt{this} \mapsto C*, p_1, \ldots, p_k] \vdash c \dashv \Gamma' \text{ for each member body} \end{array}}{\vdash \mathtt{class}\ C\ \mathtt{:}\ \mathtt{public}\ B\ \{ \ldots \}}\;\textsf{(T-Class)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} B \text{ exists, chain acyclic}\qquad \text{fields storable, well formed, new in the chain} \\ \text{each redefined } m \text{ is virtual in the base, marked override, same signature} \\ B \text{ has no constructor or one without parameters} \\ [\mathtt{this} \mapsto C*, p_1, \ldots, p_k] \vdash c \dashv \Gamma' \text{ for each member body} \end{array}}{\vdash \mathtt{class}\ C\ \mathtt{:}\ \mathtt{public}\ B\ \{ \ldots \}}\;\textsf{(T-Class)}</code></p>
                 <p>
                   The context of a member body binds <code>this</code> to <code class="bp_math inline">C*</code> and the parameters as variables, so the current class is the class of <code>this</code> in <code class="bp_math inline">\Gamma</code>.</p>
                 </div>
@@ -5584,7 +5584,7 @@ window.onload = async () => {
                       <div class="declaration decl structure" data-decl="CoreCpp.ClassDecl" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(6 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L250-L266">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(6 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L250-L266">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5634,7 +5634,7 @@ namespace, `N::C`. </pre><div class="bp_external_decl_section" role="group" aria
                       <div class="declaration decl structure" data-decl="CoreCpp.Field" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(3 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L195-L203">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(3 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L195-L203">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5670,7 +5670,7 @@ namespace, `N::C`. </pre><div class="bp_external_decl_section" role="group" aria
                       <div class="declaration decl structure" data-decl="CoreCpp.Method" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(8 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L205-L229">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(8 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L205-L229">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5732,7 +5732,7 @@ denotes the location the body returns. </pre></div>
                       <div class="declaration decl structure" data-decl="CoreCpp.Ctor" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(2 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L231-L238">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(2 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L231-L238">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5765,7 +5765,7 @@ the fields are allocated. </pre><div class="bp_external_decl_section" role="grou
                       <div class="declaration decl structure" data-decl="CoreCpp.Dtor" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(2 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L240-L248">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(2 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L240-L248">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5799,7 +5799,7 @@ through a pointer to the base well defined. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Vis" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L185-L193">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L185-L193">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5833,7 +5833,7 @@ declares it. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.cls" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L845-L919">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L845-L919">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5872,7 +5872,7 @@ Every member body is well typed under `this`.
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.memberEnv" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L840-L843">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L840-L843">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6017,7 +6017,7 @@ the parameters as variables. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.TEnv.self" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L83-L88">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L83-L88">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6039,7 +6039,7 @@ a constructor or a destructor. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.fieldType" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L635-L644">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L635-L644">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6066,7 +6066,7 @@ field is visible only when Γ(this) is the class that declares it.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.methodCall" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L631-L633">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L631-L633">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6190,7 +6190,7 @@ field is visible only when Γ(this) is the class that declares it.
                 <p>
                   The same holds of a call. An unqualified name that is neither a variable nor a function of the program is a member of the receiver.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{f \notin \Gamma \qquad f \text{ is no function of the program} \qquad \Gamma(\mathtt{this}) = C* \qquad \Gamma \vdash \mathtt{this}\mathtt{-&gt;}f(e_1, \ldots, e_k) : \tau}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallThis)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} f \notin \Gamma\qquad f \text{ is no function of the program}\qquad \Gamma(\mathtt{this}) = C* \\ \Gamma \vdash \mathtt{this}\mathtt{-&gt;}f(e_1, \ldots, e_k) : \tau \end{array}}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallThis)}</code></p>
                 <p>
                   <code class="bp_math display">\dfrac{\rho(\mathtt{this}) = \ell}{\rho, \sigma \vdash \mathtt{this} \Rightarrow \mathsf{loc}\,\ell, \sigma}\;\textsf{(This)}</code></p>
                 <p>
@@ -6222,7 +6222,7 @@ field is visible only when Γ(this) is the class that declares it.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L289-L480">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L289-L480">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6245,7 +6245,7 @@ field is visible only when Γ(this) is the class that declares it.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6270,7 +6270,7 @@ field is visible only when Γ(this) is the class that declares it.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.lval" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L607-L662">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L607-L662">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

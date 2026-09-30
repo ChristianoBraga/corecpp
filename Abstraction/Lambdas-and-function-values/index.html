@@ -5542,7 +5542,7 @@ window.onload = async () => {
                 <p>
                   <code class="bp_math display">\dfrac{\Gamma \vdash e : \tau' \qquad \tau' \approx \tau \qquad \tau' \text{ has values}}{\Gamma \vdash e \lhd \tau}\;\textsf{(Accept)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{\begin{array}{c} \Gamma' = \Gamma \text{ marked read only}, [x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k] \\ \Gamma' \vdash c \dashv \Gamma'' \qquad \tau, \tau_i \text{ storable and well formed} \qquad \Gamma \vdash_L \tau(\tau_1, \ldots, \tau_k) \hookrightarrow L\langle\bar{\tau}\rangle \end{array}}{\Gamma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{-&gt;}\ \tau\ \{c\} \lhd L\langle\bar{\tau}\rangle}\;\textsf{(T-Lambda)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} \Gamma' = \Gamma \text{ marked read only}, [x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k]\qquad \Gamma' \vdash c \dashv \Gamma'' \\ \tau, \tau_i \text{ storable and well formed}\qquad \Gamma \vdash_L \tau(\tau_1, \ldots, \tau_k) \hookrightarrow L\langle\bar{\tau}\rangle \end{array}}{\Gamma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{-&gt;}\ \tau\ \{c\} \lhd L\langle\bar{\tau}\rangle}\;\textsf{(T-Lambda)}</code></p>
                 <p>
                   Outside its three positions a lambda is a type error, and <code>auto x = [=]…</code> is a syntax error, because the grammar admits a lambda only as an argument expression.</p>
                 <p>
@@ -5574,7 +5574,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.accept" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L517-L528">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L517-L528">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5604,7 +5604,7 @@ other expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.lambdaAt" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L530-L553">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L530-L553">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5642,7 +5642,7 @@ library to which its function type converts is expected.
                       <div class="declaration decl structure" data-decl="CoreCpp.TBind" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(2 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L61-L66">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(2 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L61-L66">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5673,7 +5673,7 @@ which the body may read and not write. </pre><div class="bp_external_decl_sectio
                       <div class="declaration decl def" data-decl="CoreCpp.TEnv.captured" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L80-L81">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L80-L81">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5788,7 +5788,7 @@ which the body may read and not write. </pre><div class="bp_external_decl_sectio
                 <p>
                   A lambda evaluates to a closure with copies of the free variables of its body that the environment binds, taken when the lambda is evaluated. The closure holds values, not locations. A captured <code>int</code> or <code>bool</code> is a copy the body reads and never writes, and a captured pointer still reaches its object in <code class="bp_math inline">\sigma</code>, so an effect through it is visible outside the lambda.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{free variables of } c \text{ bound in } \rho, \text{ minus the } x_i \\ \rho(y_j) = \ell_j \qquad \ell_j \in \mathrm{dom}\,\sigma \qquad w_j = \sigma(\ell_j) \end{array}}{\rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{-&gt;}\ \tau\ \{c\} \Rightarrow \mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma}\;\textsf{(Lambda)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{free variables of } c \text{ bound in } \rho, \text{ minus the } x_i\qquad \rho(y_j) = \ell_j \\ \ell_j \in \mathrm{dom}\,\sigma\qquad w_j = \sigma(\ell_j) \end{array}}{\begin{array}{c} \rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{-&gt;}\ \tau\ \{c\} \\ \Rightarrow \mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma \end{array}}\;\textsf{(Lambda)}</code></p>
                 <p>
                   Some of the implementations are <code>partial</code>, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.</p>
                 </div>
@@ -5818,7 +5818,7 @@ which the body may read and not write. </pre><div class="bp_external_decl_sectio
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5843,7 +5843,7 @@ which the body may read and not write. </pre><div class="bp_external_decl_sectio
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.captures" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L248-L257">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L248-L257">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5871,7 +5871,7 @@ variable whose location left the store is error. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Expr.vars" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L152-L165">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L152-L165">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5894,7 +5894,7 @@ excluded. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Cmd.vars" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L167-L174">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L167-L174">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6010,9 +6010,9 @@ excluded. </pre></div>
                 <p>
                   The type checker rewrites the call into the use <code>operator()</code> of <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-std-005Fuses-statement" data-bp-preview-title="Definition 8.1.2" data-bp-preview-key="std_uses--statement"><a href="The-standard-library/Interface/#--informal-preview-std_uses--statement" title="std_uses">Definition 8.1.2</a></span></span>. The rule <code>F-Call</code> of <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-std-005Ffunction-statement" data-bp-preview-title="Definition 8.2.2" data-bp-preview-key="std_function--statement"><a href="The-standard-library/Headers/#--informal-preview-std_function--statement" title="std_function">Definition 8.2.2</a></span></span> then takes the application of the closure to the values, the premises of <code>CallFn</code> after the arguments, as its premise <code class="bp_math inline">\mathrm{apply}</code>.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash e(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallFn)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} \Gamma \vdash e : L\langle\bar{\tau}\rangle\qquad \Gamma \vdash_L \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau \\ \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k) \end{array}}{\Gamma \vdash e(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallFn)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma_0 \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad (\ell'_j, \cdot) = \mathrm{alloc}(w_j) \qquad (\ell_i, \cdot) = \mathrm{alloc}(v_i) \\ [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma' \vdash c \Rightarrow \mathsf{ret}\,v, \rho'', \sigma'' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell'_j, \ell_i\} \cup (\rho'' \setminus \rho_c))}\;\textsf{(CallFn)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma_0 \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k)\qquad (\ell'_j, \cdot) = \mathrm{alloc}(w_j) \\ (\ell_i, \cdot) = \mathrm{alloc}(v_i) \\ [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma' \vdash c \Rightarrow \mathsf{ret}\,v, \rho'', \sigma'' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell'_j, \ell_i\} \cup (\rho'' \setminus \rho_c))}\;\textsf{(CallFn)}</code></p>
                 <p>
                   With <code class="bp_math inline">\mathsf{normal}</code> in place of <code class="bp_math inline">\mathsf{ret}\,v</code> the result is <code class="bp_math inline">\mathsf{void}</code> if <code class="bp_math inline">\tau = \mathsf{void}</code> and <code>error</code> otherwise. Nothing of the environment of the call is visible inside the body, only the copies and the parameters.</p>
                 <p>
@@ -6046,7 +6046,7 @@ excluded. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.callValue" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L482-L493">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L482-L493">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6078,7 +6078,7 @@ library with a member `operator()`, a `std::function` for instance.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.applyClosure" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L589-L605">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L589-L605">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6115,7 +6115,7 @@ With normal in place of ret v the result is void if τ = void and error
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.applyVals" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L564-L587">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L564-L587">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

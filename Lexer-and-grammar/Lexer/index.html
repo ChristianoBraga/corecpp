@@ -5530,7 +5530,7 @@ window.onload = async () => {
                 <p>
                   There is no token <code>&gt;&gt;</code>, so <code>Stack&lt;Stack&lt;int&gt;&gt;</code> closes with two tokens <code>&gt;</code>.</p>
                 <p>
-                  <code class="bp_math display">\begin{array}{lcl} \textit{Token} & ::= & \textit{Keyword}\ \mid\ \textit{TypeId}\ \mid\ \textit{VarId}\ \mid\ \textit{NsId}\ \mid\ \textit{IntLit}\ \mid\ \textit{Symbol} \\ \textit{Keyword} & ::= & \texttt{int}\ \mid\ \texttt{bool}\ \mid\ \texttt{void}\ \mid\ \texttt{class}\ \mid\ \texttt{public}\ \mid\ \texttt{private}\ \mid\ \texttt{new}\ \mid\ \texttt{delete} \\  & \mid & \texttt{nullptr}\ \mid\ \texttt{this}\ \mid\ \texttt{virtual}\ \mid\ \texttt{override}\ \mid\ \texttt{namespace}\ \mid\ \texttt{template} \\  & \mid & \texttt{typename}\ \mid\ \texttt{auto}\ \mid\ \texttt{if}\ \mid\ \texttt{else}\ \mid\ \texttt{while}\ \mid\ \texttt{for}\ \mid\ \texttt{return} \\  & \mid & \texttt{true}\ \mid\ \texttt{false}\ \mid\ \texttt{operator} \\ \textit{TypeId} & ::= & \textit{Upper}\ \textit{IdentChar}^{*} \\ \textit{VarId} & ::= & \big(\ \textit{Lower}\ \mid\ \texttt{\_}\ \big)\ \textit{IdentChar}^{*} \\ \textit{NsId} & ::= & \textit{TypeId}\ \mid\ \textit{VarId} \\ \textit{IntLit} & ::= & \textit{Digit}\ \textit{Digit}^{*} \\ \textit{Symbol} & ::= & \texttt{[=]} \\  & \mid & \texttt{==}\ \mid\ \texttt{!=}\ \mid\ \texttt{&lt;=}\ \mid\ \texttt{&gt;=}\ \mid\ \texttt{\&\&}\ \mid\ \texttt{||}\ \mid\ \texttt{-&gt;}\ \mid\ \texttt{::}\ \mid\ \texttt{--}\ \mid\ \texttt{++} \\  & \mid & \texttt{+}\ \mid\ \texttt{-}\ \mid\ \texttt{*}\ \mid\ \texttt{/}\ \mid\ \texttt{\%}\ \mid\ \texttt{&lt;}\ \mid\ \texttt{&gt;}\ \mid\ \texttt{!}\ \mid\ \texttt{?}\ \mid\ \texttt{:}\ \mid\ \texttt{=} \\  & \mid & \texttt{(}\ \mid\ \texttt{)}\ \mid\ \texttt{\{}\ \mid\ \texttt{\}}\ \mid\ \texttt{[}\ \mid\ \texttt{]}\ \mid\ \texttt{,}\ \mid\ \texttt{;}\ \mid\ \texttt{.}\ \mid\ \texttt{\&}\ \mid\ \texttt{\textasciitilde} \\ \textit{IdentChar} & ::= & \textit{Upper}\ \mid\ \textit{Lower}\ \mid\ \textit{Digit}\ \mid\ \texttt{\_} \\ \textit{Upper} & ::= & \texttt{A}\ \mid\ \ldots\ \mid\ \texttt{Z} \\ \textit{Lower} & ::= & \texttt{a}\ \mid\ \ldots\ \mid\ \texttt{z} \\ \textit{Digit} & ::= & \texttt{0}\ \mid\ \ldots\ \mid\ \texttt{9} \\ \textit{Skip} & ::= & \textit{WhiteSpace}\ \mid\ \texttt{//}\ \textit{NotNewline}^{*}\ \textit{Newline} \end{array}</code></p>
+                  <code class="bp_math display">\begin{array}{lcl} \textit{Token} & ::= & \textit{Keyword}\ \mid\ \textit{TypeId}\ \mid\ \textit{VarId}\ \mid\ \textit{NsId}\ \mid\ \textit{IntLit}\ \mid\ \textit{Symbol} \\ \textit{Keyword} & ::= & \texttt{int}\ \mid\ \texttt{bool}\ \mid\ \texttt{void}\ \mid\ \texttt{class} \\  & \mid & \texttt{public}\ \mid\ \texttt{private}\ \mid\ \texttt{new}\ \mid\ \texttt{delete} \\  & \mid & \texttt{nullptr}\ \mid\ \texttt{this}\ \mid\ \texttt{virtual} \\  & \mid & \texttt{override}\ \mid\ \texttt{namespace}\ \mid\ \texttt{template} \\  & \mid & \texttt{typename}\ \mid\ \texttt{auto}\ \mid\ \texttt{if}\ \mid\ \texttt{else}\ \mid\ \texttt{while}\ \mid\ \texttt{for}\ \mid\ \texttt{return} \\  & \mid & \texttt{true}\ \mid\ \texttt{false}\ \mid\ \texttt{operator} \\ \textit{TypeId} & ::= & \textit{Upper}\ \textit{IdentChar}^{*} \\ \textit{VarId} & ::= & \big(\ \textit{Lower}\ \mid\ \texttt{\_}\ \big)\ \textit{IdentChar}^{*} \\ \textit{NsId} & ::= & \textit{TypeId}\ \mid\ \textit{VarId} \\ \textit{IntLit} & ::= & \textit{Digit}\ \textit{Digit}^{*} \\ \textit{Symbol} & ::= & \texttt{[=]} \\  & \mid & \texttt{==}\ \mid\ \texttt{!=}\ \mid\ \texttt{&lt;=}\ \mid\ \texttt{&gt;=}\ \mid\ \texttt{\&\&}\ \mid\ \texttt{||}\ \mid\ \texttt{-&gt;}\ \mid\ \texttt{::}\ \mid\ \texttt{--}\ \mid\ \texttt{++} \\  & \mid & \texttt{+}\ \mid\ \texttt{-}\ \mid\ \texttt{*}\ \mid\ \texttt{/}\ \mid\ \texttt{\%}\ \mid\ \texttt{&lt;}\ \mid\ \texttt{&gt;}\ \mid\ \texttt{!}\ \mid\ \texttt{?}\ \mid\ \texttt{:}\ \mid\ \texttt{=} \\  & \mid & \texttt{(}\ \mid\ \texttt{)}\ \mid\ \texttt{\{}\ \mid\ \texttt{\}}\ \mid\ \texttt{[}\ \mid\ \texttt{]}\ \mid\ \texttt{,}\ \mid\ \texttt{;}\ \mid\ \texttt{.}\ \mid\ \texttt{\&}\ \mid\ \texttt{\textasciitilde} \\ \textit{IdentChar} & ::= & \textit{Upper}\ \mid\ \textit{Lower}\ \mid\ \textit{Digit}\ \mid\ \texttt{\_} \\ \textit{Upper} & ::= & \texttt{A}\ \mid\ \ldots\ \mid\ \texttt{Z} \\ \textit{Lower} & ::= & \texttt{a}\ \mid\ \ldots\ \mid\ \texttt{z} \\ \textit{Digit} & ::= & \texttt{0}\ \mid\ \ldots\ \mid\ \texttt{9} \\ \textit{Skip} & ::= & \textit{WhiteSpace}\ \mid\ \texttt{//}\ \textit{NotNewline}^{*}\ \textit{Newline} \end{array}</code></p>
                 <p>
                   The input is the longest sequence of <code>Token</code> and <code>Skip</code> that covers it, <code>Skip</code> is discarded, and each token is the longest match at its position. The symbols of three characters are tried before those of two and of one.</p>
                 </div>
@@ -5564,7 +5564,7 @@ window.onload = async () => {
                       <div class="declaration decl inductive" data-decl="CoreCpp.Token" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(7 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Token.lean#L14-L22">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(7 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Token.lean#L14-L22">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5609,7 +5609,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.keywords" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Token.lean#L35-L40">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Token.lean#L35-L40">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5629,7 +5629,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.cppReserved" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Token.lean#L42-L57">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Token.lean#L42-L57">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5651,7 +5651,7 @@ representations (Table 6). A Core C++ program uses none of them outside
                       <div class="declaration decl def" data-decl="CoreCpp.symbols3" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Token.lean#L59-L62">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Token.lean#L59-L62">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5673,7 +5673,7 @@ it does in C++, where the longest match gives `--`. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.symbols2" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Token.lean#L63">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Token.lean#L63">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5692,7 +5692,7 @@ it does in C++, where the longest match gives `--`. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.symbols1" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Token.lean#L64-L66">CoreCpp/Token.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Token.lean#L64-L66">CoreCpp/Token.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5789,7 +5789,7 @@ it does in C++, where the longest match gives `--`. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Lexer.identifier" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Lexer.lean#L33-L37">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Lexer.lean#L33-L37">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5952,7 +5952,7 @@ it does in C++, where the longest match gives `--`. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.lex" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Lexer.lean#L92-L94">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Lexer.lean#L92-L94">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5973,7 +5973,7 @@ it does in C++, where the longest match gives `--`. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Lexer.run" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Lexer.lean#L51-L78">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Lexer.lean#L51-L78">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5995,7 +5995,7 @@ it does in C++, where the longest match gives `--`. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Lexer.takeWhile" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Lexer.lean#L21-L28">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Lexer.lean#L21-L28">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6018,7 +6018,7 @@ it does in C++, where the longest match gives `--`. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Lexer.matchSymbol" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Lexer.lean#L39-L43">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Lexer.lean#L39-L43">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6041,7 +6041,7 @@ it does in C++, where the longest match gives `--`. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Lexer.skipLine" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Lexer.lean#L45-L49">CoreCpp/Lexer.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Lexer.lean#L45-L49">CoreCpp/Lexer.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

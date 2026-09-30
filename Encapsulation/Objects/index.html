@@ -5506,7 +5506,7 @@ window.onload = async () => {
                 <p>
                   <code class="bp_math display">\dfrac{C \mapsto \mathtt{class}\ C\ \{\ldots C(p_1\,x_1, \ldots, p_k\,x_k)\ \{c\} \ldots\} \qquad \text{arguments as in T-Call}}{\Gamma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) : C*}\;\textsf{(T-New)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{\begin{array}{c} f_1 \ldots f_n \text{ the fields of the chain of } C \qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i) \qquad (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain run from the root down with } \mathtt{this} \mapsto \ell \text{, giving } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} f_1 \ldots f_n \text{ the fields of the chain of } C\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain run from the root down} \\ \text{with } \mathtt{this} \mapsto \ell \text{, giving } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}</code></p>
                 <p>
                   Some of the implementations are <code>partial</code>, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.</p>
                 </div>
@@ -5536,7 +5536,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L289-L480">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L289-L480">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5559,7 +5559,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5584,7 +5584,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Program.allFields" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L319-L322">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L319-L322">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5608,7 +5608,7 @@ class that declares it. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Program.chain" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L308-L317">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L308-L317">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5758,7 +5758,7 @@ rejects both. </pre></div>
                 <p>
                   The call of a member body, a method, a constructor or a destructor, binds <code>this</code> to the location <code class="bp_math inline">\ell</code> of the receiver as an alias and the parameters as in the call of a function, by value with a fresh copy and by reference with an alias. The return frees the copies and the locals of the body, never the receiver.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{\begin{array}{c} p_i = \tau_i \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i,\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \qquad p_i = \tau_i\& \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_m = [\mathtt{this} \mapsto \ell, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_m, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \end{array}}{\mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup (\rho' \setminus \rho_m))}\;\textsf{(Member)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} p_i = \tau_i \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i,\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_m = [\mathtt{this} \mapsto \ell, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k]\qquad \rho_m, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \end{array}}{\mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup (\rho' \setminus \rho_m))}\;\textsf{(Member)}</code></p>
                 <p>
                   With <code class="bp_math inline">\mathsf{normal}</code> in place of <code class="bp_math inline">\mathsf{ret}\,v</code> the result is <code class="bp_math inline">\mathsf{void}</code> for a <code>void</code> member and <code>error</code> otherwise.</p>
                 <p>
@@ -5786,7 +5786,7 @@ rejects both. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.runMember" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L501-L534">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L501-L534">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5826,7 +5826,7 @@ frees the copies and the locals of the body, never the receiver.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.checkArgs" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L555-L565">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L555-L565">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5981,11 +5981,11 @@ reference with ⊢ₗ, shared by T-Call, T-New and T-Method. </pre></div>
                 <p>
                   A method call <code>e.m(args)</code> needs a receiver of class type and <code>e-&gt;m(args)</code> a receiver of pointer type. The method is the nearest <code class="bp_math inline">m</code> in the chain of the static class of the receiver, it must be visible, and the arguments are checked as in a call. An unqualified call <code>m(args)</code> inside a member body is <code>this-&gt;m(args)</code>.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\ m(p_1\,x_1, \ldots, p_k\,x_k) \text{ visible from } \Gamma \qquad \text{arguments as in T-Call}}{\Gamma \vdash e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Method)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} \Gamma \vdash e : C\qquad C \text{ has } \tau\ m(p_1\,x_1, \ldots, p_k\,x_k) \text{ visible from } \Gamma \\ \text{arguments as in T-Call} \end{array}}{\Gamma \vdash e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Method)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\ m(\ldots) \text{ visible from } \Gamma \qquad \text{arguments as in T-Call}}{\Gamma \vdash e\mathtt{-&gt;}m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-MethodArrow)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} \Gamma \vdash e : C*\qquad C \text{ has } \tau\ m(\ldots) \text{ visible from } \Gamma \\ \text{arguments as in T-Call} \end{array}}{\Gamma \vdash e\mathtt{-&gt;}m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-MethodArrow)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma_0 \text{ or } \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[\ldots] \qquad S \text{ the static class of } e \\ m \mapsto \tau\ m(\ldots)\{c\} \text{ nearest } S \text{, or nearest } T \text{ when virtual} \qquad \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(MethodCall)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma_0 \text{ or } \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[\ldots] \\ S \text{ the static class of } e \\ m \mapsto \tau\ m(\ldots)\{c\} \text{ nearest } S \text{, or nearest } T \text{ when virtual} \\ \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(MethodCall)}</code></p>
                 <p>
                   Some of the implementations are <code>partial</code>, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.</p>
                 </div>
@@ -6015,7 +6015,7 @@ reference with ⊢ₗ, shared by T-Call, T-New and T-Method. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.methodCall" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L631-L633">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L631-L633">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6041,7 +6041,7 @@ reference with ⊢ₗ, shared by T-Call, T-New and T-Method. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6066,7 +6066,7 @@ reference with ⊢ₗ, shared by T-Call, T-New and T-Method. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.resolve" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L471-L484">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L471-L484">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6093,7 +6093,7 @@ in an unannotated program, the first of the name serves. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Program.findMethod" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L328-L332">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L328-L332">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

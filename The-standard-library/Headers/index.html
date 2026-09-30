@@ -5506,7 +5506,7 @@ window.onload = async () => {
                 <p>
                   The use <code>operator[]</code> gives a location, so <code>v[i]</code> may stand on the left of an assignment and bind a reference.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{k \ge 0 \qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau)\ (1 \le i \le k) \qquad (\ell, \sigma') = \mathrm{alloc}(\sigma_k, \mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_1, \ldots, \ell_k])}{\sigma_0 \vdash_{\mathit{vector}} \mathtt{new}\langle\tau\rangle(k) \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(V-New)}</code></p>
+                  <code class="bp_math display">\dfrac{\begin{array}{c} k \ge 0\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau)\ (1 \le i \le k) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_k, \mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_1, \ldots, \ell_k]) \end{array}}{\sigma_0 \vdash_{\mathit{vector}} \mathtt{new}\langle\tau\rangle(k) \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(V-New)}</code></p>
                 <p>
                   <code class="bp_math display">\dfrac{0 \le i &lt; n}{\sigma \vdash_{\mathit{vector}} \mathtt{operator[]}(\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}], i) \Rightarrow \ell_i, \sigma}\;\textsf{(V-Index)}</code></p>
                 <p>
@@ -5536,7 +5536,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Std.vector" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Std/Vector.lean#L25-L68">CoreCpp/Std/Vector.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Std/Vector.lean#L25-L68">CoreCpp/Std/Vector.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5555,7 +5555,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Std.elementOk" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Std/Vector.lean#L14-L23">CoreCpp/Std/Vector.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Std/Vector.lean#L14-L23">CoreCpp/Std/Vector.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5668,7 +5668,7 @@ function type. </pre></div>
                 <p>
                   <code class="bp_math display">\dfrac{}{\Gamma \vdash_{\mathit{function}} \tau(\tau_1, \ldots, \tau_k) \hookrightarrow \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle}\;\textsf{(TF-Conv)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{}{\Gamma \vdash_{\mathit{function}} \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau}\;\textsf{(TF-Call)}, \quad \text{at } \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle</code></p>
+                  <code class="bp_math display">\dfrac{\text{at } \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle}{\Gamma \vdash_{\mathit{function}} \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau}\;\textsf{(TF-Call)}</code></p>
                 <p>
                   <code class="bp_math display">\dfrac{\sigma \vdash \mathrm{apply}(v, v_1, \ldots, v_k) \Rightarrow v', \sigma'}{\sigma \vdash_{\mathit{function}} \mathtt{operator()}(v, v_1, \ldots, v_k) \Rightarrow v', \sigma'}\;\textsf{(F-Call)}</code></p>
                 <p>
@@ -5694,7 +5694,7 @@ function type. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Std.function" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Std/Function.lean#L16-L46">CoreCpp/Std/Function.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Std/Function.lean#L16-L46">CoreCpp/Std/Function.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5828,7 +5828,7 @@ function type. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Std.assert" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Std/Assert.lean#L14-L31">CoreCpp/Std/Assert.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Std/Assert.lean#L14-L31">CoreCpp/Std/Assert.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
