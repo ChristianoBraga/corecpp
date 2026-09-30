@@ -24,12 +24,17 @@ namespace CoreCpp
 /-- Memory location. -/
 abbrev Loc := Nat
 
-/-- Values. `int` is a 32-bit two's complement integer, stored as an `Int` with
-the range invariant checked at every operation. `loc` is a pointer to the
-object stored at ℓ, `null` the value of `nullptr`, `obj` an object with its
-class tag and one location per field, `lib L ℓ̄` a value of the library entity
-`L` with its locations, and `closure ps τ c cap` the value of `[=](ps) -> τ { c }`, with the
-values the lambda captured by copy, one per free variable of the body. -/
+/-- Values.
+
+`int` is a 32-bit two's complement integer, stored as an `Int` with the range
+invariant checked at every operation. `loc` is a pointer to the object stored
+at ℓ, and `null` is the value of `nullptr`.
+
+`obj` is an object with its class tag and one location per field, and
+`lib L ℓ̄` a value of the library entity `L` with its locations.
+
+`closure ps τ c cap` is the value of `[=](ps) -> τ { c }`, carrying the values
+the lambda captured by copy, one per free variable of the body. -/
 inductive Val where
   | int  (n : Int)
   | bool (b : Bool)

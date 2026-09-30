@@ -71,29 +71,38 @@ structure Param where
 
 mutual
 
-/-- Expressions. Function call is included because `Args` is part of
-`PostfixExpr`. `field` is `e.f`, `arrow` is `e->f`, `deref` is `*e` and
-`index` is `e[i]`. `newObj C` is `new C()` and `newLib τ args` is `new τ(args)`
-for a type τ of the library, `new std::vector<int>(3)` for instance. `lambda ps τ c` is `[=](ps) -> τ { c }`, which the
-grammar admits only as an argument, as the initialiser of a declaration and
-as the expression of `return`. `callFn e args` calls the function value `e`,
-and `call f args` calls the function named `f`, or the function value bound to
-`f` when `f` is a variable in scope, or the method `f` of `this` inside a
-class. `newObj C args` is `new C(args)`, which allocates the object and runs
-the constructor. `this` is the location of the receiver inside a method.
-`methodCall e arrow m args static` is `e.m(args)` when `arrow` is false and
-`e->m(args)` when it is true. The field `static` is the class of the receiver
-as the type checker sees it, filled by `Typing.annotate` and `none` as the
-parser leaves it, the datum the evaluator needs to tell a dispatched call from
-a static one. The field `sig` of `call` and of `methodCall` is the parameter
-type list of the overload the type checker chose, `none` as the parser leaves
-it, the datum the evaluator needs to pick one function or method out of an
-overload set. `locOf e` is the location of `e` as a value, an expression no
-program writes, which `Typing.annotate` puts on the `return` of a member that
-returns a reference. `intrinsic L u args` is a use `u` of the entity `L` of the
-library, an expression no program writes, which `Typing.annotate` puts where a
-program indexes, calls or applies an entity of the library. For a member, the
-receiver is the first argument. -/
+/-- Expressions.
+
+The forms a program writes. `field` is `e.f`, `arrow` is `e->f`, `deref` is
+`*e` and `index` is `e[i]`. `newObj C args` is `new C(args)`, which allocates
+the object and runs the constructor, and `newLib τ args` is `new τ(args)` for
+a type of the library, `new std::vector<int>(3)` for instance. `this` is the
+location of the receiver inside a method.
+
+`call f args` calls the function named `f`, or the function value bound to `f`
+when `f` is a variable in scope, or the method `f` of `this` inside a class.
+`callFn e args` calls the function value `e`. Function call is a form of
+`Expr` because `Args` is part of `PostfixExpr`.
+
+`methodCall e arrow m args static sig` is `e.m(args)` when `arrow` is false
+and `e->m(args)` when it is true. `lambda ps τ c` is `[=](ps) -> τ { c }`,
+which the grammar admits only as an argument, as the initialiser of a
+declaration and as the expression of `return`.
+
+Two fields carry what the type checker learns and the evaluator needs. The
+field `static` of `methodCall` is the class of the receiver as the type
+checker sees it, which tells a dispatched call from a static one.
+
+The field `sig` of `call` and of `methodCall` is the parameter type list of
+the overload it chose, which picks one function or method out of an overload
+set. Both fields are `none` as the parser leaves them, and `Typing.annotate`
+fills them.
+
+Two forms no program writes, both introduced by `Typing.annotate`. `locOf e`
+is the location of `e` as a value, which it puts on the `return` of a member
+that returns a reference. `intrinsic L u args` is a use `u` of the entity `L`
+of the library, which it puts where a program indexes, calls or applies an
+entity of the library, the receiver of a member being the first argument. -/
 inductive Expr where
   | intLit  (n : Int)
   | boolLit (b : Bool)

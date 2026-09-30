@@ -842,12 +842,16 @@ the parameters as variables. -/
 def memberEnv (c : String) (ps : List Param) : TEnv :=
   (ps.reverse.map fun q => (q.name, ⟨q.ty, false⟩)) ++ [("this", ⟨.ptr (.cls c), false⟩)]
 
-/-- A class is well formed when its base exists and the chain has no cycle,
-its fields have types with values, well formed, and repeat no field of a
-base, its members have distinct names, each method redefines only a method
-the base declares virtual and then carries override, with the same
-signature, the constructor of the base, if any, takes no parameters, and
-every member body is well typed under `this`.
+/-- A class is well formed when the conditions below hold.
+
+Its base exists and the chain of bases has no cycle. Its fields have types
+that carry values, are themselves well formed, and repeat no field of a base.
+
+Its members have distinct names, and each method redefines only a method the
+base declares virtual, carrying override and the same signature. The
+constructor of the base, if the base has one, takes no parameters.
+
+Every member body is well typed under `this`.
 
     B exists, chain acyclic    fields storable, well formed, new in the chain
     for each method m of C. if some base has m then that m is virtual, m is override and the signatures agree
