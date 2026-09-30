@@ -94,7 +94,7 @@ The right column names, for each alternative, the constructor of the inductive t
 :::
 
 :::definition "parse_expr" (parent := "ud1") (lean := "CoreCpp.P, CoreCpp.PState, CoreCpp.expr, CoreCpp.orExpr, CoreCpp.andExpr, CoreCpp.eqExpr, CoreCpp.relExpr, CoreCpp.addExpr, CoreCpp.mulExpr, CoreCpp.unaryExpr, CoreCpp.postfixExpr, CoreCpp.primary, CoreCpp.args, CoreCpp.argExpr, CoreCpp.lambda") (uses := "gram_ast, lex_automaton")
-A parser has the type `P α`, a state monad over `PState` that gives an `α` or fails with a message. The state holds the tokens and the position of the next one. One parser function per expression nonterminal, from `Expr` down to `Primary`. Each level of the grammar is one level of precedence, and the repetition `( op Operand )*` builds a left associative tree. In the implemented subset `PostfixExpr` covers the function call, indexing, field access and arrow, `UnaryExpr` adds the dereference, and `Primary` covers literals, `nullptr`, variables, parenthesised expressions and the two forms of `new`. Lambdas are parsed as argument expressions, `argExpr`, in the three positions the grammar gives them. Method calls and `this` are not parsed yet.
+A parser has the type `P α`, a state monad over `PState` that gives an `α` or fails with a message. The state holds the tokens and the position of the next one. One parser function per expression nonterminal, from `Expr` down to `Primary`. Each level of the grammar is one level of precedence, and the repetition `( op Operand )*` builds a left associative tree. `PostfixExpr` covers the function call, indexing, field access, the arrow and the method call in its two forms, deciding between a field and a method by the token that follows the name. `UnaryExpr` adds the dereference, and `Primary` covers literals, `nullptr`, `this`, variables, parenthesised expressions and the two forms of `new`. Lambdas are parsed as argument expressions, `argExpr`, in the three positions the grammar gives them.
 :::
 
 :::definition "parse_statement" (parent := "ud1") (lean := "CoreCpp.block, CoreCpp.statement, CoreCpp.localDecl, CoreCpp.forInit, CoreCpp.exprStatement") (uses := "gram_ast, parse_expr")
@@ -102,12 +102,12 @@ One parser function per command nonterminal. The function `statement` chooses th
 :::
 
 :::definition "parse_program" (parent := "ud1") (lean := "CoreCpp.program, CoreCpp.declaration, CoreCpp.classDecl, CoreCpp.member, CoreCpp.classType, CoreCpp.function, CoreCpp.params, CoreCpp.param, CoreCpp.type, CoreCpp.basicType, CoreCpp.runParser, CoreCpp.parseProgram, CoreCpp.parseExpr, CoreCpp.parseStatement") (uses := "gram_ast, parse_statement")
-A program is a sequence of declarations up to `eof`, each a class with public fields or a function. The function `runParser` runs the lexer and a parser on a string and requires the whole input to be consumed. Namespaces, templates, methods and constructors are not parsed yet.
+A program is a sequence of declarations up to `eof`, each one a class, a class template, a namespace or a function. A class carries its fields, its methods, its constructor and its destructor, under the visibility of the section that holds them. The function `runParser` runs the lexer and a parser on a string and requires the whole input to be consumed.
 :::
 
 # Preprocessor
 
-This section describes work in progress. The statement `assert` of Core C++ is not implemented yet, and the correctness property has no Lean proof.
+The agreement stated at the end of this section is checked by inspection and by the tests of `tests/preproc/`, not by a Lean proof.
 
 :::definition "pp_language" (parent := "ud1") (lean := "Preproc.Directive, Preproc.Line, Preproc.Item, Preproc.parse, Preproc.group, Preproc.condRest")
 Preproc is the preprocessor of Core C++, a language of its own that runs before the lexer of {bpref "lex_automaton"}[]. It reads a file as a sequence of lines and never lexes or parses Core C++, so the two languages share no surface. Every Preproc program is also a valid input of the preprocessor of `g++`. The terminals of its grammar are whole lines. $`\textit{Text}` stands for any text line, and $`\textit{NL}` ends a directive line.

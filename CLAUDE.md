@@ -2,16 +2,16 @@
 
 Core C++ is a well behaved subset of C++17 with a complete formal semantics,
 every construction carrying a typing rule and an evaluation rule in natural
-semantics, implemented in Lean 4. The language design, with the grammar and
-the discrepancy table with C++17, is `../.claude/core-cpp-design.md`, in
-Portuguese. Repository `git@github.com:ChristianoBraga/corecpp.git`, public
+semantics, implemented in Lean 4. The specification is the blueprint under
+`docs/`, which states every rule and points at the code that implements it.
+Repository `git@github.com:ChristianoBraga/corecpp.git`, public
 since 2026-09-18.
 
 ## Conventions
 
-- Code, comments, docstrings, identifiers, error messages and grammar
-  nonterminals are always in English. Prose replies to Christiano are in
-  Portuguese.
+- Everything in this repository is in English, always. Code, comments,
+  docstrings, identifiers, error messages, grammar nonterminals, the
+  documentation and the replies about it.
 - The identifiers of every Core C++ program are
   English too, in `examples/`, in `tests/Test.lean` and in every snippet of the
   blueprint. A class is `Stack`, `Node`, `Shape` or `Account`, a field is
