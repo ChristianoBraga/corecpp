@@ -43,11 +43,16 @@ $$`\dfrac{f \text{ declared by a header} \qquad \Gamma \vdash_f \mathtt{call} : 
 
 $$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \mathtt{operator[]} : \tau_1 \to \tau \qquad \Gamma \vdash i \lhd \tau_1}{\Gamma \vdash e[i] : \tau}\;\textsf{(T-IndexLib)}`
 
+$$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \mathtt{operator[]} : \tau_1 \to \tau, \text{ a location} \qquad \Gamma \vdash i \lhd \tau_1}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocIndexLib)}`
+
 $$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'}{\rho, \sigma_0 \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(NewLib)}`
 
 $$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L u(v_1, \ldots, v_k) \Rightarrow r, \sigma'}{\rho, \sigma_0 \vdash L.u(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(Lib)}`
 
-In the rule `Lib` the result is $`v = r` for a value and $`v = \sigma'(r)` for a location. The rule `LocLib` has the same premises and concludes $`\rho, \sigma_0 \vdash L.u(e_1, \ldots, e_k) \Rightarrow_{\ell} r, \sigma'` when $`r` is a location. The command `delete e` on a pointer to an instance frees what the intrinsic owns and then the location of the instance.
+In the rule `Lib` the result is $`v = r` for a value and $`v = \sigma'(r)` for a location. With the same premises, a use that gives a location denotes it.
+
+$$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L u(v_1, \ldots, v_k) \Rightarrow \ell, \sigma'}{\rho, \sigma_0 \vdash L.u(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocLib)}`
+ The command `delete e` on a pointer to an instance frees what the intrinsic owns and then the location of the instance.
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \qquad \sigma_0 \vdash_L \mathtt{delete}(\sigma_0(\ell)) \Rightarrow \mathsf{void}, \sigma_1}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}`
 :::

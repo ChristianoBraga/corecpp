@@ -202,7 +202,15 @@ def value (e : Expr) (t : Ty) : T Ty :=
 /-- τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal
 types, nullptr against a pointer type, or, by subsumption, a pointer to a
 derived class where a pointer to its base is expected. These and the lambda
-to `std::function` are the only implicit conversions. -/
+to `std::function` are the only implicit conversions.
+
+    D derives from B
+    ──────────────── (Subsumption)
+    D* ≈ B*
+
+    Γ ⊢ e : D*    D derives from B
+    ────────────────────────────── (T-Sub)      subsumption where a value is
+    Γ ⊢ e : B*                                  used, wherever ≈ is required  -/
 def compat (p : Program) : Ty → Ty → Bool
   | .nullT, .ptr _ => true
   | .ptr _, .nullT => true

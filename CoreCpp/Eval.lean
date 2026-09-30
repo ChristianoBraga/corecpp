@@ -104,10 +104,12 @@ def traced (rule : String) (ante : TraceAnte) (render : α → TraceCons) (k : M
   | .ok a    => pure a
   | .error e => throw e
 
-/-- As `traced`, for a premise of the library, whose rule name the library
-gives with its result. -/
-def tracedLib (fallback : String) (ante : TraceAnte) (render : α → TraceCons) (k : M (String × α))
-    (arrow : String := "⇒") : M α := do
+/-- As `traced`, for a case whose rule is known only once the premises are
+derived, a use of the library or an operator. The body gives the name of the
+rule it concluded, and `fallback` gives the one whose conclusion is the
+error. -/
+def tracedLib (fallback : Error → String) (ante : TraceAnte) (render : α → TraceCons)
+    (k : M (String × α)) (arrow : String := "⇒") : M α := do
   modify fun s => { s with depth := s.depth + 1 }
   let res : Except Error (String × α) ← tryCatch (do let a ← k; pure (.ok a)) (fun e => pure (.error e))
   modify fun s => { s with depth := s.depth - 1 }
@@ -115,7 +117,7 @@ def tracedLib (fallback : String) (ante : TraceAnte) (render : α → TraceCons)
   if s.enabled then
     let (rule, cons) := match res with
       | .ok (r, a) => (r, render a)
-      | .error e   => (fallback, { head := s!"error ({e})" })
+      | .error e   => (fallback e, { head := s!"error ({e})" })
     modify fun s =>
       { s with log := s.log.push ⟨s.depth, rule, { ante with arrow := arrow }, cons⟩ }
   match res with
@@ -204,6 +206,25 @@ The bindings a reference declaration added alias locations that exist before
 or outside the block, and those locations stay in σ. -/
 def fresh (ρ ρ' : Env) : List Loc :=
   ((ρ'.take (ρ'.length - ρ.length)).filter (·.2.owned)).map (·.2.loc)
+
+/-- The rule that an application of a unary operator concludes. -/
+def unopRule : UnOp → String
+  | .not => "Not"
+  | .neg => "Neg"
+
+/-- The rule that an application of a binary operator concludes, once the
+right operand is known. A zero divisor concludes `DivZero`. -/
+def binopRule : BinOp → Val → String
+  | .div, .int 0 | .mod, .int 0 => "DivZero"
+  | .div, _ | .mod, _ => "Div"
+  | .add, _ | .sub, _ | .mul, _ => "Arith"
+  | _, _ => "Rel"
+
+/-- The rule whose conclusion is the error, when the operator fails before the
+right operand names one. -/
+def binopFallback (op : BinOp) : Error → String
+  | .divisionByZero => "DivZero"
+  | _ => binopRule op (.int 1)
 
 def expectBool (what : String) : Val → M Bool
   | .bool b => pure b
@@ -335,11 +356,14 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
     | (.val v, σ₂) => return (v, σ₂)
     | (.loc l', σ₂) => return (← readLoc σ₂ l', σ₂)
   /-  ρ, σ ⊢ e ⇒ v, σ'    op v = v'
-      ─────────────────────────────── (Unary)
-      ρ, σ ⊢ op e ⇒ v', σ'                                                      -/
-  | .unop op e₁ => traced "Unary" (confE e ρ σ) showV do
+      ─────────────────────────────── (Not), (Neg)
+      ρ, σ ⊢ op e ⇒ v', σ'
+
+      One premise and one conclusion for the two rules, which `unop` tells
+      apart. The derivation cites the rule the operator concludes, `unopRule`. -/
+  | .unop op e₁ => tracedLib (fun _ => unopRule op) (confE e ρ σ) showV do
     let (v, σ) ← expr fs ρ σ e₁
-    return (← unop op v, σ)
+    return (unopRule op, (← unop op v, σ))
   /-  ρ, σ ⊢ e₁ ⇒ bool false, σ₁                     ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂
       ─────────────────────────────── (And-False)    ────────────────────────────────────────────── (And-True)
       ρ, σ ⊢ e₁ && e₂ ⇒ bool false, σ₁               ρ, σ ⊢ e₁ && e₂ ⇒ v, σ₂
@@ -354,12 +378,16 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
     let (v₁, σ₁) ← expr fs ρ σ e₁
     if ← expectBool "left operand of ||" v₁ then return (.bool true, σ₁) else expr fs ρ σ₁ e₂
   /-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂    v₁ ⊕ v₂ = v
-      ──────────────────────────────────────────────────────── (Binary)
-      ρ, σ ⊢ e₁ ⊕ e₂ ⇒ v, σ₂          left before right                        -/
-  | .binop op e₁ e₂ => traced "Binary" (confE e ρ σ) showV do
+      ──────────────────────────────────────────────────────── (Arith), (Div), (Rel)
+      ρ, σ ⊢ e₁ ⊕ e₂ ⇒ v, σ₂          left before right
+
+      The premises of the three rules coincide, and `binop` tells them apart.
+      A zero divisor concludes `DivZero` instead. The derivation cites the rule
+      the operator concludes, `binopRule`.                                     -/
+  | .binop op e₁ e₂ => tracedLib (binopFallback op) (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
     let (v₂, σ₂) ← expr fs ρ σ₁ e₂
-    return (← binop op v₁ v₂, σ₂)
+    return (binopRule op v₂, (← binop op v₁ v₂, σ₂))
   /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂        ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₃ ⇒ v, σ₂
       ────────────────────────────────────────────── (Cond-T)   ─────────────────────────────────────────────── (Cond-F)
       ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                                ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                     -/
@@ -531,7 +559,7 @@ partial def libUse (fs : FunEnv) (ρ : Env) (σ : Store) (n : String) (u : Std.U
   let render : Std.Result × Store → TraceCons := fun
     | (.val v, σ') => showV (v, σ')
     | (.loc l, σ') => showL (l, σ')
-  tracedLib n ante render (L.eval (fun v vs σ => applyVals fs σ v vs) u ts vs σ)
+  tracedLib (fun _ => n) ante render (L.eval (fun v vs σ => applyVals fs σ v vs) u ts vs σ)
 
 /-- The application of a closure to values, the judgement the library uses
 through `apply`. -/

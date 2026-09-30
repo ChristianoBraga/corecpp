@@ -43,6 +43,10 @@ Inside a member body `this` is the location of the receiver. It is bound in $`\r
 
 $$`\dfrac{\Gamma(\mathtt{this}) = C*}{\Gamma \vdash \mathtt{this} : C*}\;\textsf{(T-This)} \qquad \dfrac{x \notin \Gamma \qquad \Gamma(\mathtt{this}) = C* \qquad \Gamma \vdash \mathtt{this}\mathtt{->}x : \tau}{\Gamma \vdash x : \tau}\;\textsf{(T-VarField)}`
 
+The same holds of a call. An unqualified name that is neither a variable nor a function of the program is a member of the receiver.
+
+$$`\dfrac{f \notin \Gamma \qquad f \text{ is no function of the program} \qquad \Gamma(\mathtt{this}) = C* \qquad \Gamma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) : \tau}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallThis)}`
+
 $$`\dfrac{\rho(\mathtt{this}) = \ell}{\rho, \sigma \vdash \mathtt{this} \Rightarrow \mathsf{loc}\,\ell, \sigma}\;\textsf{(This)} \qquad \dfrac{x \notin \rho \qquad \rho(\mathtt{this}) = \ell \qquad \sigma(\ell) = \mathsf{obj}\,C\,[\ldots x \mapsto \ell_x \ldots]}{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell_x, \sigma}\;\textsf{(LocVarField)}`
 :::
 

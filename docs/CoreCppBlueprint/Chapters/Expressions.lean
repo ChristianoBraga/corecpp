@@ -154,7 +154,9 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma' \qquad \
 :::
 
 :::definition "expr_read" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.readLoc") (uses := "expr_deref, expr_field, std_uses")
-Reading `*e`, `e.f` or `e->f` as a value is reading the content of the location it denotes, one rule for the three forms. The typing rules `T-Deref`, `T-Field` and `T-Arrow` give the value the type of the location. An element `v[i]` of a vector is a use of the library, {bpref "std_uses"}[].
+Reading `*e`, `e.f` or `e->f` as a value is reading the content of the location it denotes, one rule for the three forms. Three typing rules give the value the type of the location. An element `v[i]` of a vector is a use of the library, {bpref "std_uses"}[].
+
+$$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash {*e} : \tau}\;\textsf{(T-Deref)} \qquad \dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f}{\Gamma \vdash e.f : \tau}\;\textsf{(T-Field)} \qquad \dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f}{\Gamma \vdash e\mathtt{->}f : \tau}\;\textsf{(T-Arrow)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in \mathrm{dom}\,\sigma'}{\rho, \sigma \vdash e \Rightarrow \sigma'(\ell), \sigma'}\;\textsf{(Read)}, \quad e \in \{{*e'},\ e'.f,\ e'\mathtt{->}f\}`
 :::
