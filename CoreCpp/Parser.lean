@@ -26,14 +26,20 @@ by its qualified name.
 
 namespace CoreCpp
 
+/-- The state of a parser, the tokens, the position of the next one, the
+enclosing namespaces and the origin of each token. -/
 structure PState where
+  /-- The tokens from the lexer, ending in `eof`. -/
   toks : Array Token
+  /-- The index of the next token in `toks`. -/
   pos  : Nat := 0
   /-- The prefix of the enclosing namespaces, `N::M::`, empty at top level. -/
   ns   : String := ""
   /-- Whether each token comes from a header of Core C++. -/
   hdr  : Array Bool := #[]
 
+/-- The type of the parsers. A value of `P α` reads the tokens of a `PState`
+from its position, advances it, and gives an `α` or fails with a message. -/
 abbrev P := StateT PState (Except String)
 
 namespace P
