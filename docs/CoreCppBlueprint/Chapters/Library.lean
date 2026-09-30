@@ -13,7 +13,11 @@ set_option verso.blueprint.foldCodeBlocks true
 
 #doc (Manual) "The standard library" =>
 
-The headers of Core C++ declare the entities of the library without a body, the class templates `std::vector` and `std::function` and the function `assert`. Each declaration names an intrinsic, a set of judgments in natural semantics that the rules of the language use as premises. The intrinsics live in `CoreCpp/Std/`, apart from the type checker and the evaluator, which know no intrinsic by name. A use of an undeclared entity is a type error, so a program uses the library only through its `#include`. Nothing of this is built into the syntax. The grammar has no production and the lexer no reserved word for the library, `namespace std` is an ordinary namespace and `std::vector` an ordinary qualified name, and what tells a class of the library from one of the program is the case of its name, lowercase for the first and uppercase for the second.
+The headers of Core C++ declare the entities of the library without a body, the class templates `std::vector` and `std::function` and the function `assert`. Each declaration names an intrinsic, a set of judgments in natural semantics that the rules of the language use as premises.
+
+The intrinsics live in `CoreCpp/Std/`, apart from the type checker and the evaluator, which know no intrinsic by name. A use of an undeclared entity is a type error, so a program uses the library only through its `#include`.
+
+Nothing of this is built into the syntax. The grammar has no production and the lexer no reserved word for the library, `namespace std` is an ordinary namespace and `std::vector` an ordinary qualified name, and what tells a class of the library from one of the program is the case of its name, lowercase for the first and uppercase for the second.
 
 :::group "ud7"
 The library, its interface and its intrinsics.
@@ -63,7 +67,9 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 # Headers
 
 :::definition "std_vector" (parent := "ud7") (lean := "CoreCpp.Std.vector, CoreCpp.Std.elementOk") (uses := "std_library, std_uses")
-The header `<vector>` declares `template <typename T> class vector;` in `namespace std`. A vector is an object, created with `new` and reached by pointer. Its value $`\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}]` holds one location per element. The element type has values and a default, so it is not a class, a type of the library, a function type, `void` or $`\mathsf{nullptr\_t}`. A vector therefore holds pointers to objects and never objects.
+The header `<vector>` declares `template <typename T> class vector;` in `namespace std`. A vector is an object, created with `new` and reached by pointer. Its value $`\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}]` holds one location per element.
+
+The element type has values and a default, so it is not a class, a type of the library, a function type, `void` or $`\mathsf{nullptr\_t}`. A vector therefore holds pointers to objects and never objects.
 
 $$`\dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{new} : \mathsf{int} \to \mathtt{std{:}{:}vector}\langle\tau\rangle*}\;\textsf{(TV-New)}`
 

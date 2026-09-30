@@ -13,7 +13,9 @@ set_option verso.blueprint.foldCodeBlocks true
 
 #doc (Manual) "Types and expressions" =>
 
-One typing rule and one evaluation rule per construction of `Expr`. The typing rules live in `Typing.expr` and the evaluation rules in `Eval.expr`, each in the comment of the case that implements it. Where C++17 leaves the evaluation order unspecified, Core C++ evaluates left to right. The second half of the chapter holds the composite and recursive types, objects and pointers, whose expressions denote locations.
+One typing rule and one evaluation rule per construction of `Expr`. The typing rules live in `Typing.expr` and the evaluation rules in `Eval.expr`, each in the comment of the case that implements it.
+
+Where C++17 leaves the evaluation order unspecified, Core C++ evaluates left to right. The second half of the chapter holds the composite and recursive types, objects and pointers, whose expressions denote locations.
 
 :::group "ud2"
 Values, types and expressions.

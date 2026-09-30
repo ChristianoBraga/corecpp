@@ -15,7 +15,11 @@ set_option verso.blueprint.foldCodeBlocks true
 
 #doc (Manual) "Type systems" =>
 
-Overloading of functions and methods by the type of the arguments, operator members, class templates instantiated by substitution, subtyping and type inference. A name denotes an overload set, and a call selects one candidate. An infix operator on an object, and the indexing of an object, are the calls of the members `operator⊕` and `operator[]`, and a member may return $`\tau\&`, which is what makes `v[i] = x` work. A template is expanded before the program is checked, so instantiation costs nothing at run time and a template is never checked, only its instantiations are.
+Overloading of functions and methods by the type of the arguments, operator members, class templates instantiated by substitution, subtyping and type inference.
+
+A name denotes an overload set, and a call selects one candidate. An infix operator on an object, and the indexing of an object, are the calls of the members `operator⊕` and `operator[]`, and a member may return $`\tau\&`, which is what makes `v[i] = x` work.
+
+A template is expanded before the program is checked, so instantiation costs nothing at run time and a template is never checked, only its instantiations are.
 
 :::group "ud6"
 Overloading, polymorphism, subtyping and inference.
@@ -94,7 +98,11 @@ Instantiation is substitution, and it precedes every other judgment.
 
 $$`\dfrac{p \text{ has } \mathtt{template{<}typename\ T{>}\ class}\ C \qquad C{<}\tau{>} \text{ mentioned in } p \qquad C{<}\tau{>} \notin \text{class table of } p}{p \longrightarrow p, \mathtt{class}\ C{<}\tau{>}\ \{ \ldots [T := \tau] \ldots \}}\;\textsf{(Inst)}`
 
-The substitution replaces the type `T` in every field, parameter, result, local declaration, vector element and class name the body mentions, and it rewrites the name of a mentioned class in its own chain, so `Node<T>*` inside `Lista<T>` becomes `Node<int>*` in `Lista<int>`. The rule applies to a fixed point, because the class it adds may mention another instantiation, and it is idempotent, so `check` and `runWith` may both apply it. A template is never checked, only its instantiations are, as in C++, and two instantiations of one template are two independent classes with no subtype relation between them.
+The substitution replaces the type `T` in every field, parameter, result, local declaration, vector element and class name the body mentions, and it rewrites the name of a mentioned class in its own chain, so `Node<T>*` inside `Lista<T>` becomes `Node<int>*` in `Lista<int>`.
+
+The rule applies to a fixed point, because the class it adds may mention another instantiation, and it is idempotent, so `check` and `runWith` may both apply it.
+
+A template is never checked, only its instantiations are, as in C++, and two instantiations of one template are two independent classes with no subtype relation between them.
 
 Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
@@ -106,7 +114,9 @@ Subsumption is the typing rule of subtyping, and it is the only conversion betwe
 
 $$`\dfrac{\Gamma \vdash e : D* \qquad D \text{ derives from } B}{\Gamma \vdash e : B*}\;\textsf{(T-Sub)}`
 
-It holds in declarations, assignments, arguments, results, comparisons and in the branches of `?:`. Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so `Stack<D*>` is not a subtype of `Stack<B*>`, and the reason is that a `Stack<B*>` accepts an `push` of any `B*`, which a `Stack<D*>` does not. Variance is left out of the subset.
+It holds in declarations, assignments, arguments, results, comparisons and in the branches of `?:`.
+
+Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so `Stack<D*>` is not a subtype of `Stack<B*>`, and the reason is that a `Stack<B*>` accepts an `push` of any `B*`, which a `Stack<D*>` does not. Variance is left out of the subset.
 :::
 
 :::definition "inference" (parent := "ud6") (lean := "CoreCpp.Cmd") (uses := "cmd_decl")

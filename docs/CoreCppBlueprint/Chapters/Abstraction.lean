@@ -30,7 +30,11 @@ $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \l
 
 $$`\dfrac{\begin{array}{c} \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k,\ \sigma_0 = \sigma) \\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma'_{i-1}, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma_k) \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup (\rho' \setminus \rho_f))}\;\textsf{(Call)}`
 
-The return frees the copies of the arguments and the locals the body declared, $`\rho' \setminus \rho_f` read as the owned bindings the body added, so after a call the store holds only what existed before it and the objects created with `new`. When the body ends with $`\mathsf{normal}`, the result is $`\mathsf{void}` if $`\tau = \mathsf{void}` and `error` otherwise. A missing `return` in a non `void` function is an evaluation `error`, not a type error. The rule above is the case in which every parameter is by value, and {bpref "param_ref"}[] gives the case of a parameter by reference.
+The return frees the copies of the arguments and the locals the body declared, $`\rho' \setminus \rho_f` read as the owned bindings the body added, so after a call the store holds only what existed before it and the objects created with `new`.
+
+When the body ends with $`\mathsf{normal}`, the result is $`\mathsf{void}` if $`\tau = \mathsf{void}` and `error` otherwise. A missing `return` in a non `void` function is an evaluation `error`, not a type error.
+
+The rule above is the case in which every parameter is by value, and {bpref "param_ref"}[] gives the case of a parameter by reference.
 
 Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
@@ -52,7 +56,11 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 # Lambdas and function values
 
 :::definition "fun_accept" (parent := "ud4") (lean := "CoreCpp.Typing.accept, CoreCpp.Typing.lambdaAt, CoreCpp.TBind, CoreCpp.TEnv.captured") (uses := "judg_ty_expr, judg_ty_cmd, dom_tenv")
-A lambda has no type of its own. The judgment $`\Gamma \vdash e \lhd \tau`, $`e` is acceptable at $`\tau`, checks a lambda against the type of the library expected where it occurs, a type to which its function type converts, `std::function` in {bpref "std_function"}[], as argument, as initialiser of a declaration and as `return` expression, and for any other expression it is $`\Gamma \vdash e : \tau'` with $`\tau' \approx \tau`. The body is checked under $`\Gamma` with every variable of the enclosing scope marked read only, the copies of `[=]`, and with the parameters of the lambda as ordinary variables. The rule `T-LocVar` requires a variable that is not read only, so an assignment to a captured variable, or a reference to it, is a type error.
+A lambda has no type of its own. The judgment $`\Gamma \vdash e \lhd \tau`, $`e` is acceptable at $`\tau`, checks a lambda against the type of the library expected where it occurs, a type to which its function type converts, `std::function` in {bpref "std_function"}[], as argument, as initialiser of a declaration and as `return` expression, and for any other expression it is $`\Gamma \vdash e : \tau'` with $`\tau' \approx \tau`.
+
+The body is checked under $`\Gamma` with every variable of the enclosing scope marked read only, the copies of `[=]`, and with the parameters of the lambda as ordinary variables.
+
+The rule `T-LocVar` requires a variable that is not read only, so an assignment to a captured variable, or a reference to it, is a type error.
 
 $$`\dfrac{\Gamma \vdash e : \tau' \qquad \tau' \approx \tau \qquad \tau' \text{ has values}}{\Gamma \vdash e \lhd \tau}\;\textsf{(Accept)}`
 
@@ -72,7 +80,11 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 :::
 
 :::definition "fun_callfn" (parent := "ud4") (lean := "CoreCpp.Typing.callValue, CoreCpp.Eval.applyClosure, CoreCpp.Eval.applyVals") (uses := "lambda, fun_call, judg_ev_expr, dom_store")
-A call through a function value evaluates the function expression to a closure, the arguments by value and left to right, allocates fresh locations for the captured copies and for the parameters, runs the body in an environment with those bindings only, and frees them on return. When the callee is a variable `f` of function type, `f(…)` is this rule and not the call of the function named `f`. The type checker rewrites the call into the use `operator()` of {bpref "std_uses"}[]. The rule `F-Call` of {bpref "std_function"}[] then takes the application of the closure to the values, the premises of `CallFn` after the arguments, as its premise $`\mathrm{apply}`.
+A call through a function value evaluates the function expression to a closure, the arguments by value and left to right, allocates fresh locations for the captured copies and for the parameters, runs the body in an environment with those bindings only, and frees them on return.
+
+When the callee is a variable `f` of function type, `f(…)` is this rule and not the call of the function named `f`.
+
+The type checker rewrites the call into the use `operator()` of {bpref "std_uses"}[]. The rule `F-Call` of {bpref "std_function"}[] then takes the application of the closure to the values, the premises of `CallFn` after the arguments, as its premise $`\mathrm{apply}`.
 
 $$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash e(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallFn)}`
 

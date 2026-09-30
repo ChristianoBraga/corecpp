@@ -13,7 +13,9 @@ set_option verso.blueprint.foldCodeBlocks true
 
 #doc (Manual) "Storage and commands" =>
 
-One typing rule and one evaluation rule per construction of `Cmd`. The typing rules live in `Typing.cmd` and the evaluation rules in `Eval.cmd`. Scope is the restoration of $`\rho` at block exit, and lifetime is the removal of the local locations from $`\sigma`. The chapter also holds the local reference, a second name for an existing location, and the evaluation order of the expressions with effects.
+One typing rule and one evaluation rule per construction of `Cmd`. The typing rules live in `Typing.cmd` and the evaluation rules in `Eval.cmd`.
+
+Scope is the restoration of $`\rho` at block exit, and lifetime is the removal of the local locations from $`\sigma`. The chapter also holds the local reference, a second name for an existing location, and the evaluation order of the expressions with effects.
 
 :::group "ud3"
 Variables, update and commands.
@@ -36,7 +38,13 @@ The implementations are `partial`, so Lean records opaque constants that carry t
 # Local reference
 
 :::definition "cmd_declref" (parent := "ud3") (lean := "CoreCpp.Typing.cmd, CoreCpp.Eval.cmd, CoreCpp.Env.alias") (uses := "cmd_decl, judg_ty_lval, judg_ev_lval, dom_env")
-The local reference `τ& y = e` binds a second name to the location `e` denotes, without allocating. The initialiser must denote a location and have the declared type, and the reference has in $`\Gamma` the type of its referent, because every read and write through it is a read or write at the referent. The binding is an alias, not owned, so the exit of the block that declared the reference leaves the location in $`\sigma`. A reference to a temporary, to `nullptr` or to an expression without a location does not exist, and a dangling reference is impossible by construction, because a reference names only locations of enclosing blocks or of objects in the store.
+The local reference `τ& y = e` binds a second name to the location `e` denotes, without allocating.
+
+The initialiser must denote a location and have the declared type, and the reference has in $`\Gamma` the type of its referent, because every read and write through it is a read or write at the referent.
+
+The binding is an alias, not owned, so the exit of the block that declared the reference leaves the location in $`\sigma`.
+
+A reference to a temporary, to `nullptr` or to an expression without a location does not exist, and a dangling reference is impossible by construction, because a reference names only locations of enclosing blocks or of objects in the store.
 
 $$`\dfrac{\Gamma \vdash_{\ell} e : \tau \qquad \tau \text{ has values}}{\Gamma \vdash \tau\mathtt{\&}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-DeclRef)}`
 
@@ -128,7 +136,14 @@ The implementations are `partial`, so Lean records opaque constants that carry t
 # Evaluation order
 
 :::definition "eval_order" (parent := "ud3") (lean := "CoreCpp.Eval.expr, CoreCpp.Eval.cmd, CoreCpp.Eval.lval") (uses := "expr_arith, cmd_assign, fun_call")
-Once a call inside an expression may write the store, the order in which the operands are evaluated is part of the meaning. Core C++ fixes one order for every construction and the interpreter implements it. In the binary operators, the left operand before the right one, rule `Binary`. In a call, the arguments left to right, rule `Call`. In the assignment, the right side before the left one, rule `Assign`. In the indexing of a vector, the receiver before the index, rule `LocLib`. The first two are choices of Core C++ where C++17 fixes no order, the last two are the orders C++17 fixes. For `f() + g()` with effects, C++17 also admits the derivation that evaluates `g()` first, and Core C++ has no such derivation, because `Binary` has one order of premises. The example `call_order.cpp` returns 21 in Core C++, and 21 or 12 under a C++ compiler.
+Once a call inside an expression may write the store, the order in which the operands are evaluated is part of the meaning. Core C++ fixes one order for every construction and the interpreter implements it.
+
+ * In the binary operators, the left operand before the right one, rule `Binary`.
+ * In a call, the arguments left to right, rule `Call`.
+ * In the assignment, the right side before the left one, rule `Assign`.
+ * In the indexing of a vector, the receiver before the index, rule `LocLib`.
+
+The first two are choices of Core C++ where C++17 fixes no order, the last two are the orders C++17 fixes. For `f() + g()` with effects, C++17 also admits the derivation that evaluates `g()` first, and Core C++ has no such derivation, because `Binary` has one order of premises. The example `call_order.cpp` returns 21 in Core C++, and 21 or 12 under a C++ compiler.
 
 The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
