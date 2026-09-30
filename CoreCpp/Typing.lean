@@ -113,6 +113,9 @@ inductive TypeError where
   | returnOutside
   | missingMain
   | unknownMethod (c m : String)
+  /-- A name after `.` or `->` with an argument list is a method call, so a
+  field of function type is not called in place. -/
+  | calledField (c m : String)
   | privateMember (c m : String)
   | noConstructor (c : String)
   | baseConstructorParams (c b : String)
@@ -161,6 +164,8 @@ def TypeError.toString : TypeError → String
   | .returnOutside        => "return outside a function"
   | .missingMain          => "no function int main()"
   | .unknownMethod c m    => s!"class {c} has no method {m}"
+  | .calledField c m      =>
+    s!"{m} is a field of {c} and not a method, so it is not called in place, bind it first"
   | .privateMember c m    => s!"{m} is a private member of {c}"
   | .noConstructor c      => s!"class {c} has no constructor for these arguments"
   | .baseConstructorParams c b => s!"the base {b} of {c} has a constructor with parameters, and there is no initialiser list"
@@ -605,7 +610,11 @@ partial def resolveMethod (p : Program) (Γ : TEnv) (recv : Expr) (arrow : Bool)
       | .cls c => pure c
       | _ => throw (.notObject recv t)
   let cands := p.findMethods c m
-  if cands.isEmpty then throw (.unknownMethod c m)
+  if cands.isEmpty then
+    -- A name after `.` or `->` followed by an argument list is a method call,
+    -- by the grammar, so a field of function type is not callable in place.
+    if (p.findField c m).isSome then throw (.calledField c m)
+    else throw (.unknownMethod c m)
   let i ← pickOverload p Γ m (cands.map (·.1.params)) es
   let (md, k) := cands[i]!
   if md.vis == .priv && Γ.self != some k then throw (.privateMember k m)

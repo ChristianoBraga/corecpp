@@ -3,15 +3,15 @@
 (* either case whose next token is ::. A quoted literal with a letter is a *)
 (* reserved word and any other quoted literal is a symbol. The start symbol is Program. *)
 (* CoreCpp/GrammarRules.lean is generated from this file by lake exe ebnf2lean. *)
-
 Program = { Declaration } ;
 Declaration = "namespace" Name "{" { Declaration } "}"
-            | "template" "<" "typename" TypeId { "," "typename" TypeId } ">"
-              "class" ( TypeId ClassRest | VarId ";" )
+            | "template" "<" "typename" TypeId { "," "typename" TypeId } ">" "class" ( TypeId ClassRest | VarId ";" )
             | Class
             | Function
             ;
-Name = TypeId | VarId ;
+Name = TypeId
+     | VarId
+     ;
 Class = "class" TypeId ClassRest ;
 ClassRest = [ ":" "public" ClassType ] "{" { Member } { Section } "}" ";" ;
 Section = ( "public" | "private" ) ":" { Member } ;
@@ -81,7 +81,12 @@ MulExpr = UnaryExpr { ( "*" | "/" | "%" ) UnaryExpr } ;
 UnaryExpr = ( "!" | "-" | "*" ) UnaryExpr
           | PostfixExpr
           ;
-PostfixExpr = Primary { ( "[" Expr "]" | "." VarId | "->" VarId | Args ) } ;
+PostfixExpr = Primary Chain ;
+Chain = [ ( "[" Expr "]" Chain | "." VarId After | "->" VarId After | Args Chain ) ] ;
+After = Args Chain
+      | ChainNoCall
+      ;
+ChainNoCall = [ ( "[" Expr "]" Chain | "." VarId After | "->" VarId After ) ] ;
 Primary = IntLit
         | "true"
         | "false"
