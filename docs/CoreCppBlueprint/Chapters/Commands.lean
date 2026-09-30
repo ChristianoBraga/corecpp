@@ -29,6 +29,8 @@ $$`\dfrac{\Gamma \vdash e : \tau \qquad \tau \neq \mathsf{void}}{\Gamma \vdash \
 $$`\dfrac{\Gamma \vdash e : \tau \qquad \tau \neq \mathsf{void}}{\Gamma \vdash \mathtt{auto}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-Auto)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma' \qquad (\ell, \sigma'') = \mathrm{alloc}(\sigma', v)}{\rho, \sigma \vdash \tau\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma''}\;\textsf{(Decl)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Local reference
@@ -39,6 +41,8 @@ The local reference `τ& y = e` binds a second name to the location `e` denotes,
 $$`\dfrac{\Gamma \vdash_{\ell} e : \tau \qquad \tau \text{ has values}}{\Gamma \vdash \tau\mathtt{\&}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-DeclRef)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \tau\mathtt{\&}\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma'}\;\textsf{(DeclRef)}`
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Assignment
@@ -49,6 +53,8 @@ The left side denotes a location and has the type of the right side. The order i
 $$`\dfrac{\Gamma \vdash_{\ell} e_1 : \tau \qquad \Gamma \vdash e_2 : \tau}{\Gamma \vdash e_1 = e_2 \dashv \Gamma}\;\textsf{(T-Assign)}`
 
 $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_2 \Rightarrow v, \sigma_1 \qquad \rho, \sigma_1 \vdash e_1 \Rightarrow_{\ell} \ell, \sigma_2 \\ \ell \in \mathrm{dom}\,\sigma_2 \end{array}}{\rho, \sigma \vdash e_1 = e_2 \Rightarrow \mathsf{normal}, \rho, \sigma_2[\ell \mapsto v]}\;\textsf{(Assign)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Sequence and block
@@ -65,6 +71,8 @@ $$`\dfrac{}{\rho, \sigma \vdash \varepsilon \Rightarrow \mathsf{normal}, \rho, \
 $$`\dfrac{\rho, \sigma \vdash c \Rightarrow \mathsf{normal}, \rho_1, \sigma_1 \qquad \rho_1, \sigma_1 \vdash cs \Rightarrow r, \rho_2, \sigma_2}{\rho, \sigma \vdash c\ cs \Rightarrow r, \rho_2, \sigma_2}\;\textsf{(Seq)}`
 
 $$`\dfrac{\rho, \sigma \vdash c \Rightarrow \mathsf{ret}\,v, \rho_1, \sigma_1}{\rho, \sigma \vdash c\ cs \Rightarrow \mathsf{ret}\,v, \rho_1, \sigma_1}\;\textsf{(Seq-Ret)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "cmd_block" (parent := "ud3") (lean := "CoreCpp.Typing.cmd, CoreCpp.Eval.cmd, CoreCpp.Eval.fresh") (uses := "cmd_seq, dom_store")
@@ -73,6 +81,8 @@ The block discards the extension of $`\rho` and removes from $`\sigma` the locat
 $$`\dfrac{\Gamma \vdash c_1 \ldots c_n \dashv \Gamma'}{\Gamma \vdash \{\, c_1 \ldots c_n \,\} \dashv \Gamma}\;\textsf{(T-Block)}`
 
 $$`\dfrac{\rho, \sigma \vdash c_1 \ldots c_n \Rightarrow r, \rho', \sigma'}{\rho, \sigma \vdash \{\, c_1 \ldots c_n \,\} \Rightarrow r, \rho, \sigma' \setminus (\rho' \setminus \rho)}\;\textsf{(Block)}`
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Conditional
@@ -85,6 +95,8 @@ $$`\dfrac{\begin{array}{c} \Gamma \vdash e : \mathsf{bool} \qquad \Gamma \vdash 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c_1\} \Rightarrow r, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{if}\ (e)\ \{c_1\}\ \mathtt{else}\ \{c_2\} \Rightarrow r, \rho, \sigma_2}\;\textsf{(If-T)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c_2\} \Rightarrow r, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{if}\ (e)\ \{c_1\}\ \mathtt{else}\ \{c_2\} \Rightarrow r, \rho, \sigma_2}\;\textsf{(If-F)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Loops
@@ -99,6 +111,8 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigm
 $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c\} \Rightarrow \mathsf{normal}, \rho, \sigma_2 \\ \rho, \sigma_2 \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow r, \rho, \sigma_3 \end{array}}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow r, \rho, \sigma_3}\;\textsf{(While-T)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c\} \Rightarrow \mathsf{ret}\,v, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow \mathsf{ret}\,v, \rho, \sigma_2}\;\textsf{(While-Ret)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "cmd_for" (parent := "ud3") (lean := "CoreCpp.Typing.cmd, CoreCpp.Eval.cmd") (uses := "cmd_while, cmd_decl, cmd_block")
@@ -107,12 +121,16 @@ The `for` is defined through `while`. The variable of the initialiser has the lo
 $$`\dfrac{\begin{array}{c} \Gamma \vdash c_0 \dashv \Gamma_0 \qquad \Gamma_0 \vdash e : \mathsf{bool} \\ \Gamma_0 \vdash c_s \dashv \Gamma_0 \qquad \Gamma_0 \vdash \{c\} \dashv \Gamma_0 \end{array}}{\Gamma \vdash \mathtt{for}\ (c_0;\, e;\, c_s)\ \{c\} \dashv \Gamma}\;\textsf{(T-For)}`
 
 $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash c_0 \Rightarrow \mathsf{normal}, \rho_0, \sigma_0 \\ \rho_0, \sigma_0 \vdash \mathtt{while}\ (e)\ \{\, \{c\}\ c_s \,\} \Rightarrow r, \rho_0, \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{for}\ (c_0;\, e;\, c_s)\ \{c\} \Rightarrow r, \rho, \sigma_1 \setminus (\rho_0 \setminus \rho)}\;\textsf{(For)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Evaluation order
 
 :::definition "eval_order" (parent := "ud3") (lean := "CoreCpp.Eval.expr, CoreCpp.Eval.cmd, CoreCpp.Eval.lval") (uses := "expr_arith, cmd_assign, fun_call")
 Once a call inside an expression may write the store, the order in which the operands are evaluated is part of the meaning. Core C++ fixes one order for every construction and the interpreter implements it. In the binary operators, the left operand before the right one, rule `Binary`. In a call, the arguments left to right, rule `Call`. In the assignment, the right side before the left one, rule `Assign`. In the indexing of a vector, the receiver before the index, rule `LocLib`. The first two are choices of Core C++ where C++17 fixes no order, the last two are the orders C++17 fixes. For `f() + g()` with effects, C++17 also admits the derivation that evaluates `g()` first, and Core C++ has no such derivation, because `Binary` has one order of premises. The example `call_order.cpp` returns 21 in Core C++, and 21 or 12 under a C++ compiler.
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Expression statement
@@ -123,4 +141,6 @@ An expression followed by `;` is a command that evaluates the expression and dis
 $$`\dfrac{\Gamma \vdash e : \tau}{\Gamma \vdash e; \dashv \Gamma}\;\textsf{(T-ExprStmt)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash e; \Rightarrow \mathsf{normal}, \rho, \sigma'}\;\textsf{(ExprStmt)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::

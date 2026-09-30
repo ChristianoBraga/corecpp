@@ -31,6 +31,8 @@ $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \l
 $$`\dfrac{\begin{array}{c} \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k,\ \sigma_0 = \sigma) \\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma'_{i-1}, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma_k) \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup (\rho' \setminus \rho_f))}\;\textsf{(Call)}`
 
 The return frees the copies of the arguments and the locals the body declared, $`\rho' \setminus \rho_f` read as the owned bindings the body added, so after a call the store holds only what existed before it and the objects created with `new`. When the body ends with $`\mathsf{normal}`, the result is $`\mathsf{void}` if $`\tau = \mathsf{void}` and `error` otherwise. A missing `return` in a non `void` function is an evaluation `error`, not a type error. The rule above is the case in which every parameter is by value, and {bpref "param_ref"}[] gives the case of a parameter by reference.
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Parameters by reference
@@ -43,6 +45,8 @@ $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \ \text{for each 
 $$`\dfrac{\begin{array}{c} \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma'_k \vdash c \Rightarrow \mathsf{ret}\,v, \rho', \sigma'' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup (\rho' \setminus \rho_f))}\;\textsf{(Call)}`
 
 Two reference parameters bound to the same argument alias each other, and a write through one is read through the other, as in C++.
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Lambdas and function values
@@ -55,12 +59,16 @@ $$`\dfrac{\Gamma \vdash e : \tau' \qquad \tau' \approx \tau \qquad \tau' \text{ 
 $$`\dfrac{\begin{array}{c} \Gamma' = \Gamma \text{ marked read only}, [x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k] \\ \Gamma' \vdash c \dashv \Gamma'' \qquad \tau, \tau_i \text{ storable and well formed} \qquad \Gamma \vdash_L \tau(\tau_1, \ldots, \tau_k) \hookrightarrow L\langle\bar{\tau}\rangle \end{array}}{\Gamma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \lhd L\langle\bar{\tau}\rangle}\;\textsf{(T-Lambda)}`
 
 Outside its three positions a lambda is a type error, and `auto x = [=]…` is a syntax error, because the grammar admits a lambda only as an argument expression.
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "lambda" (parent := "ud4") (lean := "CoreCpp.Eval.expr, CoreCpp.Eval.captures, CoreCpp.Expr.vars, CoreCpp.Cmd.vars") (uses := "judg_ev_expr, dom_closure, fun_accept")
 A lambda evaluates to a closure with copies of the free variables of its body that the environment binds, taken when the lambda is evaluated. The closure holds values, not locations. A captured `int` or `bool` is a copy the body reads and never writes, and a captured pointer still reaches its object in $`\sigma`, so an effect through it is visible outside the lambda.
 
 $$`\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{free variables of } c \text{ bound in } \rho, \text{ minus the } x_i \\ \rho(y_j) = \ell_j \qquad \ell_j \in \mathrm{dom}\,\sigma \qquad w_j = \sigma(\ell_j) \end{array}}{\rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \Rightarrow \mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma}\;\textsf{(Lambda)}`
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "fun_callfn" (parent := "ud4") (lean := "CoreCpp.Typing.callValue, CoreCpp.Eval.applyClosure, CoreCpp.Eval.applyVals") (uses := "lambda, fun_call, judg_ev_expr, dom_store")
@@ -75,6 +83,8 @@ With $`\mathsf{normal}` in place of $`\mathsf{ret}\,v` the result is $`\mathsf{v
 The application of the closure to the values is a judgment of its own, the premise the rule `F-Call` of {bpref "std_function"}[] names $`\mathrm{apply}`. A value that is not a closure is `error`.
 
 $$`\dfrac{\begin{array}{c} v = \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]) \\ (\ell'_j, \cdot) = \mathrm{alloc}(w_j) \qquad (\ell_i, \cdot) = \mathrm{alloc}(v_i) \\ \rho_c = [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \\ \rho_c, \sigma' \vdash c \Rightarrow \mathsf{ret}\,v', \rho'', \sigma'' \end{array}}{\mathrm{apply}\ v\ (v_1, \ldots, v_k) \Rightarrow v', \sigma'' \setminus (\{\ell'_j, \ell_i\} \cup (\rho'' \setminus \rho_c))}\;\textsf{(Apply)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Return
@@ -89,6 +99,8 @@ $$`\dfrac{\Gamma \vdash e : \tau_r \qquad \tau_r \neq \mathsf{void}}{\Gamma \vda
 $$`\dfrac{}{\rho, \sigma \vdash \mathtt{return} \Rightarrow \mathsf{ret}\,\mathsf{void}, \rho, \sigma}\;\textsf{(ReturnVoid)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash \mathtt{return}\ e \Rightarrow \mathsf{ret}\,v, \rho, \sigma'}\;\textsf{(Return)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Function and program

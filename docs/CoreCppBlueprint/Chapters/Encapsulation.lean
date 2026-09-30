@@ -36,6 +36,8 @@ A private member declared in class $`K` is visible exactly when $`\Gamma(\mathtt
 $$`\dfrac{C \text{ has } \tau\ f \text{ declared in } K \qquad f \text{ public or } \Gamma(\mathtt{this}) = K*}{\Gamma \vdash e.f : \tau \text{ for } \Gamma \vdash e : C}\;\textsf{(Visible)}`
 
 The same premise applies to methods, {bpref "cls_method"}[].
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "cls_this" (parent := "ud5") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.lval") (uses := "judg_ty_expr, judg_ev_expr, judg_ev_lval, dom_env")
@@ -48,6 +50,8 @@ The same holds of a call. An unqualified name that is neither a variable nor a f
 $$`\dfrac{f \notin \Gamma \qquad f \text{ is no function of the program} \qquad \Gamma(\mathtt{this}) = C* \qquad \Gamma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) : \tau}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallThis)}`
 
 $$`\dfrac{\rho(\mathtt{this}) = \ell}{\rho, \sigma \vdash \mathtt{this} \Rightarrow \mathsf{loc}\,\ell, \sigma}\;\textsf{(This)} \qquad \dfrac{x \notin \rho \qquad \rho(\mathtt{this}) = \ell \qquad \sigma(\ell) = \mathsf{obj}\,C\,[\ldots x \mapsto \ell_x \ldots]}{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell_x, \sigma}\;\textsf{(LocVarField)}`
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Objects
@@ -58,6 +62,8 @@ The expression `new C(args)` allocates one location per field of the whole chain
 $$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\ldots C(p_1\,x_1, \ldots, p_k\,x_k)\ \{c\} \ldots\} \qquad \text{arguments as in T-Call}}{\Gamma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) : C*}\;\textsf{(T-New)}`
 
 $$`\dfrac{\begin{array}{c} f_1 \ldots f_n \text{ the fields of the chain of } C \qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i) \qquad (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain run from the root down with } \mathtt{this} \mapsto \ell \text{, giving } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "cls_member" (parent := "ud5") (lean := "CoreCpp.Eval.runMember, CoreCpp.Typing.checkArgs") (uses := "fun_call, param_ref, judg_ev_cmd, dom_env")
@@ -66,6 +72,8 @@ The call of a member body, a method, a constructor or a destructor, binds `this`
 $$`\dfrac{\begin{array}{c} p_i = \tau_i \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i,\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \qquad p_i = \tau_i\& \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_m = [\mathtt{this} \mapsto \ell, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_m, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \end{array}}{\mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup (\rho' \setminus \rho_m))}\;\textsf{(Member)}`
 
 With $`\mathsf{normal}` in place of $`\mathsf{ret}\,v` the result is $`\mathsf{void}` for a `void` member and `error` otherwise.
+
+The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "cls_method" (parent := "ud5") (lean := "CoreCpp.Typing.methodCall, CoreCpp.Eval.expr, CoreCpp.Eval.resolve, CoreCpp.Program.findMethod") (uses := "cls_member, cls_visible, cls_dispatch, judg_ty_expr, judg_ev_expr")
@@ -76,6 +84,8 @@ $$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\ m(p_1\,x_1, \ldots, p_
 $$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\ m(\ldots) \text{ visible from } \Gamma \qquad \text{arguments as in T-Call}}{\Gamma \vdash e\mathtt{->}m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-MethodArrow)}`
 
 $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma_0 \text{ or } \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[\ldots] \qquad S \text{ the static class of } e \\ m \mapsto \tau\ m(\ldots)\{c\} \text{ nearest } S \text{, or nearest } T \text{ when virtual} \qquad \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(MethodCall)}`
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Inheritance
@@ -88,6 +98,8 @@ $$`\dfrac{D \text{ derives from } B}{D* \approx B*}\;\textsf{(Subsumption)}`
 
 :::definition "cls_dispatch" (parent := "ud5") (lean := "CoreCpp.Eval.resolve, CoreCpp.Program.findMethod, CoreCpp.Typing.cls") (uses := "cls_decl, cls_subsumption, dom_classes")
 A `virtual` method is chosen by the class tag $`T` of the receiver, the nearest declaration in the chain of $`T`, so a call through a base pointer reaches the override of the derived class. A non virtual method is chosen by the static class $`S`. A derived class redefines only a method the base declares `virtual`, and marks it `override`, so the method reached from $`S` and the one reached from $`T` coincide for every non virtual method. Redefining a non virtual method, marking `override` without a virtual method in a base, or changing the signature is a type error.
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::theorem "cls_dispatch_agree" (parent := "ud5") (uses := "cls_dispatch, cls_method")
@@ -102,12 +114,16 @@ $$`\dfrac{\Gamma \vdash e : C*}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\
 $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n] \qquad S \text{ the static class of } e \\ S = T \text{ or the chain of } S \text{ has a virtual destructor} \qquad \text{the destructors of the chain of } T \text{ run from } T \text{ up, giving } \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell, \ell_1, \ldots, \ell_n\}}\;\textsf{(Delete)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{null}, \sigma_0}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_0}\;\textsf{(DeleteNull)}`
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Static classes and namespaces
 
 :::definition "cls_annotate" (parent := "ud5") (lean := "CoreCpp.Typing.annotate, CoreCpp.Typing.staticClass, CoreCpp.Typing.annExpr, CoreCpp.Typing.annCmd, CoreCpp.Typing.annCmds, CoreCpp.runWith") (uses := "cls_method, cls_delete, judg_ty_expr")
 Neither $`\rho` nor $`\sigma` carries types, and the rules MethodCall and Delete need the static class of the receiver. After a program is checked, `annotate` walks it with the typing context and writes into every method call and every `delete` the class the receiver has in $`\Gamma`, and rewrites an unqualified `m(args)` inside a member body into `this->m(args)`. The program runs annotated, and an ill typed program, which `check` rejects, runs as parsed with every dispatch by the tag.
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "cls_namespace" (parent := "ud5") (lean := "CoreCpp.declaration, CoreCpp.classType, CoreCpp.P.qualify") (uses := "parse_program")
