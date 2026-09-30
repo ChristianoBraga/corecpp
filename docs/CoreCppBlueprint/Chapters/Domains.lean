@@ -67,7 +67,7 @@ The typing context $`\Gamma` is a finite map from identifiers to types. The type
 :::
 
 :::definition "dom_funenv" (parent := "dominios") (lean := "CoreCpp.Decl, CoreCpp.Program, CoreCpp.Program.funs, CoreCpp.FunEnv, CoreCpp.FunEnv.lookup")
-A program is a list of declarations, classes and functions. The functions form a finite map from names to declarations, fixed during the whole evaluation and implicit in the judgments.
+The function environment gathers the functions a program declares, a finite map from a name to its declaration, built once by the elaboration and implicit in every judgment, which reads it and never changes it. {bpref "gram_ast"}[] gives the syntax of the declarations it holds.
 :::
 
 :::definition "dom_classes" (parent := "dominios") (lean := "CoreCpp.ClassDecl, CoreCpp.Field, CoreCpp.Method, CoreCpp.Ctor, CoreCpp.Dtor, CoreCpp.Vis, CoreCpp.Program.classes, CoreCpp.Program.lookupClass, CoreCpp.Program.chain, CoreCpp.Program.allFields, CoreCpp.Program.findField, CoreCpp.Program.findMethod, CoreCpp.Program.subclass, CoreCpp.Program.hasVirtualDtor")
