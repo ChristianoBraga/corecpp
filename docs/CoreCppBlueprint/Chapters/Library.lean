@@ -47,7 +47,7 @@ $$`\dfrac{f \text{ declared by a header} \qquad \Gamma \vdash_f \mathtt{call} : 
 
 $$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \mathtt{operator[]} : \tau_1 \to \tau \qquad \Gamma \vdash i \lhd \tau_1}{\Gamma \vdash e[i] : \tau}\;\textsf{(T-IndexLib)}`
 
-$$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \mathtt{operator[]} : \tau_1 \to \tau, \text{ a location} \qquad \Gamma \vdash i \lhd \tau_1}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocIndexLib)}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e : L\langle\bar{\tau}\rangle\qquad \Gamma \vdash_L \mathtt{operator[]} : \tau_1 \to \tau, \text{ a location} \\ \Gamma \vdash i \lhd \tau_1 \end{array}}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocIndexLib)}`
 
 $$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'}{\rho, \sigma_0 \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(NewLib)}`
 
@@ -59,7 +59,7 @@ $$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i
 
 The command `delete e` on a pointer to an instance frees what the intrinsic owns and then the location of the instance.
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \qquad \sigma_0 \vdash_L \mathtt{delete}(\sigma_0(\ell)) \Rightarrow \mathsf{void}, \sigma_1}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \\ \sigma_0 \vdash_L \mathtt{delete}(\sigma_0(\ell)) \Rightarrow \mathsf{void}, \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}`
 
 Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
@@ -77,7 +77,7 @@ $$`\dfrac{}{\Gamma \vdash_{\mathit{vector}} \mathtt{operator[]} : \mathsf{int} \
 
 The use `operator[]` gives a location, so `v[i]` may stand on the left of an assignment and bind a reference.
 
-$$`\dfrac{k \ge 0 \qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau)\ (1 \le i \le k) \qquad (\ell, \sigma') = \mathrm{alloc}(\sigma_k, \mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_1, \ldots, \ell_k])}{\sigma_0 \vdash_{\mathit{vector}} \mathtt{new}\langle\tau\rangle(k) \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(V-New)}`
+$$`\dfrac{\begin{array}{c} k \ge 0\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau)\ (1 \le i \le k) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_k, \mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_1, \ldots, \ell_k]) \end{array}}{\sigma_0 \vdash_{\mathit{vector}} \mathtt{new}\langle\tau\rangle(k) \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(V-New)}`
 
 $$`\dfrac{0 \le i < n}{\sigma \vdash_{\mathit{vector}} \mathtt{operator[]}(\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}], i) \Rightarrow \ell_i, \sigma}\;\textsf{(V-Index)}`
 
@@ -91,7 +91,7 @@ The header `<functional>` declares `template <typename F> class function;` in `n
 
 $$`\dfrac{}{\Gamma \vdash_{\mathit{function}} \tau(\tau_1, \ldots, \tau_k) \hookrightarrow \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle}\;\textsf{(TF-Conv)}`
 
-$$`\dfrac{}{\Gamma \vdash_{\mathit{function}} \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau}\;\textsf{(TF-Call)}, \quad \text{at } \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle`
+$$`\dfrac{\text{at } \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle}{\Gamma \vdash_{\mathit{function}} \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau}\;\textsf{(TF-Call)}`
 
 $$`\dfrac{\sigma \vdash \mathrm{apply}(v, v_1, \ldots, v_k) \Rightarrow v', \sigma'}{\sigma \vdash_{\mathit{function}} \mathtt{operator()}(v, v_1, \ldots, v_k) \Rightarrow v', \sigma'}\;\textsf{(F-Call)}`
 

@@ -31,7 +31,7 @@ A class has an optional base, fields and methods with a visibility, at most one 
 
 The class is well formed when the base exists and the chain is acyclic, the fields have types with values and repeat no field of a base, the members have distinct names, a method that redefines a method of a base finds it `virtual` there, carries `override` and keeps the signature, the constructor of the base takes no parameters, and every member body is well typed under `this`.
 
-$$`\dfrac{\begin{array}{c} B \text{ exists, chain acyclic} \qquad \text{fields storable, well formed, new in the chain} \\ \text{each redefined } m \text{ is virtual in the base, marked override, same signature} \qquad B \text{ has no constructor or one without parameters} \\ [\mathtt{this} \mapsto C*, p_1, \ldots, p_k] \vdash c \dashv \Gamma' \text{ for each member body} \end{array}}{\vdash \mathtt{class}\ C\ \mathtt{:}\ \mathtt{public}\ B\ \{ \ldots \}}\;\textsf{(T-Class)}`
+$$`\dfrac{\begin{array}{c} B \text{ exists, chain acyclic}\qquad \text{fields storable, well formed, new in the chain} \\ \text{each redefined } m \text{ is virtual in the base, marked override, same signature} \\ B \text{ has no constructor or one without parameters} \\ [\mathtt{this} \mapsto C*, p_1, \ldots, p_k] \vdash c \dashv \Gamma' \text{ for each member body} \end{array}}{\vdash \mathtt{class}\ C\ \mathtt{:}\ \mathtt{public}\ B\ \{ \ldots \}}\;\textsf{(T-Class)}`
 
 The context of a member body binds `this` to $`C*` and the parameters as variables, so the current class is the class of `this` in $`\Gamma`.
 :::
@@ -55,7 +55,7 @@ $$`\dfrac{x \notin \Gamma \qquad \Gamma(\mathtt{this}) = C* \qquad \Gamma \vdash
 
 The same holds of a call. An unqualified name that is neither a variable nor a function of the program is a member of the receiver.
 
-$$`\dfrac{f \notin \Gamma \qquad f \text{ is no function of the program} \qquad \Gamma(\mathtt{this}) = C* \qquad \Gamma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) : \tau}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallThis)}`
+$$`\dfrac{\begin{array}{c} f \notin \Gamma\qquad f \text{ is no function of the program}\qquad \Gamma(\mathtt{this}) = C* \\ \Gamma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) : \tau \end{array}}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallThis)}`
 
 $$`\dfrac{\rho(\mathtt{this}) = \ell}{\rho, \sigma \vdash \mathtt{this} \Rightarrow \mathsf{loc}\,\ell, \sigma}\;\textsf{(This)}`
 
@@ -73,7 +73,7 @@ A class without a constructor is created by `new C()` and keeps the default valu
 
 $$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\ldots C(p_1\,x_1, \ldots, p_k\,x_k)\ \{c\} \ldots\} \qquad \text{arguments as in T-Call}}{\Gamma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) : C*}\;\textsf{(T-New)}`
 
-$$`\dfrac{\begin{array}{c} f_1 \ldots f_n \text{ the fields of the chain of } C \qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i) \qquad (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain run from the root down with } \mathtt{this} \mapsto \ell \text{, giving } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
+$$`\dfrac{\begin{array}{c} f_1 \ldots f_n \text{ the fields of the chain of } C\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain run from the root down} \\ \text{with } \mathtt{this} \mapsto \ell \text{, giving } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
 
 Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
@@ -81,7 +81,7 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 :::definition "cls_member" (parent := "ud5") (lean := "CoreCpp.Eval.runMember, CoreCpp.Typing.checkArgs") (uses := "fun_call, param_ref, judg_ev_cmd, dom_env")
 The call of a member body, a method, a constructor or a destructor, binds `this` to the location $`\ell` of the receiver as an alias and the parameters as in the call of a function, by value with a fresh copy and by reference with an alias. The return frees the copies and the locals of the body, never the receiver.
 
-$$`\dfrac{\begin{array}{c} p_i = \tau_i \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i,\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \qquad p_i = \tau_i\& \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_m = [\mathtt{this} \mapsto \ell, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_m, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \end{array}}{\mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup (\rho' \setminus \rho_m))}\;\textsf{(Member)}`
+$$`\dfrac{\begin{array}{c} p_i = \tau_i \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i,\ (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \Rightarrow \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_m = [\mathtt{this} \mapsto \ell, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k]\qquad \rho_m, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \end{array}}{\mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup (\rho' \setminus \rho_m))}\;\textsf{(Member)}`
 
 With $`\mathsf{normal}` in place of $`\mathsf{ret}\,v` the result is $`\mathsf{void}` for a `void` member and `error` otherwise.
 
@@ -91,11 +91,11 @@ The implementations are `partial`, so Lean records opaque constants that carry t
 :::definition "cls_method" (parent := "ud5") (lean := "CoreCpp.Typing.methodCall, CoreCpp.Eval.expr, CoreCpp.Eval.resolve, CoreCpp.Program.findMethod") (uses := "cls_member, cls_visible, cls_dispatch, judg_ty_expr, judg_ev_expr")
 A method call `e.m(args)` needs a receiver of class type and `e->m(args)` a receiver of pointer type. The method is the nearest $`m` in the chain of the static class of the receiver, it must be visible, and the arguments are checked as in a call. An unqualified call `m(args)` inside a member body is `this->m(args)`.
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\ m(p_1\,x_1, \ldots, p_k\,x_k) \text{ visible from } \Gamma \qquad \text{arguments as in T-Call}}{\Gamma \vdash e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Method)}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e : C\qquad C \text{ has } \tau\ m(p_1\,x_1, \ldots, p_k\,x_k) \text{ visible from } \Gamma \\ \text{arguments as in T-Call} \end{array}}{\Gamma \vdash e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Method)}`
 
-$$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\ m(\ldots) \text{ visible from } \Gamma \qquad \text{arguments as in T-Call}}{\Gamma \vdash e\mathtt{->}m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-MethodArrow)}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e : C*\qquad C \text{ has } \tau\ m(\ldots) \text{ visible from } \Gamma \\ \text{arguments as in T-Call} \end{array}}{\Gamma \vdash e\mathtt{->}m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-MethodArrow)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma_0 \text{ or } \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[\ldots] \qquad S \text{ the static class of } e \\ m \mapsto \tau\ m(\ldots)\{c\} \text{ nearest } S \text{, or nearest } T \text{ when virtual} \qquad \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(MethodCall)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma_0 \text{ or } \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[\ldots] \\ S \text{ the static class of } e \\ m \mapsto \tau\ m(\ldots)\{c\} \text{ nearest } S \text{, or nearest } T \text{ when virtual} \\ \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(MethodCall)}`
 
 Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
@@ -135,7 +135,7 @@ $$`\dfrac{\Gamma \vdash e : C*}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\
 
 $$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle* \qquad L\langle\bar{\tau}\rangle \text{ an object type} \qquad \Gamma \vdash_L \mathtt{delete} : \to \mathsf{void}}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\;\textsf{(T-DeleteLib)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n] \qquad S \text{ the static class of } e \\ S = T \text{ or the chain of } S \text{ has a virtual destructor} \qquad \text{the destructors of the chain of } T \text{ run from } T \text{ up, giving } \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell, \ell_1, \ldots, \ell_n\}}\;\textsf{(Delete)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n] \\ S \text{ the static class of } e\qquad S = T \text{ or the chain of } S \text{ has a virtual destructor} \\ \text{the destructors of the chain of } T \text{ run from } T \text{ up, giving } \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell, \ell_1, \ldots, \ell_n\}}\;\textsf{(Delete)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{null}, \sigma_0}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_0}\;\textsf{(DeleteNull)}`
 

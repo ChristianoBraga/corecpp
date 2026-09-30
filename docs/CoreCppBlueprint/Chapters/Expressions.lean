@@ -156,7 +156,7 @@ The expression `new C()` allocates one location per field of $`C`, each with the
 
 $$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\, \tau_1\, f_1; \ldots; \tau_n\, f_n; \,\}}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
 
-$$`\dfrac{\begin{array}{c} C \mapsto \mathtt{class}\ C\ \{\, \tau_1\, f_1; \ldots; \tau_n\, f_n; \,\} \qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(New)}`
+$$`\dfrac{\begin{array}{c} C \mapsto \mathtt{class}\ C\ \{\, \tau_1\, f_1; \ldots; \tau_n\, f_n; \,\} \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(New)}`
 
 Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::

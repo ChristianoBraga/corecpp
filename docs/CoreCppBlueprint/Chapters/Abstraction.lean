@@ -64,7 +64,7 @@ The rule `T-LocVar` requires a variable that is not read only, so an assignment 
 
 $$`\dfrac{\Gamma \vdash e : \tau' \qquad \tau' \approx \tau \qquad \tau' \text{ has values}}{\Gamma \vdash e \lhd \tau}\;\textsf{(Accept)}`
 
-$$`\dfrac{\begin{array}{c} \Gamma' = \Gamma \text{ marked read only}, [x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k] \\ \Gamma' \vdash c \dashv \Gamma'' \qquad \tau, \tau_i \text{ storable and well formed} \qquad \Gamma \vdash_L \tau(\tau_1, \ldots, \tau_k) \hookrightarrow L\langle\bar{\tau}\rangle \end{array}}{\Gamma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \lhd L\langle\bar{\tau}\rangle}\;\textsf{(T-Lambda)}`
+$$`\dfrac{\begin{array}{c} \Gamma' = \Gamma \text{ marked read only}, [x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k]\qquad \Gamma' \vdash c \dashv \Gamma'' \\ \tau, \tau_i \text{ storable and well formed}\qquad \Gamma \vdash_L \tau(\tau_1, \ldots, \tau_k) \hookrightarrow L\langle\bar{\tau}\rangle \end{array}}{\Gamma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \lhd L\langle\bar{\tau}\rangle}\;\textsf{(T-Lambda)}`
 
 Outside its three positions a lambda is a type error, and `auto x = [=]…` is a syntax error, because the grammar admits a lambda only as an argument expression.
 
@@ -74,7 +74,7 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 :::definition "lambda" (parent := "ud4") (lean := "CoreCpp.Eval.expr, CoreCpp.Eval.captures, CoreCpp.Expr.vars, CoreCpp.Cmd.vars") (uses := "judg_ev_expr, dom_closure, fun_accept")
 A lambda evaluates to a closure with copies of the free variables of its body that the environment binds, taken when the lambda is evaluated. The closure holds values, not locations. A captured `int` or `bool` is a copy the body reads and never writes, and a captured pointer still reaches its object in $`\sigma`, so an effect through it is visible outside the lambda.
 
-$$`\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{free variables of } c \text{ bound in } \rho, \text{ minus the } x_i \\ \rho(y_j) = \ell_j \qquad \ell_j \in \mathrm{dom}\,\sigma \qquad w_j = \sigma(\ell_j) \end{array}}{\rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \Rightarrow \mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma}\;\textsf{(Lambda)}`
+$$`\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{free variables of } c \text{ bound in } \rho, \text{ minus the } x_i\qquad \rho(y_j) = \ell_j \\ \ell_j \in \mathrm{dom}\,\sigma\qquad w_j = \sigma(\ell_j) \end{array}}{\begin{array}{c} \rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \\ \Rightarrow \mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma \end{array}}\;\textsf{(Lambda)}`
 
 Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
@@ -86,9 +86,9 @@ When the callee is a variable `f` of function type, `f(…)` is this rule and no
 
 The type checker rewrites the call into the use `operator()` of {bpref "std_uses"}[]. The rule `F-Call` of {bpref "std_function"}[] then takes the application of the closure to the values, the premises of `CallFn` after the arguments, as its premise $`\mathrm{apply}`.
 
-$$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash e(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallFn)}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e : L\langle\bar{\tau}\rangle\qquad \Gamma \vdash_L \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau \\ \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k) \end{array}}{\Gamma \vdash e(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallFn)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma_0 \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad (\ell'_j, \cdot) = \mathrm{alloc}(w_j) \qquad (\ell_i, \cdot) = \mathrm{alloc}(v_i) \\ [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma' \vdash c \Rightarrow \mathsf{ret}\,v, \rho'', \sigma'' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell'_j, \ell_i\} \cup (\rho'' \setminus \rho_c))}\;\textsf{(CallFn)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma_0 \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k)\qquad (\ell'_j, \cdot) = \mathrm{alloc}(w_j) \\ (\ell_i, \cdot) = \mathrm{alloc}(v_i) \\ [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k], \sigma' \vdash c \Rightarrow \mathsf{ret}\,v, \rho'', \sigma'' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell'_j, \ell_i\} \cup (\rho'' \setminus \rho_c))}\;\textsf{(CallFn)}`
 
 With $`\mathsf{normal}` in place of $`\mathsf{ret}\,v` the result is $`\mathsf{void}` if $`\tau = \mathsf{void}` and `error` otherwise. Nothing of the environment of the call is visible inside the body, only the copies and the parameters.
 

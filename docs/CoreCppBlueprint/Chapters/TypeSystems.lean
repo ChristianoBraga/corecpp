@@ -38,7 +38,7 @@ A type is convertible when the library marks it so, as `std::function` of {bpref
 :::definition "overload_pick" (parent := "ud6") (lean := "CoreCpp.Typing.pickOverload, CoreCpp.Typing.resolveFun, CoreCpp.Typing.resolveMethod") (uses := "overload_set, fun_call, cls_method")
 A call collects the candidates of its arity that accept the arguments, each argument by value acceptable at the type of its parameter and each argument of a reference parameter denoting a location of that type. The choice is the exact candidate when several accept.
 
-$$`\dfrac{\begin{array}{c} A = \text{the candidates of } \mathrm{cand}(f, k) \text{ that accept } e_1, \ldots, e_k \\ A \text{ has one element whose parameters are exactly the types of the arguments, or } A \text{ is a singleton} \end{array}}{\text{the call of } f \text{ selects that candidate}}\;\textsf{(T-Overload)}`
+$$`\dfrac{\begin{array}{c} A = \text{the candidates of } \mathrm{cand}(f, k) \text{ that accept } e_1, \ldots, e_k \\ A \text{ has one element whose parameters are} \\ \text{exactly the types of the arguments, or } A \text{ is a singleton} \end{array}}{\text{the call of } f \text{ selects that candidate}}\;\textsf{(T-Overload)}`
 
 With $`A` empty the error is the one of the single candidate of that arity, when there is one, and no overload otherwise. With two or more in $`A` and no exact one the call is ambiguous. Core C++ does not rank conversion sequences as C++ does, so the rule fits in one line on the board and the error is predictable.
 
@@ -56,9 +56,9 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 :::definition "op_member" (parent := "ud6") (lean := "CoreCpp.operatorName, CoreCpp.Typing.methodCall") (uses := "overload_pick, cls_method")
 An infix operator whose left operand is an object, and the indexing of an object, are the calls of members. The left operand decides, so no operator on `int` or `bool` changes meaning, and `&&` and `||` are not overloaded.
 
-$$`\dfrac{\Gamma \vdash e_1 : C \qquad C \text{ has } \mathtt{operator}\oplus \text{ visible from } \Gamma \qquad \Gamma \vdash e_1.\mathtt{operator}\oplus(e_2) : \tau}{\Gamma \vdash e_1 \oplus e_2 : \tau}\;\textsf{(T-OpBin)}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : C\qquad C \text{ has } \mathtt{operator}\oplus \text{ visible from } \Gamma \\ \Gamma \vdash e_1.\mathtt{operator}\oplus(e_2) : \tau \end{array}}{\Gamma \vdash e_1 \oplus e_2 : \tau}\;\textsf{(T-OpBin)}`
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \mathtt{operator[]} \text{ visible from } \Gamma \qquad \Gamma \vdash e.\mathtt{operator[]}(i) : \tau}{\Gamma \vdash e[i] : \tau}\;\textsf{(T-OpIndex)}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e : C\qquad C \text{ has } \mathtt{operator[]} \text{ visible from } \Gamma \\ \Gamma \vdash e.\mathtt{operator[]}(i) : \tau \end{array}}{\Gamma \vdash e[i] : \tau}\;\textsf{(T-OpIndex)}`
 
 The type checker rewrites both forms into the call of the member, and from there they are ordinary method calls, with the visibility, the overload resolution and the dispatch of a method. The trace shows the rule `MethodCall` under the infix form, which is the point.
 
@@ -96,7 +96,7 @@ A class template is a class with a type parameter, `template<typename T> class C
 :::definition "tmpl_inst" (parent := "ud6") (lean := "CoreCpp.Templates.instantiate, CoreCpp.Templates.substClass, CoreCpp.Templates.substTy, CoreCpp.Templates.substName") (uses := "tmpl_decl")
 Instantiation is substitution, and it precedes every other judgment.
 
-$$`\dfrac{p \text{ has } \mathtt{template{<}typename\ T{>}\ class}\ C \qquad C{<}\tau{>} \text{ mentioned in } p \qquad C{<}\tau{>} \notin \text{class table of } p}{p \longrightarrow p, \mathtt{class}\ C{<}\tau{>}\ \{ \ldots [T := \tau] \ldots \}}\;\textsf{(Inst)}`
+$$`\dfrac{\begin{array}{c} p \text{ has } \mathtt{template{<}typename\ T{>}\ class}\ C\qquad C{<}\tau{>} \text{ mentioned in } p \\ C{<}\tau{>} \notin \text{class table of } p \end{array}}{p \longrightarrow p, \mathtt{class}\ C{<}\tau{>}\ \{ \ldots [T := \tau] \ldots \}}\;\textsf{(Inst)}`
 
 The substitution replaces the type `T` in every field, parameter, result, local declaration, vector element and class name the body mentions, and it rewrites the name of a mentioned class in its own chain, so `Node<T>*` inside `Lista<T>` becomes `Node<int>*` in `Lista<int>`.
 
