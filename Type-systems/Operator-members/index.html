@@ -5526,7 +5526,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.operatorName" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/7504b49ccd14107deaf5f4df02976fd78bac2387/CoreCpp/Parser.lean#L489-L497">CoreCpp/Parser.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/37e0aa7dead00edc17d0335a4fa2158fd505d6cd/CoreCpp/Parser.lean#L489-L497">CoreCpp/Parser.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5546,7 +5546,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.methodCall" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/7504b49ccd14107deaf5f4df02976fd78bac2387/CoreCpp/Typing.lean#L623-L625">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/37e0aa7dead00edc17d0335a4fa2158fd505d6cd/CoreCpp/Typing.lean#L631-L633">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5668,11 +5668,11 @@ window.onload = async () => {
                 <p>
                   <code class="bp_math display">\dfrac{\tau \text{ has values} \qquad \text{every return of } c \text{ is return } e \text{ with } \Gamma \vdash_{\ell} e : \tau}{\vdash \tau\&\ m(\ldots)\ \{c\} \text{ in } C}\;\textsf{(T-RetRef)}</code></p>
                 <p>
-                  <code class="bp_math display">\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\&\ \mathtt{operator[]} \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocOpIndex)}</code></p>
+                  <code class="bp_math display">\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\&\ \mathtt{operator[]} \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocOpIndex)} \qquad \dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\&\ m(\ldots) \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-LocMethod)}</code></p>
                 <p>
-                  The annotation rewrites the <code>return e</code> of such a member as <code>return &e</code>, the location as a value, an expression no program writes.</p>
+                  The annotation rewrites the <code>return e</code> of such a member as <code>return &e</code>, the location as a value, an expression no program writes. Its type is the type of the location it denotes.</p>
                 <p>
-                  <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \&e \Rightarrow \mathsf{loc}\ \ell, \sigma'}\;\textsf{(LocOf)}</code></p>
+                  <code class="bp_math display">\dfrac{\Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \&e : \tau}\;\textsf{(T-LocOf)} \qquad \dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \&e \Rightarrow \mathsf{loc}\ \ell, \sigma'}\;\textsf{(LocOf)}</code></p>
                 <p>
                   <code class="bp_math display">\dfrac{\text{the member } m \text{ of } C \text{ returns } \tau\& \qquad \text{member } \ell\ (e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\ \ell', \sigma'}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell', \sigma'}\;\textsf{(MethodLoc)}</code></p>
                 <p>
@@ -5704,7 +5704,7 @@ window.onload = async () => {
                       <div class="declaration decl structure" data-decl="CoreCpp.Method" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(8 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/7504b49ccd14107deaf5f4df02976fd78bac2387/CoreCpp/Syntax.lean#L196-L220">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(8 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/37e0aa7dead00edc17d0335a4fa2158fd505d6cd/CoreCpp/Syntax.lean#L196-L220">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5766,7 +5766,7 @@ denotes the location the body returns. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.refReturns" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/7504b49ccd14107deaf5f4df02976fd78bac2387/CoreCpp/Typing.lean#L796-L813">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/37e0aa7dead00edc17d0335a4fa2158fd505d6cd/CoreCpp/Typing.lean#L804-L821">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5796,7 +5796,7 @@ denotes the location the body returns. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.refRets" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/7504b49ccd14107deaf5f4df02976fd78bac2387/CoreCpp/Typing.lean#L1059-L1072">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/37e0aa7dead00edc17d0335a4fa2158fd505d6cd/CoreCpp/Typing.lean#L1067-L1080">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5819,7 +5819,7 @@ walk does not enter the body of a lambda. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.callMethod" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/7504b49ccd14107deaf5f4df02976fd78bac2387/CoreCpp/Eval.lean#L458-L471">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/37e0aa7dead00edc17d0335a4fa2158fd505d6cd/CoreCpp/Eval.lean#L479-L492">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
