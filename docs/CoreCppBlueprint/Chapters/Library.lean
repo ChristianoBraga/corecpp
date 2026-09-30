@@ -52,9 +52,12 @@ $$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i
 In the rule `Lib` the result is $`v = r` for a value and $`v = \sigma'(r)` for a location. With the same premises, a use that gives a location denotes it.
 
 $$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L u(v_1, \ldots, v_k) \Rightarrow \ell, \sigma'}{\rho, \sigma_0 \vdash L.u(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocLib)}`
- The command `delete e` on a pointer to an instance frees what the intrinsic owns and then the location of the instance.
+
+The command `delete e` on a pointer to an instance frees what the intrinsic owns and then the location of the instance.
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0 \qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \qquad \sigma_0 \vdash_L \mathtt{delete}(\sigma_0(\ell)) \Rightarrow \mathsf{void}, \sigma_1}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}`
+
+Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Headers
