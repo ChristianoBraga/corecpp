@@ -47,6 +47,14 @@ The default value of a type, which `new` gives to every field and element, is $`
 :::definition "dom_int32" (parent := "dominios") (lean := "CoreCpp.Int32.min, CoreCpp.Int32.max, CoreCpp.Int32.inRange")
 The type `int` has 32 bits in two's complement. The partial operation $`\mathsf{int32}` returns the integer when it lies in the range and `error` otherwise.
 
+C++17 fixes neither the width nor the representation of `int`. A plain `int` has the natural size suggested by the architecture of the execution environment, with a range of at least $`[-32767, 32767]` (N4659 §6.9.1 paragraph 2 and §21.3.5, N1570 §5.2.4.2.1). Its representation may be two's complement, ones' complement or signed magnitude (N4659 §6.9.1 paragraph 7). The range of `int` is therefore a property of the platform.
+
+The ABI of the platform fixes it. The System V AMD64 psABI and AAPCS64 both give `int` 32 bits, and GCC supports only two's complement integer types.
+
+An arithmetic result outside the range of `int` has undefined behaviour (N4659 §8 paragraph 4), and Core C++ makes it `error`. That boundary has to be the boundary of the implementation Core C++ is compared with, `g++` and clang on x86‑64 and ARM64. A wider range would give a value where C++ gives none, and a narrower one would give `error` where C++ gives a value.
+
+The representation enters only through the lower bound $`-2^{31}`. Core C++ has no bitwise operators, no shifts and no unsigned types, so no program observes a bit pattern. The width lives only in `Int32.min` and `Int32.max`.
+
 $$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{int}\,n} \qquad \dfrac{n \notin [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{error}}`
 :::
 

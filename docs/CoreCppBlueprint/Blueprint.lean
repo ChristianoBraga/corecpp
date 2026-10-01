@@ -42,6 +42,9 @@ One chapter per group of constructions, one node per construction or nonterminal
 * Bjarne Stroustrup, The C++ Programming Language, 4th edition, Addison-Wesley, 2013.
 * ISO/IEC 14882:2017, Programming Languages, C++, cited as N4659, the final working draft of WG21, [open-std.org](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf).
 * ISO/IEC 9899:2011, Programming Languages, C, cited as N1570, the committee draft of WG14, [open-std.org](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf).
+* System V Application Binary Interface, AMD64 Architecture Processor Supplement, §3.1.2, Data Representation, [gitlab.com](https://gitlab.com/x86-psABIs/x86-64-ABI).
+* Arm, Procedure Call Standard for the Arm 64-bit Architecture (AAPCS64), Arm C and C++ Language Mappings, [github.com](https://github.com/ARM-software/abi-aa/blob/main/aapcs64/aapcs64.rst).
+* GCC manual, C Implementation-Defined Behavior, Integers, [gcc.gnu.org](https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html).
 
 {blueprint_graph}
 {blueprint_summary}
