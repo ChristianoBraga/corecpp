@@ -49,12 +49,16 @@ namespace CoreCpp
 kept apart from the subject so that the renderer can name them in a legend
 instead of repeating them on every line. -/
 structure TraceAnte where
+  /-- The environment ρ, as printed. -/
   env     : String
+  /-- The store σ, as printed. -/
   store   : String
+  /-- The expression or the command the judgment is about, as printed. -/
   subject : String
   /-- The letter under which a long subject is named in the legend, `e` for an
   expression and `c` for a command. -/
   kind    : String := "e"
+  /-- The arrow of the judgment, `⇒` or `⇒ₗ`. -/
   arrow   : String := "⇒"
   deriving Repr
 
@@ -62,22 +66,35 @@ structure TraceAnte where
 the control result or the error; the environment and the store are present
 only in the judgments that produce them. -/
 structure TraceCons where
+  /-- The value, the location, the control result or the error, as printed. -/
   head   : String
+  /-- The output environment ρ', present for a command. -/
   env?   : Option String := none
+  /-- The output store σ', absent when the judgment ends in error. -/
   store? : Option String := none
   deriving Repr
 
 /-- One recorded instance of a judgment, at its depth in the derivation. -/
 structure TraceEntry where
+  /-- The depth of the instance in the derivation tree, the root at 0. -/
   depth : Nat
+  /-- The name of the rule the instance concludes. -/
   rule  : String
+  /-- The antecedent, ρ, σ and the subject. -/
   ante  : TraceAnte
+  /-- The consequent, the result after the arrow. -/
   cons  : TraceCons
   deriving Repr
 
+/-- The state of the evaluation monad. `enabled` turns tracing on, `depth` is
+the depth of the rule application in progress, and `log` holds the recorded
+instances in post-order, each premise before its conclusion. -/
 structure TState where
+  /-- Whether the rule applications are recorded. -/
   enabled : Bool := false
+  /-- The depth of the rule application in progress. -/
   depth   : Nat := 0
+  /-- The recorded instances, in post-order. -/
   log     : Array TraceEntry := #[]
 
 /-- The evaluation monad. The state survives an error, so the trace up to the
@@ -86,8 +103,9 @@ abbrev M := ExceptT Error (StateM TState)
 
 namespace Eval
 
-/-- Runs `k` one level deeper and records the instance of the rule `rule` it
-concludes, or the error, at the current depth of the derivation. -/
+/-- Runs `k` one level deeper and, when tracing is enabled, records the
+instance of the rule `rule` it concludes, or the error, at the current depth
+of the derivation. -/
 def traced (rule : String) (ante : TraceAnte) (render : α → TraceCons) (k : M α)
     (arrow : String := "⇒") : M α := do
   modify fun s => { s with depth := s.depth + 1 }
@@ -631,8 +649,9 @@ partial def applyClosure (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (es : L
   applyVals fs σ₁ v vs
 
 /--ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, a
-dereferenced pointer, a field of an object, a field through a pointer and an
-element of a vector.
+dereferenced pointer, a field of an object, a field through a pointer, an
+unqualified field of `this`, a call of a member that returns a reference and
+an element of a vector.
 
 ```
 ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'
@@ -1027,9 +1046,10 @@ private def legend (ctx : Ctx) : Block :=
 
 end Trace
 
-/-- Renders the trace as a derivation, premises over the line of inference and
-the conclusion under it, with the environments and the stores named in a
-legend. -/
+/-- Renders the trace as a derivation, premises over the line of inference,
+the conclusion under it and the rule name at the right. A legend names the
+environments ρᵢ, the stores σⱼ and the subjects longer than 40 characters, and
+a subtree wider than 100 columns is written apart under a name 𝒟ₖ. -/
 def renderTrace (log : Array TraceEntry) : String :=
   if log.isEmpty then "" else
   let (envs, stores, subjects) := Trace.tables log
