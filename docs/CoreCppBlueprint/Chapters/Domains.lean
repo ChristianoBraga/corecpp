@@ -34,14 +34,14 @@ The judgments, one Lean function each, in `CoreCpp/Typing.lean` and `CoreCpp/Eva
 A location $`\ell` is a natural number. Locations are never reused.
 :::
 
-:::definition "dom_val" (parent := "dominios") (lean := "CoreCpp.Val, CoreCpp.Ty.default") (uses := "dom_int32, dom_loc")
+:::definition "dom_val" (parent := "dominios") (lean := "CoreCpp.Val, CoreCpp.Ty.default, CoreCpp.Std.default") (uses := "dom_int32, dom_loc")
 The values are $`\mathsf{int}\,n`, $`\mathsf{bool}\,b`, $`\mathsf{void}`, the pointer $`\mathsf{loc}\,\ell`, the value $`\mathsf{null}` of `nullptr`, the object $`\mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]`, a record of one location per field with its class tag, and the instance $`\mathsf{lib}\,L\,[\ell_0, \ldots, \ell_{n-1}]` of an object type $`L` of the library, such as a vector, with one location per element, {bpref "std_vector"}[].
 
-The value $`\mathsf{void}` is the result of a call to a function without return value, and the initial content of a field of function type before the constructor assigns it. The closure is a value too, {bpref "dom_closure"}[].
+The value $`\mathsf{void}` is the result of a call to a function without return value. The closure is a value too, {bpref "dom_closure"}[]. The value $`\mathsf{null}` is also the `std::function` with no target, the state `nullptr` gives it in C++ (N4659 §23.14.13.2.1, paragraphs 1 and 2). The type checker tells the pointer from the function, so one value serves both.
 
 The tag of an object is the class it was created with, its fields are those of the whole chain of classes, the root base first, and the tag decides the dispatch of virtual methods and the destructors that `delete` runs. Objects and instances of object types of the library live in the store at their own location and are reached only through pointers.
 
-The default value of a type, which `new` gives to every field and element, is $`\mathsf{int}\,0`, $`\mathsf{bool}\,\mathtt{false}` or $`\mathsf{null}`.
+The default value of a type, which `new` gives to every field and element before the constructor runs, is $`\mathsf{int}\,0`, $`\mathsf{bool}\,\mathtt{false}`, $`\mathsf{null}` for a pointer, and the default the intrinsic of a type of the library states, $`\mathsf{null}` for a `std::function`, {bpref "std_function"}[]. Object types, `void`, function types and $`\mathsf{nullptr\_t}` have no default, and no field or element has them.
 :::
 
 :::definition "dom_int32" (parent := "dominios") (lean := "CoreCpp.Int32.min, CoreCpp.Int32.max, CoreCpp.Int32.inRange")
@@ -75,7 +75,7 @@ The value of a lambda is the closure $`\mathsf{closure}(x_1 \ldots x_k, \tau, c,
 
 The types `std::function<τ(τ₁, …, τₖ)>` of {bpref "std_function"}[] have closures as values.
 
-A variable or a parameter holds a closure, a field or a vector element does not, because `new` would have to give it a default value and there is no empty function in this subset.
+A variable, a parameter or a field holds a closure or the function with no target, $`\mathsf{null}`, which is the default `new` gives a field. A vector has no elements of function type.
 :::
 
 :::definition "dom_ctrl" (parent := "dominios") (lean := "CoreCpp.Ctrl") (uses := "dom_val")
@@ -85,7 +85,7 @@ The control result $`r` of a command is $`\mathsf{normal}` or $`\mathsf{ret}\,v`
 :::definition "dom_erro" (parent := "dominios") (lean := "CoreCpp.Error")
 The result `error` is not a value of the language. It replaces the result of any dynamic judgment and propagates to the whole program.
 
-Its causes are division by zero, `int` overflow, the dereference of `nullptr`, an index outside a vector, a negative vector size, a failed `assert`, a location outside $`\sigma`, an undeclared variable or function, wrong arity, a missing `return` in a non `void` function, a second `delete` of the same object, and a `delete` through a pointer to a base class without a virtual destructor.
+Its causes are division by zero, `int` overflow, the dereference of `nullptr`, an index outside a vector, a negative vector size, a failed `assert`, a location outside $`\sigma`, an undeclared variable or function, wrong arity, a missing `return` in a non `void` function, the call of a `std::function` with no target, which C++ reports with the exception `bad_function_call` (N4659 §23.14.13.2.4, paragraph 2), a second `delete` of the same object, and a `delete` through a pointer to a base class without a virtual destructor.
 :::
 
 :::definition "dom_tenv" (parent := "dominios") (lean := "CoreCpp.TEnv, CoreCpp.TBind, CoreCpp.TEnv.lookup, CoreCpp.TEnv.isConst, CoreCpp.TEnv.bind, CoreCpp.TEnv.captured, CoreCpp.TEnv.self")

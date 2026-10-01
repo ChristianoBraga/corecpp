@@ -92,7 +92,7 @@ $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{closure}(x_
 
 With $`\mathsf{normal}` in place of $`\mathsf{ret}\,v` the result is $`\mathsf{void}` if $`\tau = \mathsf{void}` and `error` otherwise. Nothing of the environment of the call is visible inside the body, only the copies and the parameters.
 
-The application of the closure to the values is a judgment of its own, the premise the rule `F-Call` of {bpref "std_function"}[] names $`\mathrm{apply}`. A value that is not a closure is `error`.
+The application of the closure to the values is a judgment of its own, the premise the rule `F-Call` of {bpref "std_function"}[] names $`\mathrm{apply}`. The application of $`\mathsf{null}`, the function with no target, is `error`, {bpref "std_function"}[].
 
 $$`\dfrac{\begin{array}{c} v = \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]) \\ (\ell'_j, \cdot) = \mathrm{alloc}(w_j) \qquad (\ell_i, \cdot) = \mathrm{alloc}(v_i) \\ \rho_c = [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \\ \rho_c, \sigma' \vdash c \Rightarrow \mathsf{ret}\,v', \rho'', \sigma'' \end{array}}{\mathrm{apply}\ v\ (v_1, \ldots, v_k) \Rightarrow v', \sigma'' \setminus (\{\ell'_j, \ell_i\} \cup (\rho'' \setminus \rho_c))}\;\textsf{(Apply)}`
 

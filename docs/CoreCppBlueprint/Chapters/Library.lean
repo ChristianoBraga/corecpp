@@ -39,7 +39,7 @@ The dynamic judgment may use one judgment of the language as a premise, the appl
 :::
 
 :::definition "std_uses" (parent := "ud7") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.lval, CoreCpp.Typing.annotate, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Eval.libUse") (uses := "std_library, judg_ty_lval, judg_ev_lval, dom_store")
-The type checker rewrites every use of the library into the node $`L.u(e_1, \ldots, e_k)`, with the receiver as $`e_1` for a member. A call of a declared function is the use `call`, a call through a value of an instance is `operator()`, and indexing is `operator[]`. The evaluator has one rule for the node, whatever $`L`. The arguments are values, evaluated left to right.
+The type checker rewrites every use of the library into the node $`L.u(e_1, \ldots, e_k)`, with the receiver as $`e_1` for a member. A call of a declared function is the use `call`, a call through a value of an instance is `operator()`, indexing is `operator[]`, and a comparison with an operand of a type of the library is `operator==` or `operator!=`, with that operand as receiver whichever side it is on. The evaluator has one rule for the node, whatever $`L`. The arguments are values, evaluated left to right.
 
 $$`\dfrac{\Gamma \vdash_L L\langle\bar{\tau}\rangle\ \mathsf{ok} \qquad \Gamma \vdash_L \mathtt{new} : \tau_1 \times \cdots \times \tau_k \to \tau \qquad \Gamma \vdash e_i \lhd \tau_i}{\Gamma \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) : \tau}\;\textsf{(T-NewLib)}`
 
@@ -87,15 +87,23 @@ A negative size and an index outside $`[0, n)` are `error`, where C++17 leaves t
 :::
 
 :::definition "std_function" (parent := "ud7") (lean := "CoreCpp.Std.function") (uses := "std_library, std_uses, fun_accept, fun_callfn")
-The header `<functional>` declares `template <typename F> class function;` in `namespace std`. The template argument is a function type $`\tau(\tau_1, \ldots, \tau_k)`. A value of the instance is the closure of a lambda. It is not an object and has no default, so no field and no element has the type.
+The header `<functional>` declares `template <typename F> class function;` in `namespace std`. The template argument is a function type $`\tau(\tau_1, \ldots, \tau_k)`. A value of the instance is the closure of a lambda or the function with no target, $`\mathsf{null}`, the state of a default constructed `std::function` in C++, which `nullptr` also gives it (N4659 §23.14.13.2.1, paragraphs 1 and 2). The value is not an object, a field of the type starts with no target, and a vector has no elements of the type.
 
-$$`\dfrac{}{\Gamma \vdash_{\mathit{function}} \tau(\tau_1, \ldots, \tau_k) \hookrightarrow \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle}\;\textsf{(TF-Conv)}`
+A lambda and `nullptr` convert to the type. The default of a field is the function with no target. The comparisons with `nullptr`, in either order, ask whether the function has a target (§23.14.13.2.6), and two values of the type do not compare, as in C++. The call of the function with no target is `error`, as the exception `bad_function_call` of C++ (§23.14.13.2.4, paragraph 2), which, uncaught, ends the process with the same exit status.
+
+$$`\dfrac{}{\Gamma \vdash_{\mathit{function}} \tau(\tau_1, \ldots, \tau_k) \hookrightarrow \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle}\;\textsf{(TF-Conv)} \qquad \dfrac{}{\Gamma \vdash_{\mathit{function}} \mathsf{nullptr\_t} \hookrightarrow \mathtt{std{:}{:}function}\langle F\rangle}\;\textsf{(TF-Null)}`
+
+$$`\dfrac{}{\mathrm{default}\ \mathtt{std{:}{:}function}\langle F\rangle = \mathsf{null}}\;\textsf{(F-Default)} \qquad \dfrac{}{\Gamma \vdash_{\mathit{function}} \mathtt{operator}{\bowtie} : \mathsf{nullptr\_t} \to \mathsf{bool}}\;\textsf{(TF-Eq)}, \quad \bowtie \in \{==, \mathrel{!=}\}`
+
+$$`\dfrac{}{\sigma \vdash_{\mathit{function}} \mathtt{operator==}(v, \mathsf{null}) \Rightarrow \mathsf{bool}\,(v = \mathsf{null}), \sigma}\;\textsf{(F-Eq)} \qquad \dfrac{}{\sigma \vdash_{\mathit{function}} \mathtt{operator!=}(v, \mathsf{null}) \Rightarrow \mathsf{bool}\,(v \neq \mathsf{null}), \sigma}\;\textsf{(F-Ne)}`
+
+$$`\dfrac{}{\sigma \vdash_{\mathit{function}} \mathtt{operator()}(\mathsf{null}, v_1, \ldots, v_k) \Rightarrow \mathsf{error}}\;\textsf{(F-NoTarget)}`
 
 $$`\dfrac{\text{at } \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle}{\Gamma \vdash_{\mathit{function}} \mathtt{operator()} : \tau_1 \times \cdots \times \tau_k \to \tau}\;\textsf{(TF-Call)}`
 
 $$`\dfrac{\sigma \vdash \mathrm{apply}(v, v_1, \ldots, v_k) \Rightarrow v', \sigma'}{\sigma \vdash_{\mathit{function}} \mathtt{operator()}(v, v_1, \ldots, v_k) \Rightarrow v', \sigma'}\;\textsf{(F-Call)}`
 
-The premise of `F-Call` is the application of a closure, the one judgment of the language an intrinsic uses. The type is convertible, so two overloads that differ only in a parameter of this type are indistinguishable, {bpref "overload_set"}[].
+The premise of `F-Call` is the application of a closure, the one judgment of the language an intrinsic uses, and the application of $`\mathsf{null}` is `error`, `F-NoTarget`. The type is convertible, so two overloads that differ only in a parameter of this type are indistinguishable, {bpref "overload_set"}[].
 :::
 
 :::definition "std_assert" (parent := "ud7") (lean := "CoreCpp.Std.assert") (uses := "std_library, std_uses")
