@@ -4,8 +4,8 @@
 Basic types, class and pointer types, vectors, function types, expressions,
 lambdas, commands, classes with fields, methods, constructors, destructors and
 single inheritance, and functions. A statement is a command or an expression
-followed by `;`. Assignment and `delete` are commands. One tree per
-nonterminal of the grammar in section 4 of the language design. Namespaces
+followed by `;`. Assignment and `delete` are commands. One inductive type per
+class of nonterminals of the grammar of the blueprint, section 1.2. Namespaces
 are flattened by the parser into qualified class names, `N::C`.
 -/
 
@@ -268,7 +268,9 @@ structure ClassDecl where
 /-- Top level declarations. A `tmpl T C` is a class template, the class `C`
 with the type parameter `T`, which is never checked and never run. Only its
 instantiations are, and `Templates.instantiate` adds one class per
-instantiation the program mentions. -/
+instantiation the program mentions. A `libTmpl L Ts` is a class template of the
+library and a `libFn f τ ps` a function of the library, both declared without a
+body and implemented by an intrinsic. -/
 inductive Decl where
   | cls  (c : ClassDecl)
   | fn   (f : Fun)
