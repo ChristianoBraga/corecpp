@@ -98,11 +98,7 @@ Some of the implementations are `partial`, so Lean records opaque constants that
 :::definition "expr_rel" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.binop, CoreCpp.Typing.compat") (uses := "judg_ty_expr, judg_ev_expr")
 Equality compares two `int`, two `bool` or two pointers, and `nullptr` against a pointer, the relation $`\tau_1 \approx \tau_2`. Two pointers are equal when they are the same location, and `nullptr` equals only `nullptr`. Order compares two `int`, there is no order on pointers. The result is `bool`.
 
-On a type of the library the comparison is a judgment of the library, `T-EqLib`. The operand of that type may be either one, and the type checker rewrites the comparison into the use `operator==` or `operator!=` of {bpref "std_uses"}[] with it as receiver. A `std::function` compares with `nullptr` only, which asks whether it has a target, {bpref "std_function"}[].
-
 $$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 : \tau_2 \qquad \tau_1 \approx \tau_2 \\ \tau_1, \tau_2 \in \{\mathsf{int}, \mathsf{bool}, \tau*, \mathsf{nullptr\_t}\} \end{array}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Eq)}, \quad \bowtie \in \{==, \mathrel{!=}\}`
-
-$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \mathtt{operator}{\bowtie} : \tau \to \mathsf{bool} \\ \Gamma \vdash e_2 \lhd \tau \end{array}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-EqLib)}, \quad \bowtie \in \{==, \mathrel{!=}\}`
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{int} \qquad \Gamma \vdash e_2 : \mathsf{int}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Rel)}, \quad \bowtie \in \{<, <=, >, >=\}`
 
@@ -146,7 +142,7 @@ The implementations are `partial`, so Lean records opaque constants that carry t
 # Objects and pointers
 
 :::definition "expr_null" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr") (uses := "judg_ty_expr, judg_ev_expr, dom_val")
-The literal `nullptr` has the internal type $`\mathsf{nullptr\_t}`, compatible with every pointer type, with `std::function`, whose intrinsic admits it as the function with no target ({bpref "std_function"}[]), and with no other type. Its value is $`\mathsf{null}`.
+The literal `nullptr` has the internal type $`\mathsf{nullptr\_t}`, compatible with every pointer type and with no other. Its value is $`\mathsf{null}`.
 
 $$`\dfrac{}{\Gamma \vdash \mathtt{nullptr} : \mathsf{nullptr\_t}}\;\textsf{(T-Null)}`
 
@@ -155,7 +151,7 @@ $$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sig
 The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
-:::definition "expr_new" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Store.allocMany, CoreCpp.Ty.default, CoreCpp.Std.default") (uses := "judg_ty_expr, judg_ev_expr, dom_classes, dom_store")
+:::definition "expr_new" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Store.allocMany, CoreCpp.Ty.default") (uses := "judg_ty_expr, judg_ev_expr, dom_classes, dom_store")
 The expression `new C()` allocates one location per field of $`C`, each with the default value of its type, then the record itself, tagged with the class, and evaluates to a pointer to the record. Its type is $`C*`. The empty parentheses are the whole argument list for a class without a constructor. A class with a constructor takes its arguments in those parentheses, {bpref "cls_new"}[].
 
 $$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\, \tau_1\, f_1; \ldots; \tau_n\, f_n; \,\}}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
