@@ -282,9 +282,12 @@ inductive Decl where
 /-- A program is a list of declarations. There are no global variables. -/
 abbrev Program := List Decl
 
+/-- The functions of the program, every overload included, in order. -/
 def Program.funs (p : Program) : List Fun :=
   p.filterMap fun | .fn f => some f | _ => none
 
+/-- The class table, the classes of the program in order. Templates are not
+in it, only their instantiations. -/
 def Program.classes (p : Program) : List ClassDecl :=
   p.filterMap fun | .cls c => some c | _ => none
 
@@ -304,12 +307,13 @@ def Program.libDecls (p : Program) : List (String × Nat) :=
 def Program.lookupTemplate (p : Program) (c : String) : Option (String × ClassDecl) :=
   p.templates.find? (·.2.name == c)
 
+/-- The declaration of the class named c. -/
 def Program.lookupClass (p : Program) (c : String) : Option ClassDecl :=
   p.classes.find? (·.name == c)
 
 /-- The chain of a class, the class itself, its base, the base of the base
 and so on. A cycle or an unknown base ends the chain, and the type checker
-rejects both. -/
+rejects both. The fuel bounds the length of the chain at 64 classes. -/
 partial def Program.chain (p : Program) (c : String) (fuel : Nat := 64) : List ClassDecl :=
   match fuel, p.lookupClass c with
   | 0, _ | _, none => []
