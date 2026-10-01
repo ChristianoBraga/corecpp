@@ -464,3 +464,20 @@ int main() { Point* a = new Point(); a->x = twice(3); Point* c = *a + *a; return
 #eval parseProgram "void assert(bool condition); int main() { assert(true); return 0; }"
 -- the same declarations from a header are accepted
 #eval (parseUnit [("void assert(bool condition);", true), ("int main() { assert(1 == 1); return 0; }", false)]).map run
+-- a class template without a body outside a header is a syntax error too
+#eval parseProgram "template <typename T> class box; int main() { return 0; }"
+
+/-! ## Members -/
+
+-- a field is never virtual
+#eval parseProgram "class Point { public: virtual int x; }; int main() { return 0; }"
+-- the destructor is public, like the constructor
+#eval parseProgram "class Node { private: ~Node() { } }; int main() { return 0; }"
+#eval (parseProgram "class Node { public: ~Node() { } }; int main() { Node* n = new Node(); delete n; return 0; }").map run
+
+/-! ## A qualified name across two lines -/
+
+-- the `::` opens the next line and still marks `std` as a namespace identifier
+#eval (parseUnit [("namespace std { template <typename T> class vector; }", true),
+                  ("int main() { std", false),
+                  ("::vector<int>* v = new std::vector<int>(3); delete v; return 0; }", false)]).map run

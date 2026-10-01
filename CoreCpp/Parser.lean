@@ -688,6 +688,7 @@ partial def member (cls : String) (vis : Vis) : P MemberItem := do
     let name ← varId
     if (← peek) == .sym ";" then
       if isRef then fail "a field is not a reference in this subset"
+      if isVirtual then fail s!"field {name} is virtual, only a method or a destructor is"
       advance
       return .field ⟨t, name, vis⟩
     let ps ← params
@@ -719,8 +720,8 @@ Section = ( "public" | "private" ) ":" { Member } ;
 ```
 
 Members before any section label are private, as in C++. The base is a class of
-the program. A class has at most one constructor, which is public, and at most
-one destructor. -/
+the program. A class has at most one constructor and at most one destructor, both
+public. A field is never virtual. -/
 partial def classRest (name : String) : P ClassDecl := do
   let base ← if ← acceptSym ":" then
       expect (.kw "public")
@@ -747,6 +748,7 @@ partial def classRest (name : String) : P ClassDecl := do
         ctor := some c
       | .dtor d =>
         if dtor.isSome then fail s!"class {name} has two destructors"
+        if vis != .pub then fail s!"the destructor of {name} must be public"
         dtor := some d
   expectSym "}"
   expectSym ";"
@@ -784,6 +786,7 @@ partial def declaration : P (List Decl) := do
   match ← peek with
   | .kw "class" => return [.cls (← classDecl)]
   | .kw "template" =>
+    let h ← inHeader
     advance
     expectSym "<"
     expect (.kw "typename")
@@ -801,7 +804,7 @@ partial def declaration : P (List Decl) := do
     | .varId n =>
       advance
       expectSym ";"
-      if ps.length == 0 then fail "a class template declares at least one parameter"
+      if !h then fail s!"the declaration of class template {n} without a body belongs to a header of Core C++"
       return [.libTmpl (← qualify n) ps]
     | _ =>
       if ps.length != 1 then fail "a class template of this subset has one type parameter"
@@ -853,15 +856,17 @@ def parseStatement : String → Except String Cmd    := runParser statement
 def parseProgram   : String → Except String Program := runParser program
 
 /-- Parses the output of Preproc, a list of lines each marked with whether it
-comes from a header. No token spans two lines, so each line is lexed alone. -/
+comes from a header. No token spans two lines, so the automaton runs on each
+line alone. The pass `Lexer.qualifiers` runs once on the tokens of the whole
+unit, so it marks `std` at the end of a line before a `::` on the next. -/
 def parseUnit (lines : List (String × Bool)) : Except String Program := do
   let mut toks : Array Token := #[]
   let mut hdr : Array Bool := #[]
   for (l, h) in lines do
-    let ts := (← lex l).pop
+    let ts := (← Lexer.run l.toList #[]).pop
     toks := toks ++ ts
     hdr := hdr ++ Array.replicate ts.size h
-  let (a, s) ← program.run { toks := toks.push .eof, hdr }
+  let (a, s) ← program.run { toks := Lexer.qualifiers (toks.push .eof), hdr }
   if s.toks.getD s.pos .eof == .eof then return a
   else throw s!"unconsumed input from token {s.pos} ('{s.toks.getD s.pos .eof}')"
 

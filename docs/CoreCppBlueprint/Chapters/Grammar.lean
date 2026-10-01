@@ -49,7 +49,7 @@ The lexer covers the input by a sequence of `Token` and `Skip`, discards `Skip`,
 :::definition "lex_conventions" (parent := "ud1") (lean := "CoreCpp.Lexer.identifier, CoreCpp.Lexer.qualifiers") (uses := "lex_tokens")
 An identifier is classified by its initial after the reserved words are excluded. A further pass over the token array marks as an `NsId` every identifier whose next token is `::`, of either case.
 
-The pass `qualifiers` runs after the automaton, so it sees neither white space nor comments and marks `std :: vector` as it marks `std::vector`. It sees the tokens of one call of the lexer, and the parser lexes each line of the Preproc output alone, so the pass marks no identifier whose `::` starts the next line.
+The pass `qualifiers` runs after the automaton, so it sees neither white space nor comments and marks `std :: vector` as it marks `std::vector`. The parser runs the automaton on each line of the Preproc output alone and the pass once on the tokens of all the lines, so a `::` that starts a line marks the identifier that ends the line before.
 
 That class is what lets a qualified name open a type where the case convention alone would read a variable, so `std::vector<int>` needs no reserved word.
 :::
@@ -85,9 +85,9 @@ A class template with a body has one type parameter, and an instantiation of a c
 
 A lambda parameter is by value, and a field is not a reference. A namespace holds only classes, templates and namespaces.
 
-Only a header of Core C++ opens the namespace `std` or declares a function without a body, since C++ leaves a program that adds declarations to `std` undefined (N4659 §20.5.4.2.1, paragraph 1). Preproc marks the lines that come from a header, and the parser reads the marks. A class template declared without a body passes the parser anywhere, and the type checker rejects it unless an intrinsic implements it.
+Only a header of Core C++ opens the namespace `std`, declares a function without a body or declares a class template without a body, since C++ leaves a program that adds declarations to `std` undefined (N4659 §20.5.4.2.1, paragraph 1). Preproc marks the lines that come from a header, and the parser reads the marks. The type checker then rejects a class template without a body that no intrinsic implements.
 
-The parser also checks the names of the constructor and the destructor against their class. A class has at most one of each, and its constructor is public.
+The parser also checks the names of the constructor and the destructor against their class. A class has at most one of each, both are public, and a field is never virtual. The public destructor is a restriction of the subset, since C++ accepts a private destructor that no code outside the class calls.
 :::
 
 :::theorem "gram_ll1" (parent := "ud1") (lean := "CoreCpp.Grammar.isLL1_grammar, CoreCpp.Grammar.table, CoreCpp.Grammar.derive, LL1.translate, LL1.Grammar.isLL1, LL1.Grammar.table, LL1.Grammar.parse")
@@ -153,7 +153,7 @@ The right column names, for each alternative, the constructor of the inductive t
 
 A constructor here is a case of an inductive definition of Lean, and not the member of a class that `new` runs, which this table calls `Ctor`.
 
-Every field and every method carries a `Vis`, which the parser takes from the section that holds it. The constructor is public, and the destructor carries no visibility.
+Every field and every method carries a `Vis`, which the parser takes from the section that holds it. The constructor and the destructor are public and carry no visibility.
 :::
 
 :::definition "parse_expr" (parent := "ud1") (lean := "CoreCpp.P, CoreCpp.PState, CoreCpp.expr, CoreCpp.orExpr, CoreCpp.andExpr, CoreCpp.eqExpr, CoreCpp.relExpr, CoreCpp.addExpr, CoreCpp.mulExpr, CoreCpp.unaryExpr, CoreCpp.postfixExpr, CoreCpp.primary, CoreCpp.args, CoreCpp.argExpr, CoreCpp.lambda") (uses := "gram_ast, lex_automaton")
@@ -181,7 +181,7 @@ The functions carry the names of their nonterminals, with three exceptions. The 
 
 A class carries its fields, its methods, its constructor and its destructor, under the visibility of the section that holds them. A namespace is flattened at parse time, and every class it declares carries the prefix of the enclosing namespaces, as `N::C`.
 
-The function `runParser` runs the lexer and a parser on a string and requires the whole input to be consumed. The function `parseUnit` parses the output of Preproc, lexes each line alone and marks the tokens of the lines that come from a header.
+The function `runParser` runs the lexer and a parser on a string and requires the whole input to be consumed. The function `parseUnit` parses the output of Preproc, runs the automaton on each line alone and the pass `qualifiers` on all the tokens, and marks the tokens of the lines that come from a header.
 :::
 
 # Preprocessor

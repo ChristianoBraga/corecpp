@@ -86,8 +86,9 @@ partial def run (cs : List Char) (acc : Array Token) : Except String (Array Toke
 /-- Marks as a namespace identifier every identifier whose next token is `::`.
 The pass runs over the token array, so it sees neither the white space nor the
 comments the automaton has already dropped, and it marks `std :: vector` as it
-marks `std::vector`. It sees only the tokens of one call of `lex`, and
-`parseUnit` lexes each line apart. -/
+marks `std::vector`. `parseUnit` runs it once on the tokens of all the lines,
+so a `::` at the start of a line marks the identifier that ends the line
+before. -/
 def qualifiers (ts : Array Token) : Array Token :=
   ts.mapIdx fun i t =>
     match t, ts[i + 1]? with
