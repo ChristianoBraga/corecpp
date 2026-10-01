@@ -29,7 +29,7 @@ Syntax, tokens and the parser.
 
 # Lexer
 
-:::definition "lex_tokens" (parent := "ud1") (lean := "CoreCpp.Token, CoreCpp.keywords, CoreCpp.cppReserved, CoreCpp.symbols3, CoreCpp.symbols2, CoreCpp.symbols1")
+:::definition "lex_tokens" (parent := "ud1") (lean := "CoreCpp.Token, CoreCpp.keywords, CoreCpp.cppReserved, CoreCpp.symbols3, CoreCpp.symbols2, CoreCpp.symbols1, CoreCpp.Lexer.isIdentStart, CoreCpp.Lexer.isIdentChar")
 Tokens fall in five classes.
 
  * Reserved words, among them `int`, `bool`, `void`, `if`, `else`, `while`, `for`, `return`, `true`, `false`, `auto`, `class`, `new`, `delete`, `nullptr`, `this`, `virtual`, `override`, `namespace`, `template`, `typename` and `operator`.
@@ -45,7 +45,7 @@ $$`\begin{array}{lcl} \textit{Token} & ::= & \textit{Keyword}\ \mid\ \textit{Typ
 The input is the longest sequence of `Token` and `Skip` that covers it, `Skip` is discarded, and each token is the longest match at its position. The symbols of three characters are tried before those of two and of one.
 :::
 
-:::definition "lex_conventions" (parent := "ud1") (lean := "CoreCpp.Lexer.identifier") (uses := "lex_tokens")
+:::definition "lex_conventions" (parent := "ud1") (lean := "CoreCpp.Lexer.identifier, CoreCpp.Lexer.qualifiers") (uses := "lex_tokens")
 An identifier is classified by its initial after the reserved words are excluded. A further pass over the token array marks as an `NsId` every identifier whose next token is `::`, of either case.
 
 The pass runs after the automaton, so it sees neither white space nor comments and marks `std :: vector` as it marks `std::vector`.
@@ -87,7 +87,7 @@ Only a header of Core C++ opens the namespace `std` or declares a function or a 
 The parser also checks the names of the constructor and the destructor against their class. A class has at most one of each, and its constructor is public.
 :::
 
-:::theorem "gram_ll1" (parent := "ud1") (lean := "CoreCpp.Grammar.isLL1_grammar, LL1.Grammar.isLL1, LL1.Grammar.table, LL1.Grammar.parse")
+:::theorem "gram_ll1" (parent := "ud1") (lean := "CoreCpp.Grammar.isLL1_grammar, CoreCpp.Grammar.table, CoreCpp.Grammar.derive, LL1.translate, LL1.Grammar.isLL1, LL1.Grammar.table, LL1.Grammar.parse")
 The grammar is LL(1).
 :::
 
@@ -119,7 +119,7 @@ The same table drives the nonrecursive predictive parser `LL1.Grammar.parse`.
 
 # Abstract syntax and parser
 
-:::definition "gram_ast" (parent := "ud1") (lean := "CoreCpp.Ty, CoreCpp.UnOp, CoreCpp.BinOp, CoreCpp.Expr, CoreCpp.Cmd, CoreCpp.Param, CoreCpp.Fun, CoreCpp.ClassDecl, CoreCpp.Decl, CoreCpp.Program")
+:::definition "gram_ast" (parent := "ud1") (lean := "CoreCpp.Ty, CoreCpp.UnOp, CoreCpp.BinOp, CoreCpp.Param, CoreCpp.Expr, CoreCpp.Cmd, CoreCpp.Fun, CoreCpp.Vis, CoreCpp.Field, CoreCpp.Method, CoreCpp.Ctor, CoreCpp.Dtor, CoreCpp.ClassDecl, CoreCpp.Decl, CoreCpp.Program")
 The metavariables range over the syntax. The metavariable $`n` stands for an integer, $`b` for a boolean, $`x` for a variable identifier, $`f` for a function or field identifier, $`m` for a method identifier, and $`C` and $`B` for class names.
 
 The abstract syntax is the tree form of the grammar of {bpref "gram_full"}[], with one inductive type per class of nonterminals. It has no parentheses and no precedence, because the tree fixes the structure. The table below gives one alternative per constructor of `Syntax.lean`, in the order of the file, with the constructor in the right column.
@@ -161,7 +161,7 @@ One parser function per expression nonterminal, from `Expr` down to `Primary`. E
 `UnaryExpr` adds the dereference, and `Primary` covers literals, `nullptr`, `this`, variables, parenthesised expressions and the two forms of `new`. Lambdas are parsed as argument expressions, `argExpr`, in the three positions the grammar gives them.
 :::
 
-:::definition "parse_statement" (parent := "ud1") (lean := "CoreCpp.block, CoreCpp.statement, CoreCpp.localDecl, CoreCpp.forInit, CoreCpp.exprStatement") (uses := "gram_ast, parse_expr")
+:::definition "parse_statement" (parent := "ud1") (lean := "CoreCpp.block, CoreCpp.statement, CoreCpp.localDecl, CoreCpp.forInit, CoreCpp.exprStatement, CoreCpp.isTypeStart, CoreCpp.type, CoreCpp.basicType, CoreCpp.classType, CoreCpp.qualTail, CoreCpp.templateArgs, CoreCpp.templateArg") (uses := "gram_ast, parse_expr")
 One parser function per command nonterminal. The function `statement` chooses the production by the first token, and `exprStatement` reads an expression and then decides between assignment and expression statement by the presence of `=`.
 
 A `Type` is a basic type or a class type, optionally followed by `*`. A class type is a name, qualified by namespaces or not, with template arguments or without. The case of its last component says which type it is, an uppercase one names a class of the program and a lowercase one a class of the library, whose names are lowercase, so `Geometry::Shape` is the first and `std::vector<int>` the second.
@@ -169,7 +169,7 @@ A `Type` is a basic type or a class type, optionally followed by `*`. A class ty
 A template argument is a type, and a function type `Type(Type, …)` as well. A local declaration may be a reference, and its initialiser may be a lambda.
 :::
 
-:::definition "parse_program" (parent := "ud1") (lean := "CoreCpp.program, CoreCpp.declaration, CoreCpp.classDecl, CoreCpp.member, CoreCpp.classType, CoreCpp.function, CoreCpp.params, CoreCpp.param, CoreCpp.type, CoreCpp.basicType, CoreCpp.runParser, CoreCpp.parseProgram, CoreCpp.parseExpr, CoreCpp.parseStatement") (uses := "gram_ast, parse_statement")
+:::definition "parse_program" (parent := "ud1") (lean := "CoreCpp.program, CoreCpp.declaration, CoreCpp.P.name, CoreCpp.classDecl, CoreCpp.classRest, CoreCpp.member, CoreCpp.operatorName, CoreCpp.function, CoreCpp.params, CoreCpp.param, CoreCpp.className, CoreCpp.runParser, CoreCpp.parseProgram, CoreCpp.parseExpr, CoreCpp.parseStatement, CoreCpp.parseUnit") (uses := "gram_ast, parse_statement")
 A program is a sequence of declarations up to `eof`, each one a class, a class template, a namespace or a function. A class carries its fields, its methods, its constructor and its destructor, under the visibility of the section that holds them. The function `runParser` runs the lexer and a parser on a string and requires the whole input to be consumed.
 :::
 
@@ -177,7 +177,7 @@ A program is a sequence of declarations up to `eof`, each one a class, a class t
 
 The agreement stated at the end of this section is checked by inspection and by the tests of `tests/preproc/`, not by a Lean proof.
 
-:::definition "pp_language" (parent := "ud1") (lean := "Preproc.Directive, Preproc.Line, Preproc.Item, Preproc.parse, Preproc.group, Preproc.condRest")
+:::definition "pp_language" (parent := "ud1") (lean := "Preproc.Directive, Preproc.Line, Preproc.Item, Preproc.lines, Preproc.parse, Preproc.group, Preproc.condRest")
 Preproc is the preprocessor of Core C++, a language of its own that runs before the lexer of {bpref "lex_automaton"}[]. It reads a file as a sequence of lines and never lexes or parses Core C++, so the two languages share no surface. Every Preproc program is also a valid input of the preprocessor of `g++`.
 
 The terminals of its grammar are whole lines. $`\textit{Text}` stands for any text line, and $`\textit{NL}` ends a directive line.
@@ -197,7 +197,7 @@ Every line satisfies five rules, the lines of a branch that is not selected and 
  * No word of a text line starts with `CCPP_`, so a flag never occurs in the code.
 :::
 
-:::definition "pp_meaning" (parent := "ud1") (lean := "Preproc.run, Preproc.runItem, Preproc.translate") (uses := "pp_language, pp_headers")
+:::definition "pp_meaning" (parent := "ud1") (lean := "Preproc.run, Preproc.runItem, Preproc.Item.size, Preproc.blank, Preproc.translateLines, Preproc.translate") (uses := "pp_language, pp_headers")
 The flag environment $`\varphi` is a finite set of flags, initially the flags given as `-D CCPP_X=`. The judgement $`\varphi \vdash G \Rightarrow t, \varphi'` gives the output lines $`t` of a group and the environment after it. $`H(h)` is the contents of the Core C++ header $`h`.
 
 $$`\dfrac{}{\varphi \vdash \texttt{\#define}\ F \Rightarrow \varepsilon, \varphi \cup \{F\}}\;\textsf{(P-Define)}`
