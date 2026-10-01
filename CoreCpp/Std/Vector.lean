@@ -48,7 +48,8 @@ def vector : Intrinsic where
         With k < 0 the result is error, a negative size.                             -/
     | .new, [t], [.int k] => do
       if k < 0 then throw (.negativeSize k)
-      let (ls, σ₁) := σ.allocMany (List.replicate k.toNat t.default)
+      let some d := t.default | throw (.typeError s!"an element of type {t} has no default")
+      let (ls, σ₁) := σ.allocMany (List.replicate k.toNat d)
       let (l, σ₂) := σ₁.alloc (.lib "std::vector" ls)
       return ("V-New", .val (.loc l), σ₂)
     /-  0 ≤ i < n

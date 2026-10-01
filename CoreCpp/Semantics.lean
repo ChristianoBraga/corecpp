@@ -28,7 +28,9 @@ abbrev Loc := Nat
 
 `int` is a 32-bit two's complement integer, stored as an `Int` with the range
 invariant checked at every operation. `loc` is a pointer to the object stored
-at ℓ, and `null` is the value of `nullptr`.
+at ℓ, and `null` is the value of `nullptr`. It is also the value of a
+`std::function` with no target, the state `nullptr` gives it in C++ (N4659
+§23.14.13.2.1), since the type checker tells the two uses apart.
 
 `obj` is an object with its class tag and one location per field, and
 `lib L ℓ̄` a value of the library entity `L` with its locations.
@@ -51,16 +53,15 @@ def Int32.min : Int := -(2 ^ 31)
 def Int32.max : Int := 2 ^ 31 - 1
 def Int32.inRange (n : Int) : Bool := Int32.min ≤ n && n ≤ Int32.max
 
-/-- The default value of a type, the one `new` gives to every field and
-element before the constructor runs. Object types have no value, their default
-is never asked. A field of function type starts empty, `void`, and a call
-through it before the constructor assigns a lambda is `error`, as the
-`bad_function_call` of C++. -/
-def Ty.default : Ty → Val
-  | .int => .int 0
-  | .bool => .bool false
-  | .ptr _ => .null
-  | _ => .void
+/-- The default value of a basic type or a pointer type, the one `new` gives
+to a field or an element before the constructor runs. A type of the library
+states its own default in its intrinsic, and `Std.default` joins the two.
+Object types, `void`, function types and `nullptr_t` have none. -/
+def Ty.default : Ty → Option Val
+  | .int => some (.int 0)
+  | .bool => some (.bool false)
+  | .ptr _ => some .null
+  | _ => none
 
 /-- The `error` result. It is not a value of the language. No syntax produces,
 tests or catches it. It corresponds in C++ to abnormal program termination. -/
@@ -77,6 +78,7 @@ inductive Error where
   | typeError (msg : String)     -- for programs that skipped the type checker
   | missingReturn (f : String)
   | notCallable (v : Val)
+  | badFunctionCall              -- the call of a std::function with no target
   | deleteWithoutVirtualDtor (static tag : String)
   | doubleDelete (l : Loc)
   | library (msg : String)       -- an error that a rule of `CoreCpp.Std` gives

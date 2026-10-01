@@ -28,11 +28,12 @@ def isObject : Ty → Bool
   | .lib n _ => (statics n).any (·.isObject)
   | _ => false
 
-/-- Types with a default value, the types a field or an element may have. -/
-def hasDefault : Ty → Bool
-  | .lib n _ => (statics n).any (·.hasDefault)
-  | .fn .. => false
-  | _ => true
+/-- default τ, the value `new` gives a field of type τ before the constructor
+runs. A basic type and a pointer type have the default of `Ty.default`, and a
+type of the library the one its intrinsic states. -/
+def default : Ty → Option Val
+  | .lib n ts => (statics n).bind (·.default ts)
+  | t => t.default
 
 /-- Types to which another type converts, which tell no two overloads apart. -/
 def convertible : Ty → Bool

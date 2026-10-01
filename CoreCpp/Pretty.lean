@@ -146,6 +146,7 @@ def Error.toString : Error → String
   | .typeError msg         => s!"type error at run time, {msg}"
   | .missingReturn f       => s!"function {f} ended without return"
   | .notCallable v         => s!"call of a value that is not a function, {v}"
+  | .badFunctionCall       => "call of a std::function with no target"
   | .library msg           => msg
   | .deleteWithoutVirtualDtor s t => s!"delete through {s}* of an object of class {t} without a virtual destructor"
   | .doubleDelete l        => s!"delete of a location already freed, {Loc.toString l}"

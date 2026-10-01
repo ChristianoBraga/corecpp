@@ -40,7 +40,9 @@ arguments, the exact one when several accept. Two overloads of one name
 differ in arity or in a parameter of a type other than `std::function`, so a
 lambda argument never decides a call. An infix operator on an operand of
 class type, and the indexing of an object, are the calls of the members
-`operator⊕` and `operator[]`, which the type checker rewrites. A member may
+`operator⊕` and `operator[]`, which the type checker rewrites. A comparison
+on a type of the library is a use of its intrinsic, `f == nullptr` on a
+`std::function` for instance, and the type checker rewrites it too. A member may
 return `τ&`, and then a call to it denotes a location, which is what makes
 `v[i] = x` work on a class of the subset.
 
@@ -100,7 +102,7 @@ inductive TypeError where
   | voidValue (e : Expr)
   | objectValue (e : Expr) (t : Ty)
   | objectByValue (context : String) (t : Ty)
-  | functionStored (context : String) (t : Ty)
+  | bareFunctionType (context : String) (t : Ty)
   | notPointer (e : Expr) (t : Ty)
   | notObject (e : Expr) (t : Ty)
   | notVector (e : Expr) (t : Ty)
@@ -151,7 +153,7 @@ def TypeError.toString : TypeError → String
   | .voidValue e          => s!"void expression used as a value: {e}"
   | .objectValue e t      => s!"object of type {t} used as a value: {e}"
   | .objectByValue c t    => s!"{c} has the object type {t}, objects live behind pointers"
-  | .functionStored c t   => s!"{c} has the function type {t}, function values live in variables and parameters only"
+  | .bareFunctionType c t => s!"{c} has the function type {t}, which occurs only as the template argument of std::function"
   | .notPointer e t       => s!"{e} has type {t}, not a pointer"
   | .notObject e t        => s!"{e} has type {t}, not a class"
   | .notVector e t        => s!"{e} has type {t}, not a vector"
@@ -200,9 +202,11 @@ def value (e : Expr) (t : Ty) : T Ty :=
   else .ok t
 
 /--τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal
-types, nullptr against a pointer type, or, by subsumption, a pointer to a
-derived class where a pointer to its base is expected. These and the lambda
-to `std::function` are the only implicit conversions.
+types, nullptr against a pointer type or against a type of the library whose
+intrinsic admits it (Γ ⊢_L nullptr_t ↪ L⟨τ̄⟩, the `std::function` with no
+target), or, by subsumption, a pointer to a derived class where a pointer to
+its base is expected. These and the lambda to `std::function` are the only
+implicit conversions.
 
 ```
 D derives from B
@@ -219,6 +223,7 @@ D* ≈ B*
 def compat (p : Program) : Ty → Ty → Bool
   | .nullT, .ptr _ => true
   | .ptr _, .nullT => true
+  | .nullT, .lib n ts => (Std.statics n).any (·.convFrom ts .nullT)
   | .ptr (.cls d), .ptr (.cls b) => d == b || p.subclass d b
   | t₁, t₂ => t₁ == t₂
 
@@ -246,19 +251,13 @@ object type is admissible there and nowhere else, which is how a member takes
 an object without copying it. -/
 def storable (context : String) (t : Ty) : T Unit :=
   if Std.isObject t || t == .nullT then .error (.objectByValue context t)
-  else if t.isFn then .error (.functionStored context t)
+  else if t.isFn then .error (.bareFunctionType context t)
   else .ok ()
 
 /-- Requires a type a binding may have, an object type included when the
 binding is a reference. -/
 def bindable (context : String) (byRef : Bool) (t : Ty) : T Unit :=
   if byRef && Std.isObject t then .ok () else storable context t
-
-/-- Fields hold values with a default, the value `new` gives them before the
-constructor runs, so never a value of a type of the library without one, a
-`std::function` for instance. -/
-def noFunction (context : String) (t : Ty) : T Unit :=
-  if Std.hasDefault t then .ok () else .error (.functionStored context t)
 
 /-- The intrinsic of a type of the library, which a header must declare. -/
 def intrinsicOf (p : Program) (n : String) : T Std.Statics := do
@@ -353,10 +352,26 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
       else .error (.badOperand op.toString (if t₁ != .int then t₁ else t₂))
     /-  Γ ⊢ e₁ : τ₁    Γ ⊢ e₂ : τ₂    τ₁ ≈ τ₂    τ₁, τ₂ ∈ {int, bool, τ*, nullptr_t}
         ──────────────────────────────────────────────────────────────────── (T-Eq, ⋈ ∈ {==, !=})
-        Γ ⊢ e₁ ⋈ e₂ : bool                                                         -/
+        Γ ⊢ e₁ ⋈ e₂ : bool
+
+        Γ ⊢ e₁ : L⟨τ̄⟩    Γ ⊢_L operator⋈ : τ → bool    Γ ⊢ e₂ ◁ τ
+        ───────────────────────────────────────────────────────── (T-EqLib, ⋈ ∈ {==, !=})
+        Γ ⊢ e₁ ⋈ e₂ : bool
+
+        The comparison on a type of the library is a judgement of the library,
+        which std::function defines with nullptr only. The operand of the type
+        of the library may be either one, and the annotation puts it first.    -/
     | .eq | .ne =>
-      if related p t₁ t₂ && t₁ != .void && !Std.isObject t₁ && !(t₁ matches .lib .. | .fn ..) then .ok .bool
-      else .error (.mismatch s!"operands of {op.toString}" t₁ t₂)
+      let libCompare (n : String) (ts : List Ty) (other : Expr) : T Ty := do
+        let s ← libSig p n (.member s!"operator{op.toString}") ts
+        libArgs p Γ s!"operands of {op.toString}" s [other]
+        return s.ret
+      match t₁, t₂ with
+      | .lib n ts, _ => libCompare n ts e₂
+      | _, .lib n ts => libCompare n ts e₁
+      | _, _ =>
+        if related p t₁ t₂ && t₁ != .void && !Std.isObject t₁ then .ok .bool
+        else .error (.mismatch s!"operands of {op.toString}" t₁ t₂)
     /-  Γ ⊢ e₁ : int    Γ ⊢ e₂ : int
         ──────────────────────────── (T-Rel, ⋈ ∈ {<, <=, >, >=})
         Γ ⊢ e₁ ⋈ e₂ : bool                                                         -/
@@ -1049,8 +1064,14 @@ partial def annExpr (p : Program) (Γ : TEnv) : Expr → T Expr
     let a' ← annExpr p Γ a
     let b' ← annExpr p Γ b
     if op != .and && op != .or then
-      if let .cls _ ← expr p Γ a' then
+      let ta ← expr p Γ a'
+      if let .cls _ := ta then
         return ← annMethod p Γ a' false s!"operator{op.toString}" [b']
+      -- A comparison on a type of the library is a use of the library, with
+      -- the operand of that type as receiver, in either order.
+      if op == .eq || op == .ne then
+        if let .lib n _ := ta then return .intrinsic n s!"operator{op.toString}" [a', b']
+        if let .lib n _ ← expr p Γ b' then return .intrinsic n s!"operator{op.toString}" [b', a']
     return .binop op a' b'
   | .cond a b c => return .cond (← annExpr p Γ a) (← annExpr p Γ b) (← annExpr p Γ c)
   | .call f es _ => do
