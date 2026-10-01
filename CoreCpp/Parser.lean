@@ -5,10 +5,14 @@ import CoreCpp.Syntax
 /-!
 # Core C++ parser, subset
 
-Recursive descent over the `Array Token` that the lexer produces. Each
-nonterminal has its own function, except `Section` and `MemberRest`, which
-`classRest` and `member` read inline. A function chooses the production by the
-next token, and `member` also looks at the token after it. The subset covers
+Recursive descent over the `Array Token` that the lexer produces, one function
+per nonterminal of `grammar/core-cpp.ebnf`, named after it. Five nonterminals
+have no function of their own. The function `classRest` reads `Section`
+inline, `member` reads `MemberRest`, and `postfixExpr` reads `Chain`, `After`
+and `ChainNoCall`.
+Three functions carry another name, `classDecl` for `Class`, `operatorName` for
+`Op` and `P.name` for `Name`. A function chooses the production by the next
+token, and `member` also looks at the token after it. The subset covers
 basic, class, pointer, library and function types, expressions, lambdas in
 their three positions, commands, `delete`, classes with sections, fields,
 methods, constructors, destructors and single inheritance, namespaces and
@@ -16,8 +20,8 @@ functions with parameters by value and by reference. Three left factorings
 keep the grammar LL(1). In `Member` a `TypeId` opens a constructor when `(`
 follows it and a type otherwise. In `ExprStatement` an assignment and an
 expression statement share the prefix `Expr`, and the token `=` decides. In
-`Declaration` a class with a body and a class declared without one share the
-keyword `class`, and the case of the name decides.
+`Declaration` a class template with a body and a class template of the library
+without one share the prefix up to `class`, and the case of the name decides.
 
 The library carries no syntax of its own. `namespace std` is an ordinary
 namespace and `std::vector<int>` an ordinary qualified name, which the lexer
@@ -106,8 +110,13 @@ def nsId : P String := do
   | .nsId x => advance; return x
   | _ => fail "expected namespace identifier"
 
-/-- A name of either case, the head of a namespace and the last component of a
-qualified name. -/
+/-- A name of either case, the name of a namespace and the last component of a
+qualified name.
+
+```
+Name = TypeId | VarId ;
+```
+-/
 def name : P String := do
   match ← peek with
   | .typeId x | .varId x => advance; return x
@@ -117,7 +126,11 @@ end P
 
 open P
 
-/-- `BasicType ::= 'int' | 'bool' | 'void'` -/
+/--
+```
+BasicType = "int" | "bool" | "void" ;
+```
+-/
 def basicType : P Ty := do
   match ← peek with
   | .kw "int"  => advance; return .int
@@ -133,7 +146,11 @@ def isTypeStart : Token → Bool
 
 mutual
 
-/-- `TemplateArgs ::= '<' TemplateArg ( ',' TemplateArg )* '>'`. -/
+/--
+```
+TemplateArgs = "<" TemplateArg { "," TemplateArg } ">" ;
+```
+-/
 partial def templateArgs : P (List Ty) := do
   expectSym "<"
   let mut ts := [← templateArg]
@@ -142,11 +159,17 @@ partial def templateArgs : P (List Ty) := do
   expectSym ">"
   return ts
 
-/-- `QualTail ::= NsId '::' QualTail | Name TemplateArgs?`, the rest of a
-qualified name after a namespace. The case of the last component says which
-type it is. An uppercase one names a class of the program, so `Geometry::Shape`
-is a class type, and a lowercase one names a class of the library, whose names
-are lowercase, so `std::vector<int>` is a library type. -/
+/-- The rest of a qualified name after a namespace.
+
+```
+QualTail = NsId "::" QualTail | Name [ TemplateArgs ] ;
+```
+
+The case of the last component says which type it is. An uppercase one names a
+class of the program, so `Geometry::Shape` is a class type, and a lowercase one
+names a class of the library, whose names are lowercase, so `std::vector<int>`
+is a library type. A class of the program takes one template argument at most,
+and a class of the library always takes its arguments. -/
 partial def qualTail (pre : String) : P Ty := do
   match ← peek with
   | .nsId n => advance; expectSym "::"; qualTail (pre ++ n ++ "::")
@@ -165,9 +188,15 @@ partial def qualTail (pre : String) : P Ty := do
     fail s!"{base} names a class of the library, which takes its arguments in angle brackets"
   | _ => fail "expected a name after ::"
 
-/-- `ClassType ::= NsId '::' QualTail | TypeId TemplateArgs?`, a class name
-possibly qualified by namespaces and possibly instantiating a class template.
-The instantiation is named by the chain the design prints for the type, so
+/-- A class name possibly qualified by namespaces and possibly instantiating a
+class template.
+
+```
+ClassType = NsId "::" QualTail | TypeId [ TemplateArgs ] ;
+```
+
+An unqualified name is read in the enclosing namespace, and a class template
+takes one template argument. The instantiation is named by the chain the design prints for the type, so
 `Stack<int>` in the source and the expanded class have the same name, and
 `Templates.instantiate` adds the class before the program is checked. -/
 partial def classType : P Ty := do
@@ -182,14 +211,19 @@ partial def classType : P Ty := do
       return .cls s!"{base}<{ts.head!}>"
     return .cls base
 
-/-- The name of a class type, for the places that take no library type. -/
+/-- The name of a class type, for the base of a class, which is never a type
+of the library. -/
 partial def className : P String := do
   match ← classType with
   | .cls n => return n
   | t => fail s!"{t} is a type of the library, not a class of the program"
 
-/-- `TemplateArg ::= Type ( '(' ( Type ( ',' Type )* )? ')' )?`, a type or a
-function type, as `int(int)` in `std::function<int(int)>`. -/
+/-- A type or a function type, as `int(int)` in `std::function<int(int)>`.
+
+```
+TemplateArg = Type [ "(" [ Type { "," Type } ] ")" ] ;
+```
+-/
 partial def templateArg : P Ty := do
   let t ← type
   if !(← acceptSym "(") then return t
@@ -201,7 +235,11 @@ partial def templateArg : P Ty := do
     expectSym ")"
   return .fn t ps
 
-/-- `Type ::= BasicType | ClassType '*'?`. -/
+/--
+```
+Type = BasicType | ClassType [ "*" ] ;
+```
+-/
 partial def type : P Ty := do
   match ← peek with
   | .typeId _ | .nsId _ =>
@@ -213,7 +251,11 @@ end
 
 mutual
 
-/-- `Expr ::= OrExpr ( '?' Expr ':' Expr )?` -/
+/--
+```
+Expr = OrExpr [ "?" Expr ":" Expr ] ;
+```
+-/
 partial def expr : P Expr := do
   let c ← orExpr
   if ← acceptSym "?" then
@@ -223,7 +265,11 @@ partial def expr : P Expr := do
     return .cond c t e
   else return c
 
-/-- `OrExpr ::= AndExpr ( '||' AndExpr )*` -/
+/--
+```
+OrExpr = AndExpr { "||" AndExpr } ;
+```
+-/
 partial def orExpr : P Expr := do
   let mut l ← andExpr
   while ← acceptSym "||" do
@@ -231,7 +277,11 @@ partial def orExpr : P Expr := do
     l := .binop .or l r
   return l
 
-/-- `AndExpr ::= EqExpr ( '&&' EqExpr )*` -/
+/--
+```
+AndExpr = EqExpr { "&&" EqExpr } ;
+```
+-/
 partial def andExpr : P Expr := do
   let mut l ← eqExpr
   while ← acceptSym "&&" do
@@ -239,7 +289,11 @@ partial def andExpr : P Expr := do
     l := .binop .and l r
   return l
 
-/-- `EqExpr ::= RelExpr ( ( '==' | '!=' ) RelExpr )*` -/
+/--
+```
+EqExpr = RelExpr { ( "==" | "!=" ) RelExpr } ;
+```
+-/
 partial def eqExpr : P Expr := do
   let mut l ← relExpr
   repeat
@@ -249,7 +303,11 @@ partial def eqExpr : P Expr := do
     | _ => break
   return l
 
-/-- `RelExpr ::= AddExpr ( ( '<' | '<=' | '>' | '>=' ) AddExpr )*` -/
+/--
+```
+RelExpr = AddExpr { ( "<" | "<=" | ">" | ">=" ) AddExpr } ;
+```
+-/
 partial def relExpr : P Expr := do
   let mut l ← addExpr
   repeat
@@ -261,7 +319,11 @@ partial def relExpr : P Expr := do
     | _ => break
   return l
 
-/-- `AddExpr ::= MulExpr ( ( '+' | '-' ) MulExpr )*` -/
+/--
+```
+AddExpr = MulExpr { ( "+" | "-" ) MulExpr } ;
+```
+-/
 partial def addExpr : P Expr := do
   let mut l ← mulExpr
   repeat
@@ -271,7 +333,11 @@ partial def addExpr : P Expr := do
     | _ => break
   return l
 
-/-- `MulExpr ::= UnaryExpr ( ( '*' | '/' | '%' ) UnaryExpr )*` -/
+/--
+```
+MulExpr = UnaryExpr { ( "*" | "/" | "%" ) UnaryExpr } ;
+```
+-/
 partial def mulExpr : P Expr := do
   let mut l ← unaryExpr
   repeat
@@ -282,7 +348,11 @@ partial def mulExpr : P Expr := do
     | _ => break
   return l
 
-/-- `UnaryExpr ::= ( '!' | '-' | '*' ) UnaryExpr | PostfixExpr` -/
+/--
+```
+UnaryExpr = ( "!" | "-" | "*" ) UnaryExpr | PostfixExpr ;
+```
+-/
 partial def unaryExpr : P Expr := do
   match ← peek with
   | .sym "!" => advance; return .unop .not (← unaryExpr)
@@ -290,11 +360,23 @@ partial def unaryExpr : P Expr := do
   | .sym "*" => advance; return .deref (← unaryExpr)
   | _ => postfixExpr
 
-/-- `PostfixExpr ::= Primary ( '[' Expr ']' | '.' VarId | '->' VarId | Args )*`.
-`Args` after a variable is the call `f(…)`, of the function named `f`, of the
+/-- A primary expression and its chain, with `Chain`, `After` and `ChainNoCall`
+read inline by the loop.
+
+```
+PostfixExpr = Primary Chain ;
+Chain = [ ( "[" Expr "]" Chain | "." VarId After
+          | "->" VarId After | Args Chain ) ] ;
+After = Args Chain | ChainNoCall ;
+ChainNoCall = [ ( "[" Expr "]" Chain | "." VarId After
+                | "->" VarId After ) ] ;
+```
+
+An `Args` after a variable is the call `f(…)`, of the function named `f`, of the
 function value bound to `f` or of the method `f` of `this`, and after any other
-postfix expression it is the call of a function value, `callFn`. `.m(…)` and
-`->m(…)` are method calls, with the static class left for the type checker. -/
+postfix expression it is the call of a function value, `callFn`. The forms `.m(…)`
+and `->m(…)` are method calls, with the static class left for the type checker, and
+a field access never takes `Args` directly. -/
 partial def postfixExpr : P Expr := do
   let mut e ← primary
   repeat
@@ -311,8 +393,14 @@ partial def postfixExpr : P Expr := do
     | _, _ => break
   return e
 
-/-- `Primary ::= IntLit | 'true' | 'false' | 'nullptr' | 'this' | VarId | '(' Expr ')'
-| 'new' ClassType Args` -/
+/-- A primary expression. After `new`, a class of the program gives `newObj` and
+a type of the library gives `newLib`.
+
+```
+Primary = IntLit | "true" | "false" | "nullptr" | "this" | VarId
+        | "(" Expr ")" | "new" ClassType Args ;
+```
+-/
 partial def primary : P Expr := do
   match ← peek with
   | .intLit n  => advance; return .intLit n
@@ -329,7 +417,11 @@ partial def primary : P Expr := do
     | t => return .newLib t (← args)
   | _ => fail "expected primary expression"
 
-/-- `Args ::= '(' ( ArgExpr ( ',' ArgExpr )* )? ')'` -/
+/--
+```
+Args = "(" [ ArgExpr { "," ArgExpr } ] ")" ;
+```
+-/
 partial def args : P (List Expr) := do
   expectSym "("
   if ← acceptSym ")" then return []
@@ -339,13 +431,23 @@ partial def args : P (List Expr) := do
   expectSym ")"
   return acc
 
-/-- `ArgExpr ::= Lambda | Expr`. The lambda is an argument expression and not
-a primary, so it occurs only as argument, as initialiser of a declaration and
-as the expression of `return`. -/
+/-- The lambda is an argument expression and not a primary, so it occurs only as
+argument, as initialiser of a declaration with a type and as the expression of
+`return`.
+
+```
+ArgExpr = Lambda | Expr ;
+```
+-/
 partial def argExpr : P Expr := do
   if (← peek) == .sym "[=]" then lambda else expr
 
-/-- `Lambda ::= '[=]' Params '->' Type Block`. The parameters are by value. -/
+/-- The parameters of a lambda are by value.
+
+```
+Lambda = "[=]" Params "->" Type Block ;
+```
+-/
 partial def lambda : P Expr := do
   expectSym "[=]"
   let ps ← params
@@ -355,14 +457,23 @@ partial def lambda : P Expr := do
   let b ← block
   return .lambda ps r b
 
-/-- `Param ::= Type '&'? VarId`. With `&` the parameter is by reference. -/
+/-- With `&` the parameter is by reference.
+
+```
+Param = Type [ "&" ] VarId ;
+```
+-/
 partial def param : P Param := do
   let t ← type
   let isRef ← acceptSym "&"
   let x ← varId
   return ⟨t, x, isRef⟩
 
-/-- `Params ::= '(' ( Param ( ',' Param )* )? ')'` -/
+/--
+```
+Params = "(" [ Param { "," Param } ] ")" ;
+```
+-/
 partial def params : P (List Param) := do
   expectSym "("
   if ← acceptSym ")" then return []
@@ -372,7 +483,12 @@ partial def params : P (List Param) := do
   expectSym ")"
   return acc
 
-/-- `ExprStatement ::= Expr ( '=' Expr )?`, an assignment command or an expression as statement. -/
+/-- An assignment command or an expression as statement, told apart by `=`.
+
+```
+ExprStatement = Expr [ "=" Expr ] ;
+```
+-/
 partial def exprStatement : P Cmd := do
   let l ← expr
   if ← acceptSym "=" then
@@ -380,9 +496,14 @@ partial def exprStatement : P Cmd := do
     return .assign l r
   else return .exprStmt l
 
-/-- `LocalDecl ::= 'auto' VarId '=' Expr | Type '&'? VarId '=' ArgExpr`. With
-`&` the declaration is a local reference. A lambda initialises only a typed
-declaration, never an `auto` one. -/
+/-- With `&` the declaration is a local reference. A lambda initialises only a
+typed declaration, never an `auto` one.
+
+```
+LocalDecl = "auto" VarId "=" Expr
+          | Type [ "&" ] VarId "=" ArgExpr ;
+```
+-/
 partial def localDecl : P Cmd := do
   if ← accept (.kw "auto") then
     let x ← varId
@@ -396,13 +517,23 @@ partial def localDecl : P Cmd := do
     let e ← argExpr
     return if isRef then .declRef t x e else .decl t x e
 
-/-- `ForInit ::= LocalDecl | ExprStatement` -/
+/-- A declaration when the first token opens a type, by `isTypeStart`, and an
+expression statement otherwise.
+
+```
+ForInit = LocalDecl | ExprStatement ;
+```
+-/
 partial def forInit : P Cmd := do
   match ← peek with
   | .kw "auto" => localDecl
   | t => if isTypeStart t then localDecl else exprStatement
 
-/-- `Block ::= '{' Statement* '}'` -/
+/--
+```
+Block = "{" { Statement } "}" ;
+```
+-/
 partial def block : P (List Cmd) := do
   expectSym "{"
   let mut acc : List Cmd := []
@@ -412,7 +543,20 @@ partial def block : P (List Cmd) := do
   expectSym "}"
   return acc
 
-/-- `Statement`, a command or an expression statement, chosen by the first token. -/
+/-- A command or an expression statement, chosen by the first token. A token that
+opens a type, by `isTypeStart`, opens a declaration.
+
+```
+Statement = Block
+          | "if" "(" Expr ")" Block [ "else" Block ]
+          | "while" "(" Expr ")" Block
+          | "for" "(" ForInit ";" Expr ";" ExprStatement ")" Block
+          | "return" [ ArgExpr ] ";"
+          | "delete" Expr ";"
+          | LocalDecl ";"
+          | ExprStatement ";" ;
+```
+-/
 partial def statement : P Cmd := do
   match ← peek with
   | .sym "{" => return .block (← block)
@@ -464,9 +608,13 @@ partial def statement : P Cmd := do
 
 end
 
-/-- `Function ::= Type VarId Params ( Block | ';' )`. A function without a
-body is a declaration of the library, as `void assert(bool condition);` of
-`<cassert>`, and only a header holds it. -/
+/-- A function without a body is a declaration of the library, as
+`void assert(bool condition);` of `<cassert>`, and only a header holds it.
+
+```
+Function = Type VarId Params ( Block | ";" ) ;
+```
+-/
 def function : P Decl := do
   let h ← inHeader
   let t ← type
@@ -486,7 +634,13 @@ inductive MemberItem where
   | ctor   (c : Ctor)
   | dtor   (d : Dtor)
 
-/-- The operators a class may overload, the production `Op` of the design. -/
+/-- The operators a class may overload, the nonterminal `Op`.
+
+```
+Op = "+" | "-" | "*" | "/" | "%" | "==" | "!="
+   | "<" | "<=" | ">" | ">=" | "[" "]" ;
+```
+-/
 def operatorName : P String := do
   match ← peek with
   | .sym "[" => advance; expectSym "]"; return "operator[]"
@@ -496,10 +650,20 @@ def operatorName : P String := do
     else fail "expected an operator that a class may overload"
   | _ => fail "expected an operator that a class may overload"
 
-/-- `Member ::= 'virtual' ( Type '&'? MemberRest | '~' TypeId '(' ')' Block )
-| '~' TypeId '(' ')' Block | TypeId Params Block | Type '&'? MemberRest` with
-`MemberRest ::= VarId ( ';' | Params 'override'? Block ) | 'operator' Op Params Block`.
-The first factoring of the design. A `TypeId` followed by `(` opens the
+/-- A member of a class, with `MemberRest` read inline by `afterType`.
+
+```
+Member = "virtual" ( Type [ "&" ] MemberRest
+                   | "~" TypeId "(" ")" Block )
+       | "~" TypeId "(" ")" Block
+       | ( BasicType | NsId "::" QualTail [ "*" ] ) [ "&" ] MemberRest
+       | TypeId ( Params Block
+                | [ TemplateArgs ] [ "*" ] [ "&" ] MemberRest ) ;
+MemberRest = VarId ( ";" | Params [ "override" ] Block )
+           | "operator" Op Params Block ;
+```
+
+The first factoring of the grammar. A `TypeId` followed by `(` opens the
 constructor, which must be named after the class, and a `TypeId` followed by
 anything else opens a type. The `&` after the type marks a member that
 returns a reference, so a call to it denotes a location, and it never
@@ -547,9 +711,16 @@ partial def member (cls : String) (vis : Vis) : P MemberItem := do
     else afterType false (← type)
   | _ => afterType false (← type)
 
-/-- `ClassRest ::= ( ':' 'public' ClassType )? '{' Member* Section* '}' ';'` with
-`Section ::= ( 'public' | 'private' ) ':' Member*`, the class after its name.
-Members before any section label are private, as in C++. -/
+/-- The class after its name, with `Section` read inline.
+
+```
+ClassRest = [ ":" "public" ClassType ] "{" { Member } { Section } "}" ";" ;
+Section = ( "public" | "private" ) ":" { Member } ;
+```
+
+Members before any section label are private, as in C++. The base is a class of
+the program. A class has at most one constructor, which is public, and at most
+one destructor. -/
 partial def classRest (name : String) : P ClassDecl := do
   let base ← if ← acceptSym ":" then
       expect (.kw "public")
@@ -581,20 +752,34 @@ partial def classRest (name : String) : P ClassDecl := do
   expectSym ";"
   return ⟨name, base, fields, methods, ctor, dtor⟩
 
-/-- `Class ::= 'class' TypeId ClassRest`. -/
+/-- The class name is read in the enclosing namespace.
+
+```
+Class = "class" TypeId ClassRest ;
+```
+-/
 partial def classDecl : P ClassDecl := do
   expect (.kw "class")
   classRest (← qualify (← typeId))
 
 mutual
 
-/-- `Declaration ::= 'namespace' Name '{' Declaration* '}'
-| 'template' '<' 'typename' TypeId ( ',' 'typename' TypeId )* '>'
-  'class' ( TypeId ClassRest | VarId ';' ) | Class | Function`.
+/--
+```
+Declaration = "namespace" Name "{" { Declaration } "}"
+            | "template" "<" "typename" TypeId
+                { "," "typename" TypeId } ">"
+                "class" ( TypeId ClassRest | VarId ";" )
+            | Class
+            | Function ;
+```
+
 A namespace holds classes, templates and namespaces, and its name is of either
-case, since the library opens `namespace std`. Its declarations are flattened
-into the program with qualified names. A class declared without a body is a
-class of the library, named in lowercase, which an intrinsic implements. -/
+case, since the library opens `namespace std`, which only a header of Core C++
+opens. Its declarations are flattened into the program with qualified names. A
+class template with a body has one type parameter. A class template declared
+without a body is a class of the library, named in lowercase, which an
+intrinsic implements. -/
 partial def declaration : P (List Decl) := do
   match ← peek with
   | .kw "class" => return [.cls (← classDecl)]
@@ -644,7 +829,12 @@ partial def declaration : P (List Decl) := do
 
 end
 
-/-- `Program ::= Declaration*` -/
+/-- A sequence of declarations up to `eof`.
+
+```
+Program = { Declaration } ;
+```
+-/
 partial def program : P Program := do
   let mut acc : List Decl := []
   while (← peek) != .eof do

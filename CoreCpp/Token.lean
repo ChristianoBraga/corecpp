@@ -2,7 +2,7 @@
 # Core C++ tokens
 
 Six token classes. Reserved words, type identifiers (initial uppercase),
-variable identifiers (initial lowercase), namespace identifiers, integer
+variable identifiers (initial lowercase or `_`), namespace identifiers, integer
 literals, operators and punctuation. A namespace identifier is an identifier
 whose next token is `::`, of either case, which the lexer marks in a pass over
 the token array. It is what lets a qualified name of the library, `std::vector`,
@@ -14,7 +14,7 @@ namespace CoreCpp
 inductive Token where
   | kw     (s : String)   -- reserved word
   | typeId (s : String)   -- type identifier, initial uppercase
-  | varId  (s : String)   -- variable identifier, initial lowercase
+  | varId  (s : String)   -- variable identifier, initial lowercase or `_`
   | nsId   (s : String)   -- namespace identifier, an identifier before `::`
   | intLit (n : Nat)      -- decimal integer literal
   | sym    (s : String)   -- operator or punctuation

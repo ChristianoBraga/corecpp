@@ -5,11 +5,13 @@ A language of its own, run before the Core C++ compiler, and a valid input of
 the preprocessor of `g++`. It reads a file as a sequence of lines and never
 lexes or parses Core C++. The design is `preproc/ccpp-preproc.md`.
 
-    File  = Group ;
-    Group = { Line | Cond } ;
-    Line  = "#include" "<" Header ">" NL | "#define" FlagId NL | Text ;
-    Cond  = Test FlagId NL Group [ "#else" NL Group ] "#endif" NL ;
-    Test  = "#ifdef" | "#ifndef" ;
+```
+File  = Group ;
+Group = { Line | Cond } ;
+Line  = "#include" "<" Header ">" NL | "#define" FlagId NL | Text ;
+Cond  = Test FlagId NL Group [ "#else" NL Group ] "#endif" NL ;
+Test  = "#ifdef" | "#ifndef" ;
+```
 
 Every line satisfies the lexical rules, including the lines of a branch that
 is not selected and the lines of every header. The output replaces each
@@ -218,6 +220,7 @@ abbrev M := ExceptT String IO
 
 mutual
 
+/-- The judgement φ ⊢ G ⇒ t, φ′ on a group, item by item, threading φ. -/
 partial def run (env : Env) (φ : List String) : List Item → M (List OutLine × List String)
   | [] => return ([], φ)
   | i :: is => do
@@ -225,6 +228,29 @@ partial def run (env : Env) (φ : List String) : List Item → M (List OutLine �
     let (ts, φ) ← run env φ is
     return (t ++ ts, φ)
 
+/-- The judgement on one item.
+
+```
+──────────────────────────── (P-Define)
+φ ⊢ #define F ⇒ ε, φ ∪ {F}
+
+φ ⊢ H(h) ⇒ t, φ′
+──────────────────────────── (P-Include)
+φ ⊢ #include <h> ⇒ t, φ′
+
+F ∈ φ    φ ⊢ G₁ ⇒ t, φ′
+─────────────────────────────────────── (P-IfdefT)
+φ ⊢ #ifdef F G₁ #else G₂ #endif ⇒ t, φ′
+
+F ∉ φ    φ ⊢ G₂ ⇒ t, φ′
+─────────────────────────────────────── (P-IfdefF)
+φ ⊢ #ifdef F G₁ #else G₂ #endif ⇒ t, φ′
+```
+
+The directive `#ifndef` swaps the premises. A text line gives itself, marked
+when it comes from a header. An `#include` gives the output of the header.
+Every other directive line and every line of a branch that is not selected
+gives an empty line. -/
 partial def runItem (env : Env) (φ : List String) : Item → M (List OutLine × List String)
   | .text s => return ([(s, env.depth > 0)], φ)
   -- (P-Define)  φ ⊢ #define F ⇒ ε, φ ∪ {F}

@@ -30,7 +30,9 @@ def takeWhile (p : Char → Bool) : List Char → String × List Char
 def isIdentStart (c : Char) : Bool := c.isAlpha || c == '_'
 def isIdentChar  (c : Char) : Bool := c.isAlphanum || c == '_'
 
-/-- Classifies an identifier by its initial, or as a reserved word. -/
+/-- Classifies an identifier as a reserved word, or else by its initial. An
+uppercase initial gives a type identifier, and a lowercase initial or `_` a
+variable identifier. -/
 def identifier (s : String) : Token :=
   if keywords.contains s then .kw s
   else if s.front.isUpper then .typeId s
@@ -42,12 +44,16 @@ def matchSymbol (syms : List String) (cs : List Char) : Option (String × List C
     let n := s.length
     if cs.take n == s.toList then some (s, cs.drop n) else none
 
-/-- Discards a line comment. -/
+/-- Discards a line comment, up to the next newline or the end of the input. -/
 def skipLine : List Char → List Char
   | [] => []
   | '\n' :: cs => cs
   | _ :: cs => skipLine cs
 
+/-- The automaton. It discards white space and line comments, reads the longest
+run of digits as an integer literal and the longest run of identifier
+characters as an identifier, tries the symbols of three, two and one
+characters in that order, and ends the array with `eof`. -/
 partial def run (cs : List Char) (acc : Array Token) : Except String (Array Token) :=
   match cs with
   | [] => .ok (acc.push .eof)
@@ -79,8 +85,9 @@ partial def run (cs : List Char) (acc : Array Token) : Except String (Array Toke
 
 /-- Marks as a namespace identifier every identifier whose next token is `::`.
 The pass runs over the token array, so it sees neither the white space nor the
-comments the automaton has already dropped, and `std :: vector` is marked as
-`std::vector` is. -/
+comments the automaton has already dropped, and it marks `std :: vector` as it
+marks `std::vector`. It sees only the tokens of one call of `lex`, and
+`parseUnit` lexes each line apart. -/
 def qualifiers (ts : Array Token) : Array Token :=
   ts.mapIdx fun i t =>
     match t, ts[i + 1]? with
@@ -89,7 +96,8 @@ def qualifiers (ts : Array Token) : Array Token :=
 
 end Lexer
 
-/-- The lexer. -/
+/-- The lexer, the automaton `Lexer.run` followed by the pass
+`Lexer.qualifiers`. -/
 def lex (input : String) : Except String (Array Token) :=
   (Lexer.run input.toList #[]).map Lexer.qualifiers
 
