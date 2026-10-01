@@ -1,0 +1,205 @@
+# The semantics as relations, the evaluator as their interpreter
+
+Design note, 2026-10-01, branch `relational-semantics`. It records the
+decisions taken in conversation and the order of the work.
+
+## Principle
+
+The semantics of Core C++ is a set of inductive propositions, one per
+judgement, one constructor per rule. The evaluator of `CoreCpp.Eval` is the
+interpreter of those relations, to be proved sound and complete with respect
+to them. The structure follows Radix, the DSL of Leonardo de Moura's tutorial
+"The Lean Programming Language and Theorem Prover", ETAPS 2026, Turin,
+13 April, whose code is at github.com/leodemoura/RadixExperiment and
+github.com/leodemoura/ETAPSTutorial2026. There the relation `BigStep` is the
+specification, the function `interp` the implementation, and the theorems
+`interp_sound`, `interp_complete`, `interp_fuel_mono` and `BigStep.det` tie
+them. The slide states the principle, "the relational semantics is the
+ground truth".
+
+## The judgements
+
+| Judgement | Lean relation | Interpreter |
+| --- | --- | --- |
+| ρ, σ ⊢ e ⇒ v, σ′ | `Semantics.Eval p ρ σ e v σ′` | `Eval.expr` |
+| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `Semantics.LEval p ρ σ e ℓ σ′` | `Eval.lval` |
+| ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `Semantics.Exec p ρ σ c r ρ′ σ′` | `Eval.cmd` |
+| ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `Semantics.Execs p ρ σ c̄ r ρ′ σ′` | `Eval.cmds` |
+| Γ ⊢ e : τ | to come | `Typing.expr` |
+| Γ ⊢ e ⇒ₗ τ | to come | `Typing.lval` |
+| Γ ⊢ c ⊣ Γ′ | to come | `Typing.cmds` |
+| Γ ⊢ τ ok | to come | `Typing.wellFormed` |
+| τ′ ↪ τ | to come | `Typing.compat` |
+
+The program p is a parameter of every relation, the function table and the
+class table of the rules. The subject of a rule is the pointer to the
+statement under execution, and a rule applies to a subject when its
+conclusion matches the constructor of the subject. The relations of one
+judgement family form one `mutual` block, since Call needs the command
+judgement and Block the expression judgement. The auxiliary relations
+`Args`, `Bind`, `Member`, `CallMethod`, `Ctors`, `Dtors`, `Apply`,
+`ApplyArgs` and `Returns` name the premises that several rules share, the
+arguments left to right, the binding of parameters, the call of a member
+body, the dispatch of a method, the constructors and destructors of a chain,
+the application of a closure and the value a control gives.
+
+## How a rule is written
+
+A constructor is laid out as the rule is written on the board, the premises
+one per line, the inference line as a comment with the name the blueprint
+uses, and the conclusion under it. The docstring, when there is one, holds
+the side remark only.
+
+```lean
+  /-- A zero divisor has no derivation. -/
+  | div
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .int n₁, σ₁)
+      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ .int n₂, σ₂)
+      (hz : n₂ ≠ 0)
+      (hd : op.divide n₁ n₂ = some n)
+      (hr : Int32.inRange n) :
+    -- ──────────────────────────────────── (Div)
+      ⟨ρ, σ⟩ ⊢ .binop op e₁ e₂ ⇒ .int n, σ₂
+```
+
+The notation is the one of the judgements, with two concessions to the
+parser. The configuration ⟨ρ, σ⟩ is in angle brackets, since a notation that
+starts with a bare term and a comma would register a parser on every comma
+and break the tuples of Lean. A sequence of commands takes `⇒*`, since the
+parser cannot tell a command from a list of commands. The program is the `p`
+in scope, the parameter of the relations, so that no rule names it, as in the
+blueprint. The notation is declared before the relations and with
+`hygiene false`, so that `p` and the names `Eval`, `LEval`, `Exec` and
+`Execs` resolve at the use site, the latter to the relations under definition
+inside the `mutual` block. The name of a constructor must lead in the syntax
+of `inductive`, so the rule name appears twice, as the constructor and on the
+inference line. A command of our own that reads a rule premises first is
+possible, some fifty lines of `syntax` and `macro_rules`, and was not judged
+worth it.
+
+## `error` is the absence of a derivation
+
+The relations have no `error`. A dereference of `nullptr`, a division by
+zero, an overflow, an index out of bounds, a missing return, a double
+`delete`, a `delete` through a base pointer without a virtual destructor and
+every other case C++17 leaves undefined have no derivation, because a premise
+of every rule that could reach them fails, `σ(ℓ) = v`, `n₂ ≠ 0`,
+`n ∈ [−2³¹, 2³¹ − 1]`, `0 ≤ i < n`. The evaluator keeps its `Error` with the
+messages and the exit code 134.
+
+This is the choice of Radix, and it helps the proofs in two ways. No rule
+propagates an error, since a premise without derivation gives a conclusion
+without derivation, so there is no constructor Seq with `error` in its first
+command, no While with `error` in its body, no Call with `error` in an
+argument. Every induction on a relation has one case per construction and
+none for propagation. The price is what the relation cannot say. "This
+program gives `error`" is a statement about the evaluator, and the claim of
+the design, that everything C++17 leaves undefined gives `error`, becomes
+"a well typed program is stuck only at the undefined cases". The rules of the
+blueprint that conclude `error`, Div-Zero and Deref-Null, become the cases
+where no rule applies, stated as side conditions of the rules that do.
+
+## The library
+
+A module is a relation plus a function. The relation, in
+`CoreCpp/Semantics/Library.lean`, is the specification of the names the
+header of the module declares, in the forms of the judgements of the
+language. The structure `Module` has the four relations a module may give,
+`new`, `index`, `delete` and `call`, each an instance of a judgement of the
+language, left at `False` when the entity does not have it. The rules of the
+language for a subject of the library, NewLib, LocIndex, DeleteLib and
+CallLib, take the relation of the module as a premise. In the relation nothing
+is called. The premise holds or it does not. Only the interpreter, when it
+checks that premise, calls the module's function, and soundness proves that
+the function agrees with the relation.
+
+The module is found by the name the header declares, `moduleOf`, and nothing
+else links the two. No flag describes a type of the library. Whether a type is
+an object type is read from the keyword `class` of its declaration in the
+header. Whether a type converts to it is an instance of τ′ ↪ τ that the module
+adds. What `new` gives a field of the type is the evaluation of the default
+initialiser τ(), a core judgement, to which the module adds its own rule. The
+structures `Statics`, `Intrinsic`, `Sig`, `Use` and `Result` of
+`CoreCpp/Std/Intrinsic.lean`, the node `Expr.intrinsic`, the rewriting of the
+uses in `Typing.annotate` and the functions `Std.isObject`, `Std.convertible`
+and `Std.hasDefault` go when the interpreter is rewritten, step 4.
+
+`std::function` adds no relation today. Its value is a closure, a value of
+the language, and its call is the rule Apply. The decision of 2026-10-01 that
+`std::function` becomes an object created with `new std::function<F>(λ)`,
+reached by pointer and called as `(*f)(3)`, is a semantic change of both the
+relation and the interpreter and comes after step 4, with the default
+initialiser `new std::function<F>()` giving the function with no target, as in
+N4659 §23.14.13.2.1 ¶1, whose call has no derivation.
+
+## Preproc
+
+Unchanged. `#include <h>` is replaced by the header, a Core C++ file that
+declares the names. The header makes the program well formed, the Lean module
+of the same name gives the rules, and the link between them is the name.
+
+## Layout
+
+| Directory or file | Role |
+| --- | --- |
+| `CoreCpp/Semantics.lean` | the domains, ℓ, v, ρ, σ, r |
+| `CoreCpp/Semantics/Library.lean` | the relations of the modules and `moduleOf` |
+| `CoreCpp/Semantics/Dynamic.lean` | the dynamic judgements, `Eval`, `LEval`, `Exec`, `Execs` and the auxiliaries |
+| `CoreCpp/Semantics/Static.lean` | the static judgements, to come |
+| `CoreCpp/Eval.lean`, `CoreCpp/Typing.lean` | the interpreters, on fuel |
+| `CoreCpp/Std/` | the functions of the modules |
+| `CoreCpp/Proofs/` | determinism, soundness, completeness, to come |
+
+## The interpreter
+
+`Eval.lean` keeps its monad and its trace. The trace it prints is a derivation
+of the relation. Its `partial def` become recursion on fuel, as in Radix, so
+that theorems about it are possible, and the library sites become calls of the
+module functions in the places where the relation has a module premise. Its
+results on every test and example stay the same.
+
+## The theorems
+
+For each dynamic judgement, with `n` the fuel.
+
+- Determinism. `Eval p ρ σ e v₁ σ₁ → Eval p ρ σ e v₂ σ₂ → v₁ = v₂ ∧ σ₁ = σ₂`.
+  The claim "deterministic" of `CLAUDE.md` becomes this theorem.
+- Soundness. `expr n p ρ σ e = .ok (v, σ′) → Eval p ρ σ e v σ′`.
+- Completeness. `Eval p ρ σ e v σ′ → ∃ n, expr n p ρ σ e = .ok (v, σ′)`.
+- Fuel monotonicity, so that the existential of completeness composes.
+
+## The blueprint
+
+Each node points at the inductive of its judgement, a type and so an
+admissible target, beside the function that implements it. The Library
+chapter presents the rules of each module under the same judgement as the
+language's rules, T-VecIndex beside T-Index. The domains chapter states
+`error` as the absence of a derivation.
+
+## Order of the work
+
+Each step leaves every check green, `lake build`, the three test files,
+`bin/compare` with 35 agreements and 8 expected differences, and
+`lake exe vbp build`, and each is a commit on the branch.
+
+1. This note.
+2. `Semantics/Library.lean` and `Semantics/Dynamic.lean`, the dynamic
+   judgements transcribed from the comments of `Eval.lean`, no proof. Done
+   with this note.
+3. `Semantics/Static.lean`, the static judgements transcribed from
+   `Typing.lean`.
+4. The interpreter. `Eval.lean` and `Typing.lean` on fuel, the library as
+   relation plus function, the intrinsics gone, `Typing.annotate` without the
+   rewriting of uses.
+5. `std::function` as an object, in the relation and in the interpreter.
+6. Determinism, then soundness, then completeness.
+7. The blueprint and the design lines of `CLAUDE.md`.
+
+## Open
+
+- Whether `Expr.intrinsic`, `locOf` and the fields `static` and `sig` stay in
+  the AST as the annotations of the type checker, or the relation is stated
+  over the source program with the annotations as premises.
+- The merge order with `converge-chapter-2` and `converge-chapter-3`, both
+  unmerged, and the redo of their open defects on this design.
+- The grammar, if `new std::function<F>(λ)` needs a production.
