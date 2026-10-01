@@ -5546,7 +5546,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L276-L484">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5571,7 +5571,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.cmd" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L671-L799">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L704-L832">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5598,7 +5598,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.lval" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L607-L662">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L633-L695">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5618,19 +5618,26 @@ window.onload = async () => {
 dereferenced pointer, a field of an object, a field through a pointer and an
 element of a vector.
 
-    ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'
-    ──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error
-    ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'
+```
+ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'
+──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error
+ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'
+```
 
-    ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-    ─────────────────────────────────────────────── (LocField)
-    ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'
+```
+ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+─────────────────────────────────────────────── (LocField)
+ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'
+```
 
-    ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-    ────────────────────────────────────────────────── (LocArrow)    e-&gt;f is (*e).f
-    ρ, σ ⊢ e-&gt;f ⇒ₗ ℓ_f, σ'
+```
+ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+────────────────────────────────────────────────── (LocArrow)    e-&gt;f is (*e).f
+ρ, σ ⊢ e-&gt;f ⇒ₗ ℓ_f, σ'
+```
 
-    An element of a vector is a use of the library, the rule LocLib.             </pre></div>
+An element of a vector is a use of the library, the rule LocLib.
+</pre></div>
   </div>
 </div>
                     </li>

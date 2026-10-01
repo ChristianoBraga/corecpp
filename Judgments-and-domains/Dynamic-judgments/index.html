@@ -5552,7 +5552,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L276-L484">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5721,7 +5721,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.lval" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L607-L662">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L633-L695">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5741,19 +5741,26 @@ window.onload = async () => {
 dereferenced pointer, a field of an object, a field through a pointer and an
 element of a vector.
 
-    ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'
-    ──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error
-    ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'
+```
+ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'
+──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error
+ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'
+```
 
-    ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-    ─────────────────────────────────────────────── (LocField)
-    ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'
+```
+ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+─────────────────────────────────────────────── (LocField)
+ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'
+```
 
-    ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-    ────────────────────────────────────────────────── (LocArrow)    e-&gt;f is (*e).f
-    ρ, σ ⊢ e-&gt;f ⇒ₗ ℓ_f, σ'
+```
+ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+────────────────────────────────────────────────── (LocArrow)    e-&gt;f is (*e).f
+ρ, σ ⊢ e-&gt;f ⇒ₗ ℓ_f, σ'
+```
 
-    An element of a vector is a use of the library, the rule LocLib.             </pre></div>
+An element of a vector is a use of the library, the rule LocLib.
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5910,7 +5917,7 @@ element of a vector.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.cmd" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L671-L799">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L704-L832">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5937,7 +5944,7 @@ element of a vector.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.cmds" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L801-L819">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L834-L861">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5958,16 +5965,25 @@ element of a vector.
   <div class="bp_external_decl_body">
     <pre class="docstring">Command sequences.
 
+```
 ────────────────────────── (Seq-Empty)
 ρ, σ ⊢ ε ⇒ normal, ρ, σ
+```
 
+```
 ρ, σ ⊢ c ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ cs ⇒ r, ρ₂, σ₂
-──────────────────────────────────────────────────── (Seq)   ρ₁ carries the binding of c to the rest
+──────────────────────────────────────────────────── (Seq)
 ρ, σ ⊢ c cs ⇒ r, ρ₂, σ₂
+```
 
+The environment ρ₁ carries the binding of c to the rest of the sequence.
+
+```
 ρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁
 ───────────────────────────── (Seq-Ret)   the return interrupts the sequence
-ρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁                                                                </pre></div>
+ρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁
+```
+</pre></div>
   </div>
 </div>
                     </li>
@@ -6112,7 +6128,7 @@ element of a vector.
                       <div class="declaration decl def abbrev" data-decl="CoreCpp.M" data-kind="abbrev">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">abbrev</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L83-L85">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">abbrev</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L83-L85">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6133,7 +6149,7 @@ failing rule is kept. </pre></div>
                       <div class="declaration decl structure" data-decl="CoreCpp.TState" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(3 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L78-L81">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(3 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L78-L81">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6166,7 +6182,7 @@ failing rule is kept. </pre></div>
                       <div class="declaration decl structure" data-decl="CoreCpp.TraceAnte" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(5 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L48-L59">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(5 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L48-L59">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6209,7 +6225,7 @@ expression and `c` for a command. </pre></div>
                       <div class="declaration decl structure" data-decl="CoreCpp.TraceCons" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(3 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L61-L68">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(3 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L61-L68">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6244,7 +6260,7 @@ only in the judgments that produce them. </pre><div class="bp_external_decl_sect
                       <div class="declaration decl structure" data-decl="CoreCpp.TraceEntry" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(4 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L70-L76">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(4 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L70-L76">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6280,7 +6296,7 @@ only in the judgments that produce them. </pre><div class="bp_external_decl_sect
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.traced" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L89-L105">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L89-L105">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6308,7 +6324,7 @@ concludes, or the error, at the current depth of the derivation. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.renderTrace" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L985-L998">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L1030-L1043">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

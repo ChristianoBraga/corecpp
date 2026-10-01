@@ -5540,7 +5540,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L289-L480">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L297-L488">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5563,7 +5563,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L276-L484">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5588,7 +5588,7 @@ window.onload = async () => {
                       <div class="declaration decl inductive" data-decl="CoreCpp.BinOp" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(13 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L58-L62">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(13 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Syntax.lean#L58-L62">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5651,7 +5651,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.binop" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L157-L202">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L163-L217">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5668,27 +5668,36 @@ window.onload = async () => {
   <div class="bp_external_decl_body">
     <pre class="docstring">Arithmetic and relational binary operators, on already evaluated values.
 
+```
 ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂
 ──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})
 ρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂
+```
 
+```
 ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0
 ──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})
 ρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++
+```
 
+```
 ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int 0, σ₂
 ──────────────────────────────────────────────── (DivZero)
 ρ, σ ⊢ e₁ ⊘ e₂ ⇒ error (division by zero)
+```
 
+```
 ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂
 ─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, &lt;, &lt;=, &gt;, &gt;=})
 ρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂
+```
 
 Two pointers are equal when they are the same location. nullptr equals
 only nullptr. There is no order on pointers.
 
 The left operand is evaluated before the right one, the Core C++ choice
-where C++17 does not specify the order.                                        </pre></div>
+where C++17 does not specify the order.
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5825,7 +5834,7 @@ where C++17 does not specify the order.                                        <
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L289-L480">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L297-L488">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5848,7 +5857,7 @@ where C++17 does not specify the order.                                        <
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L276-L484">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5873,7 +5882,7 @@ where C++17 does not specify the order.                                        <
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.binop" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L157-L202">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L163-L217">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5890,27 +5899,36 @@ where C++17 does not specify the order.                                        <
   <div class="bp_external_decl_body">
     <pre class="docstring">Arithmetic and relational binary operators, on already evaluated values.
 
+```
 ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂
 ──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})
 ρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂
+```
 
+```
 ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0
 ──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})
 ρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++
+```
 
+```
 ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int 0, σ₂
 ──────────────────────────────────────────────── (DivZero)
 ρ, σ ⊢ e₁ ⊘ e₂ ⇒ error (division by zero)
+```
 
+```
 ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂
 ─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, &lt;, &lt;=, &gt;, &gt;=})
 ρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂
+```
 
 Two pointers are equal when they are the same location. nullptr equals
 only nullptr. There is no order on pointers.
 
 The left operand is evaluated before the right one, the Core C++ choice
-where C++17 does not specify the order.                                        </pre></div>
+where C++17 does not specify the order.
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5919,7 +5937,7 @@ where C++17 does not specify the order.                                        <
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.compat" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L202-L218">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L202-L223">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5938,13 +5956,18 @@ types, nullptr against a pointer type, or, by subsumption, a pointer to a
 derived class where a pointer to its base is expected. These and the lambda
 to `std::function` are the only implicit conversions.
 
-    D derives from B
-    ──────────────── (Subsumption)
-    D* ≈ B*
+```
+D derives from B
+──────────────── (Subsumption)
+D* ≈ B*
+```
 
-    Γ ⊢ e : D*    D derives from B
-    ────────────────────────────── (T-Sub)      subsumption where a value is
-    Γ ⊢ e : B*                                  used, wherever ≈ is required  </pre></div>
+```
+Γ ⊢ e : D*    D derives from B
+────────────────────────────── (T-Sub)      subsumption where a value is
+Γ ⊢ e : B*                                  used, wherever ≈ is required
+```
+</pre></div>
   </div>
 </div>
                     </li>
@@ -6079,7 +6102,7 @@ to `std::function` are the only implicit conversions.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L289-L480">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L297-L488">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6102,7 +6125,7 @@ to `std::function` are the only implicit conversions.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L276-L484">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

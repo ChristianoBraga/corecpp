@@ -5566,7 +5566,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.cmds" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L791-L800">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L823-L835">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5583,9 +5583,12 @@ window.onload = async () => {
   <div class="bp_external_decl_body">
     <pre class="docstring">Γ ⊢ c₁ … cₙ ⊣ Γₙ, threading the context through the sequence.
 
+```
 ──────────── (T-Seq-Empty)      Γ ⊢ c ⊣ Γ₁    Γ₁ ⊢ cs ⊣ Γ₂
 Γ ⊢ ε ⊣ Γ                       ──────────────────────────── (T-Seq)
-                                Γ ⊢ c cs ⊣ Γ₂                                  </pre></div>
+                                Γ ⊢ c cs ⊣ Γ₂
+```
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5594,7 +5597,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.cmds" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L801-L819">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L834-L861">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5615,16 +5618,25 @@ window.onload = async () => {
   <div class="bp_external_decl_body">
     <pre class="docstring">Command sequences.
 
+```
 ────────────────────────── (Seq-Empty)
 ρ, σ ⊢ ε ⇒ normal, ρ, σ
+```
 
+```
 ρ, σ ⊢ c ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ cs ⇒ r, ρ₂, σ₂
-──────────────────────────────────────────────────── (Seq)   ρ₁ carries the binding of c to the rest
+──────────────────────────────────────────────────── (Seq)
 ρ, σ ⊢ c cs ⇒ r, ρ₂, σ₂
+```
 
+The environment ρ₁ carries the binding of c to the rest of the sequence.
+
+```
 ρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁
 ───────────────────────────── (Seq-Ret)   the return interrupts the sequence
-ρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁                                                                </pre></div>
+ρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁
+```
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5789,7 +5801,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.cmd" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L695-L789">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L727-L821">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5812,7 +5824,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.cmd" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L671-L799">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L704-L832">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5839,7 +5851,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.fresh" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Eval.lean#L204-L208">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L219-L223">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

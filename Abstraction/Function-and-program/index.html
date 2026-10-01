@@ -5518,7 +5518,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.fn" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L823-L838">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L861-L879">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5536,9 +5536,12 @@ and are well formed, and its body is, under the context of its parameters and
 its return type. A reference parameter has in Γ the type of its referent, as a
 local reference does.
 
-    τ, τᵢ storable and well formed    [x₁ ↦ τ₁, …, xₖ ↦ τₖ] ⊢ c ⊣ Γ'
-    ──────────────────────────────────────────────────────────────── (T-Fun)
-    ⊢ τ f (τ₁ x₁, …, τₖ xₖ) { c }                                                  </pre></div>
+```
+τ, τᵢ storable and well formed    [x₁ ↦ τ₁, …, xₖ ↦ τₖ] ⊢ c ⊣ Γ'
+──────────────────────────────────────────────────────────────── (T-Fun)
+⊢ τ f (τ₁ x₁, …, τₖ xₖ) { c }
+```
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5671,7 +5674,7 @@ local reference does.
                       <div class="declaration decl def abbrev" data-decl="CoreCpp.Program" data-kind="abbrev">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">abbrev</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L280-L281">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">abbrev</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Syntax.lean#L280-L281">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5691,7 +5694,7 @@ local reference does.
                       <div class="declaration decl def" data-decl="CoreCpp.check" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L928-L963">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L973-L1011">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5707,10 +5710,13 @@ local reference does.
 overloading, every class and function is well typed and `int main()` exists.
 A template is not checked, only its instantiations are.
 
-    names distinct up to overloading    ⊢ Cᵢ for each class    ⊢ fᵢ for each function
-    main ↦ (int main() { c })
-    ────────────────────────────────────────────────────────────────────────────── (T-Program)
-    ⊢ p                                                                            </pre></div>
+```
+names distinct up to overloading    ⊢ Cᵢ for each class    ⊢ fᵢ for each function
+main ↦ (int main() { c })
+────────────────────────────────────────────────────────────────────────────── (T-Program)
+⊢ p
+```
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5719,7 +5725,7 @@ A template is not checked, only its instantiations are.
                       <div class="declaration decl def" data-decl="CoreCpp.runWith" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L825-L840">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L867-L885">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5737,15 +5743,18 @@ A template is not checked, only its instantiations are.
     <pre class="docstring">Program execution. The initial store is empty, because there are no global
 variables, and the result is the value returned by `main()`.
 
-    main ↦ (int main() { c })    [], ∅ ⊢ main() ⇒ v, σ
-    ─────────────────────────────────────────────────── (Program)
-    p ⇒ v
+```
+main ↦ (int main() { c })    [], ∅ ⊢ main() ⇒ v, σ
+─────────────────────────────────────────────────── (Program)
+p ⇒ v
+```
 
-    The objects created with new stay in σ until delete or the end of the
-    program. The locals of main leave σ with the return of the call, so the
-    final store holds objects only. The program is annotated with the static
-    classes of method calls and deletes before it runs, when it is well typed,
-    and otherwise runs as parsed, with every dispatch by the class tag.        </pre></div>
+The objects created with new stay in σ until delete or the end of the
+program. The locals of main leave σ with the return of the call, so the
+final store holds objects only. The program is annotated with the static
+classes of method calls and deletes before it runs, when it is well typed,
+and otherwise runs as parsed, with every dispatch by the class tag.
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5754,7 +5763,7 @@ variables, and the result is the value returned by `main()`.
                       <div class="declaration decl def" data-decl="CoreCpp.run" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L842">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L887">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

@@ -5574,7 +5574,7 @@ window.onload = async () => {
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.accept" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L517-L528">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L528-L542">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5593,9 +5593,12 @@ window.onload = async () => {
     <pre class="docstring">Γ ⊢ e ◁ τ, e is acceptable at type τ. For a lambda, `lambdaAt`. For any
 other expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.
 
-    Γ ⊢ e : τ'    τ' ≈ τ    τ' has values
-    ───────────────────────────────────── (Accept)
-    Γ ⊢ e ◁ τ                                                                      </pre></div>
+```
+Γ ⊢ e : τ'    τ' ≈ τ    τ' has values
+───────────────────────────────────── (Accept)
+Γ ⊢ e ◁ τ
+```
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5604,7 +5607,7 @@ other expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.lambdaAt" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L530-L553">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L544-L570">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5624,16 +5627,19 @@ other expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.
     <pre class="docstring">Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -&gt; τ { c } ◁ L⟨τ̄⟩, a lambda where a type of the
 library to which its function type converts is expected.
 
-    Γ' = Γ marked read only, [x₁ ↦ τ₁, …, xₖ ↦ τₖ]    Γ' ⊢ c ⊣ Γ''    τ, τᵢ storable, well formed
-    Γ ⊢_L τ(τ₁, …, τₖ) ↪ L⟨τ̄⟩
-    ───────────────────────────────────────────────────────────────────────────────────── (T-Lambda)
-    Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -&gt; τ { c } ◁ L⟨τ̄⟩
+```
+Γ' = Γ marked read only, [x₁ ↦ τ₁, …, xₖ ↦ τₖ]    Γ' ⊢ c ⊣ Γ''
+τ, τᵢ storable, well formed    Γ ⊢_L τ(τ₁, …, τₖ) ↪ L⟨τ̄⟩
+──────────────────────────────────────────────────────────── (T-Lambda)
+Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -&gt; τ { c } ◁ L⟨τ̄⟩
+```
 
-    The lambda has the function type τ(τ₁, …, τₖ), and the conversion is a
-    judgement of the library, the one of `std::function` for instance. The body
-    is checked under Γ with every variable of the enclosing scope marked read
-    only, the copies of `[=]`, and with the parameters of the lambda as
-    ordinary variables.                                                           </pre></div>
+The lambda has the function type τ(τ₁, …, τₖ), and the conversion is a
+judgement of the library, the one of `std::function` for instance. The body
+is checked under Γ with every variable of the enclosing scope marked read
+only, the copies of `[=]`, and with the parameters of the lambda as
+ordinary variables.
+</pre></div>
   </div>
 </div>
                     </li>
@@ -5642,7 +5648,7 @@ library to which its function type converts is expected.
                       <div class="declaration decl structure" data-decl="CoreCpp.TBind" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(2 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L61-L66">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(2 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L61-L66">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5673,7 +5679,7 @@ which the body may read and not write. </pre><div class="bp_external_decl_sectio
                       <div class="declaration decl def" data-decl="CoreCpp.TEnv.captured" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L80-L81">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L80-L81">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5818,7 +5824,7 @@ which the body may read and not write. </pre><div class="bp_external_decl_sectio
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L261-L469">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L276-L484">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5843,7 +5849,7 @@ which the body may read and not write. </pre><div class="bp_external_decl_sectio
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.captures" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L248-L257">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L263-L272">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5871,7 +5877,7 @@ variable whose location left the store is error. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Expr.vars" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L152-L165">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Syntax.lean#L152-L165">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5894,7 +5900,7 @@ excluded. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Cmd.vars" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Syntax.lean#L167-L174">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Syntax.lean#L167-L174">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6046,7 +6052,7 @@ excluded. </pre></div>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.callValue" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Typing.lean#L482-L493">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L490-L504">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6067,9 +6073,12 @@ excluded. </pre></div>
 on a variable and on any other expression. The value has a type of the
 library with a member `operator()`, a `std::function` for instance.
 
-    Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator() : τ₁ × … × τₖ → τ    Γ ⊢ eᵢ ◁ τᵢ
-    ──────────────────────────────────────────────────────────── (T-CallFn)
-    Γ ⊢ e(e₁, …, eₖ) : τ                                                          </pre></div>
+```
+Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator() : τ₁ × … × τₖ → τ    Γ ⊢ eᵢ ◁ τᵢ
+──────────────────────────────────────────────────────────── (T-CallFn)
+Γ ⊢ e(e₁, …, eₖ) : τ
+```
+</pre></div>
   </div>
 </div>
                     </li>
@@ -6078,7 +6087,7 @@ library with a member `operator()`, a `std::function` for instance.
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.applyClosure" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L589-L605">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L607-L631">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6097,16 +6106,24 @@ library with a member `operator()`, a `std::function` for instance.
   <div class="bp_external_decl_body">
     <pre class="docstring">The application of a closure to arguments.
 
+```
 v = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])
-ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right, by value
-(ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ                        fresh locations for the copies and the parameters
-ρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                the closure environment, nothing else is visible
+ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ
+(ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ
+ρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]
 ρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''
 ─────────────────────────────────────────────────────────────── (Apply)
-apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))          the copies, the parameters and the locals leave
+apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))
+```
+
+The arguments evaluate left to right, by value. The locations ℓ'ⱼ and ℓᵢ are
+fresh, for the copies and for the parameters. The environment ρ_c holds the
+closure environment and nothing else is visible. On the way out the copies,
+the parameters and the locals leave the store.
 
 With normal in place of ret v the result is void if τ = void and error
-(missing return) otherwise. A value that is not a closure is error.        </pre></div>
+(missing return) otherwise. A value that is not a closure is error.
+</pre></div>
   </div>
 </div>
                     </li>
@@ -6115,7 +6132,7 @@ With normal in place of ret v the result is void if τ = void and error
                       <div class="declaration decl opaque" data-decl="CoreCpp.Eval.applyVals" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/4715c33e5a7ecde430f42d48d05071dbdef10e9e/CoreCpp/Eval.lean#L564-L587">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Eval.lean#L582-L605">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

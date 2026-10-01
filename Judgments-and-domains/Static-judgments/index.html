@@ -5556,7 +5556,7 @@ window.onload = async () => {
                       <div class="declaration decl inductive" data-decl="CoreCpp.Expr" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(20 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L74-L127">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(20 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Syntax.lean#L74-L127">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5685,7 +5685,7 @@ entity of the library, the receiver of a member being the first argument. </pre>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.expr" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L289-L480">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L297-L488">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5818,7 +5818,7 @@ entity of the library, the receiver of a member being the first argument. </pre>
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.lval" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L646-L693">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L669-L725">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5837,13 +5837,22 @@ dereferenced pointer, a field of an object, a field through a pointer, and a
 use of the library or a member that gives a location. A variable captured by copy inside a lambda denotes no
 writable location.
 
-    Γ(x) = τ, x not captured   Γ ⊢ e : τ*           Γ ⊢ e : C, C has τ f
-    ──────────────────────── (T-LocVar)  ──────────── (T-LocDeref)  ─────────────────── (T-LocField)
-    Γ ⊢ₗ x : τ                 Γ ⊢ₗ *e : τ          Γ ⊢ₗ e.f : τ
+```
+Γ(x) = τ, x not captured   Γ ⊢ e : τ*       Γ ⊢ e : C, C has τ f
+──────────────────────── (T-LocVar)  ─────────── (T-LocDeref)  ────────────────── (T-LocField)
+Γ ⊢ₗ x : τ                 Γ ⊢ₗ *e : τ      Γ ⊢ₗ e.f : τ
+```
 
-    Γ ⊢ e : C*, C has τ f                Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator[] : τ₁ → τ, a location    Γ ⊢ i ◁ τ₁
-    ────────────────────── (T-LocArrow)  ─────────────────────────────────────────────────── (T-LocIndexLib)
-    Γ ⊢ₗ e-&gt;f : τ                        Γ ⊢ₗ e[i] : τ                                       </pre></div>
+```
+Γ ⊢ e : C*, C has τ f
+────────────────────── (T-LocArrow)
+Γ ⊢ₗ e-&gt;f : τ
+
+Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator[] : τ₁ → τ, a location    Γ ⊢ i ◁ τ₁
+─────────────────────────────────────────────────────────────────── (T-LocIndexLib)
+Γ ⊢ₗ e[i] : τ
+```
+</pre></div>
   </div>
 </div>
                     </li>
@@ -6004,7 +6013,7 @@ writable location.
                       <div class="declaration decl inductive" data-decl="CoreCpp.Cmd" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(11 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Syntax.lean#L129-L146">CoreCpp/Syntax.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(11 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Syntax.lean#L129-L146">CoreCpp/Syntax.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6073,7 +6082,7 @@ checker sees it, filled by `Typing.annotate`. </pre><div class="bp_external_decl
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.cmd" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L695-L789">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L727-L821">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6096,7 +6105,7 @@ checker sees it, filled by `Typing.annotate`. </pre><div class="bp_external_decl
                       <div class="declaration decl opaque" data-decl="CoreCpp.Typing.cmds" data-kind="opaque">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e0305918a71a8b03072eb7200156ecb1bf5c0ff9/CoreCpp/Typing.lean#L791-L800">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">opaque</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/b6a1a9380a33425fab07ef6e6624dd3c9d3674cf/CoreCpp/Typing.lean#L823-L835">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6113,9 +6122,12 @@ checker sees it, filled by `Typing.annotate`. </pre><div class="bp_external_decl
   <div class="bp_external_decl_body">
     <pre class="docstring">Γ ⊢ c₁ … cₙ ⊣ Γₙ, threading the context through the sequence.
 
+```
 ──────────── (T-Seq-Empty)      Γ ⊢ c ⊣ Γ₁    Γ₁ ⊢ cs ⊣ Γ₂
 Γ ⊢ ε ⊣ Γ                       ──────────────────────────── (T-Seq)
-                                Γ ⊢ c cs ⊣ Γ₂                                  </pre></div>
+                                Γ ⊢ c cs ⊣ Γ₂
+```
+</pre></div>
   </div>
 </div>
                     </li>
