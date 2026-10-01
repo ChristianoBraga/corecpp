@@ -3,32 +3,68 @@ import CoreCpp.Semantics.Library
 /-!
 # The dynamic semantics of Core C++, as relations
 
-The three judgements of the evaluation, as inductive propositions. One
-constructor per rule, named as the rule is named in the blueprint and in the
-comments of `CoreCpp.Eval`.
+One inductive proposition per judgement, one constructor per rule, named as
+in the blueprint.
 
-* `Eval p ρ σ e v σ′` is ρ, σ ⊢ e ⇒ v, σ′, the expression e has the value v.
-* `LEval p ρ σ e ℓ σ′` is ρ, σ ⊢ e ⇒ₗ ℓ, σ′, the expression e denotes ℓ.
-* `Exec p ρ σ c r ρ′ σ′` is ρ, σ ⊢ c ⇒ r, ρ′, σ′, the command c ends with r.
+| Judgement | Relation | Meaning |
+| --- | --- | --- |
+| ρ, σ ⊢ e ⇒ v, σ′ | `Eval p ρ σ e v σ′` | e has the value v |
+| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `LEval p ρ σ e ℓ σ′` | e denotes the location ℓ |
+| ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `Exec p ρ σ c r ρ′ σ′` | c ends with the control r |
+| ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `Execs p ρ σ c̄ r ρ′ σ′` | the sequence c̄ ends with r |
 
-The program p is a parameter, the function table and the class table of every
-rule. The auxiliary relations `Execs`, `Args`, `Bind`, `Member`, `CallMethod`,
-`Ctors`, `Dtors`, `Apply` and `ApplyArgs` name the premises the rules share,
-the sequence of commands, the arguments left to right, the binding of
-parameters, the call of a member body, the dispatch of a method, the
-constructors and destructors of a chain and the application of a closure.
+The program p, the function table and the class table, is a parameter of
+every relation. The auxiliaries `Args`, `Bind`, `Member`, `CallMethod`,
+`Ctors`, `Dtors`, `Apply`, `ApplyArgs` and `Returns` name shared premises.
 
-The relation is the specification and `CoreCpp.Eval` the implementation. The
-relation has no `error`. A dereference of `nullptr`, a division by zero, an
-overflow, an index out of bounds, a missing return and every other case that
-C++17 leaves undefined have no derivation, and the evaluator gives `error`
-for them. The subject is the program as `Typing.annotate` leaves it, with the
-static class of a receiver and the signature of an overload filled in, and
-without the node `Expr.intrinsic`, which the evaluator uses today and this
-relation does not need. A subject of the library is judged by the module that
-its header declares, through the relations of `CoreCpp.Semantics.Library`,
-which the rules NewLib, LocIndex, DeleteLib and CallLib take as premises.
+The relation is the specification and `CoreCpp.Eval` the implementation.
+There is no `error`. Whatever C++17 leaves undefined has no derivation, and
+the evaluator gives `error` for it. The subject is the program as
+`Typing.annotate` leaves it, without the node `Expr.intrinsic`. A subject of
+the library is judged by the module its header declares, through the
+relations of `CoreCpp.Semantics.Library`, the premises of NewLib, LocIndex,
+DeleteLib and CallLib.
 -/
+
+namespace CoreCpp.Semantics
+
+/-! ## Notation
+
+The judgements as the rules write them.
+
+| Judgement | Notation | Expands to |
+| --- | --- | --- |
+| ρ, σ ⊢ e ⇒ v, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'` | `Eval p ρ σ e v σ'` |
+| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'` | `LEval p ρ σ e ℓ σ'` |
+| ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'` | `Exec p ρ σ c r ρ' σ'` |
+| ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Execs p ρ σ cs r ρ' σ'` |
+
+The configuration ⟨ρ, σ⟩ is in angle brackets, since a comma after a bare
+term would clash with the tuples of Lean, and the program is left out, which is the `p` in scope, the parameter of the
+relations, so that the rules read as they do in the blueprint. A sequence of
+commands takes `⇒*`, since the parser cannot tell a command from a list of
+commands. The notation is declared before the relations it names, so that the
+rules use it, and hygiene is off so that `p` and the names `Eval`, `LEval`,
+`Exec` and `Execs` resolve at the use site, the latter to the relations under
+definition inside the `mutual` block. -/
+
+set_option hygiene false in
+set_option quotPrecheck false in
+scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " e:41 " ⇒ " v:41 ", " σ':41 => Eval p ρ σ e v σ'
+
+set_option hygiene false in
+set_option quotPrecheck false in
+scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " e:41 " ⇒ₗ " ℓ:41 ", " σ':41 => LEval p ρ σ e ℓ σ'
+
+set_option hygiene false in
+set_option quotPrecheck false in
+scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " c:41 " ⇒ " r:41 ", " ρ':41 ", " σ':41 => Exec p ρ σ c r ρ' σ'
+
+set_option hygiene false in
+set_option quotPrecheck false in
+scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " cs:41 " ⇒* " r:41 ", " ρ':41 ", " σ':41 => Execs p ρ σ cs r ρ' σ'
+
+end CoreCpp.Semantics
 
 namespace CoreCpp
 
@@ -117,42 +153,6 @@ inductive Returns : Ctrl → Ty → Val → Prop where
   /-- A body of a `void` function that ends without `return` gives `void`. A
   body of another type that ends without `return` has no derivation. -/
   | void : Returns .normal .void .void
-
-/-! ## Notation
-
-The judgements as the rules write them.
-
-| Judgement | Notation | Expands to |
-| --- | --- | --- |
-| ρ, σ ⊢ e ⇒ v, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'` | `Eval p ρ σ e v σ'` |
-| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'` | `LEval p ρ σ e ℓ σ'` |
-| ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'` | `Exec p ρ σ c r ρ' σ'` |
-| ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Execs p ρ σ cs r ρ' σ'` |
-
-The configuration ⟨ρ, σ⟩ is in angle brackets, since a comma after a bare
-term would clash with the tuples of Lean, and the program is left out, which is the `p` in scope, the parameter of the
-relations, so that the rules read as they do in the blueprint. A sequence of
-commands takes `⇒*`, since the parser cannot tell a command from a list of
-commands. The notation is declared before the relations it names, so that the
-rules use it, and hygiene is off so that `p` and the names `Eval`, `LEval`,
-`Exec` and `Execs` resolve at the use site, the latter to the relations under
-definition inside the `mutual` block. -/
-
-set_option hygiene false in
-set_option quotPrecheck false in
-scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " e:41 " ⇒ " v:41 ", " σ':41 => Eval p ρ σ e v σ'
-
-set_option hygiene false in
-set_option quotPrecheck false in
-scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " e:41 " ⇒ₗ " ℓ:41 ", " σ':41 => LEval p ρ σ e ℓ σ'
-
-set_option hygiene false in
-set_option quotPrecheck false in
-scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " c:41 " ⇒ " r:41 ", " ρ':41 ", " σ':41 => Exec p ρ σ c r ρ' σ'
-
-set_option hygiene false in
-set_option quotPrecheck false in
-scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " cs:41 " ⇒* " r:41 ", " ρ':41 ", " σ':41 => Execs p ρ σ cs r ρ' σ'
 
 mutual
 
