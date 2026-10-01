@@ -136,47 +136,62 @@ def showR (r : Ctrl × Env × Store) : TraceCons :=
   { head := toString r.1,
     env? := some r.2.1.toString, store? := some r.2.2.toString }
 
-/-- Range check for `int`.
+/--Range check for `int`.
 
-    n ∈ [−2³¹, 2³¹ − 1]              n ∉ [−2³¹, 2³¹ − 1]
-    ──────────────────              ──────────────────────
-    int32 n = int n                 int32 n = error (overflow)              -/
+```
+n ∈ [−2³¹, 2³¹ − 1]              n ∉ [−2³¹, 2³¹ − 1]
+──────────────────              ──────────────────────
+int32 n = int n                 int32 n = error (overflow)
+```
+-/
 def int32 (n : Int) : M Val :=
   if Int32.inRange n then pure (.int n) else throw .overflow
 
-/-- Unary operators.
+/--Unary operators.
 
-    ρ, σ ⊢ e ⇒ bool b, σ'                    ρ, σ ⊢ e ⇒ int n, σ'
-    ──────────────────────── (Not)           ────────────────────────── (Neg)
-    ρ, σ ⊢ !e ⇒ bool ¬b, σ'                  ρ, σ ⊢ −e ⇒ int32 (−n), σ'          -/
+```
+ρ, σ ⊢ e ⇒ bool b, σ'                    ρ, σ ⊢ e ⇒ int n, σ'
+──────────────────────── (Not)           ────────────────────────── (Neg)
+ρ, σ ⊢ !e ⇒ bool ¬b, σ'                  ρ, σ ⊢ −e ⇒ int32 (−n), σ'
+```
+-/
 def unop : UnOp → Val → M Val
   | .not, .bool b => pure (.bool !b)
   | .neg, .int n  => int32 (-n)
   | op, v => throw (.typeError s!"unary operator {op.toString} on {v}")
 
-/-- Arithmetic and relational binary operators, on already evaluated values.
+/--Arithmetic and relational binary operators, on already evaluated values.
 
-    ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂
-    ──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})
-    ρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂
+```
+ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂
+──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})
+ρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂
+```
 
-    ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0
-    ──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})
-    ρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++
+```
+ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0
+──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})
+ρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++
+```
 
-    ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int 0, σ₂
-    ──────────────────────────────────────────────── (DivZero)
-    ρ, σ ⊢ e₁ ⊘ e₂ ⇒ error (division by zero)
+```
+ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int 0, σ₂
+──────────────────────────────────────────────── (DivZero)
+ρ, σ ⊢ e₁ ⊘ e₂ ⇒ error (division by zero)
+```
 
-    ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂
-    ─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, <, <=, >, >=})
-    ρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂
+```
+ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂
+─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, <, <=, >, >=})
+ρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂
+```
 
-    Two pointers are equal when they are the same location. nullptr equals
-    only nullptr. There is no order on pointers.
+Two pointers are equal when they are the same location. nullptr equals
+only nullptr. There is no order on pointers.
 
-    The left operand is evaluated before the right one, the Core C++ choice
-    where C++17 does not specify the order.                                        -/
+The left operand is evaluated before the right one, the Core C++ choice
+where C++17 does not specify the order.
+-/
 def binop : BinOp → Val → Val → M Val
   | .add, .int a, .int b => int32 (a + b)
   | .sub, .int a, .int b => int32 (a - b)
@@ -498,17 +513,20 @@ partial def callMethod (fs : FunEnv) (ρ : Env) (σ : Store) (recv : Expr) (arro
   let (v, σ') ← runMember fs ρ σ₀ l md.params md.body es md.ret s!"{k}::{m}"
   return (md, v, σ')
 
-/-- The call of a member body, a method, a constructor or a destructor, with
+/--The call of a member body, a method, a constructor or a destructor, with
 this bound to the location ℓ of the receiver and the arguments bound as in
 Call, by value with a fresh copy and by reference with an alias. The return
 frees the copies and the locals of the body, never the receiver.
 
-    for each i, left to right, with σ'₀ = σ,
-      pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ
-      pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ₗ ℓᵢ, σ'ᵢ
-    ρ_m = [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]    ρ_m, σ'ₖ ⊢ c ⇒ r, ρ', σ''
-    ────────────────────────────────────────────────────────────── (Member)
-    member ℓ (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))          -/
+```
+for each i, left to right, with σ'₀ = σ,
+  pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ
+  pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ₗ ℓᵢ, σ'ᵢ
+ρ_m = [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]    ρ_m, σ'ₖ ⊢ c ⇒ r, ρ', σ''
+────────────────────────────────────────────────────────────── (Member)
+member ℓ (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))
+```
+-/
 partial def runMember (fs : FunEnv) (ρ : Env) (σ : Store) (l : Loc) (ps : List Param) (body : List Cmd)
     (es : List Expr) (ret : Ty) (who : String) : M (Val × Store) := do
   if ps.length != es.length then throw (.arity who)
@@ -586,41 +604,56 @@ partial def applyVals (fs : FunEnv) (σ : Store) (v : Val) (vs : List Val) : M (
   | .normal, .void => return (.void, σ''')
   | .normal, _     => throw (.missingReturn "lambda")
 
-/-- The application of a closure to arguments.
+/--The application of a closure to arguments.
 
-    v = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])
-    ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ                    arguments left to right, by value
-    (ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ                        fresh locations for the copies and the parameters
-    ρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                the closure environment, nothing else is visible
-    ρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''
-    ─────────────────────────────────────────────────────────────── (Apply)
-    apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))          the copies, the parameters and the locals leave
+```
+v = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])
+ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ
+(ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ
+ρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]
+ρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''
+─────────────────────────────────────────────────────────────── (Apply)
+apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))
+```
 
-    With normal in place of ret v the result is void if τ = void and error
-    (missing return) otherwise. A value that is not a closure is error.        -/
+The arguments evaluate left to right, by value. The locations ℓ'ⱼ and ℓᵢ are
+fresh, for the copies and for the parameters. The environment ρ_c holds the
+closure environment and nothing else is visible. On the way out the copies,
+the parameters and the locals leave the store.
+
+With normal in place of ret v the result is void if τ = void and error
+(missing return) otherwise. A value that is not a closure is error.
+-/
 partial def applyClosure (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (es : List Expr) : M (Val × Store) := do
   let .closure ps _ _ _ := v | throw (.notCallable v)
   if ps.length != es.length then throw (.arity "lambda")
   let (vs, σ₁) ← args fs ρ σ es
   applyVals fs σ₁ v vs
 
-/-- ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, a
+/--ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, a
 dereferenced pointer, a field of an object, a field through a pointer and an
 element of a vector.
 
-    ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'
-    ──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error
-    ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'
+```
+ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'
+──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error
+ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'
+```
 
-    ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-    ─────────────────────────────────────────────── (LocField)
-    ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'
+```
+ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+─────────────────────────────────────────────── (LocField)
+ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'
+```
 
-    ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-    ────────────────────────────────────────────────── (LocArrow)    e->f is (*e).f
-    ρ, σ ⊢ e->f ⇒ₗ ℓ_f, σ'
+```
+ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+────────────────────────────────────────────────── (LocArrow)    e->f is (*e).f
+ρ, σ ⊢ e->f ⇒ₗ ℓ_f, σ'
+```
 
-    An element of a vector is a use of the library, the rule LocLib.             -/
+An element of a vector is a use of the library, the rule LocLib.
+-/
 partial def lval (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × Store) :=
   match e with
   /-  ρ(x) = ℓ                      x ∉ ρ    ρ(this) = ℓ    σ(ℓ) = obj C [… x ↦ ℓ_x …]
@@ -798,18 +831,27 @@ partial def cmd (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl × Env
       | some w => throw (.typeError s!"delete of {w}, not an object")
     | w => throw (.typeError s!"delete of {w}, not a pointer")
 
-/-- Command sequences.
+/--Command sequences.
 
-    ────────────────────────── (Seq-Empty)
-    ρ, σ ⊢ ε ⇒ normal, ρ, σ
+```
+────────────────────────── (Seq-Empty)
+ρ, σ ⊢ ε ⇒ normal, ρ, σ
+```
 
-    ρ, σ ⊢ c ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ cs ⇒ r, ρ₂, σ₂
-    ──────────────────────────────────────────────────── (Seq)   ρ₁ carries the binding of c to the rest
-    ρ, σ ⊢ c cs ⇒ r, ρ₂, σ₂
+```
+ρ, σ ⊢ c ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ cs ⇒ r, ρ₂, σ₂
+──────────────────────────────────────────────────── (Seq)
+ρ, σ ⊢ c cs ⇒ r, ρ₂, σ₂
+```
 
-    ρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁
-    ───────────────────────────── (Seq-Ret)   the return interrupts the sequence
-    ρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁                                                                -/
+The environment ρ₁ carries the binding of c to the rest of the sequence.
+
+```
+ρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁
+───────────────────────────── (Seq-Ret)   the return interrupts the sequence
+ρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁
+```
+-/
 partial def cmds (fs : FunEnv) (ρ : Env) (σ : Store) : List Cmd → M (Ctrl × Env × Store)
   | [] => return (.normal, ρ, σ)
   | c :: cs => do
@@ -822,18 +864,21 @@ end
 
 end Eval
 
-/-- Program execution. The initial store is empty, because there are no global
+/--Program execution. The initial store is empty, because there are no global
 variables, and the result is the value returned by `main()`.
 
-    main ↦ (int main() { c })    [], ∅ ⊢ main() ⇒ v, σ
-    ─────────────────────────────────────────────────── (Program)
-    p ⇒ v
+```
+main ↦ (int main() { c })    [], ∅ ⊢ main() ⇒ v, σ
+─────────────────────────────────────────────────── (Program)
+p ⇒ v
+```
 
-    The objects created with new stay in σ until delete or the end of the
-    program. The locals of main leave σ with the return of the call, so the
-    final store holds objects only. The program is annotated with the static
-    classes of method calls and deletes before it runs, when it is well typed,
-    and otherwise runs as parsed, with every dispatch by the class tag.        -/
+The objects created with new stay in σ until delete or the end of the
+program. The locals of main leave σ with the return of the call, so the
+final store holds objects only. The program is annotated with the static
+classes of method calls and deletes before it runs, when it is well typed,
+and otherwise runs as parsed, with every dispatch by the class tag.
+-/
 def runWith (trace : Bool) (p : Program) : Except Error Val × Array TraceEntry :=
   let p := (Typing.annotate p).toOption.getD p
   let (r, s) := (Eval.expr p [] {} (.call "main" [] none)).run.run { enabled := trace }

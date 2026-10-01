@@ -199,32 +199,40 @@ def value (e : Expr) (t : Ty) : T Ty :=
   else if Std.isObject t then .error (.objectValue e t)
   else .ok t
 
-/-- τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal
+/--τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal
 types, nullptr against a pointer type, or, by subsumption, a pointer to a
 derived class where a pointer to its base is expected. These and the lambda
 to `std::function` are the only implicit conversions.
 
-    D derives from B
-    ──────────────── (Subsumption)
-    D* ≈ B*
+```
+D derives from B
+──────────────── (Subsumption)
+D* ≈ B*
+```
 
-    Γ ⊢ e : D*    D derives from B
-    ────────────────────────────── (T-Sub)      subsumption where a value is
-    Γ ⊢ e : B*                                  used, wherever ≈ is required  -/
+```
+Γ ⊢ e : D*    D derives from B
+────────────────────────────── (T-Sub)      subsumption where a value is
+Γ ⊢ e : B*                                  used, wherever ≈ is required
+```
+-/
 def compat (p : Program) : Ty → Ty → Bool
   | .nullT, .ptr _ => true
   | .ptr _, .nullT => true
   | .ptr (.cls d), .ptr (.cls b) => d == b || p.subclass d b
   | t₁, t₂ => t₁ == t₂
 
-/-- Two overloads of one name are declared together only when they differ in
+/--Two overloads of one name are declared together only when they differ in
 arity or in a parameter of a type other than `std::function`, the check 5 of
 the design. The restriction keeps a lambda argument from deciding a call,
 which would ask for the type of the lambda before the candidate is known.
 
-    arities differ, or ∃ i. pᵢ ≠ qᵢ and neither pᵢ nor qᵢ is std::function
-    ──────────────────────────────────────────────────────────────────── (Distinguishable)
-    the two declarations are overloads                                          -/
+```
+arities differ, or ∃ i. pᵢ ≠ qᵢ and neither pᵢ nor qᵢ is std::function
+──────────────────────────────────────────────────────────────────── (Distinguishable)
+the two declarations are overloads
+```
+-/
 def distinguishable (ps qs : List Param) : Bool :=
   ps.length != qs.length ||
     (ps.zip qs).any fun (a, b) => a.ty != b.ty && !Std.convertible a.ty && !Std.convertible b.ty
@@ -479,13 +487,16 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
     | .cls _ => methodCall p Γ e false "operator[]" [i]
     | _ => throw (.notVector e t)
 
-/-- The call of a value of type t with the arguments es, shared by `T-CallFn`
+/--The call of a value of type t with the arguments es, shared by `T-CallFn`
 on a variable and on any other expression. The value has a type of the
 library with a member `operator()`, a `std::function` for instance.
 
-    Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator() : τ₁ × … × τₖ → τ    Γ ⊢ eᵢ ◁ τᵢ
-    ──────────────────────────────────────────────────────────── (T-CallFn)
-    Γ ⊢ e(e₁, …, eₖ) : τ                                                          -/
+```
+Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator() : τ₁ × … × τₖ → τ    Γ ⊢ eᵢ ◁ τᵢ
+──────────────────────────────────────────────────────────── (T-CallFn)
+Γ ⊢ e(e₁, …, eₖ) : τ
+```
+-/
 partial def callValue (p : Program) (Γ : TEnv) (fe : Expr) (t : Ty) (es : List Expr) : T Ty := do
   let .lib n ts := t | throw (.notFunction fe t)
   let s ← libSig p n (.member "operator()") ts
@@ -514,12 +525,15 @@ partial def libArgs (p : Program) (Γ : TEnv) (context : String) (s : Std.Sig) (
   for (τ, e) in s.params.zip es do
     accept p Γ s!"argument of {context}" e τ
 
-/-- Γ ⊢ e ◁ τ, e is acceptable at type τ. For a lambda, `lambdaAt`. For any
+/--Γ ⊢ e ◁ τ, e is acceptable at type τ. For a lambda, `lambdaAt`. For any
 other expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.
 
-    Γ ⊢ e : τ'    τ' ≈ τ    τ' has values
-    ───────────────────────────────────── (Accept)
-    Γ ⊢ e ◁ τ                                                                      -/
+```
+Γ ⊢ e : τ'    τ' ≈ τ    τ' has values
+───────────────────────────────────── (Accept)
+Γ ⊢ e ◁ τ
+```
+-/
 partial def accept (p : Program) (Γ : TEnv) (context : String) (e : Expr) (τ : Ty) : T Unit := do
   match e with
   | .lambda ps r b => lambdaAt p Γ ps r b τ
@@ -527,19 +541,22 @@ partial def accept (p : Program) (Γ : TEnv) (context : String) (e : Expr) (τ :
     let t ← value e (← expr p Γ e)
     if !compat p t τ then throw (.mismatch context τ t)
 
-/-- Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ◁ L⟨τ̄⟩, a lambda where a type of the
+/--Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ◁ L⟨τ̄⟩, a lambda where a type of the
 library to which its function type converts is expected.
 
-    Γ' = Γ marked read only, [x₁ ↦ τ₁, …, xₖ ↦ τₖ]    Γ' ⊢ c ⊣ Γ''    τ, τᵢ storable, well formed
-    Γ ⊢_L τ(τ₁, …, τₖ) ↪ L⟨τ̄⟩
-    ───────────────────────────────────────────────────────────────────────────────────── (T-Lambda)
-    Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ◁ L⟨τ̄⟩
+```
+Γ' = Γ marked read only, [x₁ ↦ τ₁, …, xₖ ↦ τₖ]    Γ' ⊢ c ⊣ Γ''
+τ, τᵢ storable, well formed    Γ ⊢_L τ(τ₁, …, τₖ) ↪ L⟨τ̄⟩
+──────────────────────────────────────────────────────────── (T-Lambda)
+Γ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ◁ L⟨τ̄⟩
+```
 
-    The lambda has the function type τ(τ₁, …, τₖ), and the conversion is a
-    judgement of the library, the one of `std::function` for instance. The body
-    is checked under Γ with every variable of the enclosing scope marked read
-    only, the copies of `[=]`, and with the parameters of the lambda as
-    ordinary variables.                                                           -/
+The lambda has the function type τ(τ₁, …, τₖ), and the conversion is a
+judgement of the library, the one of `std::function` for instance. The body
+is checked under Γ with every variable of the enclosing scope marked read
+only, the copies of `[=]`, and with the parameters of the lambda as
+ordinary variables.
+-/
 partial def lambdaAt (p : Program) (Γ : TEnv) (ps : List Param) (r : Ty) (b : List Cmd) (τ : Ty) : T Unit := do
   let .lib n ts := τ | throw (.lambdaMismatch τ)
   let L ← intrinsicOf p n
@@ -564,19 +581,22 @@ partial def checkArgs (p : Program) (Γ : TEnv) (f : String) (ps : List Param) (
     else
       accept p Γ s!"argument {q.name} of {f}" e q.ty
 
-/-- The candidate of an overload set that a call selects, by its index. The
+/--The candidate of an overload set that a call selects, by its index. The
 candidates that accept the arguments are collected, and the choice is the
 exact one when several accept.
 
-    A = the candidates of cand(f, k) that accept e₁, …, eₖ
-    A has one element whose parameters are exactly the types of the arguments, or A is a singleton
-    ─────────────────────────────────────────────────────────────────────────────── (T-Overload)
-    the call of f selects that candidate
+```
+A = the candidates of cand(f, k) that accept e₁, …, eₖ
+A has one element whose parameters are exactly the types of the arguments, or A is a singleton
+─────────────────────────────────────────────────────────────────────────────── (T-Overload)
+the call of f selects that candidate
+```
 
-    With A empty the error is the one of the single candidate of that arity,
-    when there is one, and `no overload` otherwise. With two or more in A and
-    no exact one the call is ambiguous. Core C++ does not rank conversion
-    sequences, so the rule fits in one line on the board.                        -/
+With A empty the error is the one of the single candidate of that arity,
+when there is one, and `no overload` otherwise. With two or more in A and
+no exact one the call is ambiguous. Core C++ does not rank conversion
+sequences, so the rule fits in one line on the board.
+-/
 partial def pickOverload (p : Program) (Γ : TEnv) (who : String)
     (cands : List (List Param)) (es : List Expr) : T Nat := do
   let idx := (List.range cands.length).filter fun i => (cands[i]!).length == es.length
@@ -632,29 +652,41 @@ partial def resolveMethod (p : Program) (Γ : TEnv) (recv : Expr) (arrow : Bool)
 partial def methodCall (p : Program) (Γ : TEnv) (recv : Expr) (arrow : Bool) (m : String) (es : List Expr) : T Ty := do
   return (← resolveMethod p Γ recv arrow m es).1.ret
 
-/-- The type of field f of class C as seen from Γ, or the error. A private
+/--The type of field f of class C as seen from Γ, or the error. A private
 field is visible only when Γ(this) is the class that declares it.
 
-    C has τ f declared in K    f public or Γ(this) = K*
-    ──────────────────────────────────────────────────── (Visible)                -/
+```
+C has τ f declared in K    f public or Γ(this) = K*
+──────────────────────────────────────────────────── (Visible)
+```
+-/
 partial def fieldType (p : Program) (Γ : TEnv) (c f : String) : T Ty := do
   if (p.lookupClass c).isNone then throw (.unknownClass c)
   let some (fd, k) := p.findField c f | throw (.unknownField c f)
   if fd.vis == .priv && Γ.self != some k then throw (.privateMember k f)
   return fd.ty
 
-/-- The expressions that denote a location, with their type. A variable, a
+/--The expressions that denote a location, with their type. A variable, a
 dereferenced pointer, a field of an object, a field through a pointer, and a
 use of the library or a member that gives a location. A variable captured by copy inside a lambda denotes no
 writable location.
 
-    Γ(x) = τ, x not captured   Γ ⊢ e : τ*           Γ ⊢ e : C, C has τ f
-    ──────────────────────── (T-LocVar)  ──────────── (T-LocDeref)  ─────────────────── (T-LocField)
-    Γ ⊢ₗ x : τ                 Γ ⊢ₗ *e : τ          Γ ⊢ₗ e.f : τ
+```
+Γ(x) = τ, x not captured   Γ ⊢ e : τ*       Γ ⊢ e : C, C has τ f
+──────────────────────── (T-LocVar)  ─────────── (T-LocDeref)  ────────────────── (T-LocField)
+Γ ⊢ₗ x : τ                 Γ ⊢ₗ *e : τ      Γ ⊢ₗ e.f : τ
+```
 
-    Γ ⊢ e : C*, C has τ f                Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator[] : τ₁ → τ, a location    Γ ⊢ i ◁ τ₁
-    ────────────────────── (T-LocArrow)  ─────────────────────────────────────────────────── (T-LocIndexLib)
-    Γ ⊢ₗ e->f : τ                        Γ ⊢ₗ e[i] : τ                                       -/
+```
+Γ ⊢ e : C*, C has τ f
+────────────────────── (T-LocArrow)
+Γ ⊢ₗ e->f : τ
+
+Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator[] : τ₁ → τ, a location    Γ ⊢ i ◁ τ₁
+─────────────────────────────────────────────────────────────────── (T-LocIndexLib)
+Γ ⊢ₗ e[i] : τ
+```
+-/
 partial def lval (p : Program) (Γ : TEnv) : Expr → T Ty
   | .var x =>
     match Γ.lookup x with
@@ -788,11 +820,14 @@ partial def cmd (p : Program) (τᵣ : Ty) (Γ : TEnv) : Cmd → T TEnv
       return Γ
     | _ => throw (.notDeletable e t)
 
-/-- Γ ⊢ c₁ … cₙ ⊣ Γₙ, threading the context through the sequence.
+/--Γ ⊢ c₁ … cₙ ⊣ Γₙ, threading the context through the sequence.
 
-    ──────────── (T-Seq-Empty)      Γ ⊢ c ⊣ Γ₁    Γ₁ ⊢ cs ⊣ Γ₂
-    Γ ⊢ ε ⊣ Γ                       ──────────────────────────── (T-Seq)
-                                    Γ ⊢ c cs ⊣ Γ₂                                  -/
+```
+──────────── (T-Seq-Empty)      Γ ⊢ c ⊣ Γ₁    Γ₁ ⊢ cs ⊣ Γ₂
+Γ ⊢ ε ⊣ Γ                       ──────────────────────────── (T-Seq)
+                                Γ ⊢ c cs ⊣ Γ₂
+```
+-/
 partial def cmds (p : Program) (τᵣ : Ty) (Γ : TEnv) : List Cmd → T TEnv
   | [] => .ok Γ
   | c :: cs => do
@@ -801,13 +836,16 @@ partial def cmds (p : Program) (τᵣ : Ty) (Γ : TEnv) : List Cmd → T TEnv
 
 end
 
-/-- Every `return` of a member that returns a reference is a `return e` with
+/--Every `return` of a member that returns a reference is a `return e` with
 `e` denoting a location. The walk does not enter the body of a lambda, whose
 `return` is the lambda's own.
 
-    τ has values    every return of c is return e with Γ ⊢ₗ e : τ
-    ─────────────────────────────────────────────────────────────── (T-RetRef)
-    ⊢ τ& m(…) { c } in C                                                          -/
+```
+τ has values    every return of c is return e with Γ ⊢ₗ e : τ
+─────────────────────────────────────────────────────────────── (T-RetRef)
+⊢ τ& m(…) { c } in C
+```
+-/
 partial def refReturns (p : Program) (Γ : TEnv) (m : String) : List Cmd → T Unit
   | [] => .ok ()
   | c :: cs => do
@@ -820,14 +858,17 @@ partial def refReturns (p : Program) (Γ : TEnv) (m : String) : List Cmd → T U
     | _ => pure ()
     refReturns p Γ m cs
 
-/-- A function is well typed when its parameter and return types have values
+/--A function is well typed when its parameter and return types have values
 and are well formed, and its body is, under the context of its parameters and
 its return type. A reference parameter has in Γ the type of its referent, as a
 local reference does.
 
-    τ, τᵢ storable and well formed    [x₁ ↦ τ₁, …, xₖ ↦ τₖ] ⊢ c ⊣ Γ'
-    ──────────────────────────────────────────────────────────────── (T-Fun)
-    ⊢ τ f (τ₁ x₁, …, τₖ xₖ) { c }                                                  -/
+```
+τ, τᵢ storable and well formed    [x₁ ↦ τ₁, …, xₖ ↦ τₖ] ⊢ c ⊣ Γ'
+──────────────────────────────────────────────────────────────── (T-Fun)
+⊢ τ f (τ₁ x₁, …, τₖ xₖ) { c }
+```
+-/
 def fn (p : Program) (f : Fun) : T Unit := do
   if f.ret != .void then storable s!"result of {f.name}" f.ret
   wellFormed p f.ret
@@ -842,7 +883,7 @@ the parameters as variables. -/
 def memberEnv (c : String) (ps : List Param) : TEnv :=
   (ps.reverse.map fun q => (q.name, ⟨q.ty, false⟩)) ++ [("this", ⟨.ptr (.cls c), false⟩)]
 
-/-- A class is well formed when the conditions below hold.
+/--A class is well formed when the conditions below hold.
 
 Its base exists and the chain of bases has no cycle. Its fields have types
 that carry values, are themselves well formed, and repeat no field of a base.
@@ -853,13 +894,17 @@ constructor of the base, if the base has one, takes no parameters.
 
 Every member body is well typed under `this`.
 
-    B exists, chain acyclic    fields storable, well formed, new in the chain
-    for each method m of C. if some base has m then that m is virtual, m is override and the signatures agree
-    for each override m of C. some base has a virtual m
-    B has no constructor or one with no parameters
-    [this ↦ C*, params] ⊢ body ⊣ Γ' for each method, the constructor and the destructor
-    ───────────────────────────────────────────────────────────────────────────────────── (T-Class)
-    ⊢ class C : public B { … }                                                     -/
+```
+B exists, chain acyclic    fields storable, well formed, new in the chain
+for each method m of C. if some base has m then that m is virtual,
+    m is override and the signatures agree
+for each override m of C. some base has a virtual m
+B has no constructor or one with no parameters
+[this ↦ C*, params] ⊢ body ⊣ Γ' for each member body
+──────────────────────────────────────────────────────────────── (T-Class)
+⊢ class C : public B { … }
+```
+-/
 def cls (p : Program) (c : ClassDecl) : T Unit := do
   if let some b := c.base then
     if (p.lookupClass b).isNone then throw (.unknownBase c.name b)
@@ -925,14 +970,17 @@ expansion that precedes every other judgment. Idempotent. -/
 def expand (p : Program) : Except TypeError Program :=
   (Templates.instantiate p).mapError TypeError.instantiation
 
-/-- A program is well typed when class and function names are distinct up to
+/--A program is well typed when class and function names are distinct up to
 overloading, every class and function is well typed and `int main()` exists.
 A template is not checked, only its instantiations are.
 
-    names distinct up to overloading    ⊢ Cᵢ for each class    ⊢ fᵢ for each function
-    main ↦ (int main() { c })
-    ────────────────────────────────────────────────────────────────────────────── (T-Program)
-    ⊢ p                                                                            -/
+```
+names distinct up to overloading    ⊢ Cᵢ for each class    ⊢ fᵢ for each function
+main ↦ (int main() { c })
+────────────────────────────────────────────────────────────────────────────── (T-Program)
+⊢ p
+```
+-/
 def check (p₀ : Program) : Except TypeError Unit := do
   let p ← expand p₀
   for f in p.funs do
