@@ -51,14 +51,42 @@ def Ty.isFn : Ty → Bool
   | .fn .. => true
   | _ => false
 
+/-- The unary operators. -/
 inductive UnOp where
-  | not | neg
+  /-- Logical negation, `!e`. -/
+  | not
+  /-- Arithmetic negation, `-e`. -/
+  | neg
   deriving Repr, BEq, DecidableEq
 
+/-- The binary operators. -/
 inductive BinOp where
-  | add | sub | mul | div | mod
-  | eq | ne | lt | le | gt | ge
-  | and | or
+  /-- Addition, `+`. -/
+  | add
+  /-- Subtraction, `-`. -/
+  | sub
+  /-- Multiplication, `*`. -/
+  | mul
+  /-- Division, `/`, truncated toward zero. -/
+  | div
+  /-- Remainder, `%`, with the sign of the dividend. -/
+  | mod
+  /-- Equality, `==`. -/
+  | eq
+  /-- Inequality, `!=`. -/
+  | ne
+  /-- Less than, `<`. -/
+  | lt
+  /-- Less than or equal, `<=`. -/
+  | le
+  /-- Greater than, `>`. -/
+  | gt
+  /-- Greater than or equal, `>=`. -/
+  | ge
+  /-- Conjunction, `&&`, with short circuit. -/
+  | and
+  /-- Disjunction, `||`, with short circuit. -/
+  | or
   deriving Repr, BEq, DecidableEq
 
 /-- A parameter. `byRef` marks a `τ&` parameter, bound to the location of the
