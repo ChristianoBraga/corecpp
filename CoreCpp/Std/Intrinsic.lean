@@ -15,7 +15,6 @@ arguments, the judgements are the following.
     Γ ⊢_L L⟨τ̄⟩ ok              instOk      the instance is well formed
     Γ ⊢_L u : τ̄ₐ → τ           sig         the signature of the use u
     Γ ⊢_L τ ↪ L⟨τ̄⟩             convFrom    τ converts to L⟨τ̄⟩
-    default L⟨τ̄⟩ = v           default     the value new gives a field of the type
     σ ⊢_L u(v̄) ⇒ r, σ′         eval        the result of the use u
 
 The dynamic judgement may use one judgement of the language, the application
@@ -66,6 +65,8 @@ structure Statics where
   arity : Nat
   /-- The values of its instances live in the store and are never copied. -/
   isObject : Bool := false
+  /-- Its instances have a default value, so a field or an element may have them. -/
+  hasDefault : Bool := true
   /-- Another type converts to it, so a parameter of its type tells no two
   overloads apart. -/
   convertible : Bool := false
@@ -75,10 +76,6 @@ structure Statics where
   sig : Use → List Ty → Except String Sig
   /-- Γ ⊢_L τ ↪ L⟨τ̄⟩. -/
   convFrom : List Ty → Ty → Bool := fun _ _ => false
-  /-- default L⟨τ̄⟩, the value `new` gives a field of the type before the
-  constructor runs, `none` when the type has no default, an object type for
-  instance. -/
-  default : List Ty → Option Val := fun _ => none
 
 /-- An intrinsic, its static judgements and its dynamic one. The dynamic
 judgement is polymorphic in the monad of the evaluator, which passes the

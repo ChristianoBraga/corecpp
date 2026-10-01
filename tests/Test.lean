@@ -245,26 +245,8 @@ int main() { return applyTwice([=](int x) -> int { return x * x; }, 3); }"
 #eval (parseStd "int main() { int x = 1; return x(2); }").map check
 -- the lambda has exactly the parameter types of the std::function
 #eval (parseStd "int main() { std::function<int(int)> f = [=](bool b) -> int { return 1; }; return f(1); }").map check
-
-/-! ## The std::function with no target -/
-
--- a field of function type is accepted, and it starts with no target
+-- no field of function type in this subset
 #eval (parseStd "class C { public: std::function<int()> f; }; int main() { return 0; }").map check
--- a call through it before an assignment is error, as the bad_function_call of C++
-#eval (parseStd "class C { public: std::function<int()> f; }; int main() { C* c = new C(); std::function<int()> g = c->f; return g(); }").map run
--- after the assignment the call runs
-#eval (parseStd "class C { public: std::function<int()> f; }; int main() { C* c = new C(); std::function<int()> h = [=]() -> int { return 4; }; c->f = h; std::function<int()> g = c->f; return g(); }").map run
--- nullptr initialises and is assigned to a std::function
-#eval (parseStd "int main() { std::function<int()> f = nullptr; f = nullptr; return 0; }").map run
--- the comparison with nullptr asks whether the function has a target, in either order
-#eval (parseStd "int main() { std::function<int()> f = nullptr; return (f == nullptr ? 1 : 0) + (nullptr != f ? 0 : 2); }").map run
-#eval (parseStd "int main() { std::function<int()> f = [=]() -> int { return 1; }; return (f != nullptr ? 1 : 0) + (nullptr == f ? 2 : 0); }").map run
--- two std::function values do not compare, as in C++
-#eval (parseStd "int main() { std::function<int()> f = nullptr; std::function<int()> g = nullptr; return f == g ? 1 : 0; }").map check
--- nullptr converts to a std::function and to a pointer only
-#eval (parseStd "int main() { int x = nullptr; return 0; }").map check
--- a vector has no elements of function type
-#eval (parseStd "int main() { std::vector<std::function<int()>>* v = new std::vector<std::function<int()>>(1); return 0; }").map check
 
 -- the trace of a call through a closure
 #eval do

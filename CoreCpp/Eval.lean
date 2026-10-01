@@ -319,10 +319,7 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
     let chain := fs.chain c
     if chain.isEmpty then throw (.typeError s!"unknown class {c}")
     let flds := fs.allFields c
-    let ds ← flds.mapM fun (f, _) => match Std.default f.ty with
-      | some d => pure d
-      | none => throw (.typeError s!"field {f.name} of type {f.ty} has no default")
-    let (ls, σ₁) := σ.allocMany ds
+    let (ls, σ₁) := σ.allocMany (flds.map fun (f, _) => f.ty.default)
     let (l, σ₂) := σ₁.alloc (.obj c ((flds.map (·.1.name)).zip ls))
     let mut σ := σ₂
     for cd in chain.reverse do
@@ -585,7 +582,6 @@ partial def libUse (fs : FunEnv) (ρ : Env) (σ : Store) (n : String) (u : Std.U
 /-- The application of a closure to values, the judgement the library uses
 through `apply`. -/
 partial def applyVals (fs : FunEnv) (σ : Store) (v : Val) (vs : List Val) : M (Val × Store) := do
-  if v == .null then throw .badFunctionCall
   let .closure ps r b cap := v | throw (.notCallable v)
   if ps.length != vs.length then throw (.arity "lambda")
   let mut σ := σ
@@ -629,7 +625,6 @@ With normal in place of ret v the result is void if τ = void and error
 (missing return) otherwise. A value that is not a closure is error.
 -/
 partial def applyClosure (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (es : List Expr) : M (Val × Store) := do
-  if v == .null then throw .badFunctionCall
   let .closure ps _ _ _ := v | throw (.notCallable v)
   if ps.length != es.length then throw (.arity "lambda")
   let (vs, σ₁) ← args fs ρ σ es
