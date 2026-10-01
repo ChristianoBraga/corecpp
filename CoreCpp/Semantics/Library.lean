@@ -17,7 +17,23 @@ A use with no derivation here is `error` there.
 
 namespace CoreCpp.Semantics
 
-/-- The relations a module may give. Each one is an instance of a judgement of
+/-- The static relations a module may give, the signatures of its uses, each
+an instance of a judgement of the type checker, at the template arguments τ̄
+of the instance. A module leaves at `False` the ones its entity does not
+have. -/
+structure StaticModule where
+  /-- Γ ⊢_L L⟨τ̄⟩ ok, the instance is well formed. -/
+  wf : List Ty → Prop := fun _ => False
+  /-- Γ ⊢_L new : τ̄ₐ → τ, the signature of the creation of an instance. -/
+  new : List Ty → List Ty → Ty → Prop := fun _ _ _ => False
+  /-- Γ ⊢_L operator[] : τ₁ → τ, a location, the signature of indexing. -/
+  index : List Ty → Ty → Ty → Prop := fun _ _ _ => False
+  /-- Γ ⊢_L delete ok, an instance is deleted. -/
+  delete : List Ty → Prop := fun _ => False
+  /-- Γ ⊢_L f : τ̄ₐ → τ, the signature of a function declared without a body. -/
+  call : List Ty → Ty → Prop := fun _ _ => False
+
+/-- The dynamic relations a module may give. Each one is an instance of a judgement of
 the language, and a module leaves at `False` the ones its entity does not
 have. -/
 structure Module where
@@ -62,17 +78,51 @@ inductive Delete : Val → Store → Store → Prop where
 
 def module : Module := { new := New, index := Index, delete := Delete }
 
+/-- The element type of a vector has values and a default, so it is neither
+an object type, nor a type of the library, nor `void`, `nullptr_t` or a
+function type. -/
+def isElement : Ty → Bool
+  | .cls _ | .lib .. | .fn .. | .void | .nullT => false
+  | _ => true
+
+/-- Γ ⊢_vector new : int → std::vector<τ>*. -/
+inductive TNew : List Ty → List Ty → Ty → Prop where
+  | new :
+    -- ──────────────────────────────────────── (TV-New)
+      TNew [t] [.int] (.ptr (.lib "std::vector" [t]))
+
+/-- Γ ⊢_vector operator[] : int → τ, a location. -/
+inductive TIndex : List Ty → Ty → Ty → Prop where
+  | index :
+    -- ──────────────── (TV-Index)
+      TIndex [t] .int t
+
+/-- Γ ⊢_vector delete ok. -/
+inductive TDelete : List Ty → Prop where
+  | delete :
+    -- ─────────── (TV-Delete)
+      TDelete [t]
+
+def statics : StaticModule :=
+  { wf := fun ts => match ts with | [t] => isElement t = true | _ => False,
+    new := TNew, index := TIndex, delete := TDelete }
+
 end Vector
 
 /-! ## `std::function`, the module of `<functional>`
 
 A value of `std::function<τ(τ̄)>` is a closure, a value of the language, and
-its call is the application of a closure, the rule Apply. The module adds no
-relation. -/
+its call is the application of a closure, the rule Apply. The type is the
+written form of the function type τ(τ̄), and the type checker treats it as
+such. The module states only which instances are well formed, those whose
+argument is a function type. -/
 
 namespace Function
 
 def module : Module := {}
+
+def statics : StaticModule :=
+  { wf := fun ts => match ts with | [.fn ..] => True | _ => False }
 
 end Function
 
@@ -89,13 +139,28 @@ inductive Call : List Val → Store → Val → Store → Prop where
 
 def module : Module := { call := Call }
 
+/-- Γ ⊢_assert assert : bool → void. -/
+inductive TCall : List Ty → Ty → Prop where
+  | call :
+    -- ─────────────────── (TA-Call)
+      TCall [.bool] .void
+
+def statics : StaticModule := { call := TCall }
+
 end Assert
 
-/-- The module of a name a header declares. -/
+/-- The dynamic relations of the module of a name a header declares. -/
 def moduleOf : String → Option Module
   | "std::vector" => some Vector.module
   | "std::function" => some Function.module
   | "assert" => some Assert.module
+  | _ => none
+
+/-- The static relations of the module of a name a header declares. -/
+def staticOf : String → Option StaticModule
+  | "std::vector" => some Vector.statics
+  | "std::function" => some Function.statics
+  | "assert" => some Assert.statics
   | _ => none
 
 end CoreCpp.Semantics

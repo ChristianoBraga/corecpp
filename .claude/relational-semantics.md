@@ -25,11 +25,14 @@ ground truth".
 | ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `Semantics.LEval p ρ σ e ℓ σ′` | `Eval.lval` |
 | ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `Semantics.Exec p ρ σ c r ρ′ σ′` | `Eval.cmd` |
 | ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `Semantics.Execs p ρ σ c̄ r ρ′ σ′` | `Eval.cmds` |
-| Γ ⊢ e : τ | to come | `Typing.expr` |
-| Γ ⊢ e ⇒ₗ τ | to come | `Typing.lval` |
-| Γ ⊢ c ⊣ Γ′ | to come | `Typing.cmds` |
-| Γ ⊢ τ ok | to come | `Typing.wellFormed` |
-| τ′ ↪ τ | to come | `Typing.compat` |
+| Γ ⊢ e : τ | `Semantics.HasType p Γ e τ` | `Typing.expr` |
+| Γ ⊢ₗ e : τ | `Semantics.LHasType p Γ e τ` | `Typing.lval` |
+| Γ ⊢ e ◁ τ | `Semantics.Accept p Γ e τ` | `Typing.accept` |
+| Γ ⊢ c ⊣ Γ′ | `Semantics.Check p τᵣ Γ c Γ′` | `Typing.cmd` |
+| Γ ⊢ c̄ ⊣ Γ′ | `Semantics.Checks p τᵣ Γ c̄ Γ′` | `Typing.cmds` |
+| Γ ⊢ τ ok | `Semantics.WF p τ` | `Typing.wellFormed` |
+| ⊢ f, ⊢ C, ⊢ p | `Semantics.FunOk`, `ClassOk`, `ProgramOk` | `Typing.fn`, `Typing.cls`, `check` |
+| τ′ ≈ τ | `Typing.compat p τ′ τ`, a function | `Typing.compat` |
 
 The program p is a parameter of every relation, the function table and the
 class table of the rules. The subject of a rule is the pointer to the
@@ -70,11 +73,17 @@ The notation is the one of the judgements.
 | ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'` | `LEval p ρ σ e ℓ σ'` |
 | ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'` | `Exec p ρ σ c r ρ' σ'` |
 | ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Execs p ρ σ cs r ρ' σ'` |
+| Γ ⊢ e : τ | `Γ ⊢ e : τ` | `HasType p Γ e τ` |
+| Γ ⊢ₗ e : τ | `Γ ⊢ₗ e : τ` | `LHasType p Γ e τ` |
+| Γ ⊢ e ◁ τ | `Γ ⊢ e ◁ τ` | `Accept p Γ e τ` |
+| Γ ⊢ c ⊣ Γ′ under τᵣ | `⟨Γ, τᵣ⟩ ⊢ c ⊣ Γ'` | `Check p τᵣ Γ c Γ'` |
+| Γ ⊢ c̄ ⊣ Γ′ under τᵣ | `⟨Γ, τᵣ⟩ ⊢ cs ⊣* Γ'` | `Checks p τᵣ Γ cs Γ'` |
 
-It makes two concessions to the parser. The configuration ⟨ρ, σ⟩ is in angle brackets, since a notation that
-starts with a bare term and a comma would register a parser on every comma
-and break the tuples of Lean. A sequence of commands takes `⇒*`, since the
-parser cannot tell a command from a list of commands. The program is the `p`
+It makes two concessions to the parser. The configuration ⟨ρ, σ⟩, and ⟨Γ, τᵣ⟩ for a command with the result type of
+its body, are in angle brackets, since a notation that starts with a bare
+term and a comma would register a parser on every comma and break the tuples
+of Lean. A sequence of commands takes `⇒*` and `⊣*`, since the parser cannot
+tell a command from a list of commands. The program is the `p`
 in scope, the parameter of the relations, so that no rule names it, as in the
 blueprint. The notation is declared before the relations and with
 `hygiene false`, so that `p` and the names `Eval`, `LEval`, `Exec` and
@@ -121,8 +130,12 @@ is called. The premise holds or it does not. Only the interpreter, when it
 checks that premise, calls the module's function, and soundness proves that
 the function agrees with the relation.
 
-The module is found by the name the header declares, `moduleOf`, and nothing
-else links the two. No flag describes a type of the library. Whether a type is
+The static side is the structure `StaticModule`, the signatures of the uses as
+relations, `wf`, `new`, `index`, `delete` and `call`, which the rules
+T-NewLib, T-IndexLib, T-LocIndexLib, T-DeleteLib and T-CallLib take as
+premises, and WF-Lib for the well formed instances. The module is found by
+the name the header declares, `moduleOf` and `staticOf`, and nothing else
+links the two. No flag describes a type of the library. Whether a type is
 an object type is read from the keyword `class` of its declaration in the
 header. Whether a type converts to it is an instance of τ′ ↪ τ that the module
 adds. What `new` gives a field of the type is the evaluation of the default
@@ -132,13 +145,34 @@ structures `Statics`, `Intrinsic`, `Sig`, `Use` and `Result` of
 uses in `Typing.annotate` and the functions `Std.isObject`, `Std.convertible`
 and `Std.hasDefault` go when the interpreter is rewritten, step 4.
 
-`std::function` adds no relation today. Its value is a closure, a value of
-the language, and its call is the rule Apply. The decision of 2026-10-01 that
+`std::function` adds no dynamic relation today. Its value is a closure, a
+value of the language, its call is the rule Apply, and the type checker reads
+`std::function<τ(τ̄)>` as the written form of the function type τ(τ̄), the
+type a lambda is acceptable at, rule T-Lambda, and the type a value is
+called at, rule T-CallFn. Its module states only which instances are well
+formed. An object type is a class or an entity of the library whose module
+gives `new` a signature, `Semantics.IsObject`, which is how the type checker
+tells a vector from a `std::function` without a flag. The decision of 2026-10-01 that
 `std::function` becomes an object created with `new std::function<F>(λ)`,
 reached by pointer and called as `(*f)(3)`, is a semantic change of both the
 relation and the interpreter and comes after step 4, with the default
 initialiser `new std::function<F>()` giving the function with no target, as in
 N4659 §23.14.13.2.1 ¶1, whose call has no derivation.
+
+## Overload resolution
+
+The rule T-Overload of the blueprint selects, among the candidates of a name,
+the one that accepts the arguments, the exact one when several accept, and
+rejects the ambiguous call. A relation cannot state it. "No other candidate
+accepts the arguments" places the typing relation under a negation, which
+Lean's positivity condition forbids in an inductive proposition. The relation
+therefore reads the signature `Typing.annotate` fills into the call, rules
+T-Call and T-Method with `Program.pickFun` and `Program.pickMethod`, and a
+call without a signature has a derivation only when its name has one
+candidate. The uniqueness and the rejection of ambiguity are properties of
+the type checker, to be stated as theorems about it, not rules of the
+relation. The same holds of the rule Distinguishable, which is a condition of
+`ClassOk` and `ProgramOk` on the declared signatures alone.
 
 ## Preproc
 
@@ -153,7 +187,7 @@ of the same name gives the rules, and the link between them is the name.
 | `CoreCpp/Semantics.lean` | the domains, ℓ, v, ρ, σ, r |
 | `CoreCpp/Semantics/Library.lean` | the relations of the modules and `moduleOf` |
 | `CoreCpp/Semantics/Dynamic.lean` | the dynamic judgements, `Eval`, `LEval`, `Exec`, `Execs` and the auxiliaries |
-| `CoreCpp/Semantics/Static.lean` | the static judgements, to come |
+| `CoreCpp/Semantics/Static.lean` | the static judgements, `HasType`, `LHasType`, `Accept`, `Check`, `Checks`, `WF`, `FunOk`, `ClassOk`, `ProgramOk` |
 | `CoreCpp/Eval.lean`, `CoreCpp/Typing.lean` | the interpreters, on fuel |
 | `CoreCpp/Std/` | the functions of the modules |
 | `CoreCpp/Proofs/` | determinism, soundness, completeness, to come |
@@ -195,7 +229,10 @@ Each step leaves every check green, `lake build`, the three test files,
    judgements transcribed from the comments of `Eval.lean`, no proof. Done
    with this note.
 3. `Semantics/Static.lean`, the static judgements transcribed from
-   `Typing.lean`.
+   `Typing.lean`. Done. The judgements on declarations, `FunOk`, `ClassOk`
+   and `ProgramOk`, are structures of named conditions rather than
+   inductives with one constructor, since their conditions are side
+   conditions on the declarations and not premises on subterms.
 4. The interpreter. `Eval.lean` and `Typing.lean` on fuel, the library as
    relation plus function, the intrinsics gone, `Typing.annotate` without the
    rewriting of uses.
@@ -211,3 +248,8 @@ Each step leaves every check green, `lake build`, the three test files,
 - The merge order with `converge-chapter-2` and `converge-chapter-3`, both
   unmerged, and the redo of their open defects on this design.
 - The grammar, if `new std::function<F>(λ)` needs a production.
+- The condition `inherited` of `ClassOk` transcribes the type checker as it
+  is, a redefined method must be marked `virtual` in the base, which rejects
+  the third level of a chain. The decision that `override` implies `virtual`,
+  as in C++17 §13.3 ¶2, changes both the relation and the type checker, on a
+  branch of chapter 6.
