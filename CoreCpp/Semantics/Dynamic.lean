@@ -120,9 +120,17 @@ inductive Returns : Ctrl → Ty → Val → Prop where
 
 /-! ## Notation
 
-The judgements as the rules write them, with the configuration ⟨ρ, σ⟩ in angle
-brackets, since a comma after a bare term would clash with the tuples of Lean,
-and without the program, which is the `p` in scope, the parameter of the
+The judgements as the rules write them.
+
+| Judgement | Notation | Expands to |
+| --- | --- | --- |
+| ρ, σ ⊢ e ⇒ v, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'` | `Eval p ρ σ e v σ'` |
+| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'` | `LEval p ρ σ e ℓ σ'` |
+| ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'` | `Exec p ρ σ c r ρ' σ'` |
+| ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Execs p ρ σ cs r ρ' σ'` |
+
+The configuration ⟨ρ, σ⟩ is in angle brackets, since a comma after a bare
+term would clash with the tuples of Lean, and the program is left out, which is the `p` in scope, the parameter of the
 relations, so that the rules read as they do in the blueprint. A sequence of
 commands takes `⇒*`, since the parser cannot tell a command from a list of
 commands. The notation is declared before the relations it names, so that the

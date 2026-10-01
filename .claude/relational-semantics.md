@@ -62,8 +62,16 @@ the side remark only.
       ⟨ρ, σ⟩ ⊢ .binop op e₁ e₂ ⇒ .int n, σ₂
 ```
 
-The notation is the one of the judgements, with two concessions to the
-parser. The configuration ⟨ρ, σ⟩ is in angle brackets, since a notation that
+The notation is the one of the judgements.
+
+| Judgement | Notation | Expands to |
+| --- | --- | --- |
+| ρ, σ ⊢ e ⇒ v, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'` | `Eval p ρ σ e v σ'` |
+| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'` | `LEval p ρ σ e ℓ σ'` |
+| ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'` | `Exec p ρ σ c r ρ' σ'` |
+| ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Execs p ρ σ cs r ρ' σ'` |
+
+It makes two concessions to the parser. The configuration ⟨ρ, σ⟩ is in angle brackets, since a notation that
 starts with a bare term and a comma would register a parser on every comma
 and break the tuples of Lean. A sequence of commands takes `⇒*`, since the
 parser cannot tell a command from a list of commands. The program is the `p`
