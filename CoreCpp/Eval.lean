@@ -124,6 +124,31 @@ def tracedLib (fallback : Error → String) (ante : TraceAnte) (render : α → 
   | .ok (_, a) => pure a
   | .error e   => throw e
 
+/-- As `traced`, for a case whose rule is known once its first premises are
+derived, a short circuit operator, a conditional, a binary operator or a
+variable. The first stage derives those premises and gives the name of the
+rule with the rest of the derivation. `fallback` names the rule when the first
+stage fails. -/
+def tracedStaged (fallback : String) (ante : TraceAnte) (render : α → TraceCons)
+    (k : M (String × M α)) (arrow : String := "⇒") : M α := do
+  modify fun s => { s with depth := s.depth + 1 }
+  let res : Except (String × Error) (String × α) ← tryCatch
+    (do
+      let (r, rest) ← k
+      tryCatch (do let a ← rest; pure (.ok (r, a))) (fun e => pure (.error (r, e))))
+    (fun e => pure (.error (fallback, e)))
+  modify fun s => { s with depth := s.depth - 1 }
+  let s ← get
+  if s.enabled then
+    let (rule, cons) := match res with
+      | .ok (r, a)    => (r, render a)
+      | .error (r, e) => (r, { head := s!"error ({e})" })
+    modify fun s =>
+      { s with log := s.log.push ⟨s.depth, rule, { ante with arrow := arrow }, cons⟩ }
+  match res with
+  | .ok (_, a)    => pure a
+  | .error (_, e) => throw e
+
 def confE (e : Expr) (ρ : Env) (σ : Store) : TraceAnte :=
   { env := ρ.toString, store := σ.toString, subject := toString e }
 def confC (c : Cmd) (ρ : Env) (σ : Store) : TraceAnte :=
@@ -234,12 +259,6 @@ def binopRule : BinOp → Val → String
   | .div, _ | .mod, _ => "Div"
   | .add, _ | .sub, _ | .mul, _ => "Arith"
   | _, _ => "Rel"
-
-/-- The rule whose conclusion is the error, when the operator fails before the
-right operand names one. -/
-def binopFallback (op : BinOp) : Error → String
-  | .divisionByZero => "DivZero"
-  | _ => binopRule op (.int 1)
 
 def expectBool (what : String) : Val → M Bool
   | .bool b => pure b
@@ -383,15 +402,17 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
       ─────────────────────────────── (And-False)    ────────────────────────────────────────────── (And-True)
       ρ, σ ⊢ e₁ && e₂ ⇒ bool false, σ₁               ρ, σ ⊢ e₁ && e₂ ⇒ v, σ₂
       short circuit, e₂ is evaluated only if e₁ is true                          -/
-  | .binop .and e₁ e₂ => traced "And" (confE e ρ σ) showV do
+  | .binop .and e₁ e₂ => tracedStaged "And-False" (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
-    if ← expectBool "left operand of &&" v₁ then expr fs ρ σ₁ e₂ else return (.bool false, σ₁)
+    if ← expectBool "left operand of &&" v₁ then return ("And-True", expr fs ρ σ₁ e₂)
+    else return ("And-False", pure (.bool false, σ₁))
   /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁                      ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂
       ─────────────────────────────── (Or-True)      ─────────────────────────────────────────────── (Or-False)
       ρ, σ ⊢ e₁ || e₂ ⇒ bool true, σ₁                ρ, σ ⊢ e₁ || e₂ ⇒ v, σ₂                             -/
-  | .binop .or e₁ e₂ => traced "Or" (confE e ρ σ) showV do
+  | .binop .or e₁ e₂ => tracedStaged "Or-True" (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
-    if ← expectBool "left operand of ||" v₁ then return (.bool true, σ₁) else expr fs ρ σ₁ e₂
+    if ← expectBool "left operand of ||" v₁ then return ("Or-True", pure (.bool true, σ₁))
+    else return ("Or-False", expr fs ρ σ₁ e₂)
   /-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂    v₁ ⊕ v₂ = v
       ──────────────────────────────────────────────────────── (Arith), (Div), (Rel)
       ρ, σ ⊢ e₁ ⊕ e₂ ⇒ v, σ₂          left before right
@@ -399,16 +420,17 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
       The premises of the three rules coincide, and `binop` tells them apart.
       A zero divisor concludes `DivZero` instead. The derivation cites the rule
       the operator concludes, `binopRule`.                                     -/
-  | .binop op e₁ e₂ => tracedLib (binopFallback op) (confE e ρ σ) showV do
+  | .binop op e₁ e₂ => tracedStaged (binopRule op (.int 1)) (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
     let (v₂, σ₂) ← expr fs ρ σ₁ e₂
-    return (binopRule op v₂, (← binop op v₁ v₂, σ₂))
+    return (binopRule op v₂, do return (← binop op v₁ v₂, σ₂))
   /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂        ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₃ ⇒ v, σ₂
       ────────────────────────────────────────────── (Cond-T)   ─────────────────────────────────────────────── (Cond-F)
       ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                                ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                     -/
-  | .cond e₁ e₂ e₃ => traced "Cond" (confE e ρ σ) showV do
+  | .cond e₁ e₂ e₃ => tracedStaged "Cond-T" (confE e ρ σ) showV do
     let (v₁, σ₁) ← expr fs ρ σ e₁
-    if ← expectBool "condition" v₁ then expr fs ρ σ₁ e₂ else expr fs ρ σ₁ e₃
+    if ← expectBool "condition" v₁ then return ("Cond-T", expr fs ρ σ₁ e₂)
+    else return ("Cond-F", expr fs ρ σ₁ e₃)
   /-  f ∉ ρ    f ↦ (τ f (p₁ x₁, …, pₖ xₖ) { c }) in the program
       for each i, left to right, with σ'₀ = σ,
         pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ      call by value, a fresh location with a copy
@@ -659,12 +681,12 @@ partial def lval (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × St
   /-  ρ(x) = ℓ                      x ∉ ρ    ρ(this) = ℓ    σ(ℓ) = obj C [… x ↦ ℓ_x …]
       ──────────────── (LocVar)     ─────────────────────────────────────────── (LocVarField)
       ρ, σ ⊢ x ⇒ₗ ℓ, σ              ρ, σ ⊢ x ⇒ₗ ℓ_x, σ        an unqualified field of this -/
-  | .var x => traced "LocVar" (confE e ρ σ) showL (arrow := "⇒ₗ") do
+  | .var x => tracedStaged "LocVar" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     match ρ.lookup x with
-    | some l => return (l, σ)
+    | some l => return ("LocVar", pure (l, σ))
     | none   =>
       match ρ.lookup "this" with
-      | some lt => fieldLoc σ lt x
+      | some lt => return ("LocVarField", fieldLoc σ lt x)
       | none => throw (.undeclaredVariable x)
   | .deref e₁ => traced "LocDeref" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     let (v, σ') ← expr fs ρ σ e₁
