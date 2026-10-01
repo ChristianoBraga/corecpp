@@ -10,3 +10,5 @@ import CoreCpp.Pretty
 import CoreCpp.Templates
 import CoreCpp.Typing
 import CoreCpp.Eval
+import CoreCpp.Semantics.Library
+import CoreCpp.Semantics.Dynamic
