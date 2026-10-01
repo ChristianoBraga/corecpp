@@ -61,16 +61,21 @@ namespace CoreCpp
 /-- A binding of Γ. `const` marks a variable captured by copy in a lambda body,
 which the body may read and not write. -/
 structure TBind where
+  /-- The type of the identifier. -/
   ty    : Ty
+  /-- Whether the binding is read only, a copy captured by a lambda. -/
   const : Bool := false
   deriving Repr, BEq, Inhabited
 
 /-- Typing context Γ, a finite map from identifiers to types. -/
 abbrev TEnv := List (String × TBind)
 
+/-- Γ(x), the type of the most recent binding of x. -/
 def TEnv.lookup (Γ : TEnv) (x : String) : Option Ty :=
   (Γ.find? (·.1 == x)).map (·.2.ty)
 
+/-- Whether the most recent binding of x is read only, a copy captured by a
+lambda. -/
 def TEnv.isConst (Γ : TEnv) (x : String) : Bool :=
   ((Γ.find? (·.1 == x)).map (·.2.const)).getD false
 
@@ -87,54 +92,106 @@ def TEnv.self (Γ : TEnv) : Option String :=
   | some (.ptr (.cls c)) => some c
   | _ => none
 
+/-- The type errors, one per way a static judgment fails. The type checker
+stops at the first one. -/
 inductive TypeError where
+  /-- A variable that Γ does not bind. -/
   | undeclaredVariable (x : String)
+  /-- A function the program does not declare. -/
   | undeclaredFunction (f : String)
+  /-- Two functions with the same name and signature. -/
   | duplicateFunction (f : String)
+  /-- Two classes or templates with the same name. -/
   | duplicateClass (c : String)
+  /-- A type that names an undeclared class. -/
   | unknownClass (c : String)
+  /-- A field that the class and its bases do not declare. -/
   | unknownField (c f : String)
+  /-- A call with a number of arguments other than the expected one. -/
   | arity (f : String) (expected got : Nat)
+  /-- A type other than the one the context expects. -/
   | mismatch (context : String) (expected got : Ty)
+  /-- An expression that does not denote a location where one is required. -/
   | notLvalue (e : Expr)
+  /-- An expression of type `void` used as a value. -/
   | voidValue (e : Expr)
+  /-- An expression of object type used as a value. -/
   | objectValue (e : Expr) (t : Ty)
+  /-- A variable, parameter, result or field of object type or of type
+  `nullptr_t`. -/
   | objectByValue (context : String) (t : Ty)
+  /-- A function type where only a storable type is admitted. -/
   | functionStored (context : String) (t : Ty)
+  /-- A pointer operation on an expression that is not a pointer. -/
   | notPointer (e : Expr) (t : Ty)
+  /-- A member access on an expression that is not an object. -/
   | notObject (e : Expr) (t : Ty)
+  /-- An index on an expression that is not indexable. -/
   | notVector (e : Expr) (t : Ty)
+  /-- A call of a value that is not a `std::function`. -/
   | notFunction (e : Expr) (t : Ty)
+  /-- A lambda outside the argument, initialiser and `return` positions. -/
   | lambdaPosition (e : Expr)
+  /-- A lambda checked at a type that is not its `std::function` type. -/
   | lambdaMismatch (expected : Ty)
+  /-- A write to a copy captured by a lambda. -/
   | constCapture (x : String)
+  /-- An argument of a reference parameter that does not denote a location. -/
   | refArgument (f x : String) (e : Expr)
+  /-- An operator applied to an operand of the wrong type. -/
   | badOperand (op : String) (t : Ty)
+  /-- A `return` outside a function. -/
   | returnOutside
+  /-- A program without `int main()`. -/
   | missingMain
+  /-- A method that the class and its bases do not declare. -/
   | unknownMethod (c m : String)
   /-- A name after `.` or `->` with an argument list is a method call, so a
   field of function type is not called in place. -/
   | calledField (c m : String)
+  /-- A private member reached from outside the class that declares it. -/
   | privateMember (c m : String)
+  /-- A `new` whose arguments no constructor of the class accepts. -/
   | noConstructor (c : String)
+  /-- A base whose constructor takes parameters, without an initialiser list. -/
   | baseConstructorParams (c b : String)
+  /-- A redefinition of a method the base does not declare `virtual`. -/
   | redefinesNonVirtual (c m : String)
+  /-- A method that redefines a virtual one without `override`, or the
+  converse. -/
   | overrideWithoutVirtual (c m : String)
+  /-- An override with a signature other than the one it redefines. -/
   | signatureMismatch (c m : String)
+  /-- A base class that the program does not declare. -/
   | unknownBase (c b : String)
+  /-- A chain of bases that returns to the class. -/
   | cyclicInheritance (c : String)
+  /-- Two members of a class with the same name and signature. -/
   | duplicateMember (c m : String)
+  /-- A field that repeats a field of a base. -/
   | fieldRedeclared (c f : String)
+  /-- A `this` outside a member body. -/
   | thisOutside
+  /-- A `delete` of an expression that is not a pointer to an object. -/
   | notDeletable (e : Expr) (t : Ty)
+  /-- A call that no overload of the name accepts. -/
   | noOverload (f : String)
+  /-- A call that two or more overloads accept, without exactly one exact
+  candidate. -/
   | ambiguousCall (f : String)
+  /-- Two overloads that no parameter of a type other than `std::function`
+  tells apart. -/
   | indistinguishable (f : String)
+  /-- A `return` of a member returning `τ&` whose expression denotes no
+  location. -/
   | refReturnNotLvalue (m : String) (e : Expr)
+  /-- An operator member with a number of parameters other than one. -/
   | operatorArity (c m : String)
+  /-- An error of template instantiation. -/
   | instantiation (msg : String)
+  /-- An error that a static rule of `CoreCpp.Std` gives. -/
   | library (msg : String)
+  /-- A use of the library whose header is missing. -/
   | undeclaredLibrary (name : String)
   deriving Repr
 
@@ -189,6 +246,7 @@ def TypeError.toString : TypeError → String
 
 instance : ToString TypeError := ⟨TypeError.toString⟩
 
+/-- The result of a static judgment, a value or a type error. -/
 abbrev T (α : Type) := Except TypeError α
 
 namespace Typing
@@ -294,7 +352,9 @@ partial def wellFormed (p : Program) : Ty → T Unit
 
 mutual
 
-/-- Γ ⊢ e : τ -/
+/-- Γ ⊢ e : τ, the type of an expression, one or more rules per constructor
+of `Expr`. A lambda has no type of its own, and `accept` checks it at the
+type its position expects. -/
 partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
   /-  ─────────────── (T-Lit)      ─────────────── (T-BoolLit)      ───────────────────── (T-Null)
       Γ ⊢ n : int                  Γ ⊢ b : bool                     Γ ⊢ nullptr : nullptr_t   -/
@@ -666,20 +726,27 @@ partial def fieldType (p : Program) (Γ : TEnv) (c f : String) : T Ty := do
   if fd.vis == .priv && Γ.self != some k then throw (.privateMember k f)
   return fd.ty
 
-/--The expressions that denote a location, with their type. A variable, a
-dereferenced pointer, a field of an object, a field through a pointer, and a
-use of the library or a member that gives a location. A variable captured by copy inside a lambda denotes no
-writable location.
+/--Γ ⊢ₗ e : τ, the expressions that denote a location, with their type. A
+variable, an unqualified field of `this`, a dereferenced pointer, a field of
+an object, a field through a pointer, and a use of the library or a call of a
+member that gives a location. A variable captured by copy inside a lambda
+denotes no writable location.
 
 ```
-Γ(x) = τ, x not captured   Γ ⊢ e : τ*       Γ ⊢ e : C, C has τ f
-──────────────────────── (T-LocVar)  ─────────── (T-LocDeref)  ────────────────── (T-LocField)
-Γ ⊢ₗ x : τ                 Γ ⊢ₗ *e : τ      Γ ⊢ₗ e.f : τ
-```
+Γ(x) = τ    x not captured
+────────────────────────── (T-LocVar)
+Γ ⊢ₗ x : τ
 
-```
-Γ ⊢ e : C*, C has τ f
-────────────────────── (T-LocArrow)
+Γ ⊢ e : τ*
+─────────── (T-LocDeref)
+Γ ⊢ₗ *e : τ
+
+Γ ⊢ e : C    C has τ f
+────────────────────── (T-LocField)
+Γ ⊢ₗ e.f : τ
+
+Γ ⊢ e : C*    C has τ f
+─────────────────────── (T-LocArrow)
 Γ ⊢ₗ e->f : τ
 
 Γ ⊢ e : L⟨τ̄⟩    Γ ⊢_L operator[] : τ₁ → τ, a location    Γ ⊢ i ◁ τ₁
