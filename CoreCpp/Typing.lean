@@ -346,13 +346,13 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
       if t₁ == .bool && t₂ == .bool then .ok .bool
       else .error (.badOperand op.toString (if t₁ != .bool then t₁ else t₂))
     /-  Γ ⊢ e₁ : int    Γ ⊢ e₂ : int
-        ──────────────────────────── (T-Arith, ⊕ ∈ {+, −, ×, /, %})
+        ──────────────────────────── (T-Arith, ⊕ ∈ {+, -, *, /, %})
         Γ ⊢ e₁ ⊕ e₂ : int                                                          -/
     | .add | .sub | .mul | .div | .mod =>
       if t₁ == .int && t₂ == .int then .ok .int
       else .error (.badOperand op.toString (if t₁ != .int then t₁ else t₂))
-    /-  Γ ⊢ e₁ : τ₁    Γ ⊢ e₂ : τ₂    τ₁ ≈ τ₂    τ₁, τ₂ ∈ {int, bool, τ*, nullptr_t}
-        ──────────────────────────────────────────────────────────────────── (T-Eq, ⋈ ∈ {==, !=})
+    /-  Γ ⊢ e₁ : τ₁    Γ ⊢ e₂ : τ₂    τ₁ ≈ τ₂ or τ₂ ≈ τ₁    τ₁, τ₂ ∈ {int, bool, τ*, nullptr_t}
+        ──────────────────────────────────────────────────────────────────────── (T-Eq, ⋈ ∈ {==, !=})
         Γ ⊢ e₁ ⋈ e₂ : bool                                                         -/
     | .eq | .ne =>
       if related p t₁ t₂ && t₁ != .void && !Std.isObject t₁ && !(t₁ matches .lib .. | .fn ..) then .ok .bool
@@ -363,8 +363,9 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
     | .lt | .le | .gt | .ge =>
       if t₁ == .int && t₂ == .int then .ok .bool
       else .error (.badOperand op.toString (if t₁ != .int then t₁ else t₂))
-  /-  Γ ⊢ e₁ : bool    Γ ⊢ e₂ : τ    Γ ⊢ e₃ : τ    τ has values
-      ────────────────────────────────────────────────────── (T-Cond)
+  /-  Γ ⊢ e₁ : bool    Γ ⊢ e₂ : τ₂    Γ ⊢ e₃ : τ₃    τ₂, τ₃ have values
+      τ = τ₃ if τ₂ ≈ τ₃, otherwise τ = τ₂ if τ₃ ≈ τ₂
+      ──────────────────────────────────────────────────────────── (T-Cond)
       Γ ⊢ e₁ ? e₂ : e₃ : τ                                                         -/
   | .cond e₁ e₂ e₃ => do
     let t₁ ← expr p Γ e₁
@@ -450,14 +451,14 @@ partial def expr (p : Program) (Γ : TEnv) : Expr → T Ty
     let s ← libSig p n .new ts
     libArgs p Γ s!"new {t}" s es
     return s.ret
-  /-  Γ ⊢ e : C    C ↦ class C { … τ f; … }
+  /-  Γ ⊢ e : C    C has τ f, visible from Γ
       ──────────────────────────────────── (T-Field)
       Γ ⊢ e.f : τ                                                                  -/
   | .field e f => do
     let t ← expr p Γ e
     let .cls c := t | throw (.notObject e t)
     fieldType p Γ c f
-  /-  Γ ⊢ e : C*    C ↦ class C { … τ f; … }
+  /-  Γ ⊢ e : C*    C has τ f, visible from Γ
       ────────────────────────────────────── (T-Arrow)      e->f abbreviates (*e).f
       Γ ⊢ e->f : τ                                                                 -/
   | .arrow e f => do
@@ -688,6 +689,9 @@ writable location.
 ```
 -/
 partial def lval (p : Program) (Γ : TEnv) : Expr → T Ty
+  /-  Γ(x) = τ    x not captured
+      ──────────────────────────── (T-LocVar)     otherwise an unqualified field
+      Γ ⊢ₗ x : τ                                  of this, as in T-VarField      -/
   | .var x =>
     match Γ.lookup x with
     | some t => if Γ.isConst x then .error (.constCapture x) else .ok t
@@ -695,6 +699,12 @@ partial def lval (p : Program) (Γ : TEnv) : Expr → T Ty
       match Γ.self with
       | some c => if (p.findField c x).isSome then fieldType p Γ c x else .error (.undeclaredVariable x)
       | none => .error (.undeclaredVariable x)
+  /-  Γ ⊢ e : τ*          Γ ⊢ e : C, C has τ f      Γ ⊢ e : C*, C has τ f
+      ─────────── (T-LocDeref)  ──────────────── (T-LocField)  ───────────────── (T-LocArrow)
+      Γ ⊢ₗ *e : τ        Γ ⊢ₗ e.f : τ              Γ ⊢ₗ e->f : τ
+
+      The premises are those of T-Deref, T-Field and T-Arrow, so `expr`
+      decides.                                                                   -/
   | e@(.deref _) | e@(.field ..) | e@(.arrow ..) => expr p Γ e
   /-  Γ ⊢ e : C    C has τ& operator[] visible from Γ
       ───────────────────────────────────────────────── (T-LocOpIndex)

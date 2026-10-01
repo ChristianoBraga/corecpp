@@ -189,7 +189,7 @@ def unop : UnOp → Val → M Val
 
 ```
 ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂
-──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})
+──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, -, *})
 ρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂
 ```
 
@@ -198,6 +198,9 @@ def unop : UnOp → Val → M Val
 ──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})
 ρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++
 ```
+
+The quotient of −2³¹ by −1 is 2³¹, so `int32` makes it error. The remainder
+of −2³¹ by −1 is 0.
 
 ```
 ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int 0, σ₂
@@ -260,6 +263,9 @@ def binopRule : BinOp → Val → String
   | .add, _ | .sub, _ | .mul, _ => "Arith"
   | _, _ => "Rel"
 
+/-- The boolean a value holds, the premise e ⇒ bool b of the short circuit
+operators and of the conditional. Any other value is error, which a well
+typed program never reaches. -/
 def expectBool (what : String) : Val → M Bool
   | .bool b => pure b
   | v => throw (.typeError s!"{what} is not boolean, got {v}")
@@ -270,8 +276,9 @@ def readLoc (σ : Store) (l : Loc) : M Val :=
   | some v => pure v
   | none   => throw (.danglingLocation l)
 
-/-- A pointer value as a live location. nullptr is error, the dereference
-that C++ leaves undefined. -/
+/-- The location a pointer value holds. nullptr is error, the dereference
+that C++ leaves undefined. The location need not be live, and `readLoc`
+checks that it is when it is read. -/
 def pointee (v : Val) : M Loc :=
   match v with
   | .loc l => pure l
@@ -318,8 +325,11 @@ partial def expr (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × St
     | some l => return (.loc l, σ)
     | none => throw (.typeError "this outside a member body")
   /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'    ℓ ∈ dom σ'
-      ────────────────────────────────── (Read)     e one of *e', e'.f, e'->f, e'[i]
-      ρ, σ ⊢ e ⇒ σ'(ℓ), σ'                          reading a location is reading its content -/
+      ────────────────────────────────── (Read)     e one of *e', e'.f, e'->f
+      ρ, σ ⊢ e ⇒ σ'(ℓ), σ'                          reading a location is reading its content
+
+      The type checker rewrites every e'[i] into a use of the library or a call
+      of operator[], so `lval` never meets an index here.                         -/
   | .deref _ | .field .. | .arrow .. | .index .. => traced "Read" (confE e ρ σ) showV do
     let (l, σ') ← lval fs ρ σ e
     return (← readLoc σ' l, σ')
@@ -688,12 +698,21 @@ partial def lval (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × St
       match ρ.lookup "this" with
       | some lt => return ("LocVarField", fieldLoc σ lt x)
       | none => throw (.undeclaredVariable x)
+  /-  ρ, σ ⊢ e ⇒ loc ℓ, σ'
+      ──────────────────── (LocDeref)     nullptr is error, `pointee`
+      ρ, σ ⊢ *e ⇒ₗ ℓ, σ'                                                         -/
   | .deref e₁ => traced "LocDeref" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     let (v, σ') ← expr fs ρ σ e₁
     return (← pointee v, σ')
+  /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+      ─────────────────────────────────────────────── (LocField)
+      ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'                                                      -/
   | .field e₁ f => traced "LocField" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     let (l, σ') ← lval fs ρ σ e₁
     fieldLoc σ' l f
+  /-  ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+      ────────────────────────────────────────────────── (LocArrow)    e->f is (*e).f
+      ρ, σ ⊢ e->f ⇒ₗ ℓ_f, σ'                                                     -/
   | .arrow e₁ f => traced "LocArrow" (confE e ρ σ) showL (arrow := "⇒ₗ") do
     let (v, σ') ← expr fs ρ σ e₁
     fieldLoc σ' (← pointee v) f
@@ -716,7 +735,9 @@ partial def lval (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × St
     | (.val v, _) => throw (.typeError s!"{e} gives the value {v}, not a location")
   | _ => throw (.typeError s!"expression does not denote a location: {e}")
 
-/-- The location of field f of the object stored at ℓ. -/
+/-- The location of field f of the object stored at ℓ, the premise
+σ(ℓ) = obj C [… f ↦ ℓ_f …] of LocField and LocArrow. A location outside σ is
+error. -/
 partial def fieldLoc (σ : Store) (l : Loc) (f : String) : M (Loc × Store) := do
   let .obj c fs ← readLoc σ l | throw (.typeError s!"{Loc.toString l} does not hold an object")
   match fs.lookup f with
