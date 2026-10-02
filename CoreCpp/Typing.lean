@@ -15,10 +15,11 @@ every judgment. Each rule is in the comment of the case that implements it.
 
 Object types, classes, `std::vector` and `std::function`, have no values. No
 variable, by value parameter, result or field has an object type, and a
-reference parameter may have one. An expression of object type, such as `*p`,
+reference parameter or a local reference may have one. An expression of object type, such as `*p`,
 never stands where a value is expected. It occurs as the left operand of
 `.`, as the operand of `[]` or of an operator member, as the callee of
-`(*f)(ē)` and as the argument of a reference parameter.
+`(*f)(ē)`, as the argument of a reference parameter and as the initialiser
+of a local reference.
 
 A lambda expression has no type of its own. It is checked against the
 function type expected where it occurs, the argument of
