@@ -604,15 +604,13 @@ inductive Check (p : Program) : Ty → TEnv → Cmd → TEnv → Prop where
     -- ──────────────────────────── (T-RetVoid)
       ⟨Γ, .void⟩ ⊢ .ret none ⊣ Γ
 
-  /-- A lambda may be returned at a `std::function` type. -/
   | ret
       (hv : τᵣ ≠ .void)
       (h : Γ ⊢ e ◁ τᵣ) :
     -- ──────────────────────────── (T-Ret)
       ⟨Γ, τᵣ⟩ ⊢ .ret (some e) ⊣ Γ
 
-  /-- Γ[x ↦ τ] reaches the following commands, and a lambda initialises a
-  `std::function`. -/
+  /-- Γ[x ↦ τ] reaches the following commands. -/
   | decl
       (hs : Storable τ)
       (hw : WF p τ)

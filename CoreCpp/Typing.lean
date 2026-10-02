@@ -162,7 +162,7 @@ def TypeError.toString : TypeError → String
   | .notObject e t        => s!"{e} has type {t}, not a class"
   | .notVector e t        => s!"{e} has type {t}, not a vector"
   | .notFunction e t      => s!"{e} has type {t}, not a std::function"
-  | .lambdaPosition e     => s!"a lambda occurs only as argument, initialiser or return expression: {e}"
+  | .lambdaPosition e     => s!"a lambda occurs only as the argument of new std::function<F>(λ): {e}"
   | .lambdaMismatch t     => s!"a lambda is acceptable only at its function type, expected {t}"
   | .constCapture x       => s!"{x} is captured by copy and read only inside the lambda"
   | .refArgument f x e    => s!"argument for the reference parameter {x} of {f} does not denote a location: {e}"
@@ -418,8 +418,9 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
     | .callFn fe es => do
       let t ← expr fuel p Γ fe
       callValue fuel p Γ fe t es
-    /-  A lambda has no type of its own. Outside its three positions it is an
-        error, see `lambdaAt` for Γ ⊢ [=](…) -> τ { c } ◁ std::function<…>.        -/
+    /-  A lambda has no type of its own. It is acceptable only at its function
+        type, as the argument of new std::function<F>(λ), see `lambdaAt` for
+        Γ ⊢ [=](…) -> τ { c } ◁ τ(τ₁, …, τₖ).                                         -/
     | e@(.lambda ..) => .error (.lambdaPosition e)
     /-  Γ ⊢ₗ e : τ
         ────────────── (T-LocOf)      internal, the annotation of the return of a
@@ -795,8 +796,8 @@ def cmd (fuel : Nat) (p : Program) (τᵣ : Ty) (Γ : TEnv) (c : Cmd) : T TEnv :
       let _ ← cmd fuel p τᵣ Γ₀ (.block b)
       return Γ
     /-  τᵣ = void                      Γ ⊢ e ◁ τᵣ    τᵣ ≠ void
-        ──────────────── (T-RetVoid)   ────────────────────────── (T-Ret)      a lambda may be returned
-        Γ ⊢ return ⊣ Γ                 Γ ⊢ return e ⊣ Γ                        at a std::function type   -/
+        ──────────────── (T-RetVoid)   ────────────────────────── (T-Ret)
+        Γ ⊢ return ⊣ Γ                 Γ ⊢ return e ⊣ Γ                                                  -/
     | .ret none =>
       if τᵣ == .void then .ok Γ else .error (.mismatch "return without value" τᵣ .void)
     | .ret (some e) => do
@@ -804,8 +805,8 @@ def cmd (fuel : Nat) (p : Program) (τᵣ : Ty) (Γ : TEnv) (c : Cmd) : T TEnv :
       accept fuel p Γ "return value" e τᵣ
       return Γ
     /-  Γ ⊢ e ◁ τ    τ has values    τ well formed
-        ───────────────────────────────────────── (T-Decl)      Γ[x ↦ τ] reaches the following commands,
-        Γ ⊢ τ x = e ⊣ Γ[x ↦ τ]                                  and a lambda initialises a std::function -/
+        ───────────────────────────────────────── (T-Decl)      Γ[x ↦ τ] reaches the following commands
+        Γ ⊢ τ x = e ⊣ Γ[x ↦ τ]                                                             -/
     | .decl t x e => do
       storable s!"variable {x}" t
       wellFormed fuel p t
