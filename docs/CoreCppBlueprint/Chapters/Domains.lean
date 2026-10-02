@@ -13,9 +13,11 @@ set_option verso.blueprint.foldCodeBlocks true
 
 #doc (Manual) "Judgments and domains" =>
 
-Core C++ has three semantic components and four judgments. The typing context $`\Gamma` maps identifiers to types. The environment $`\rho` maps identifiers to locations $`\ell`. The store $`\sigma` maps locations to values, and its domain is the set of live locations.
+Core C++ has three semantic components. The typing context $`\Gamma` maps identifiers to types. The environment $`\rho` maps identifiers to locations $`\ell`. The store $`\sigma` maps locations to values, and its domain is the set of live locations.
 
 The notation is the sequent style of Kahn (1987). Hypotheses stand left of $`\vdash`, the subject right of it, and the result after $`\Rightarrow`.
+
+Each judgment is an inductive proposition of `CoreCpp/Semantics/`, one constructor per rule, and the type checker of `CoreCpp/Typing.lean` and the evaluator of `CoreCpp/Eval.lean` are the functions that interpret them, {bpref "judg_relations"}[]. Every node of this blueprint points at both, the relation and the function.
 
 :::author "christiano" (name := "Christiano Braga")
 :::
@@ -25,7 +27,7 @@ Semantic domains, in `CoreCpp/Semantics.lean` and `CoreCpp/Typing.lean`.
 :::
 
 :::group "juizos"
-The judgments, one Lean function each, in `CoreCpp/Typing.lean` and `CoreCpp/Eval.lean`.
+The judgments, one inductive proposition each in `CoreCpp/Semantics/`, interpreted by one Lean function each in `CoreCpp/Typing.lean` and `CoreCpp/Eval.lean`.
 :::
 
 # Domains
@@ -45,7 +47,7 @@ The default value of a type, which `new` gives to every field and element, is $`
 :::
 
 :::definition "dom_int32" (parent := "dominios") (lean := "CoreCpp.Int32.min, CoreCpp.Int32.max, CoreCpp.Int32.inRange")
-The type `int` has 32 bits in two's complement. The partial operation $`\mathsf{int32}` returns the integer when it lies in the range and `error` otherwise.
+The type `int` has 32 bits in two's complement. The partial operation $`\mathsf{int32}` returns the integer when it lies in the range, and a rule that uses it has no derivation otherwise, so the evaluator gives `error`.
 
 C++17 fixes neither the width nor the representation of `int`. A plain `int` has the natural size suggested by the architecture of the execution environment, with a range of at least $`[-32767, 32767]` (N4659 §6.9.1 paragraph 2 and §21.3.5, N1570 §5.2.4.2.1). Its representation may be two's complement, ones' complement or signed magnitude (N4659 §6.9.1 paragraph 7). The range of `int` is therefore a property of the platform.
 
@@ -55,7 +57,7 @@ An arithmetic result outside the range of `int` has undefined behaviour (N4659 �
 
 The representation enters only through the lower bound $`-2^{31}`. Core C++ has no bitwise operators, no shifts and no unsigned types, so no program observes a bit pattern. The width lives only in `Int32.min` and `Int32.max`.
 
-$$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{int}\,n} \qquad \dfrac{n \notin [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{error}}`
+$$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{int}\,n}`
 :::
 
 :::definition "dom_env" (parent := "dominios") (lean := "CoreCpp.Env, CoreCpp.Binding, CoreCpp.Env.lookup, CoreCpp.Env.extend, CoreCpp.Env.alias") (uses := "dom_loc")
@@ -67,7 +69,7 @@ Inside a member body, `this` is an alias binding to the location of the receiver
 :::
 
 :::definition "dom_store" (parent := "dominios") (lean := "CoreCpp.Store, CoreCpp.Store.read, CoreCpp.Store.write, CoreCpp.Store.alloc, CoreCpp.Store.allocMany, CoreCpp.Store.free, CoreCpp.Store.dom") (uses := "dom_loc, dom_val")
-The store $`\sigma` is a finite map from locations to values. The operation $`\mathrm{alloc}(\sigma, v)` returns a fresh location $`\ell \notin \mathrm{dom}\,\sigma` and the store $`\sigma[\ell \mapsto v]`. The operation $`\sigma \setminus L` removes the locations of $`L` from the domain. Reading or writing outside the domain is `error`.
+The store $`\sigma` is a finite map from locations to values. The operation $`\mathrm{alloc}(\sigma, v)` returns a fresh location $`\ell \notin \mathrm{dom}\,\sigma` and the store $`\sigma[\ell \mapsto v]`. The operation $`\sigma \setminus L` removes the locations of $`L` from the domain. Reading or writing outside the domain has no derivation, and the evaluator gives `error`.
 :::
 
 :::definition "dom_closure" (parent := "dominios") (lean := "CoreCpp.Val, CoreCpp.Ty.isFn") (uses := "dom_val")
@@ -81,9 +83,9 @@ The control result $`r` of a command is $`\mathsf{normal}` or $`\mathsf{ret}\,v`
 :::
 
 :::definition "dom_erro" (parent := "dominios") (lean := "CoreCpp.Error")
-The result `error` is not a value of the language. It replaces the result of any dynamic judgment and propagates to the whole program.
+The result `error` is not a value of the language. In the relations it is the absence of a derivation. Whatever C++17 leaves undefined fails a premise of every rule that could reach it, $`\sigma(\ell) = v`, $`n_2 \neq 0`, $`n \in [-2^{31}, 2^{31}-1]`, $`0 \le i < n`, and the subject has no derivation, with nothing to propagate. The evaluator, which runs the relations, reports the case as `error`, with a message and the exit code 134, and the error replaces the result of the whole program.
 
-Its causes are division by zero, `int` overflow, the dereference of `nullptr`, an index outside a vector, a negative vector size, a failed `assert`, a location outside $`\sigma`, an undeclared variable or function, wrong arity, a missing `return` in a non `void` function, a second `delete` of the same object, and a `delete` through a pointer to a base class without a virtual destructor.
+Its causes are division by zero, `int` overflow, the dereference of `nullptr`, an index outside a vector, a negative vector size, a failed `assert`, the call of a `std::function` with no target, a location outside $`\sigma`, an undeclared variable or function, wrong arity, a missing `return` in a non `void` function, a second `delete` of the same object, a `delete` through a pointer to a base class without a virtual destructor, and the exhaustion of the fuel of the evaluator, a bound on the depth of a derivation that no program reaches.
 :::
 
 :::definition "dom_tenv" (parent := "dominios") (lean := "CoreCpp.TEnv, CoreCpp.TBind, CoreCpp.TEnv.lookup, CoreCpp.TEnv.isConst, CoreCpp.TEnv.bind, CoreCpp.TEnv.captured, CoreCpp.TEnv.self")
@@ -106,31 +108,56 @@ The table gives, for a class, its chain up to the root base, every field of the 
 The type checker consults it for types, visibility and dispatch, and `new` and `delete` for the fields to allocate and to free. Names are qualified by their namespace, `N::C`.
 :::
 
+# Relations and interpreters
+
+:::definition "judg_relations" (parent := "juizos") (lean := "CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Accept, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks, CoreCpp.Semantics.WF, CoreCpp.Semantics.FunOk, CoreCpp.Semantics.ClassOk, CoreCpp.Semantics.ProgramOk, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Execs, CoreCpp.Semantics.Runs, CoreCpp.typingFuel, CoreCpp.runWith") (uses := "dom_tenv, dom_env, dom_store, dom_erro")
+The semantics is a set of inductive propositions, one per judgment, one constructor per rule, named as the rule is named in this blueprint, in `CoreCpp/Semantics/Static.lean` and `Dynamic.lean`. A constructor is laid out as a rule is written on the board, the premises one per line, the inference line with the name, and the conclusion under it. The program $`p` is a parameter of every relation, the function table and the class table.
+
+| Judgment | Relation | Notation in Lean | Interpreter |
+| --- | --- | --- | --- |
+| $`\Gamma \vdash e : \tau` | `HasType p Γ e τ` | `Γ ⊢ e : τ` | `Typing.expr` |
+| $`\Gamma \vdash_{\ell} e : \tau` | `LHasType p Γ e τ` | `Γ ⊢ₗ e : τ` | `Typing.lval` |
+| $`\Gamma \vdash e \lhd \tau` | `Accept p Γ e τ` | `Γ ⊢ e ◁ τ` | `Typing.accept` |
+| $`\Gamma \vdash c \dashv \Gamma'` | `Check p τᵣ Γ c Γ'` | `⟨Γ, τᵣ⟩ ⊢ c ⊣ Γ'` | `Typing.cmd` |
+| $`\Gamma \vdash \bar{c} \dashv \Gamma'` | `Checks p τᵣ Γ cs Γ'` | `⟨Γ, τᵣ⟩ ⊢ cs ⊣* Γ'` | `Typing.cmds` |
+| $`\Gamma \vdash \tau\ \mathsf{ok}` | `WF p τ` | | `Typing.wellFormed` |
+| $`\vdash f`, $`\vdash C`, $`\vdash p` | `FunOk`, `ClassOk`, `ProgramOk` | | `Typing.fn`, `Typing.cls`, `check` |
+| $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` | `Eval p ρ σ e v σ'` | `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'` | `Eval.expr` |
+| $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'` | `LEval p ρ σ e ℓ σ'` | `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'` | `Eval.lval` |
+| $`\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'` | `Exec p ρ σ c r ρ' σ'` | `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'` | `Eval.cmd` |
+| $`\rho, \sigma \vdash \bar{c} \Rightarrow r, \rho', \sigma'` | `Execs p ρ σ cs r ρ' σ'` | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Eval.cmds` |
+| $`p \Rightarrow v` | `Runs p v` | | `run` |
+
+The configuration $`\langle\rho, \sigma\rangle`, and $`\langle\Gamma, \tau_r\rangle` for a command with the result type of its body, are in angle brackets in Lean, and a sequence takes a starred arrow, two concessions to the parser of Lean. The relation is the specification and the function its interpreter. Every function of the type checker and of the evaluator recurses on a fuel argument, a bound on the depth of a derivation, so that theorems about them can be stated, soundness, that a result of the function is a derivation of the relation, and completeness, that a derivation is reached with enough fuel. The structure follows Radix, the DSL of Leonardo de Moura's tutorial at ETAPS 2026.
+
+The judgments on declarations, $`\vdash f`, $`\vdash C` and $`\vdash p`, are structures of named conditions rather than relations with one constructor, since their conditions are side conditions on the declarations and not premises on subterms. The selection of an overload, {bpref "overload_pick"}[], is the work of the type checker, which writes its choice into the call, and the relation reads it.
+:::
+
 # Static judgments
 
-:::definition "judg_ty_expr" (parent := "juizos") (lean := "CoreCpp.Expr, CoreCpp.Typing.expr") (uses := "dom_tenv, gram_ast")
+:::definition "judg_ty_expr" (parent := "juizos") (lean := "CoreCpp.Expr, CoreCpp.Typing.expr, CoreCpp.Semantics.HasType") (uses := "dom_tenv, gram_ast, judg_relations")
 The judgment $`\Gamma \vdash e : \tau` states that the expression $`e` has type $`\tau` in the context $`\Gamma`. One rule per constructor of `Expr`.
 :::
 
-:::definition "judg_ty_lval" (parent := "juizos") (lean := "CoreCpp.Typing.lval") (uses := "dom_tenv")
+:::definition "judg_ty_lval" (parent := "juizos") (lean := "CoreCpp.Typing.lval, CoreCpp.Semantics.LHasType") (uses := "dom_tenv, judg_relations")
 The judgment $`\Gamma \vdash_{\ell} e : \tau` holds for the expressions that denote a location, a variable, `*e`, `e.f`, `e->f` and `e[i]`.
 :::
 
-:::definition "judg_ty_cmd" (parent := "juizos") (lean := "CoreCpp.Cmd, CoreCpp.Typing.cmd, CoreCpp.Typing.cmds") (uses := "judg_ty_expr, gram_ast")
+:::definition "judg_ty_cmd" (parent := "juizos") (lean := "CoreCpp.Cmd, CoreCpp.Typing.cmd, CoreCpp.Typing.cmds, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks") (uses := "judg_ty_expr, gram_ast, judg_relations")
 The judgment $`\Gamma \vdash c \dashv \Gamma'` states that the command $`c` is well typed and extends $`\Gamma` to $`\Gamma'`, so that a declaration reaches the following commands of the sequence. The return type $`\tau_r` of the enclosing function is an implicit parameter.
 :::
 
 # Dynamic judgments
 
-:::definition "judg_ev_expr" (parent := "juizos") (lean := "CoreCpp.Eval.expr") (uses := "dom_env, dom_store, dom_val, dom_erro")
+:::definition "judg_ev_expr" (parent := "juizos") (lean := "CoreCpp.Eval.expr, CoreCpp.Semantics.Eval") (uses := "dom_env, dom_store, dom_val, dom_erro, judg_relations")
 The judgment $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` states that the expression $`e`, under the environment $`\rho` and the store $`\sigma`, evaluates to $`v` and yields $`\sigma'`. The store enters expressions because a function call inside an expression may change it.
 :::
 
-:::definition "judg_ev_lval" (parent := "juizos") (lean := "CoreCpp.Eval.lval") (uses := "dom_env, dom_store, dom_loc")
+:::definition "judg_ev_lval" (parent := "juizos") (lean := "CoreCpp.Eval.lval, CoreCpp.Semantics.LEval") (uses := "dom_env, dom_store, dom_loc, judg_relations")
 The judgment $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'` states that the expression $`e` denotes the location $`\ell`. It holds for a variable, a dereferenced pointer, a field of an object, a field through a pointer, and a use of the library that gives a location, such as an element of a vector.
 :::
 
-:::definition "judg_ev_cmd" (parent := "juizos") (lean := "CoreCpp.Eval.cmd, CoreCpp.Eval.cmds") (uses := "judg_ev_expr, dom_ctrl")
+:::definition "judg_ev_cmd" (parent := "juizos") (lean := "CoreCpp.Eval.cmd, CoreCpp.Eval.cmds, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Execs") (uses := "judg_ev_expr, dom_ctrl, judg_relations")
 The judgment $`\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'` states that the command $`c` yields the control $`r`, the environment $`\rho'` and the store $`\sigma'`. The output environment exists so that a declaration extends $`\rho` for the following commands, and the block discards the extension when it ends.
 :::
 

@@ -235,11 +235,15 @@ For each dynamic judgement, with `n` the fuel.
 
 ## The blueprint
 
-Each node points at the inductive of its judgement, a type and so an
-admissible target, beside the function that implements it. The Library
-chapter presents the rules of each module under the same judgement as the
-language's rules, T-VecIndex beside T-Index. The domains chapter states
-`error` as the absence of a derivation.
+Since step 6 each node points at the inductive of its judgement, a type and
+so an admissible target, beside the function that implements it, and the
+node `judg_relations` of the domains chapter presents the relations, the
+notation table, the interpreters on fuel and the two theorems to come. The
+Library chapter presents the rules of each module under the same judgement
+as the language's rules. The domains chapter states `error` as the absence
+of a derivation, and every rule that concluded `error`, DivZero and the
+second rule of `int32`, became a remark that the case has no derivation and
+that the evaluator gives `error`.
 
 ## Order of the work
 
@@ -263,8 +267,9 @@ Each step leaves every check green, `lake build`, the three test files,
    the design lines of `CLAUDE.md`. Done. The grammar needed no production,
    since `new ClassType Args` and `( Expr ) Args` already derive
    `new std::function<F>(λ)` and `(*f)(ē)`.
-5. Determinism, then soundness, then completeness.
-6. The blueprint and the design lines of `CLAUDE.md`.
+5. Determinism, then soundness, then completeness. Postponed by decision
+   of 2026-10-02, the convergence of each chapter comes first.
+6. The blueprint and the design lines of `CLAUDE.md`. Done.
 
 ## Open
 
