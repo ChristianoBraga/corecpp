@@ -769,6 +769,8 @@ structure ClassOk (p : Program) (c : ClassDecl) : Prop where
     (c.methods.filter fun m' => m'.name == m.name && sigOf m'.params == sigOf m.params).length = 1
   /-- No field repeats a field of a base. -/
   fresh : ∀ f ∈ c.fields, ∀ b, c.base = some b → ¬ ((p.allFields b).map (·.1.name)).contains f.name
+  /-- No field has type `void`, which has no values. -/
+  fieldsNotVoid : ∀ f ∈ c.fields, f.ty ≠ .void
   /-- Each field type is storable. -/
   fieldTypes : ∀ f ∈ c.fields, Storable f.ty
   /-- Each field type is well formed. -/

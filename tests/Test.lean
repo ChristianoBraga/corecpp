@@ -165,6 +165,9 @@ int main() {
   return p->a * 10 + (*v)[1];
 }"
 
+-- a field never has type void
+#eval (parseStd "class Box { public: void hole; }; int main() { Box* b = new Box(); return 0; }").map check
+
 -- a local reference to an object binds its location, as a reference parameter does
 #eval prog "class Counter { public: int value; Counter() { value = 1; } };
 int main() { Counter* p = new Counter(); Counter& c = *p; c.value = 5; return p->value; }"

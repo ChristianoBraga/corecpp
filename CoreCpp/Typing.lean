@@ -134,6 +134,7 @@ inductive TypeError where
   | cyclicInheritance (c : String)
   | duplicateMember (c m : String)
   | fieldRedeclared (c f : String)
+  | voidField (c f : String)
   | thisOutside
   | notDeletable (e : Expr) (t : Ty)
   | noOverload (f : String)
@@ -158,6 +159,7 @@ def TypeError.toString : TypeError → String
   | .mismatch c e g       => s!"{c}: expected {e}, got {g}"
   | .notLvalue e          => s!"expression does not denote a location: {e}"
   | .voidValue e          => s!"void expression used as a value: {e}"
+  | .voidField c f        => s!"field {f} of {c} has type void, which has no values"
   | .objectValue e t      => s!"object of type {t} used as a value: {e}"
   | .objectByValue c t    => s!"{c} has the object type {t}, objects live behind pointers"
   | .functionStored c t   => s!"{c} has the function type {t}, which is the template argument of std::function only"
@@ -943,7 +945,7 @@ constructor of the base, if the base has one, takes no parameters.
 Every member body is well typed under `this`.
 
 ```
-B exists, chain acyclic    fields storable, well formed, new in the chain
+B exists, chain acyclic    fields not void, storable, well formed, new in the chain
 for each method m of C. if some base has m then that m is virtual,
     m is override and the signatures agree
 for each override m of C. some base has a virtual m
@@ -976,6 +978,7 @@ def cls (p : Program) (c : ClassDecl) : T Unit := do
       throw (.duplicateMember c.name m.name)
   for f in c.fields do
     if baseFields.contains f.name then throw (TypeError.fieldRedeclared c.name f.name)
+    if f.ty == .void then throw (.voidField c.name f.name)
     storable s!"field {f.name} of {c.name}" f.ty
     wellFormed typingFuel p f.ty
   for m in c.methods do

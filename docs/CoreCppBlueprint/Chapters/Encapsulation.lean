@@ -31,7 +31,7 @@ A class has an optional base, fields and methods with a visibility, at most one 
 
 The class is well formed when the base exists and the chain is acyclic, the fields have types with values and repeat no field of a base, the members have distinct names, a method that redefines a method of a base finds it `virtual` there, carries `override` and keeps the signature, the constructor of the base takes no parameters, and every member body is well typed under `this`.
 
-$$`\dfrac{\begin{array}{c} B \text{ exists, chain acyclic}\qquad \text{fields storable, well formed, new in the chain} \\ \text{each redefined } m \text{ is virtual in the base, marked override, same signature} \\ B \text{ has no constructor or one without parameters} \\ [\mathtt{this} \mapsto C*, p_1, \ldots, p_k] \vdash c \dashv \Gamma' \text{ for each member body} \end{array}}{\vdash \mathtt{class}\ C\ \mathtt{:}\ \mathtt{public}\ B\ \{ \ldots \}}\;\textsf{(T-Class)}`
+$$`\dfrac{\begin{array}{c} B \text{ exists, chain acyclic}\qquad \text{fields not void, storable, well formed, new in the chain} \\ \text{each redefined } m \text{ is virtual in the base, marked override, same signature} \\ B \text{ has no constructor or one without parameters} \\ [\mathtt{this} \mapsto C*, p_1, \ldots, p_k] \vdash c \dashv \Gamma' \text{ for each member body} \end{array}}{\vdash \mathtt{class}\ C\ \mathtt{:}\ \mathtt{public}\ B\ \{ \ldots \}}\;\textsf{(T-Class)}`
 
 The context of a member body binds `this` to $`C*` and the parameters as variables, so the current class is the class of `this` in $`\Gamma`.
 :::
