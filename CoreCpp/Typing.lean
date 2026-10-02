@@ -815,13 +815,13 @@ def cmd (fuel : Nat) (p : Program) (τᵣ : Ty) (Γ : TEnv) (c : Cmd) : T TEnv :
       wellFormed fuel p t
       accept fuel p Γ s!"initialiser of {x}" e t
       return Γ.bind x t
-    /-  Γ ⊢ₗ e : τ    τ has values    τ well formed
-        ───────────────────────────────────────────── (T-DeclRef)      the initialiser denotes a location
+    /-  Γ ⊢ₗ e : τ    τ bindable by reference    τ well formed
+        ──────────────────────────────────────────────────────── (T-DeclRef)      the initialiser denotes a location
         Γ ⊢ τ& x = e ⊣ Γ[x ↦ τ]                                        and x has the type of its referent -/
     | .declRef t x e => do
       bindable s!"reference {x}" true t
       wellFormed fuel p t
-      let te ← value e (← lval fuel p Γ e)
+      let te ← lval fuel p Γ e
       if te != t then throw (.mismatch s!"referent of {x}" t te)
       return Γ.bind x t
     /-  Γ ⊢ e : τ    τ has values    τ ≠ nullptr_t

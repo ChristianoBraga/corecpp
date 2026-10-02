@@ -165,6 +165,12 @@ int main() {
   return p->a * 10 + (*v)[1];
 }"
 
+-- a local reference to an object binds its location, as a reference parameter does
+#eval prog "class Counter { public: int value; Counter() { value = 1; } };
+int main() { Counter* p = new Counter(); Counter& c = *p; c.value = 5; return p->value; }"
+#eval prog "class Counter { public: int value; Counter() { value = 1; } };
+int main() { std::vector<Counter*>* v = new std::vector<Counter*>(1); (*v)[0] = new Counter(); Counter& c = *(*v)[0]; return c.value; }"
+
 -- a reference to a pointer variable
 #eval prog "class P { public: int a; };
 int main() { P* p = nullptr; P*& q = p; q = new P(); q->a = 3; return p->a; }"

@@ -42,9 +42,9 @@ The initialiser must denote a location and have the declared type, and the refer
 
 The binding is an alias, not owned, so the exit of the block that declared the reference leaves the location in $`\sigma`.
 
-A reference to a temporary, to `nullptr` or to an expression without a location does not exist, and a dangling reference is impossible by construction, because a reference names only locations of enclosing blocks or of objects in the store.
+The referent may be an object, as in `C& r = *p;`, since the reference binds its location and copies nothing. A reference to a temporary, to `nullptr` or to an expression without a location does not exist, and a dangling reference is impossible by construction, because a reference names only locations of enclosing blocks or of objects in the store.
 
-$$`\dfrac{\Gamma \vdash_{\ell} e : \tau \qquad \tau \text{ has values}}{\Gamma \vdash \tau\mathtt{\&}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-DeclRef)}`
+$$`\dfrac{\Gamma \vdash_{\ell} e : \tau \qquad \tau \text{ bindable by reference}}{\Gamma \vdash \tau\mathtt{\&}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-DeclRef)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \tau\mathtt{\&}\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma'}\;\textsf{(DeclRef)}`
 :::

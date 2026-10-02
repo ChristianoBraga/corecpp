@@ -624,8 +624,7 @@ inductive Check (p : Program) : Ty → TEnv → Cmd → TEnv → Prop where
   | declRef
       (hb : Bindable true τ)
       (hw : WF p τ)
-      (h : Γ ⊢ₗ e : τ)
-      (hv : HasValues τ) :
+      (h : Γ ⊢ₗ e : τ) :
     -- ─────────────────────────────────────── (T-DeclRef)
       ⟨Γ, τᵣ⟩ ⊢ .declRef τ x e ⊣ Γ.bind x τ
 
