@@ -698,10 +698,10 @@ def lval (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc 
     /-  ρ(x) = ℓ                      x ∉ ρ    ρ(this) = ℓ    σ(ℓ) = obj C [… x ↦ ℓ_x …]
         ──────────────── (LocVar)     ─────────────────────────────────────────── (LocVarField)
         ρ, σ ⊢ x ⇒ₗ ℓ, σ              ρ, σ ⊢ x ⇒ₗ ℓ_x, σ        an unqualified field of this -/
-    | .var x => traced "LocVar" (confE e ρ σ) showL (arrow := "⇒ₗ") do
+    | .var x =>
       match ρ.lookup x with
-      | some l => return (l, σ)
-      | none   =>
+      | some l => traced "LocVar" (confE e ρ σ) showL (arrow := "⇒ₗ") do return (l, σ)
+      | none   => traced "LocVarField" (confE e ρ σ) showL (arrow := "⇒ₗ") do
         match ρ.lookup "this" with
         | some lt => fieldLoc fuel σ lt x
         | none => throw (.undeclaredVariable x)
