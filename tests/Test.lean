@@ -202,39 +202,51 @@ int main() { P* p = new P(); inc(p->a); inc(p->a);
   std::vector<int>* v = new std::vector<int>(2); inc((*v)[1]);
   return p->a * 10 + (*v)[1]; }"
 
--- a lambda returned by a function and applied through a std::function parameter
-#eval prog "std::function<int(int)> multiplier(int k) {
-  return [=](int x) -> int { return k * x; };
+-- a std::function returned by a function and called through its pointer
+#eval prog "std::function<int(int)>* multiplier(int k) {
+  return new std::function<int(int)>([=](int x) -> int { return k * x; });
 }
-int apply(std::function<int(int)> f, int v) { return f(v); }
+int apply(std::function<int(int)>* f, int v) { return (*f)(v); }
 int main() { return apply(multiplier(3), 14); }"
 
 -- a counter through a captured pointer, the object outlives its block
 #eval prog "class Box { public: int value; };
-std::function<int()> counter() {
+std::function<int()>* counter() {
   Box* c = new Box();
   c->value = 0;
-  return [=]() -> int { c->value = c->value + 1; return c->value; };
+  return new std::function<int()>([=]() -> int { c->value = c->value + 1; return c->value; });
 }
-int main() { std::function<int()> k = counter(); int first = k(); return k() + k() + first; }"
+int main() { std::function<int()>* k = counter(); int first = (*k)(); return (*k)() + (*k)() + first; }"
 
 -- the capture is a copy taken at the lambda, later writes to n are not seen
 #eval prog "int main() { int n = 5;
-  std::function<int(int)> sum = [=](int x) -> int { return x + n; };
-  n = 100; return sum(1); }"
+  std::function<int(int)>* sum = new std::function<int(int)>([=](int x) -> int { return x + n; });
+  n = 100; return (*sum)(1); }"
 
--- a lambda passed directly as an argument
-#eval prog "int applyTwice(std::function<int(int)> f, int x) { return f(f(x)); }
-int main() { return applyTwice([=](int x) -> int { return x * x; }, 3); }"
+-- a lambda as the argument of new std::function, the object passed by pointer
+#eval prog "int applyTwice(std::function<int(int)>* f, int x) { return (*f)((*f)(x)); }
+int main() { return applyTwice(new std::function<int(int)>([=](int x) -> int { return x * x; }), 3); }"
 
--- a function value copied into another variable and called through it
-#eval prog "int main() { std::function<int(int, int)> g = [=](int a, int b) -> int { return a - b; };
-  std::function<int(int, int)> h = g; return h(10, 3); }"
+-- a second pointer to the same function object calls the same closure, then delete
+#eval prog "int main() { std::function<int(int, int)>* g = new std::function<int(int, int)>([=](int a, int b) -> int { return a - b; });
+  std::function<int(int, int)>* h = g; int r = (*h)(10, 3); delete g; return r; }"
+
+-- the function with no target, new std::function<F>(), is error when called
+#eval prog "int main() { std::function<int(int)>* f = new std::function<int(int)>(); return (*f)(1); }"
+
+-- a field holds a pointer to a function object, called through the pointer
+#eval prog "class Button { public: std::function<int()>* handler; };
+int main() { Button* b = new Button(); b->handler = new std::function<int()>([=]() -> int { return 4; });
+  return (*b->handler)(); }"
+
+-- a reference to a function object is called as a variable
+#eval prog "int main() { std::function<int(int)>* p = new std::function<int(int)>([=](int x) -> int { return x + 1; });
+  std::function<int(int)>& f = *p; return f(41); }"
 
 -- a captured variable is read only inside the lambda
-#eval (parseStd "int main() { int n = 1; std::function<int()> f = [=]() -> int { n = 2; return n; }; return f(); }").map check
+#eval (parseStd "int main() { int n = 1; std::function<int()>* f = new std::function<int()>([=]() -> int { n = 2; return n; }); return (*f)(); }").map check
 -- and cannot be aliased by a reference either
-#eval (parseStd "int main() { int n = 1; std::function<int()> f = [=]() -> int { int& r = n; r = 3; return n; }; return f(); }").map check
+#eval (parseStd "int main() { int n = 1; std::function<int()>* f = new std::function<int()>([=]() -> int { int& r = n; r = 3; return n; }); return (*f)(); }").map check
 -- a lambda is not an auto initialiser, by the grammar
 #eval parseStd "int main() { auto f = [=](int x) -> int { return x; }; return f(1); }"
 -- a lambda is not an operand, by the grammar
@@ -243,14 +255,18 @@ int main() { return applyTwice([=](int x) -> int { return x * x; }, 3); }"
 #eval (parseStd "void inc(int& r) { r = r + 1; } int main() { inc(5); return 0; }").map check
 -- only function values are called
 #eval (parseStd "int main() { int x = 1; return x(2); }").map check
--- the lambda has exactly the parameter types of the std::function
-#eval (parseStd "int main() { std::function<int(int)> f = [=](bool b) -> int { return 1; }; return f(1); }").map check
--- no field of function type in this subset
+-- the lambda has exactly the function type of the std::function
+#eval (parseStd "int main() { std::function<int(int)>* f = new std::function<int(int)>([=](bool b) -> int { return 1; }); return (*f)(1); }").map check
+-- a std::function is an object, never held by value, in a field or in a variable
 #eval (parseStd "class C { public: std::function<int()> f; }; int main() { return 0; }").map check
+#eval (parseStd "int main() { std::function<int()>* p = new std::function<int()>(); std::function<int()> f = *p; return 0; }").map check
+-- a lambda occurs only as the argument of new std::function
+#eval (parseStd "int applyTwice(std::function<int(int)>* f, int x) { return (*f)((*f)(x)); }
+int main() { return applyTwice([=](int x) -> int { return x * x; }, 3); }").map check
 
--- the trace of a call through a closure
+-- the trace of a call through a function object
 #eval do
-  let p ← parseStd "int main() { int n = 2; std::function<int(int)> f = [=](int x) -> int { return x + n; }; return f(40); }"
+  let p ← parseStd "int main() { int n = 2; std::function<int(int)>* f = new std::function<int(int)>([=](int x) -> int { return x + n; }); return (*f)(40); }"
   let (r, log) := runWith true p
   return (r, renderTrace log)
 
@@ -395,9 +411,9 @@ int main() { auto c = new Box<int>(42); auto n = c->get(); return n; }"
 -- a member takes an object by reference, never by value
 #eval (parseStd "class P { public: int x; int sum(P o) { return x + o.x; } }; int main() { return 0; }").map check
 
--- two overloads that differ only in a std::function parameter are rejected
-#eval (parseStd "int g(std::function<int(int)> h) { return h(1); }
-int g(std::function<bool(bool)> h) { return 0; }
+-- two overloads that differ in the pointer type of a std::function parameter are distinct
+#eval (parseStd "int g(std::function<int(int)>* h) { return (*h)(1); }
+int g(std::function<bool(bool)>* h) { return 0; }
 int main() { return 0; }").map check
 
 -- two candidates and no exact match is an ambiguous call

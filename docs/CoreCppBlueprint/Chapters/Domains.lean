@@ -73,9 +73,7 @@ The store $`\sigma` is a finite map from locations to values. The operation $`\m
 :::definition "dom_closure" (parent := "dominios") (lean := "CoreCpp.Val, CoreCpp.Ty.isFn") (uses := "dom_val")
 The value of a lambda is the closure $`\mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m])`, with the parameters, the result type, the body and the captured copies, one value per free variable of the body.
 
-The types `std::function<τ(τ₁, …, τₖ)>` of {bpref "std_function"}[] have closures as values.
-
-A variable or a parameter holds a closure, a field or a vector element does not, because `new` would have to give it a default value and there is no empty function in this subset.
+A closure is held by a `std::function` object of {bpref "std_function"}[], whose one location holds it as the target of the object, or $`\mathsf{null}` for the function with no target. No variable, field or element holds a closure directly, since a `std::function` is an object, reached by pointer or by reference.
 :::
 
 :::definition "dom_ctrl" (parent := "dominios") (lean := "CoreCpp.Ctrl") (uses := "dom_val")
@@ -106,48 +104,34 @@ The classes of the program form the class table, a finite map from class names t
 The table gives, for a class, its chain up to the root base, every field of the chain with the class that declares it, the nearest method of a given name, the subclass relation and whether some class of the chain has a virtual destructor.
 
 The type checker consults it for types, visibility and dispatch, and `new` and `delete` for the fields to allocate and to free. Names are qualified by their namespace, `N::C`.
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Static judgments
 
 :::definition "judg_ty_expr" (parent := "juizos") (lean := "CoreCpp.Expr, CoreCpp.Typing.expr") (uses := "dom_tenv, gram_ast")
 The judgment $`\Gamma \vdash e : \tau` states that the expression $`e` has type $`\tau` in the context $`\Gamma`. One rule per constructor of `Expr`.
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "judg_ty_lval" (parent := "juizos") (lean := "CoreCpp.Typing.lval") (uses := "dom_tenv")
 The judgment $`\Gamma \vdash_{\ell} e : \tau` holds for the expressions that denote a location, a variable, `*e`, `e.f`, `e->f` and `e[i]`.
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "judg_ty_cmd" (parent := "juizos") (lean := "CoreCpp.Cmd, CoreCpp.Typing.cmd, CoreCpp.Typing.cmds") (uses := "judg_ty_expr, gram_ast")
 The judgment $`\Gamma \vdash c \dashv \Gamma'` states that the command $`c` is well typed and extends $`\Gamma` to $`\Gamma'`, so that a declaration reaches the following commands of the sequence. The return type $`\tau_r` of the enclosing function is an implicit parameter.
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Dynamic judgments
 
 :::definition "judg_ev_expr" (parent := "juizos") (lean := "CoreCpp.Eval.expr") (uses := "dom_env, dom_store, dom_val, dom_erro")
 The judgment $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` states that the expression $`e`, under the environment $`\rho` and the store $`\sigma`, evaluates to $`v` and yields $`\sigma'`. The store enters expressions because a function call inside an expression may change it.
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "judg_ev_lval" (parent := "juizos") (lean := "CoreCpp.Eval.lval") (uses := "dom_env, dom_store, dom_loc")
 The judgment $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'` states that the expression $`e` denotes the location $`\ell`. It holds for a variable, a dereferenced pointer, a field of an object, a field through a pointer, and a use of the library that gives a location, such as an element of a vector.
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "judg_ev_cmd" (parent := "juizos") (lean := "CoreCpp.Eval.cmd, CoreCpp.Eval.cmds") (uses := "judg_ev_expr, dom_ctrl")
 The judgment $`\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'` states that the command $`c` yields the control $`r`, the environment $`\rho'` and the store $`\sigma'`. The output environment exists so that a declaration extends $`\rho` for the following commands, and the block discards the extension when it ends.
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "judg_trace" (parent := "juizos") (lean := "CoreCpp.M, CoreCpp.TState, CoreCpp.TraceAnte, CoreCpp.TraceCons, CoreCpp.TraceEntry, CoreCpp.Eval.traced, CoreCpp.renderTrace") (uses := "judg_ev_expr, judg_ev_cmd")

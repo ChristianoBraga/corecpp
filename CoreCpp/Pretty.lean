@@ -74,11 +74,6 @@ partial def Expr.toString (e : Expr) : String :=
   | .this => "this"
   | .newObj c as => s!"new {c}({", ".intercalate (as.map Expr.toString)})"
   | .newLib t as => s!"new {t}({", ".intercalate (as.map Expr.toString)})"
-  | .intrinsic l u as =>
-    match u, as with
-    | "operator[]", [r, i] => s!"{paren 8 r}[{Expr.toString i}]"
-    | "operator()", r :: rest => s!"{paren 8 r}({", ".intercalate (rest.map Expr.toString)})"
-    | _, _ => s!"{l}({", ".intercalate (as.map Expr.toString)})"
   | .field e f => s!"{paren 8 e}.{f}"
   | .arrow e f => s!"{paren 8 e}->{f}"
   | .deref e   => s!"*{paren 7 e}"
@@ -146,6 +141,8 @@ def Error.toString : Error → String
   | .typeError msg         => s!"type error at run time, {msg}"
   | .missingReturn f       => s!"function {f} ended without return"
   | .notCallable v         => s!"call of a value that is not a function, {v}"
+  | .noTarget              => "call of a std::function with no target"
+  | .outOfFuel             => "the derivation is deeper than the fuel of the evaluator"
   | .library msg           => msg
   | .deleteWithoutVirtualDtor s t => s!"delete through {s}* of an object of class {t} without a virtual destructor"
   | .doubleDelete l        => s!"delete of a location already freed, {Loc.toString l}"

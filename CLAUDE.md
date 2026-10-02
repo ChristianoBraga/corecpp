@@ -58,11 +58,18 @@ since 2026-09-18.
   descent), `Semantics.lean` (Loc, Val, Error, Env, Store, Ctrl),
   `Pretty.lean`, `Typing.lean` (static semantics), `Eval.lean` (evaluator in the
   monad `M := ExceptT Error (StateM TState)` carrying the derivation trace).
+- `CoreCpp/Semantics/`, the semantics as relations, one inductive
+  proposition per judgement, one constructor per rule laid out as premises,
+  inference line and conclusion, `Dynamic.lean`, `Static.lean` and
+  `Library.lean`, the relations of the modules. The evaluator and the type
+  checker are their interpreters, on fuel, to be proved sound and complete.
+  The design note is `.claude/relational-semantics.md`.
 - `CoreCpp/Std/`, the library. The headers declare `std::vector`,
-  `std::function` and `assert` without a body, and each declaration names an
-  intrinsic (`Std/Intrinsic.lean`), its typing and evaluation judgements. The
-  type checker rewrites every use into an `Expr.intrinsic` node, and the
-  evaluator knows no intrinsic by name. `bin/corecpp` runs Preproc first.
+  `std::function` and `assert` without a body, and each declaration names a
+  module, a relation in `Semantics/Library.lean` plus a function in `Std/`,
+  which the rules of the language take as premises. The language finds a
+  module by the declared name and knows none otherwise. `bin/corecpp` runs
+  Preproc first.
 - `Main.lean`, the executable. `bin/corecpp [ast|check|run|trace] <file | ->`.
   `trace` renders the derivation as on the board, premises over the line of
   inference, conclusion under it, rule at the right, with ρ, σ and the long
@@ -113,11 +120,13 @@ since 2026-09-18.
   Destructors run only on `delete`. No objects by value, no copy constructors,
   no RAII, no initialiser lists.
 - Lambdas only `[=]`, with copies of basic values and pointers, read only.
-  A lambda expression occurs only as initialiser of a `std::function`
-  declaration, as argument of a `std::function` parameter, or as a `return`
-  expression. No `[&]`.
+  A lambda expression occurs only as the argument of
+  `new std::function<F>(λ)`. A `std::function` is an object, created with
+  `new`, reached by pointer and called as `(*f)(ē)`, and
+  `new std::function<F>()` is the function with no target, whose call is
+  `error`. No `[&]`.
 - Templates only on classes, instantiated in type position. Overloading by
-  argument type, not distinguishing `std::function` parameters. `auto` local.
+  argument type. `auto` local.
 - Single translation unit, methods defined inside the class. Preproc runs
   before the compiler.
 - Inductive big step semantics. Divergence has no derivation, a limitation of

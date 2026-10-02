@@ -33,8 +33,6 @@ $$`\dfrac{}{\Gamma \vdash b : \mathsf{bool}}\;\textsf{(T-BoolLit)}`
 $$`\dfrac{}{\rho, \sigma \vdash n \Rightarrow \mathsf{int32}\,n, \sigma}\;\textsf{(Lit)}`
 
 $$`\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{bool}\,b, \sigma}\;\textsf{(BoolLit)}`
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Variable
@@ -45,8 +43,6 @@ The variable denotes the location the environment assigns to it. The store does 
 $$`\dfrac{\Gamma(x) = \tau}{\Gamma \vdash_{\ell} x : \tau}\;\textsf{(T-LocVar)}`
 
 $$`\dfrac{\rho(x) = \ell}{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell, \sigma}\;\textsf{(LocVar)}`
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "expr_var" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr") (uses := "judg_ty_expr, judg_ev_expr, expr_lvar")
@@ -55,8 +51,6 @@ Reading $`x` is reading $`\sigma(\rho(x))`. The location must be live.
 $$`\dfrac{\Gamma(x) = \tau}{\Gamma \vdash x : \tau}\;\textsf{(T-Var)}`
 
 $$`\dfrac{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell, \sigma \qquad \ell \in \mathrm{dom}\,\sigma}{\rho, \sigma \vdash x \Rightarrow \sigma(\ell), \sigma}\;\textsf{(Var)}`
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Unary operators
@@ -73,8 +67,6 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,b, \sigma'}{\rho, \si
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{int}\,n, \sigma'}{\rho, \sigma \vdash -e \Rightarrow \mathsf{int32}(-n), \sigma'}\;\textsf{(Neg)}`
 
 In the code, the case `Unary` of `Eval.expr` evaluates the operand and calls `Eval.unop`.
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Binary operators
@@ -91,8 +83,6 @@ $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow \mathsf{int}\,n_1
 $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{int}\,n_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow \mathsf{int}\,0, \sigma_2}{\rho, \sigma \vdash e_1 \oslash e_2 \Rightarrow \mathsf{error}}\;\textsf{(DivZero)}`
 
 In the code, the case `Binary` of `Eval.expr` evaluates both operands and calls `Eval.binop`.
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "expr_rel" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.binop, CoreCpp.Typing.compat") (uses := "judg_ty_expr, judg_ev_expr")
@@ -103,8 +93,6 @@ $$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 :
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{int} \qquad \Gamma \vdash e_2 : \mathsf{int}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Rel)}, \quad \bowtie \in \{<, <=, >, >=\}`
 
 $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow v_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v_2, \sigma_2}{\rho, \sigma \vdash e_1 \bowtie e_2 \Rightarrow \mathsf{bool}(v_1 \bowtie v_2), \sigma_2}\;\textsf{(Rel)}`
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "expr_logic" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr") (uses := "judg_ty_expr, judg_ev_expr")
@@ -121,8 +109,6 @@ $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sig
 $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow v, \sigma_2}\;\textsf{(Or-False)}`
 
 In the code, the cases `And` and `Or` of `Eval.expr` implement the two pairs of rules.
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Conditional
@@ -135,8 +121,6 @@ $$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdas
 $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-T)}`
 
 $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-F)}`
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Objects and pointers
@@ -147,8 +131,6 @@ The literal `nullptr` has the internal type $`\mathsf{nullptr\_t}`, compatible w
 $$`\dfrac{}{\Gamma \vdash \mathtt{nullptr} : \mathsf{nullptr\_t}}\;\textsf{(T-Null)}`
 
 $$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sigma}\;\textsf{(Null)}`
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "expr_new" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Store.allocMany, CoreCpp.Ty.default") (uses := "judg_ty_expr, judg_ev_expr, dom_classes, dom_store")
@@ -157,8 +139,6 @@ The expression `new C()` allocates one location per field of $`C`, each with the
 $$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\, \tau_1\, f_1; \ldots; \tau_n\, f_n; \,\}}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
 
 $$`\dfrac{\begin{array}{c} C \mapsto \mathtt{class}\ C\ \{\, \tau_1\, f_1; \ldots; \tau_n\, f_n; \,\} \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(New)}`
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "expr_deref" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.lval, CoreCpp.Eval.pointee") (uses := "judg_ty_lval, judg_ev_lval, expr_null")
@@ -167,8 +147,6 @@ The dereference `*e` denotes the location the pointer holds. When the pointer is
 $$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash_{\ell} {*e} : \tau}\;\textsf{(T-LocDeref)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma'}{\rho, \sigma \vdash {*e} \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocDeref)}`
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "expr_field" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Typing.fieldType, CoreCpp.Eval.lval, CoreCpp.Eval.fieldLoc") (uses := "judg_ty_lval, judg_ev_lval, expr_deref, dom_classes")
@@ -181,8 +159,6 @@ $$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f}{\Gamma \vdash_{\e
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e.f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocField)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e\mathtt{->}f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocArrow)}`
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "expr_read" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.readLoc") (uses := "expr_deref, expr_field, std_uses")
@@ -195,6 +171,4 @@ $$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f}{\Gamma \vdash e.f 
 $$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f}{\Gamma \vdash e\mathtt{->}f : \tau}\;\textsf{(T-Arrow)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in \mathrm{dom}\,\sigma'}{\rho, \sigma \vdash e \Rightarrow \sigma'(\ell), \sigma'}\;\textsf{(Read)}, \quad e \in \{{*e'},\ e'.f,\ e'\mathtt{->}f\}`
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::

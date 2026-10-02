@@ -1,33 +1,26 @@
-import CoreCpp.Std.Intrinsic
+import CoreCpp.Std.Module
 
 /-!
-# `assert`, the intrinsic of `<cassert>`
+# `assert`, the functions of `<cassert>`
 
     void assert(bool condition);
 
 In C++ `assert` is a macro. With `NDEBUG` undefined, a failed assertion calls
 `abort`, and Core C++ gives `error`, which ends with the same exit status.
+The relations are `CoreCpp.Semantics.Assert`.
 -/
 
-namespace CoreCpp.Std
+namespace CoreCpp.Std.Assert
 
-def assert : Intrinsic where
-  name := "assert"
-  arity := 1
-  /-  ───────────────────────────── (TA-Call)
-      Γ ⊢_assert call : bool → void                                              -/
-  sig
-    | .call, _ => .ok { params := [.bool], ret := .void }
-    | u, _ => .error s!"assert has no {u.toString}"
-  eval _ use _ args σ :=
-    match use, args with
-    /-  ──────────────────────────────── (A-True)
-        σ ⊢_assert call(true) ⇒ void, σ
+/-- TA-Call. -/
+def statics : StaticFns where
+  call := some ([.bool], .void)
 
-        ──────────────────────────────── (A-False)
-        σ ⊢_assert call(false) ⇒ error                                            -/
-    | .call, [.bool true] => return ("A-True", .val .void, σ)
-    | .call, [.bool false] => throw (.library "assertion failed")
-    | u, _ => throw (.typeError s!"assert has no {u.toString} on these arguments")
+/-- A-True. A failed assertion is `error`. -/
+def fns : Fns where
+  call
+    | [.bool true], σ => return ("A-True", .void, σ)
+    | [.bool false], _ => throw (.library "assertion failed")
+    | _, _ => throw (.typeError "assert has no call on these arguments")
 
-end CoreCpp.Std
+end CoreCpp.Std.Assert

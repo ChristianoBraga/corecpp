@@ -135,19 +135,31 @@ relations, `wf`, `new`, `index`, `delete` and `call`, which the rules
 T-NewLib, T-IndexLib, T-LocIndexLib, T-DeleteLib and T-CallLib take as
 premises, and WF-Lib for the well formed instances. The module is found by
 the name the header declares, `moduleOf` and `staticOf`, and nothing else
-links the two. No flag describes a type of the library. Whether a type is
+links the two.
+
+The function side, `CoreCpp/Std/Module.lean`, mirrors the two structures.
+`StaticFns` has `wf`, `new`, `index`, `delete` and `call` as functions, the
+signatures of `new` as a list, one per arity, and `Fns` has the dynamic
+functions, each returning the name of the rule it concludes for the trace.
+`Std.staticFnsOf` and `Std.fnsOf` find them by the declared name, and
+`Std.isObject` is true of a class and of a library type whose module gives
+`new` a signature. The type checker calls them where the rules have a module
+premise, `staticsOf` in `Typing.lean`, and the evaluator through `libStep`,
+which records the premise in the trace under the rule of the module. No flag describes a type of the library. Whether a type is
 an object type is read from the keyword `class` of its declaration in the
 header. Whether a type converts to it is an instance of τ′ ↪ τ that the module
-adds. What `new` gives a field of the type is the evaluation of the default
-initialiser τ(), a core judgement, to which the module adds its own rule. The
-structures `Statics`, `Intrinsic`, `Sig`, `Use` and `Result` of
-`CoreCpp/Std/Intrinsic.lean`, the node `Expr.intrinsic`, the rewriting of the
-uses in `Typing.annotate` and the functions `Std.isObject`, `Std.convertible`
-and `Std.hasDefault` go when the interpreter is rewritten, step 4.
+adds. No field has a library type, since every library type is an object,
+so the default `new` gives a field is `Ty.default` of a basic or pointer
+type, and no module needs a default. The structures `Statics`, `Intrinsic`,
+`Sig`, `Use` and `Result` of the former `CoreCpp/Std/Intrinsic.lean`, the
+node `Expr.intrinsic`, the rewriting of the uses in `Typing.annotate` and the
+flags `convertible` and `hasDefault` are gone since step 4.
 
 An object type is a class or an entity of the library whose module gives
 `new` a signature, `Semantics.IsObject`, so no flag says which library types
-are objects.
+are objects. The implementation of the test, `Std.isObject`, asks the
+functions of the module for the signatures of `new` and is true when there is
+one.
 
 `std::function` is an object, by the decision of 2026-10-01, and the
 relations state it. `new std::function<F>(λ)` creates it, rules F-New and
@@ -160,8 +172,8 @@ call of the function with no target has no derivation. A lambda is
 acceptable at its function type F, rule T-Lambda, so it occurs as the
 argument of `new`. No variable, field or parameter has the type by value,
 since it is an object type, and a reference to it binds as any object does.
-The interpreter, the tests, the examples and the blueprint still have the
-earlier treatment, a closure stored by value, and step 4 brings them to this.
+The interpreter, the tests, the examples and the blueprint follow, since
+step 4.
 
 ## Overload resolution
 
@@ -199,10 +211,17 @@ of the same name gives the rules, and the link between them is the name.
 ## The interpreter
 
 `Eval.lean` keeps its monad and its trace. The trace it prints is a derivation
-of the relation. Its `partial def` become recursion on fuel, as in Radix, so
-that theorems about it are possible, and the library sites become calls of the
-module functions in the places where the relation has a module premise. Its
-results on every test and example stay the same.
+of the relation. Since step 4 every function of its `mutual` block, and every
+function of the two blocks of `Typing.lean`, with `wellFormed`, `refReturns`
+and `refRets`, takes a first argument `fuel : Nat` and recurses on it
+structurally, as in Radix, so that theorems about them are possible. No
+`partial def` remains in the two files. Fuel exhaustion is `Error.outOfFuel`
+and `TypeError.outOfFuel`, and `runWith`, `run` and `typingFuel` give a bound
+of 10⁶ that no program reaches, since fuel bounds the depth of a derivation
+and not its size. The library sites are calls of the module functions where
+the relation has a module premise. Its results on every test and example
+stayed the same, and the examples of `std::function` were rewritten with
+`new` and `(*f)(ē)`.
 
 ## The theorems
 
@@ -240,15 +259,18 @@ Each step leaves every check green, `lake build`, the three test files,
 4. The interpreter. `Eval.lean` and `Typing.lean` on fuel, the library as
    relation plus function, the intrinsics gone, `Typing.annotate` without the
    rewriting of uses, `std::function` as an object, with the tests, the
-   examples and the grammar if `new std::function<F>(λ)` needs a production.
+   examples, the Library chapter and the lambda nodes of the blueprint, and
+   the design lines of `CLAUDE.md`. Done. The grammar needed no production,
+   since `new ClassType Args` and `( Expr ) Args` already derive
+   `new std::function<F>(λ)` and `(*f)(ē)`.
 5. Determinism, then soundness, then completeness.
 6. The blueprint and the design lines of `CLAUDE.md`.
 
 ## Open
 
-- Whether `Expr.intrinsic`, `locOf` and the fields `static` and `sig` stay in
-  the AST as the annotations of the type checker, or the relation is stated
-  over the source program with the annotations as premises.
+- Whether `locOf` and the fields `static` and `sig` stay in the AST as the
+  annotations of the type checker, or the relation is stated over the source
+  program with the annotations as premises.
 - The merge order with `converge-chapter-2` and `converge-chapter-3`, both
   unmerged, and the redo of their open defects on this design.
 - The grammar, if `new std::function<F>(λ)` needs a production.

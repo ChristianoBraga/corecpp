@@ -20,10 +20,9 @@ every relation. The auxiliaries `Args`, `Bind`, `Member`, `CallMethod`,
 The relation is the specification and `CoreCpp.Eval` the implementation.
 There is no `error`. Whatever C++17 leaves undefined has no derivation, and
 the evaluator gives `error` for it. The subject is the program as
-`Typing.annotate` leaves it, without the node `Expr.intrinsic`. A subject of
-the library is judged by the module its header declares, through the
-relations of `CoreCpp.Semantics.Library`, the premises of NewLib, LocIndex,
-DeleteLib and CallLib.
+`Typing.annotate` leaves it. A subject of the library is judged by the module
+its header declares, through the relations of `CoreCpp.Semantics.Library`,
+the premises of NewLib, LocIndex, DeleteLib and CallLib.
 -/
 
 namespace CoreCpp.Semantics

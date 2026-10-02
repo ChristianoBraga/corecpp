@@ -24,7 +24,8 @@ C++17 leaves undefined is rejected statically or is the runtime result
 | `CoreCpp/Eval.lean` | Evaluator in natural semantics, one function per judgment, each rule in the comment of the case that implements it |
 | `CoreCpp/Pretty.lean` | Printing of syntax and semantic domains |
 | `CoreCpp/Templates.lean` | Expansion of class templates by substitution, before checking |
-| `CoreCpp/Std.lean`, `CoreCpp/Std/` | The library, one intrinsic per declaration of a header, with its typing and evaluation judgements |
+| `CoreCpp/Semantics/` | The semantics as relations, the dynamic and the static judgements and the relations of the library |
+| `CoreCpp/Std.lean`, `CoreCpp/Std/` | The library, one module per declaration of a header, the functions of its relations |
 | `Main.lean`, `bin/corecpp` | Command line interpreter |
 | `CoreCpp/Grammar.lean` | The grammar of Core C++ with the theorem that it is LL(1), by the package [ll1-lean](https://github.com/ChristianoBraga/ll1-lean) |
 | `grammar/core-cpp.ebnf`, `CoreCpp/GrammarRules.lean` | The grammar of Core C++ in EBNF, and the Lean module that `lake exe ebnf2lean` generates from it |
@@ -124,8 +125,9 @@ lives on the branch `gh-pages`, the contents of that directory plus an empty
   mandatory.
 - Every object is created with `new`, reached by pointer or reference and never
   copied. Destructors run only on `delete`.
-- Lambdas capture only by copy, `[=]`, and occur only where C++ converts them
-  to a known `std::function`.
+- Lambdas capture only by copy, `[=]`, and occur only as the argument of
+  `new std::function<F>(λ)`. A `std::function` is an object, reached by
+  pointer and called as `(*f)(ē)`.
 - Divergence has no derivation. The inductive big step semantics does not
   describe non terminating executions, a limitation of the style (Kahn,
   RR-0601, §4.4, p. 11).

@@ -30,9 +30,9 @@ Overloading, polymorphism, subtyping and inference.
 :::definition "overload_set" (parent := "ud6") (lean := "CoreCpp.sigOf, CoreCpp.Program.funsNamed, CoreCpp.Program.findMethods, CoreCpp.Typing.distinguishable") (uses := "fun_decl, cls_decl")
 A name denotes an overload set, the functions of the program with that name, or the methods of that name along the chain of a class, one per signature. A method of a derived class replaces the one of a base with the same signature, and a different signature is another overload, so the subset has no name hiding. Two declarations of one name live together only when they differ.
 
-$$`\dfrac{\text{arities differ, or } \exists i.\ p_i \neq q_i \text{ and neither } p_i \text{ nor } q_i \text{ is convertible}}{\text{the two declarations are overloads}}\;\textsf{(Distinguishable)}`
+$$`\dfrac{\text{arities differ, or } \exists i.\ p_i \neq q_i \text{ and neither } p_i \text{ nor } q_i \text{ is a } \mathtt{std{:}{:}function}}{\text{the two declarations are overloads}}\;\textsf{(Distinguishable)}`
 
-A type is convertible when the library marks it so, as `std::function` of {bpref "std_function"}[]. The restriction is the check 5 of the design. It keeps a lambda argument from deciding a call, which would ask for the type of the lambda before the candidate that gives it is known.
+The restriction is the check 5 of the design. It keeps a lambda argument from deciding a call, which would ask for the type of the lambda before the candidate that gives it is known. Since a `std::function` is an object of {bpref "std_function"}[], no parameter has it by value, and a lambda is only the argument of `new`, so the exclusion is never exercised and two overloads are distinct exactly when a parameter type differs.
 :::
 
 :::definition "overload_pick" (parent := "ud6") (lean := "CoreCpp.Typing.pickOverload, CoreCpp.Typing.resolveFun, CoreCpp.Typing.resolveMethod") (uses := "overload_set, fun_call, cls_method")
@@ -41,14 +41,10 @@ A call collects the candidates of its arity that accept the arguments, each argu
 $$`\dfrac{\begin{array}{c} A = \text{the candidates of } \mathrm{cand}(f, k) \text{ that accept } e_1, \ldots, e_k \\ A \text{ has one element whose parameters are} \\ \text{exactly the types of the arguments, or } A \text{ is a singleton} \end{array}}{\text{the call of } f \text{ selects that candidate}}\;\textsf{(T-Overload)}`
 
 With $`A` empty the error is the one of the single candidate of that arity, when there is one, and no overload otherwise. With two or more in $`A` and no exact one the call is ambiguous. Core C++ does not rank conversion sequences as C++ does, so the rule fits in one line on the board and the error is predictable.
-
-The implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "overload_sig" (parent := "ud6") (lean := "CoreCpp.FunEnv.lookupSig, CoreCpp.Eval.resolve, CoreCpp.Typing.annotate") (uses := "overload_pick, judg_ev_expr")
 Overloading adds no evaluation rule. The type checker writes the signature of the chosen candidate into the tree, the field `sig` of a call, and the evaluator looks a function or a method up by name and signature instead of by name alone. A program that was not annotated, which the checker rejects first, runs with the first candidate of the name.
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Operator members
@@ -61,8 +57,6 @@ $$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : C\qquad C \text{ has } \mathtt{op
 $$`\dfrac{\begin{array}{c} \Gamma \vdash e : C\qquad C \text{ has } \mathtt{operator[]} \text{ visible from } \Gamma \\ \Gamma \vdash e.\mathtt{operator[]}(i) : \tau \end{array}}{\Gamma \vdash e[i] : \tau}\;\textsf{(T-OpIndex)}`
 
 The type checker rewrites both forms into the call of the member, and from there they are ordinary method calls, with the visibility, the overload resolution and the dispatch of a method. The trace shows the rule `MethodCall` under the infix form, which is the point.
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 :::definition "op_refret" (parent := "ud6") (lean := "CoreCpp.Method, CoreCpp.Typing.refReturns, CoreCpp.Typing.refRets, CoreCpp.Eval.callMethod") (uses := "op_member, judg_ev_lval")
@@ -83,8 +77,6 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \
 $$`\dfrac{\text{the member } m \text{ of } C \text{ returns } \tau\& \qquad \text{member } \ell\ (e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\ \ell', \sigma'}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell', \sigma'}\;\textsf{(MethodLoc)}`
 
 In value position the same call reads $`\sigma'(\ell')`. A location a member returns is that of a field or of an element of a vector of the receiver, and it survives the call because the object lives in $`\sigma`. A member that returned the location of a parameter by value would return a freed location, and reading it is `error`, by the general rule of locations outside $`\sigma`.
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Parametric polymorphism
@@ -103,8 +95,6 @@ The substitution replaces the type `T` in every field, parameter, result, local 
 The rule applies to a fixed point, because the class it adds may mention another instantiation, and it is idempotent, so `check` and `runWith` may both apply it.
 
 A template is never checked, only its instantiations are, as in C++, and two instantiations of one template are two independent classes with no subtype relation between them.
-
-Some of the implementations are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
 # Subtyping and inference

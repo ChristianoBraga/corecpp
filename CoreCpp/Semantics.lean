@@ -12,7 +12,8 @@ Locations ℓ, values v, environment ρ, store σ, control results r and the
 * An object is a record of locations with a class tag, stored at its own
   location. A pointer value is the location of an object. A value of the
   library, such as a vector, carries the name of its template and a list of
-  locations, whose meaning its module of `CoreCpp.Std` gives.
+  locations, whose meaning its module of `CoreCpp.Std` gives. A
+  `std::function` is such a value, with one location, its target.
 * A closure is the value of a lambda expression, its parameters, its body
   and the read only copies of the variables it captured.
 * Inside a method, `this` is bound in ρ to the location of the receiver, an
@@ -53,9 +54,8 @@ def Int32.inRange (n : Int) : Bool := Int32.min ≤ n && n ≤ Int32.max
 
 /-- The default value of a type, the one `new` gives to every field and
 element before the constructor runs. Object types have no value, their default
-is never asked. A field of function type starts empty, `void`, and a call
-through it before the constructor assigns a lambda is `error`, as the
-`bad_function_call` of C++. -/
+is never asked, and a field or an element has a basic or a pointer type, so
+the last case is never reached by a well typed program. -/
 def Ty.default : Ty → Val
   | .int => .int 0
   | .bool => .bool false
@@ -77,6 +77,8 @@ inductive Error where
   | typeError (msg : String)     -- for programs that skipped the type checker
   | missingReturn (f : String)
   | notCallable (v : Val)
+  | noTarget                     -- a call of a std::function with no target
+  | outOfFuel
   | deleteWithoutVirtualDtor (static tag : String)
   | doubleDelete (l : Loc)
   | library (msg : String)       -- an error that a rule of `CoreCpp.Std` gives

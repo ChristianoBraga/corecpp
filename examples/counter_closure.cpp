@@ -7,14 +7,14 @@ public:
   int value;
 };
 
-std::function<int()> counter() {
+std::function<int()>* counter() {
   Box* c = new Box();
   c->value = 0;
-  return [=]() -> int { c->value = c->value + 1; return c->value; };
+  return new std::function<int()>([=]() -> int { c->value = c->value + 1; return c->value; });
 }
 
 int main() {
-  std::function<int()> k = counter();
-  int first = k();
-  return k() + k() + first;
+  std::function<int()>* k = counter();
+  int first = (*k)();
+  return (*k)() + (*k)() + first;
 }

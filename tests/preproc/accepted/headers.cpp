@@ -10,8 +10,8 @@ int main() {
   (*v)[1] = 5;
   int s = (*v)[0] + (*v)[1];
 #ifdef CCPP_FUN
-  std::function<int(int)> twice = [=](int x) -> int { return 2 * x; };
-  s = twice(s);
+  std::function<int(int)>* twice = new std::function<int(int)>([=](int x) -> int { return 2 * x; });
+  s = (*twice)(s);
 #endif
   return s;
 }

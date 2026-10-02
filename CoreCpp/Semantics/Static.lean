@@ -78,15 +78,6 @@ end CoreCpp.Semantics
 
 namespace CoreCpp
 
-/-- The type `std::function<τ(τ₁, …, τₖ)>` of the object that holds a closure
-of result τ and parameters τ₁, …, τₖ. -/
-def Ty.function (r : Ty) (ps : List Ty) : Ty := .lib "std::function" [.fn r ps]
-
-/-- Whether a type is a `std::function`. -/
-def Ty.isFunction : Ty → Bool
-  | .lib "std::function" _ => true
-  | _ => false
-
 /-- The type of `e₁ ? e₂ : e₃` from the types of its branches, the common one,
 or the one the other converts to. -/
 def Ty.join (p : Program) (t₂ t₃ : Ty) : Option Ty :=
