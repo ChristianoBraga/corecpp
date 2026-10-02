@@ -96,9 +96,8 @@ Function call is a form of `Expr` because `Args` is part of `PostfixExpr`.
 
 `methodCall e arrow m args static sig` is `e.m(args)` when `arrow` is false
 and `e->m(args)` when it is true. `lambda ps τ c` is `[=](ps) -> τ { c }`,
-which the grammar admits only as an argument, as the initialiser of a
-declaration and as the expression of `return`, and the type checker only as
-the argument of `new std::function<F>(λ)`.
+which the grammar admits only as an argument of `new`, and the type checker
+only as the argument of `new std::function<F>(λ)`.
 
 Two fields carry what the type checker learns and the evaluator needs. The
 field `static` of `methodCall` is the class of the receiver as the type

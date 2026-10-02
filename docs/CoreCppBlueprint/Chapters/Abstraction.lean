@@ -62,7 +62,7 @@ $$`\dfrac{\Gamma \vdash e : \tau' \qquad \tau' \approx \tau \qquad \tau' \text{ 
 
 $$`\dfrac{\begin{array}{c} \Gamma' = \Gamma \text{ marked read only}, [x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k]\qquad \Gamma' \vdash c \dashv \Gamma'' \\ \tau, \tau_i \text{ storable and well formed} \end{array}}{\Gamma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \lhd \tau(\tau_1, \ldots, \tau_k)}\;\textsf{(T-Lambda)}`
 
-Anywhere else a lambda is a type error, since no other position expects a function type, and `auto x = [=]…` is a syntax error, because the grammar admits a lambda only as an argument expression.
+Anywhere else a lambda is a syntax error, since the grammar admits it only as an argument of `new`, and as the argument of a `new` of a class of the program it is a type error, since no constructor parameter has a function type. The grammar chapter, {bpref "parse_statement"}[], explains the decision.
 :::
 
 :::definition "lambda" (parent := "ud4") (lean := "CoreCpp.Eval.expr, CoreCpp.Eval.captures, CoreCpp.Expr.vars, CoreCpp.Cmd.vars, CoreCpp.Semantics.Eval, CoreCpp.captures?") (uses := "judg_ev_expr, dom_closure, fun_accept")

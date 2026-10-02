@@ -170,7 +170,9 @@ in N4659 §23.14.13.2.1 ¶1. It is reached by pointer and called as `(*f)(ē)`,
 rule CallFn of the language, which reads the target and applies it, and a
 call of the function with no target has no derivation. A lambda is
 acceptable at its function type F, rule T-Lambda, so it occurs as the
-argument of `new`. No variable, field or parameter has the type by value,
+argument of `new`, and since 2026-10-02 the grammar admits it nowhere else,
+`NewArg = Lambda | Expr` under `new ClassType NewArgs`, with `Args` over
+`Expr` for calls. No variable, field or parameter has the type by value,
 since it is an object type, and a reference to it binds as any object does.
 The interpreter, the tests, the examples and the blueprint follow, since
 step 4.
@@ -264,9 +266,9 @@ Each step leaves every check green, `lake build`, the three test files,
    relation plus function, the intrinsics gone, `Typing.annotate` without the
    rewriting of uses, `std::function` as an object, with the tests, the
    examples, the Library chapter and the lambda nodes of the blueprint, and
-   the design lines of `CLAUDE.md`. Done. The grammar needed no production,
-   since `new ClassType Args` and `( Expr ) Args` already derive
-   `new std::function<F>(λ)` and `(*f)(ē)`.
+   the design lines of `CLAUDE.md`. Done. The grammar then tightened on
+   2026-10-02, a lambda only as an argument of `new`, since a declaration or
+   a `return` of a lambda would hold the `std::function` by value.
 5. Determinism, then soundness, then completeness. Postponed by decision
    of 2026-10-02, the convergence of each chapter comes first.
 6. The blueprint and the design lines of `CLAUDE.md`. Done.
@@ -278,7 +280,6 @@ Each step leaves every check green, `lake build`, the three test files,
   program with the annotations as premises.
 - The merge order with `converge-chapter-2` and `converge-chapter-3`, both
   unmerged, and the redo of their open defects on this design.
-- The grammar, if `new std::function<F>(λ)` needs a production.
 - The condition `inherited` of `ClassOk` transcribes the type checker as it
   is, a redefined method must be marked `virtual` in the base, which rejects
   the third level of a chain. The decision that `override` implies `virtual`,

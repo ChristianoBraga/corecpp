@@ -260,9 +260,13 @@ int main() { Button* b = new Button(); b->handler = new std::function<int()>([=]
 -- a std::function is an object, never held by value, in a field or in a variable
 #eval (parseStd "class C { public: std::function<int()> f; }; int main() { return 0; }").map check
 #eval (parseStd "int main() { std::function<int()>* p = new std::function<int()>(); std::function<int()> f = *p; return 0; }").map check
--- a lambda occurs only as the argument of new std::function
-#eval (parseStd "int applyTwice(std::function<int(int)>* f, int x) { return (*f)((*f)(x)); }
-int main() { return applyTwice([=](int x) -> int { return x * x; }, 3); }").map check
+-- a lambda occurs only as an argument of new, by the grammar
+#eval parseStd "int applyTwice(std::function<int(int)>* f, int x) { return (*f)((*f)(x)); }
+int main() { return applyTwice([=](int x) -> int { return x * x; }, 3); }"
+#eval parseStd "int main() { std::function<int()> f = [=]() -> int { return 1; }; return 0; }"
+#eval parseStd "int main() { return [=]() -> int { return 1; }; }"
+-- and only of new std::function, by the type checker
+#eval (parseStd "class C { public: int n; C(int m) { n = m; } }; int main() { C* c = new C([=]() -> int { return 1; }); return 0; }").map check
 
 -- the trace of a call through a function object
 #eval do
