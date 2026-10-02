@@ -195,10 +195,11 @@ class template.
 ClassType = NsId "::" QualTail | TypeId [ TemplateArgs ] ;
 ```
 
-An unqualified name is read in the enclosing namespace, and a class template
-takes one template argument. The instantiation is named by the chain the design prints for the type, so
-`Stack<int>` in the source and the expanded class have the same name, and
-`Templates.instantiate` adds the class before the program is checked. -/
+The function reads an unqualified name in the enclosing namespace, and a class
+template takes one template argument. The name of the instantiation is the
+string `Ty.toString` prints for the type, so `Stack<int>` in the source and the
+expanded class have the same name, and `Templates.instantiate` adds the class
+before the type checker runs. -/
 partial def classType : P Ty := do
   match ← peek with
   | .nsId n => advance; expectSym "::"; qualTail (n ++ "::")
@@ -373,8 +374,9 @@ ChainNoCall = [ ( "[" Expr "]" Chain | "." VarId After
 ```
 
 An `Args` after a variable is the call `f(…)`, of the function named `f`, of the
-function value bound to `f` or of the method `f` of `this`, and after any other
-postfix expression it is the call of a function value, `callFn`. The forms `.m(…)`
+`std::function` a reference `f` names or of the method `f` of `this`, and after
+any other postfix expression it is the call of the `std::function` that
+expression denotes, `callFn`, as in `(*f)(ē)`. The forms `.m(…)`
 and `->m(…)` are method calls, with the static class left for the type checker, and
 a field access never takes `Args` directly. -/
 partial def postfixExpr : P Expr := do
@@ -778,10 +780,10 @@ Declaration = "namespace" Name "{" { Declaration } "}"
 
 A namespace holds classes, templates and namespaces, and its name is of either
 case, since the library opens `namespace std`, which only a header of Core C++
-opens. Its declarations are flattened into the program with qualified names. A
-class template with a body has one type parameter. A class template declared
-without a body is a class of the library, named in lowercase, which an
-intrinsic implements. -/
+opens. The function flattens its declarations into the program with qualified
+names. A class template with a body has one type parameter. A class template declared
+without a body is a class of the library, named in lowercase, which a module
+of the library implements. -/
 partial def declaration : P (List Decl) := do
   match ← peek with
   | .kw "class" => return [.cls (← classDecl)]
@@ -799,7 +801,7 @@ partial def declaration : P (List Decl) := do
     -- After `class` the case of the name decides. A type identifier opens a
     -- class of the program, with its body. A variable identifier opens a
     -- class declared without a body, which the library names in lowercase and
-    -- an intrinsic implements.
+    -- a module of the library implements.
     match ← peek with
     | .varId n =>
       advance

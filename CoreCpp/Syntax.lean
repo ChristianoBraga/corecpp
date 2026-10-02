@@ -1,9 +1,9 @@
 /-!
 # Core C++ abstract syntax, subset
 
-Basic types, class and pointer types, vectors, function types, expressions,
-lambdas, commands, classes with fields, methods, constructors, destructors and
-single inheritance, and functions. A statement is a command or an expression
+Basic types, class and pointer types, types of the library, function types,
+expressions, lambdas, commands, classes with fields, methods, constructors,
+destructors and single inheritance, and functions. A statement is a command or an expression
 followed by `;`. Assignment and `delete` are commands. One inductive type per
 class of nonterminals of the grammar of the blueprint, section 1.2. Namespaces
 are flattened by the parser into qualified class names, `N::C`.
@@ -89,10 +89,10 @@ the object and runs the constructor, and `newLib τ args` is `new τ(args)` for
 a type of the library, `new std::vector<int>(3)` for instance. `this` is the
 location of the receiver inside a method.
 
-`call f args` calls the function named `f`, or the function value bound to `f`
-when `f` is a variable in scope, or the method `f` of `this` inside a class.
-`callFn e args` calls the function value `e`. Function call is a form of
-`Expr` because `Args` is part of `PostfixExpr`.
+`call f args` calls the function named `f`, or the `std::function` that a
+reference `f` in scope names, or the method `f` of `this` inside a class.
+`callFn e args` calls the `std::function` that `e` denotes, as in `(*f)(ē)`.
+Function call is a form of `Expr` because `Args` is part of `PostfixExpr`.
 
 `methodCall e arrow m args static sig` is `e.m(args)` when `arrow` is false
 and `e->m(args)` when it is true. `lambda ps τ c` is `[=](ps) -> τ { c }`,
