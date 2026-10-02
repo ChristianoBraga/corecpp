@@ -145,19 +145,23 @@ structures `Statics`, `Intrinsic`, `Sig`, `Use` and `Result` of
 uses in `Typing.annotate` and the functions `Std.isObject`, `Std.convertible`
 and `Std.hasDefault` go when the interpreter is rewritten, step 4.
 
-`std::function` adds no dynamic relation today. Its value is a closure, a
-value of the language, its call is the rule Apply, and the type checker reads
-`std::function<τ(τ̄)>` as the written form of the function type τ(τ̄), the
-type a lambda is acceptable at, rule T-Lambda, and the type a value is
-called at, rule T-CallFn. Its module states only which instances are well
-formed. An object type is a class or an entity of the library whose module
-gives `new` a signature, `Semantics.IsObject`, which is how the type checker
-tells a vector from a `std::function` without a flag. The decision of 2026-10-01 that
-`std::function` becomes an object created with `new std::function<F>(λ)`,
-reached by pointer and called as `(*f)(3)`, is a semantic change of both the
-relation and the interpreter and comes after step 4, with the default
-initialiser `new std::function<F>()` giving the function with no target, as in
-N4659 §23.14.13.2.1 ¶1, whose call has no derivation.
+An object type is a class or an entity of the library whose module gives
+`new` a signature, `Semantics.IsObject`, so no flag says which library types
+are objects.
+
+`std::function` is an object, by the decision of 2026-10-01, and the
+relations state it. `new std::function<F>(λ)` creates it, rules F-New and
+TF-New of its module, with the closure as its target at a location of its
+own, and `new std::function<F>()` creates the function with no target, rules
+F-Empty and TF-Empty, `null` at that location, as default construction does
+in N4659 §23.14.13.2.1 ¶1. It is reached by pointer and called as `(*f)(ē)`,
+rule CallFn of the language, which reads the target and applies it, and a
+call of the function with no target has no derivation. A lambda is
+acceptable at its function type F, rule T-Lambda, so it occurs as the
+argument of `new`. No variable, field or parameter has the type by value,
+since it is an object type, and a reference to it binds as any object does.
+The interpreter, the tests, the examples and the blueprint still have the
+earlier treatment, a closure stored by value, and step 4 brings them to this.
 
 ## Overload resolution
 
@@ -235,10 +239,10 @@ Each step leaves every check green, `lake build`, the three test files,
    conditions on the declarations and not premises on subterms.
 4. The interpreter. `Eval.lean` and `Typing.lean` on fuel, the library as
    relation plus function, the intrinsics gone, `Typing.annotate` without the
-   rewriting of uses.
-5. `std::function` as an object, in the relation and in the interpreter.
-6. Determinism, then soundness, then completeness.
-7. The blueprint and the design lines of `CLAUDE.md`.
+   rewriting of uses, `std::function` as an object, with the tests, the
+   examples and the grammar if `new std::function<F>(λ)` needs a production.
+5. Determinism, then soundness, then completeness.
+6. The blueprint and the design lines of `CLAUDE.md`.
 
 ## Open
 

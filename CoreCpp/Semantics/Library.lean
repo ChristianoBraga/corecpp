@@ -111,18 +111,60 @@ end Vector
 
 /-! ## `std::function`, the module of `<functional>`
 
-A value of `std::function<τ(τ̄)>` is a closure, a value of the language, and
-its call is the application of a closure, the rule Apply. The type is the
-written form of the function type τ(τ̄), and the type checker treats it as
-such. The module states only which instances are well formed, those whose
-argument is a function type. -/
+A `std::function<τ(τ̄)>` is an object, created with `new std::function<F>(λ)`
+or `new std::function<F>()`, reached by pointer and called as `(*f)(ē)`, the
+rule CallFn of the language. Its value in σ is `lib std::function [ℓ_t]`, with
+the target, a closure, at ℓ_t, or `null` at ℓ_t for the function with no
+target, which default construction gives, as N4659 §23.14.13.2.1 ¶1 states. A
+call of the function with no target has no derivation. The type is the
+written form of the function type τ(τ̄), the type a lambda has. -/
 
 namespace Function
 
-def module : Module := {}
+/-- σ ⊢_function new⟨F⟩(w) ⇒ loc ℓ, σ′, and new⟨F⟩() for the function with no
+target. -/
+inductive New : List Ty → List Val → Store → Val → Store → Prop where
+  | target
+      (hw : w = .closure ps r b cap)
+      (ht : σ.alloc w = (ℓₜ, σ₁))
+      (ho : σ₁.alloc (.lib "std::function" [ℓₜ]) = (ℓ, σ₂)) :
+    -- ───────────────────────────────── (F-New)
+      New [F] [w] σ (.loc ℓ) σ₂
+
+  | empty
+      (ht : σ.alloc .null = (ℓₜ, σ₁))
+      (ho : σ₁.alloc (.lib "std::function" [ℓₜ]) = (ℓ, σ₂)) :
+    -- ──────────────────────────────── (F-Empty)
+      New [F] [] σ (.loc ℓ) σ₂
+
+/-- σ ⊢_function delete v ⇒ σ′. -/
+inductive Delete : Val → Store → Store → Prop where
+  /-- The language frees the location of the object itself. -/
+  | delete :
+    -- ──────────────────────────────── (F-Delete)
+      Delete (.lib L ls) σ (σ.free ls)
+
+def module : Module := { new := New, delete := Delete }
+
+/-- Γ ⊢_function new : F → std::function<F>*, and new : → std::function<F>*. -/
+inductive TNew : List Ty → List Ty → Ty → Prop where
+  | target :
+    -- ────────────────────────────────────────────────── (TF-New)
+      TNew [.fn r ps] [.fn r ps] (.ptr (.lib "std::function" [.fn r ps]))
+
+  | empty :
+    -- ───────────────────────────────────────────── (TF-Empty)
+      TNew [.fn r ps] [] (.ptr (.lib "std::function" [.fn r ps]))
+
+/-- Γ ⊢_function delete ok. -/
+inductive TDelete : List Ty → Prop where
+  | delete :
+    -- ─────────────── (TF-Delete)
+      TDelete [.fn r ps]
 
 def statics : StaticModule :=
-  { wf := fun ts => match ts with | [.fn ..] => True | _ => False }
+  { wf := fun ts => match ts with | [.fn ..] => True | _ => False,
+    new := TNew, delete := TDelete }
 
 end Function
 

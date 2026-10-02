@@ -25,10 +25,11 @@ An ill typed program has no derivation. The subject is the program as
 selects filled in. Choosing that overload, rule T-Overload, is the work of
 the type checker, and the relation reads its result, so a call without a
 signature has a derivation only when its name has one overload.
-`std::function<τ(τ̄)>` is the written form of the type of a closure, a type
-of the language, and a subject of the library is judged by the static
-relations of its module in `CoreCpp.Semantics.Library`, the premises of
-T-NewLib, T-IndexLib, T-LocIndexLib, T-DeleteLib and T-CallLib.
+A `std::function<F>` is an object, created with `new std::function<F>(λ)`,
+where the lambda is acceptable at its function type F, reached by pointer and
+called as `(*f)(ē)`, rule T-CallFn. A subject of the library is judged by the
+static relations of its module in `CoreCpp.Semantics.Library`, the premises
+of T-NewLib, T-IndexLib, T-LocIndexLib, T-DeleteLib and T-CallLib.
 -/
 
 namespace CoreCpp.Semantics
@@ -77,8 +78,8 @@ end CoreCpp.Semantics
 
 namespace CoreCpp
 
-/-- The type `std::function<τ(τ₁, …, τₖ)>` of a closure of result τ and
-parameters τ₁, …, τₖ. -/
+/-- The type `std::function<τ(τ₁, …, τₖ)>` of the object that holds a closure
+of result τ and parameters τ₁, …, τₖ. -/
 def Ty.function (r : Ty) (ps : List Ty) : Ty := .lib "std::function" [.fn r ps]
 
 /-- Whether a type is a `std::function`. -/
@@ -507,9 +508,10 @@ inductive Accept (p : Program) : TEnv → Expr → Ty → Prop where
     -- ─────────── (Accept)
       Γ ⊢ e ◁ τ
 
-  /-- The body is checked under Γ with every variable of the enclosing scope
-  marked read only, the copies of `[=]`, and with the parameters of the
-  lambda as ordinary variables. -/
+  /-- A lambda is acceptable at its function type, the argument of
+  `new std::function<F>(λ)`. The body is checked under Γ with every variable
+  of the enclosing scope marked read only, the copies of `[=]`, and with the
+  parameters of the lambda as ordinary variables. -/
   | lambda
       (hr : r = .void ∨ Storable r)
       (hwr : WF p r)
@@ -517,7 +519,7 @@ inductive Accept (p : Program) : TEnv → Expr → Ty → Prop where
       (hwps : ∀ q ∈ ps, WF p q.ty)
       (hb : ⟨Γ.captured.bindParams ps, r⟩ ⊢ b ⊣* Γ') :
     -- ───────────────────────────────────────────────────── (T-Lambda)
-      Γ ⊢ .lambda ps r b ◁ Ty.function r (ps.map (·.ty))
+      Γ ⊢ .lambda ps r b ◁ .fn r (ps.map (·.ty))
 
 /-- The arguments of a call against its parameters, by value with ◁ and by
 reference with ⊢ₗ, shared by T-Call, T-New and T-Method. -/

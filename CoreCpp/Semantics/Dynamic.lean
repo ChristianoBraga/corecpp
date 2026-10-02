@@ -307,7 +307,8 @@ inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop
   /-- A variable f bound to a closure hides the function named f. -/
   | callVar
       (hρ : ρ.lookup f = some ℓ)
-      (hv : ⟨ρ, σ⟩ ⊢ .var f ⇒ w, σ₁)
+      (hv : ⟨ρ, σ⟩ ⊢ .var f ⇒ .lib "std::function" [ℓₜ], σ₁)
+      (ht : σ₁.read ℓₜ = some w)
       (ha : ApplyArgs p ρ σ₁ w es v σ') :
     -- ───────────────────────────────── (CallFn)
       ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ v, σ'
@@ -333,8 +334,12 @@ inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop
     -- ────────────────────────────────────── (CallLib)
       ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ v, σ₂
 
+  /-- The callee is a `std::function` object, `*f` for a pointer f, whose
+  target w is a closure. A function with no target, `null` at ℓₜ, has no
+  derivation. -/
   | callFn
-      (he : ⟨ρ, σ⟩ ⊢ fe ⇒ w, σ₁)
+      (he : ⟨ρ, σ⟩ ⊢ fe ⇒ .lib "std::function" [ℓₜ], σ₁)
+      (ht : σ₁.read ℓₜ = some w)
       (ha : ApplyArgs p ρ σ₁ w es v σ') :
     -- ───────────────────────────────── (CallFn)
       ⟨ρ, σ⟩ ⊢ .callFn fe es ⇒ v, σ'
