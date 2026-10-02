@@ -13,9 +13,12 @@ sequence and a block discards the extension. Functions are checked against
 their declared return type. The class table of the program is a parameter of
 every judgment. Each rule is in the comment of the case that implements it.
 
-Object types, classes and vectors, have no values. An expression of object
-type occurs only as the operand of `.`, `[]` or `*`, never as a variable, a
-parameter, a result, an operand or an argument.
+Object types, classes, `std::vector` and `std::function`, have no values. No
+variable, by value parameter, result or field has an object type, and a
+reference parameter may have one. An expression of object type, such as `*p`,
+never stands where a value is expected. It occurs as the left operand of
+`.`, as the operand of `[]` or of an operator member, as the callee of
+`(*f)(ē)` and as the argument of a reference parameter.
 
 A lambda expression has no type of its own. It is checked against the
 function type expected where it occurs, the argument of

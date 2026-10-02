@@ -62,8 +62,13 @@ def Ty.default : Ty → Val
   | .ptr _ => .null
   | _ => .void
 
-/-- The `error` result. It is not a value of the language. No syntax produces,
-tests or catches it. It corresponds in C++ to abnormal program termination. -/
+/-- The `error` result of the evaluator. It is not a value of the language. No
+syntax produces, tests or catches it. It corresponds in C++ to abnormal
+program termination. The relations of `CoreCpp.Semantics` have no `error`,
+and the evaluator gives one where no rule has a derivation. The causes
+`undeclaredVariable`, `undeclaredFunction`, `arity`, `typeError` and
+`notCallable` guard the evaluator against a program that skipped the type
+checker, and `outOfFuel` marks a derivation deeper than the fuel. -/
 inductive Error where
   | divisionByZero
   | overflow

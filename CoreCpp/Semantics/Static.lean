@@ -316,7 +316,8 @@ inductive HasType (p : Program) : TEnv → Expr → Ty → Prop where
     -- ─────────────────────────── (T-Cond)
       Γ ⊢ .cond e₁ e₂ e₃ : τ
 
-  /-- A variable f bound to a function value hides the function named f. -/
+  /-- A variable f of a `std::function` type, a reference parameter, hides
+  the function named f. -/
   | callVar
       (h : Γ.lookup f = some (Ty.function τ ps))
       (ha : AcceptArgs p Γ ps es) :

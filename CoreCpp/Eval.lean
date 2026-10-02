@@ -15,9 +15,11 @@ case. The judgments are
 * ρ, σ ⊢ c ⇒ r, ρ', σ', command execution,
 
 in the sequent style of Kahn (1987), the hypotheses ρ and σ left of ⊢, the
-subject right of it and the result after ⇒. All three admit `error` in place
-of the result, with propagation. The evaluation order is left to right where
-C++17 leaves it unspecified, and the C++17 order where it is fixed, right
+subject right of it and the result after ⇒. The relations of
+`CoreCpp.Semantics` have no `error`, since a case without a rule has no
+derivation. The evaluator gives `error` there in place of the result and
+propagates it to the result of the program. The evaluation order is left to
+right where C++17 leaves it unspecified, and the C++17 order where it is fixed, right
 operand before left in assignment and function before arguments in a call. The
 store enters expressions because a call inside an expression may change it.
 Objects live in the store as records of locations with a class tag, pointers
@@ -90,8 +92,9 @@ abbrev M := ExceptT Error (StateM TState)
 
 namespace Eval
 
-/-- Runs `k` one level deeper and records the instance of the rule `rule` it
-concludes, or the error, at the current depth of the derivation. -/
+/-- Runs `k` one level deeper and, when tracing is enabled, records the
+instance of the rule `rule` it concludes, or the error, at the current depth
+of the derivation. -/
 def traced (rule : String) (ante : TraceAnte) (render : α → TraceCons) (k : M α)
     (arrow : String := "⇒") : M α := do
   modify fun s => { s with depth := s.depth + 1 }
@@ -440,10 +443,11 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
         With ρ_f, σ'ₖ ⊢ c ⇒ normal, ρ', σ'' the result is void, σ'' ∖ {ℓᵢ} if τ = void,
         and error (missing return) otherwise.
 
-        ρ(f) = ℓ    σ(ℓ) = closure(…)    ρ, σ ⊢ ℓ(e₁, …, eₖ) as in CallFn
+        ρ(f) = ℓ    σ(ℓ) = lib std::function [ℓₜ]    the application as in CallFn
         ───────────────────────────────────────────────────────────── (CallFn)     a variable f bound to a
-        ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'                                                 function value hides the
-                                                                                    function named f      -/
+        ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'                                                 std::function object, a
+                                                                                    reference parameter, hides
+                                                                                    the function named f  -/
     | .call f es sig =>
       match ρ.lookup f with
       | some _ => traced "CallFn" (confE e ρ σ) showV do
@@ -661,8 +665,9 @@ def applyClosure (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (e
     let (vs, σ₁) ← args fuel fs ρ σ es
     applyVals fuel fs σ₁ v vs
 
-  /--ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, a
-  dereferenced pointer, a field of an object, a field through a pointer and an
+  /--ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, an
+  unqualified field of `this`, a dereferenced pointer, a field of an object, a
+  field through a pointer, a call of a member that returns a reference and an
   element of a vector.
 
   ```
@@ -683,7 +688,7 @@ def applyClosure (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (e
   ρ, σ ⊢ e->f ⇒ₗ ℓ_f, σ'
   ```
 
-  An element of a vector is a use of the library, the rule LocLib.
+  An element of a vector is a use of the library, the rule LocIndex.
   -/
 def lval (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × Store) :=
   match fuel with

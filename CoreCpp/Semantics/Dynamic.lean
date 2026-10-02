@@ -303,7 +303,8 @@ inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop
     -- ─────────────────────────────────────────────────────────────── (Call)
       ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ v, σ₂.free (owned ++ Env.fresh ρf ρ')
 
-  /-- A variable f bound to a closure hides the function named f. -/
+  /-- A variable f bound to a `std::function` object, a reference parameter,
+  hides the function named f. -/
   | callVar
       (hρ : ρ.lookup f = some ℓ)
       (hv : ⟨ρ, σ⟩ ⊢ .var f ⇒ .lib "std::function" [ℓₜ], σ₁)
