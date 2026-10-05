@@ -388,14 +388,14 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
       | .lt | .le | .gt | .ge =>
         if t₁ == .int && t₂ == .int then .ok .bool
         else .error (.badOperand op.toString (if t₁ != .int then t₁ else t₂))
-    /-  Γ ⊢ e₁ : bool    Γ ⊢ e₂ : τ₂    Γ ⊢ e₃ : τ₃    τ₂, τ₃ have values    τ = join(τ₂, τ₃)
+    /-  Γ ⊢ e₁ : bool    Γ ⊢ e₂ : τ₂    Γ ⊢ e₃ : τ₃    HasValues(τ₂)    HasValues(τ₃)    τ = join(τ₂, τ₃)
         ──────────────────────────────────────────────────────────────────────── (T-Cond)
         Γ ⊢ e₁ ? e₂ : e₃ : τ
 
         The join is τ₂ when the types are equal or τ₂ is a pointer and τ₃ is
         nullptr_t, τ₃ when τ₂ ≈ τ₃, and τ₂ when τ₃ ≈ τ₂, as `Ty.join` states.
 
-        Γ ⊢ₗ e₁ ? e₂ : e₃ : τ    τ object type
+        Γ ⊢ₗ e₁ ? e₂ : e₃ : τ    IsObject(τ)
         ─────────────────────────────────────── (T-CondObj)      two objects of one type
         Γ ⊢ e₁ ? e₂ : e₃ : τ                                      denote a location, no copy -/
     | e@(.cond e₁ e₂ e₃) => do
@@ -453,11 +453,13 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
         ────────────── (T-LocOf)      internal, the annotation of the return of a
         Γ ⊢ &e : τ                    member that returns a reference              -/
     | .locOf e => lval fuel p Γ e
-    /-  C ↦ class C { … C(p₁ x₁, …, pₖ xₖ) { c } … }    arguments as in T-Call
+    /-  p(C) = cd    cd.ctor = C(p₁ x₁, …, pₖ xₖ) { c }    arguments as in T-Call
         ──────────────────────────────────────────────────────────────── (T-New)
         Γ ⊢ new C(e₁, …, eₖ) : C*
 
-        A class without a constructor is created by new C() alone.                    -/
+        p(C) = cd    cd.ctor = ⊥
+        ───────────────────────── (T-New)      without a constructor, no arguments
+        Γ ⊢ new C() : C*                                                              -/
     | .newObj c es => do
       let some cd := p.lookupClass c | throw (.unknownClass c)
       match cd.ctor with
@@ -493,14 +495,14 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
         | throw (.arity s!"new {t}" (S.new ts).head!.1.length es.length)
       acceptArgs fuel p Γ s!"new {t}" ps es
       return r
-    /-  Γ ⊢ e : C    C has τ f visible from Γ
+    /-  Γ ⊢ e : C    field_Γ(C, f) = τ
         ──────────────────────────────────── (T-Field)
         Γ ⊢ e.f : τ                                                                  -/
     | .field e f => do
       let t ← expr fuel p Γ e
       let .cls c := t | throw (.notObject e t)
       fieldType fuel p Γ c f
-    /-  Γ ⊢ e : C*    C has τ f visible from Γ
+    /-  Γ ⊢ e : C*    field_Γ(C, f) = τ
         ────────────────────────────────────── (T-Arrow)      e->f abbreviates (*e).f
         Γ ⊢ e->f : τ                                                                 -/
     | .arrow e f => do
@@ -727,13 +729,13 @@ def fieldType (fuel : Nat) (p : Program) (Γ : TEnv) (c f : String) : T Ty :=
   writable location.
 
   ```
-  Γ(x) = τ, x not captured   Γ ⊢ e : τ*       Γ ⊢ e : C, C has τ f
+  Γ(x) = τ, x ∉ const(Γ)     Γ ⊢ e : τ*       Γ ⊢ e : C, field_Γ(C, f) = τ
   ──────────────────────── (T-LocVar)  ─────────── (T-LocDeref)  ────────────────── (T-LocField)
   Γ ⊢ₗ x : τ                 Γ ⊢ₗ *e : τ      Γ ⊢ₗ e.f : τ
   ```
 
   ```
-  Γ ⊢ e : C*, C has τ f
+  Γ ⊢ e : C*, field_Γ(C, f) = τ
   ────────────────────── (T-LocArrow)
   Γ ⊢ₗ e->f : τ
 

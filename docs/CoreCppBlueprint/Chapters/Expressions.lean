@@ -42,7 +42,9 @@ $$`\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{bool}\,b, \sigma}\;\textsf
 :::definition "expr_lvar" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.lval, CoreCpp.TEnv.isConst, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval") (uses := "judg_ty_lval, judg_ev_lval")
 The variable denotes the location the environment assigns to it, and the store does not change. A variable that a lambda captures by copy is read only in $`\Gamma`, so it denotes no location for the type checker and is never assigned. Inside a member body an unqualified field of `this` also denotes a location, rule LocVarField of {bpref "cls_this"}[], with the typing rule T-LocVarField. The other expressions that denote a location, `*e`, `e.f` and `e->f`, are the nodes of the last section, and an element `v[i]` of a vector is a use of the library, {bpref "std_uses"}[].
 
-$$`\dfrac{\Gamma(x) = \tau \qquad x \text{ not captured}}{\Gamma \vdash_{\ell} x : \tau}\;\textsf{(T-LocVar)}`
+The set $`\mathrm{const}(\Gamma)` holds the variables of $`\Gamma` captured by copy inside a lambda, `TEnv.isConst`.
+
+$$`\dfrac{\Gamma(x) = \tau \qquad x \notin \mathrm{const}(\Gamma)}{\Gamma \vdash_{\ell} x : \tau}\;\textsf{(T-LocVar)}`
 
 $$`\dfrac{\rho(x) = \ell}{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell, \sigma}\;\textsf{(LocVar)}`
 :::
@@ -117,10 +119,12 @@ In the code, the cases `binop .and` and `binop .or` of `Eval.expr` implement the
 
 # Conditional
 
-:::definition "expr_cond" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.value, CoreCpp.Typing.compat, CoreCpp.Ty.join, CoreCpp.Semantics.HasValues, CoreCpp.Eval.expr, CoreCpp.Eval.expectBool, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval, CoreCpp.Typing.lval, CoreCpp.Typing.locJoin, CoreCpp.Eval.lval, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval") (uses := "judg_ty_expr, judg_ev_expr, judg_ty_lval, judg_ev_lval")
+:::definition "expr_cond" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.value, CoreCpp.Typing.compat, CoreCpp.Ty.join, CoreCpp.Semantics.HasValues, CoreCpp.Eval.expr, CoreCpp.Eval.expectBool, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval, CoreCpp.Typing.lval, CoreCpp.Typing.locJoin, CoreCpp.Eval.lval, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval, CoreCpp.Semantics.IsObject") (uses := "judg_ty_expr, judg_ev_expr, judg_ty_lval, judg_ev_lval")
 The condition is `bool`. For a value, both branches have types with values, neither `void` nor an object type, and the type of the conditional is their join, `Ty.join`. The join is $`\tau_2` when the two types are equal or when $`\tau_2` is a pointer type and $`\tau_3` is $`\mathsf{nullptr\_t}`, $`\tau_3` when $`\tau_2 \approx \tau_3`, and $`\tau_2` when $`\tau_3 \approx \tau_2`. A pointer to a derived class and a pointer to its base thus join at the base, and a pointer and `nullptr` join at the pointer type in either order, so `c ? p : nullptr` and `c ? nullptr : p` both have the type of `p`, the composite pointer type of C++ (N4659 §8.16 paragraph 7). Only the chosen branch is evaluated, after the condition.
 
-$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash e_2 : \tau_2 \qquad \Gamma \vdash e_3 : \tau_3 \\ \tau_2, \tau_3 \text{ have values} \qquad \tau = \mathrm{join}(\tau_2, \tau_3) \end{array}}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-Cond)}`
+The predicates $`\mathsf{HasValues}` and $`\mathsf{IsObject}` are those of {bpref "dom_tenv"}[].
+
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash e_2 : \tau_2 \qquad \Gamma \vdash e_3 : \tau_3 \\ \mathsf{HasValues}(\tau_2) \qquad \mathsf{HasValues}(\tau_3) \qquad \tau = \mathrm{join}(\tau_2, \tau_3) \end{array}}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-Cond)}`
 
 $$`\mathrm{join}(\tau_2, \tau_3) = \begin{cases} \tau_2 & \text{if } \tau_2 = \tau_3 \text{ or } \tau_2 = \tau'* \text{ and } \tau_3 = \mathsf{nullptr\_t} \\ \tau_3 & \text{else if } \tau_2 \approx \tau_3 \\ \tau_2 & \text{else if } \tau_3 \approx \tau_2 \end{cases}`
 
@@ -132,7 +136,7 @@ When the two branches denote locations of one type, the conditional denotes the 
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash_{\ell} e_2 : \tau_2 \qquad \Gamma \vdash_{\ell} e_3 : \tau_3 \qquad \tau = \mathrm{locJoin}(\tau_2, \tau_3)}{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-LocCond)}`
 
-$$`\dfrac{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau \qquad \tau \text{ object type}}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-CondObj)}`
+$$`\dfrac{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau \qquad \mathsf{IsObject}(\tau)}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-CondObj)}`
 
 $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow_{\ell} \ell, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow_{\ell} \ell, \sigma_2}\;\textsf{(LocCond-T)}`
 
@@ -152,9 +156,11 @@ $$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sig
 :::definition "expr_new" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Program.lookupClass, CoreCpp.Program.allFields, CoreCpp.Store.alloc, CoreCpp.Store.allocMany, CoreCpp.Ty.default, CoreCpp.Semantics.Ctors, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr, dom_classes, dom_store")
 The expression `new C()` allocates one location per field of $`C` and of its bases, each with the default value of its type, `Ty.default`, then the record itself, tagged with the class. The constructors of the chain then run on the record, from the root base down, and the expression evaluates to a pointer to the record. Its type is $`C*`. A class without a constructor takes no arguments, so the empty parentheses are its whole argument list. The typing rule below is the one of a class without constructor, and the evaluation rule is the case without arguments, in which a constructor of a base runs with none. A class with a constructor takes its arguments in the parentheses, {bpref "cls_new"}[].
 
-$$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\ldots\} \qquad C \text{ has no constructor}}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
+The program $`p` maps a class $`C` to its declaration $`\mathit{cd}`, `Program.lookupClass`, whose constructor $`\mathit{cd}.\mathrm{ctor}` is $`\bot` when it has none, and $`C \in \mathrm{dom}\,p` states that $`p` declares $`C`, a nonempty `Program.chain`. The list $`\mathrm{fields}(C)` holds the fields of $`C` and of its bases, the root base first, `Program.allFields`. The judgment $`\rho, \sigma \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'` runs the constructors of the chain of $`C` on the object at $`\ell`, from the root base down, each with $`\mathtt{this} \mapsto \ell`, the relation `Ctors`.
 
-$$`\dfrac{\begin{array}{c} \tau_1\, f_1, \ldots, \tau_n\, f_n \text{ the fields of } C \text{ and of its bases, the root base first} \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain of } C \text{ run on } \ell \text{ from the root base down},\ \sigma' \text{ to } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
+$$`\dfrac{p(C) = \mathit{cd} \qquad \mathit{cd}.\mathrm{ctor} = \bot}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
+
+$$`\dfrac{\begin{array}{c} C \in \mathrm{dom}\,p \qquad \mathrm{fields}(C) = [\tau_1\, f_1, \ldots, \tau_n\, f_n] \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \rho, \sigma' \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
 :::
 
 :::definition "expr_deref" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.lval, CoreCpp.Eval.pointee, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval") (uses := "judg_ty_lval, judg_ev_lval, expr_null")
@@ -168,9 +174,11 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma'}{\rho, \
 :::definition "expr_field" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Typing.fieldType, CoreCpp.Program.visibleField, CoreCpp.Eval.lval, CoreCpp.Eval.fieldLoc, CoreCpp.Eval.pointee, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval") (uses := "judg_ty_lval, judg_ev_lval, expr_deref, dom_classes")
 The field access `e.f` denotes the location of the field $`f` in the record that $`e` denotes. The access `e->f` denotes the field of the record its pointer holds, as `(*e).f` does, so a null pointer has no derivation and the evaluator gives `error`. The record must be in the store, so an access through a pointer after `delete` has no derivation either. The premise $`C \text{ has } \tau\, f` holds of a field of $`C` or of one of its bases, and a private field must be visible from $`\Gamma`, `Program.visibleField` and {bpref "cls_visible"}[].
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e.f : \tau}\;\textsf{(T-LocField)}`
+The equation $`\mathrm{field}_{\Gamma}(C, f) = \tau` states that $`C` or one of its bases declares the field $`\tau\, f` and that $`f` is visible from $`\Gamma`, `Program.visibleField`.
 
-$$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e\mathtt{->}f : \tau}\;\textsf{(T-LocArrow)}`
+$$`\dfrac{\Gamma \vdash e : C \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash_{\ell} e.f : \tau}\;\textsf{(T-LocField)}`
+
+$$`\dfrac{\Gamma \vdash e : C* \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash_{\ell} e\mathtt{->}f : \tau}\;\textsf{(T-LocArrow)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e.f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocField)}`
 
@@ -182,16 +190,16 @@ Reading `*e`, `e.f`, `e->f` or `e[i]` as a value is reading the content of the l
 
 $$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash {*e} : \tau}\;\textsf{(T-Deref)}`
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f \text{ visible from } \Gamma}{\Gamma \vdash e.f : \tau}\;\textsf{(T-Field)}`
+$$`\dfrac{\Gamma \vdash e : C \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash e.f : \tau}\;\textsf{(T-Field)}`
 
-$$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f \text{ visible from } \Gamma}{\Gamma \vdash e\mathtt{->}f : \tau}\;\textsf{(T-Arrow)}`
+$$`\dfrac{\Gamma \vdash e : C* \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash e\mathtt{->}f : \tau}\;\textsf{(T-Arrow)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in \mathrm{dom}\,\sigma'}{\rho, \sigma \vdash e \Rightarrow \sigma'(\ell), \sigma'}\;\textsf{(Read)}, \quad e \in \{{*e'},\ e'.f,\ e'\mathtt{->}f,\ e'[i]\}`
 :::
 
 # Rules of the chapter
 
-Every typing rule and every evaluation rule of this chapter, in the order of its sections. Each rule is stated with its explanation in the section named above it. The rules of the same expressions that involve classes, T-VarField, T-LocVarField and LocVarField for a field of `this`, T-OpBin for an operator member, T-New with a constructor and T-NewLib, are stated in the chapters on encapsulation, on type systems and on the library.
+Every typing rule and every evaluation rule of this chapter, in the order of its sections. Each rule is stated with its explanation, and with the definition of its notation, in the section named above it. The rules of the same expressions that involve classes, T-VarField, T-LocVarField and LocVarField for a field of `this`, T-OpBin for an operator member, T-New with a constructor and T-NewLib, are stated in the chapters on encapsulation, on type systems and on the library.
 
 *Literals*
 
@@ -207,7 +215,7 @@ $$`\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{bool}\,b, \sigma}\;\textsf
 
 *Variable*
 
-$$`\dfrac{\Gamma(x) = \tau \qquad x \text{ not captured}}{\Gamma \vdash_{\ell} x : \tau}\;\textsf{(T-LocVar)}`
+$$`\dfrac{\Gamma(x) = \tau \qquad x \notin \mathrm{const}(\Gamma)}{\Gamma \vdash_{\ell} x : \tau}\;\textsf{(T-LocVar)}`
 
 $$`\dfrac{\Gamma(x) = \tau}{\Gamma \vdash x : \tau}\;\textsf{(T-Var)}`
 
@@ -257,11 +265,11 @@ $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \si
 
 *Conditional*
 
-$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash e_2 : \tau_2 \qquad \Gamma \vdash e_3 : \tau_3 \\ \tau_2, \tau_3 \text{ have values} \qquad \tau = \mathrm{join}(\tau_2, \tau_3) \end{array}}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-Cond)}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash e_2 : \tau_2 \qquad \Gamma \vdash e_3 : \tau_3 \\ \mathsf{HasValues}(\tau_2) \qquad \mathsf{HasValues}(\tau_3) \qquad \tau = \mathrm{join}(\tau_2, \tau_3) \end{array}}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-Cond)}`
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash_{\ell} e_2 : \tau_2 \qquad \Gamma \vdash_{\ell} e_3 : \tau_3 \qquad \tau = \mathrm{locJoin}(\tau_2, \tau_3)}{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-LocCond)}`
 
-$$`\dfrac{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau \qquad \tau \text{ object type}}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-CondObj)}`
+$$`\dfrac{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau \qquad \mathsf{IsObject}(\tau)}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-CondObj)}`
 
  
 
@@ -277,25 +285,25 @@ $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \si
 
 $$`\dfrac{}{\Gamma \vdash \mathtt{nullptr} : \mathsf{nullptr\_t}}\;\textsf{(T-Null)}`
 
-$$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\ldots\} \qquad C \text{ has no constructor}}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
+$$`\dfrac{p(C) = \mathit{cd} \qquad \mathit{cd}.\mathrm{ctor} = \bot}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
 
 $$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash_{\ell} {*e} : \tau}\;\textsf{(T-LocDeref)}`
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e.f : \tau}\;\textsf{(T-LocField)}`
+$$`\dfrac{\Gamma \vdash e : C \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash_{\ell} e.f : \tau}\;\textsf{(T-LocField)}`
 
-$$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e\mathtt{->}f : \tau}\;\textsf{(T-LocArrow)}`
+$$`\dfrac{\Gamma \vdash e : C* \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash_{\ell} e\mathtt{->}f : \tau}\;\textsf{(T-LocArrow)}`
 
 $$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash {*e} : \tau}\;\textsf{(T-Deref)}`
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\, f \text{ visible from } \Gamma}{\Gamma \vdash e.f : \tau}\;\textsf{(T-Field)}`
+$$`\dfrac{\Gamma \vdash e : C \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash e.f : \tau}\;\textsf{(T-Field)}`
 
-$$`\dfrac{\Gamma \vdash e : C* \qquad C \text{ has } \tau\, f \text{ visible from } \Gamma}{\Gamma \vdash e\mathtt{->}f : \tau}\;\textsf{(T-Arrow)}`
+$$`\dfrac{\Gamma \vdash e : C* \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash e\mathtt{->}f : \tau}\;\textsf{(T-Arrow)}`
 
  
 
 $$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sigma}\;\textsf{(Null)}`
 
-$$`\dfrac{\begin{array}{c} \tau_1\, f_1, \ldots, \tau_n\, f_n \text{ the fields of } C \text{ and of its bases, the root base first} \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain of } C \text{ run on } \ell \text{ from the root base down},\ \sigma' \text{ to } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
+$$`\dfrac{\begin{array}{c} C \in \mathrm{dom}\,p \qquad \mathrm{fields}(C) = [\tau_1\, f_1, \ldots, \tau_n\, f_n] \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \rho, \sigma' \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma'}{\rho, \sigma \vdash {*e} \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocDeref)}`
 

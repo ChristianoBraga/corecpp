@@ -348,12 +348,12 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
     | .deref _ | .field .. | .arrow .. | .index .. => traced "Read" (confE e ρ σ) showV do
       let (l, σ') ← lval fuel fs ρ σ e
       return (← readLoc σ' l, σ')
-    /-  C ↦ class C : public B { … C(p₁ x₁, …, pₖ xₖ) { c } … }
-        f₁ … fₙ = the fields of the chain of C, the root base first
+    /-  C ∈ dom p    fields(C) = [τ₁ f₁, …, τₙ fₙ]                the chain of C, the root base first
         (ℓᵢ, σᵢ) = alloc σᵢ₋₁ (default τᵢ),  σ₀ = σ            one location per field, with its default value
         (ℓ, σ') = alloc σₙ (obj C [f₁ ↦ ℓ₁, …, fₙ ↦ ℓₙ])       the record, tagged with the class
-        the constructors of the chain run from the root base down, each with this ↦ ℓ,
-        the one of C with the arguments as in Call, the others with none
+        ρ, σ' ⊢ ctors(ℓ, C, e₁ … eₖ) ⇒ σ''                      the constructors of the chain from the root base
+                                                               down, each with this ↦ ℓ, the one of C with the
+                                                               arguments as in Call, the others with none
         ────────────────────────────────────────────────────────────────────── (New)
         ρ, σ ⊢ new C(e₁, …, eₖ) ⇒ loc ℓ, σ''
 
