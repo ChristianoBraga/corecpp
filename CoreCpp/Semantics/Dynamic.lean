@@ -241,7 +241,7 @@ inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop
     -- ──────────────────────────────────────────────────── (Arith)
       ⟨ρ, σ⟩ ⊢ .binop op e₁ e₂ ⇒ .int (op.arith n₁ n₂), σ₂
 
-  /-- A zero divisor has no derivation. -/
+  /-- A zero divisor and a result outside the range of `int` have no derivation. -/
   | div
       (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .int n₁, σ₁)
       (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ .int n₂, σ₂)

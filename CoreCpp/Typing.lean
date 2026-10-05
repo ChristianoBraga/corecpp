@@ -366,7 +366,7 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
       | .add | .sub | .mul | .div | .mod =>
         if t₁ == .int && t₂ == .int then .ok .int
         else .error (.badOperand op.toString (if t₁ != .int then t₁ else t₂))
-      /-  Γ ⊢ e₁ : τ₁    Γ ⊢ e₂ : τ₂    τ₁ ≈ τ₂    τ₁, τ₂ ∈ {int, bool, τ*, nullptr_t}
+      /-  Γ ⊢ e₁ : τ₁    Γ ⊢ e₂ : τ₂    τ₁ ≈ τ₂ or τ₂ ≈ τ₁    τ₁, τ₂ ∈ {int, bool, τ*, nullptr_t}
           ──────────────────────────────────────────────────────────────────── (T-Eq, ⋈ ∈ {==, !=})
           Γ ⊢ e₁ ⋈ e₂ : bool                                                         -/
       | .eq | .ne =>
@@ -378,9 +378,12 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
       | .lt | .le | .gt | .ge =>
         if t₁ == .int && t₂ == .int then .ok .bool
         else .error (.badOperand op.toString (if t₁ != .int then t₁ else t₂))
-    /-  Γ ⊢ e₁ : bool    Γ ⊢ e₂ : τ    Γ ⊢ e₃ : τ    τ has values
-        ────────────────────────────────────────────────────── (T-Cond)
-        Γ ⊢ e₁ ? e₂ : e₃ : τ                                                         -/
+    /-  Γ ⊢ e₁ : bool    Γ ⊢ e₂ : τ₂    Γ ⊢ e₃ : τ₃    τ₂, τ₃ have values    τ = join(τ₂, τ₃)
+        ──────────────────────────────────────────────────────────────────────── (T-Cond)
+        Γ ⊢ e₁ ? e₂ : e₃ : τ
+
+        The join is τ₂ when the types are equal, τ₃ when τ₂ ≈ τ₃, and τ₂ when
+        τ₃ ≈ τ₂, as `Ty.join` states.                                                -/
     | .cond e₁ e₂ e₃ => do
       let t₁ ← expr fuel p Γ e₁
       if t₁ != .bool then throw (.mismatch "condition" .bool t₁)
@@ -472,14 +475,14 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
         | throw (.arity s!"new {t}" (S.new ts).head!.1.length es.length)
       acceptArgs fuel p Γ s!"new {t}" ps es
       return r
-    /-  Γ ⊢ e : C    C ↦ class C { … τ f; … }
+    /-  Γ ⊢ e : C    C has τ f visible from Γ
         ──────────────────────────────────── (T-Field)
         Γ ⊢ e.f : τ                                                                  -/
     | .field e f => do
       let t ← expr fuel p Γ e
       let .cls c := t | throw (.notObject e t)
       fieldType fuel p Γ c f
-    /-  Γ ⊢ e : C*    C ↦ class C { … τ f; … }
+    /-  Γ ⊢ e : C*    C has τ f visible from Γ
         ────────────────────────────────────── (T-Arrow)      e->f abbreviates (*e).f
         Γ ⊢ e->f : τ                                                                 -/
     | .arrow e f => do

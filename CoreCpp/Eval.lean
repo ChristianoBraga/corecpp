@@ -181,11 +181,9 @@ def unop : UnOp → Val → M Val
 ρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++
 ```
 
-```
-ρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int 0, σ₂
-──────────────────────────────────────────────── (DivZero)
-ρ, σ ⊢ e₁ ⊘ e₂ ⇒ error (division by zero)
-```
+A zero divisor and a result outside the range of `int` have no derivation,
+and `binop` gives `error` for them. The quotient of −2³¹ by −1 is such a
+result, while the remainder of −2³¹ by −1 is 0.
 
 ```
 ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂
@@ -418,8 +416,9 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
         ρ, σ ⊢ e₁ ⊕ e₂ ⇒ v, σ₂          left before right
 
         The premises of the three rules coincide, and `binop` tells them apart.
-        A zero divisor concludes `DivZero` instead. The derivation cites the rule
-        the operator concludes, `binopRule`.                                     -/
+        A zero divisor has no derivation, and the trace names its error
+        `DivZero`. The derivation cites the rule the operator concludes,
+        `binopRule`.                                     -/
     | .binop op e₁ e₂ => tracedLib (binopFallback op) (confE e ρ σ) showV do
       let (v₁, σ₁) ← expr fuel fs ρ σ e₁
       let (v₂, σ₂) ← expr fuel fs ρ σ₁ e₂
