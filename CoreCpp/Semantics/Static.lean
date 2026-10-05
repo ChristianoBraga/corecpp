@@ -631,7 +631,7 @@ inductive Check (p : Program) : Ty → TEnv → Cmd → TEnv → Prop where
     -- ──────────────────────────── (T-Ret)
       ⟨Γ, τᵣ⟩ ⊢ .ret (some e) ⊣ Γ
 
-  /-- Γ[x ↦ τ] reaches the following commands. -/
+  /-- The context Γ[x ↦ τ] reaches the following commands. -/
   | decl
       (hs : Storable τ)
       (hw : WF p τ)

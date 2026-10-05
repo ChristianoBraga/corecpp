@@ -67,7 +67,7 @@ end CoreCpp.Semantics
 
 namespace CoreCpp
 
-/-- The locations a block allocated, the owned bindings of ρ′ ∖ ρ. The bindings
+/-- The set fresh(ρ, ρ′), the locations a block allocated, the owned bindings of ρ′ ∖ ρ. The bindings
 a reference declaration added alias locations that exist before the block, and
 those stay in σ. -/
 def Env.fresh (ρ ρ' : Env) : List Loc :=
@@ -423,7 +423,7 @@ inductive LEval (p : Program) : Env → Store → Expr → Loc → Store → Pro
 
 /-- ρ, σ ⊢ c ⇒ r, ρ′, σ′ -/
 inductive Exec (p : Program) : Env → Store → Cmd → Ctrl → Env → Store → Prop where
-  /-- The block discards the extension of ρ and frees the locations it allocated, the owned bindings of ρ′ ∖ ρ. -/
+  /-- The block discards the extension of ρ and frees the locations it allocated, fresh(ρ, ρ′), the owned bindings of ρ′ ∖ ρ. -/
   | block
       (h : ⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ') :
     -- ─────────────────────────────────────────────────── (Block)
@@ -483,7 +483,7 @@ inductive Exec (p : Program) : Env → Store → Cmd → Ctrl → Env → Store 
     -- ───────────────────────────────────────────────── (Decl)
       ⟨ρ, σ⟩ ⊢ .decl τ x e ⇒ .normal, ρ.extend x ℓ, σ''
 
-  /-- A second name for an existing location, not owned, so block exit leaves ℓ in σ. -/
+  /-- A second name for an existing location, the alias binding ρ[x ↦ₐ ℓ], not owned, so block exit leaves ℓ in σ. -/
   | declRef
       (h : ⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ') :
     -- ────────────────────────────────────────────────── (DeclRef)
@@ -493,7 +493,7 @@ inductive Exec (p : Program) : Env → Store → Cmd → Ctrl → Env → Store 
   | declAuto
       (h : ⟨ρ, σ⟩ ⊢ e ⇒ v, σ')
       (ha : σ'.alloc v = (ℓ, σ'')) :
-    -- ───────────────────────────────────────────────────
+    -- ─────────────────────────────────────────────────── (Decl)
       ⟨ρ, σ⟩ ⊢ .declAuto x e ⇒ .normal, ρ.extend x ℓ, σ''
 
   /-- Right operand before left, the order C++17 fixes for assignment. -/

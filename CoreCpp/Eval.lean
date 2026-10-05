@@ -237,7 +237,7 @@ def binop : BinOp → Val → Val → M Val
   | .ne,  .loc _, .null | .ne, .null, .loc _ => pure (.bool true)
   | op, v₁, v₂ => throw (.typeError s!"operator {op.toString} on {v₁} and {v₂}")
 
-/-- Locations a block allocated, the owned bindings of ρ' ∖ ρ, for scope exit.
+/-- The set fresh(ρ, ρ'), the locations a block allocated, the owned bindings of ρ' ∖ ρ, for scope exit.
 The bindings a reference declaration added alias locations that exist before
 or outside the block, and those locations stay in σ. -/
 def fresh (ρ ρ' : Env) : List Loc :=
@@ -779,9 +779,9 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
     match c with
     /-  ρ, σ ⊢ c₁ … cₙ ⇒ r, ρ', σ'
         ──────────────────────────────────────────── (Block)
-        ρ, σ ⊢ { c₁ … cₙ } ⇒ r, ρ, σ' ∖ (ρ' ∖ ρ)
+        ρ, σ ⊢ { c₁ … cₙ } ⇒ r, ρ, σ' ∖ fresh(ρ, ρ')
         the block discards the extension of ρ and removes from σ the locations it
-        allocated, ρ' ∖ ρ read as the owned bindings, so an alias made by a
+        allocated, fresh(ρ, ρ') the owned bindings of ρ' ∖ ρ, so an alias made by a
         reference declaration never frees the location it names -/
     | .block cs => traced "Block" (confC c ρ σ) showR do
       let (r, ρ', σ') ← cmds fuel fs ρ σ cs
@@ -816,7 +816,7 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
       else return (.normal, ρ, σ₁)
     /-  ρ, σ ⊢ c₀ ⇒ normal, ρ₀, σ₀    ρ₀, σ₀ ⊢ while (e) { {c} cₛ } ⇒ r, ρ₀, σ₁
         ────────────────────────────────────────────────────────────────────── (For)
-        ρ, σ ⊢ for (c₀; e; cₛ) {c} ⇒ r, ρ, σ₁ ∖ (ρ₀ ∖ ρ)
+        ρ, σ ⊢ for (c₀; e; cₛ) {c} ⇒ r, ρ, σ₁ ∖ fresh(ρ, ρ₀)
         the variable of c₀ has the loop as its scope, the body is its own block, and
         the step cₛ runs after the body, outside the body's scope                                       -/
     | .for c₀ e cₛ b => traced "For" (confC c ρ σ) showR do
@@ -833,8 +833,8 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
     | .ret (some e) => traced "Return" (confC c ρ σ) showR do
       let (v, σ') ← expr fuel fs ρ σ e
       return (.ret v, ρ, σ')
-    /-  ρ, σ ⊢ e ⇒ v, σ'    (ℓ, σ'') = alloc σ' v    ℓ ∉ dom σ'
-        ──────────────────────────────────────────────────────── (Decl)
+    /-  ρ, σ ⊢ e ⇒ v, σ'    (ℓ, σ'') = alloc(σ', v)
+        ──────────────────────────────────────────────── (Decl)
         ρ, σ ⊢ τ x = e ⇒ normal, ρ[x ↦ ℓ], σ''
         the declaration allocates a fresh location and extends ρ for the following commands -/
     | .decl _ x e => traced "Decl" (confC c ρ σ) showR do
@@ -843,13 +843,16 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
       return (.normal, ρ.extend x l, σ'')
     /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'
         ───────────────────────────────────────────── (DeclRef)
-        ρ, σ ⊢ τ& x = e ⇒ normal, ρ[x ↦ ℓ], σ'
+        ρ, σ ⊢ τ& x = e ⇒ normal, ρ[x ↦ₐ ℓ], σ'
         a reference binds a second name to an existing location, nothing is
-        allocated and the binding is not owned, so block exit leaves ℓ in σ      -/
+        allocated and the alias binding ρ[x ↦ₐ ℓ] is not owned, so block exit
+        leaves ℓ in σ                                                             -/
     | .declRef _ x e => traced "DeclRef" (confC c ρ σ) showR do
       let (l, σ') ← lval fuel fs ρ σ e
       return (.normal, ρ.alias x l, σ')
-    /-  The rule for auto is Decl, with τ the type of v.                            -/
+    /-  ρ, σ ⊢ e ⇒ v, σ'    (ℓ, σ'') = alloc(σ', v)
+        ──────────────────────────────────────────────── (Decl)      the rule Decl for auto
+        ρ, σ ⊢ auto x = e ⇒ normal, ρ[x ↦ ℓ], σ''                                  -/
     | .declAuto x e => traced "Decl" (confC c ρ σ) showR do
       let (v, σ') ← expr fuel fs ρ σ e
       let (l, σ'') := σ'.alloc v

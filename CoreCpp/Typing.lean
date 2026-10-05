@@ -827,8 +827,8 @@ def cmd (fuel : Nat) (p : Program) (τᵣ : Ty) (Γ : TEnv) (c : Cmd) : T TEnv :
       if te != .bool then throw (.mismatch "condition of while" .bool te)
       let _ ← cmd fuel p τᵣ Γ (.block b)
       return Γ
-    /-  Γ ⊢ c₀ ⊣ Γ₀    Γ₀ ⊢ e : bool    Γ₀ ⊢ cₛ ⊣ Γ₀    Γ₀ ⊢ {c} ⊣ Γ₀
-        ─────────────────────────────────────────────────────────── (T-For)
+    /-  Γ ⊢ c₀ ⊣ Γ₀    Γ₀ ⊢ e : bool    Γ₀ ⊢ cₛ ⊣ Γₛ    Γ₀ ⊢ {c} ⊣ Γ₀
+        ─────────────────────────────────────────────────────────── (T-For)      the context Γₛ of the step is discarded
         Γ ⊢ for (c₀; e; cₛ) {c} ⊣ Γ                                                 -/
     | .for c₀ e cₛ b => do
       let Γ₀ ← cmd fuel p τᵣ Γ c₀
@@ -846,15 +846,15 @@ def cmd (fuel : Nat) (p : Program) (τᵣ : Ty) (Γ : TEnv) (c : Cmd) : T TEnv :
       if τᵣ == .void then throw (.mismatch "return value" τᵣ (← expr fuel p Γ e))
       accept fuel p Γ "return value" e τᵣ
       return Γ
-    /-  Γ ⊢ e ◁ τ    τ has values    τ well formed
-        ───────────────────────────────────────── (T-Decl)      Γ[x ↦ τ] reaches the following commands
+    /-  Storable(τ)    Γ ⊢ τ ok    Γ ⊢ e ◁ τ
+        ───────────────────────────────────────── (T-Decl)      the context Γ[x ↦ τ] reaches the following commands
         Γ ⊢ τ x = e ⊣ Γ[x ↦ τ]                                                             -/
     | .decl t x e => do
       storable s!"variable {x}" t
       wellFormed fuel p t
       accept fuel p Γ s!"initialiser of {x}" e t
       return Γ.bind x t
-    /-  Γ ⊢ₗ e : τ    τ bindable by reference    τ well formed
+    /-  Bindable_true(τ)    Γ ⊢ τ ok    Γ ⊢ₗ e : τ
         ──────────────────────────────────────────────────────── (T-DeclRef)      the initialiser denotes a location
         Γ ⊢ τ& x = e ⊣ Γ[x ↦ τ]                                        and x has the type of its referent -/
     | .declRef t x e => do
@@ -863,15 +863,15 @@ def cmd (fuel : Nat) (p : Program) (τᵣ : Ty) (Γ : TEnv) (c : Cmd) : T TEnv :
       let te ← lval fuel p Γ e
       if te != t then throw (.mismatch s!"referent of {x}" t te)
       return Γ.bind x t
-    /-  Γ ⊢ e : τ    τ has values    τ ≠ nullptr_t
+    /-  Γ ⊢ e : τ    HasValues(τ)    Storable(τ)
         ─────────────────────────────────────────── (T-Auto)      a lambda has no type for auto to copy
         Γ ⊢ auto x = e ⊣ Γ[x ↦ τ]                                                    -/
     | .declAuto x e => do
       let te ← value e (← expr fuel p Γ e)
       storable s!"variable {x}" te
       return Γ.bind x te
-    /-  Γ ⊢ₗ e₁ : τ    Γ ⊢ e₂ : τ'    τ' ≈ τ    τ has values
-        ───────────────────────────────────────────────── (T-Assign)
+    /-  Γ ⊢ₗ e₁ : τ    HasValues(τ)    Γ ⊢ e₂ : τ'    HasValues(τ')    τ' ≈ τ
+        ───────────────────────────────────────────────────────────────────── (T-Assign)
         Γ ⊢ e₁ = e₂ ⊣ Γ                                                              -/
     | .assign e₁ e₂ => do
       let t₁ ← lval fuel p Γ e₁
