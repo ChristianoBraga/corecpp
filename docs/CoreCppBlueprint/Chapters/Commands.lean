@@ -139,3 +139,85 @@ $$`\dfrac{\Gamma \vdash e : \tau}{\Gamma \vdash e; \dashv \Gamma}\;\textsf{(T-Ex
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash e; \Rightarrow \mathsf{normal}, \rho, \sigma'}\;\textsf{(ExprStmt)}`
 :::
+
+# Rules of the chapter
+
+Every typing rule and every evaluation rule of this chapter, in the order of its sections, the typing rules of each section before its evaluation rules. Each rule is stated with its explanation, and with the definition of its notation, in the section named above it.
+
+*Declaration*
+
+$$`\dfrac{\Gamma \vdash e : \tau \qquad \tau \neq \mathsf{void}}{\Gamma \vdash \tau\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-Decl)}`
+
+$$`\dfrac{\Gamma \vdash e : \tau \qquad \tau \neq \mathsf{void}}{\Gamma \vdash \mathtt{auto}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-Auto)}`
+
+ 
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma' \qquad (\ell, \sigma'') = \mathrm{alloc}(\sigma', v)}{\rho, \sigma \vdash \tau\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma''}\;\textsf{(Decl)}`
+
+*Local reference*
+
+$$`\dfrac{\Gamma \vdash_{\ell} e : \tau \qquad \tau \text{ bindable by reference}}{\Gamma \vdash \tau\mathtt{\&}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-DeclRef)}`
+
+ 
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \tau\mathtt{\&}\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma'}\;\textsf{(DeclRef)}`
+
+*Assignment*
+
+$$`\dfrac{\Gamma \vdash_{\ell} e_1 : \tau \qquad \Gamma \vdash e_2 : \tau}{\Gamma \vdash e_1 = e_2 \dashv \Gamma}\;\textsf{(T-Assign)}`
+
+ 
+
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_2 \Rightarrow v, \sigma_1 \qquad \rho, \sigma_1 \vdash e_1 \Rightarrow_{\ell} \ell, \sigma_2 \\ \ell \in \mathrm{dom}\,\sigma_2 \end{array}}{\rho, \sigma \vdash e_1 = e_2 \Rightarrow \mathsf{normal}, \rho, \sigma_2[\ell \mapsto v]}\;\textsf{(Assign)}`
+
+*Sequence and block*
+
+$$`\dfrac{}{\Gamma \vdash \varepsilon \dashv \Gamma}\;\textsf{(T-Seq-Empty)}`
+
+$$`\dfrac{\Gamma \vdash c \dashv \Gamma_1 \qquad \Gamma_1 \vdash cs \dashv \Gamma_2}{\Gamma \vdash c\ cs \dashv \Gamma_2}\;\textsf{(T-Seq)}`
+
+$$`\dfrac{\Gamma \vdash c_1 \ldots c_n \dashv \Gamma'}{\Gamma \vdash \{\, c_1 \ldots c_n \,\} \dashv \Gamma}\;\textsf{(T-Block)}`
+
+ 
+
+$$`\dfrac{}{\rho, \sigma \vdash \varepsilon \Rightarrow \mathsf{normal}, \rho, \sigma}\;\textsf{(Seq-Empty)}`
+
+$$`\dfrac{\rho, \sigma \vdash c \Rightarrow \mathsf{normal}, \rho_1, \sigma_1 \qquad \rho_1, \sigma_1 \vdash cs \Rightarrow r, \rho_2, \sigma_2}{\rho, \sigma \vdash c\ cs \Rightarrow r, \rho_2, \sigma_2}\;\textsf{(Seq)}`
+
+$$`\dfrac{\rho, \sigma \vdash c \Rightarrow \mathsf{ret}\,v, \rho_1, \sigma_1}{\rho, \sigma \vdash c\ cs \Rightarrow \mathsf{ret}\,v, \rho_1, \sigma_1}\;\textsf{(Seq-Ret)}`
+
+$$`\dfrac{\rho, \sigma \vdash c_1 \ldots c_n \Rightarrow r, \rho', \sigma'}{\rho, \sigma \vdash \{\, c_1 \ldots c_n \,\} \Rightarrow r, \rho, \sigma' \setminus (\rho' \setminus \rho)}\;\textsf{(Block)}`
+
+*Conditional*
+
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e : \mathsf{bool} \qquad \Gamma \vdash \{c_1\} \dashv \Gamma \\ \Gamma \vdash \{c_2\} \dashv \Gamma \end{array}}{\Gamma \vdash \mathtt{if}\ (e)\ \{c_1\}\ \mathtt{else}\ \{c_2\} \dashv \Gamma}\;\textsf{(T-If)}`
+
+ 
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c_1\} \Rightarrow r, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{if}\ (e)\ \{c_1\}\ \mathtt{else}\ \{c_2\} \Rightarrow r, \rho, \sigma_2}\;\textsf{(If-T)}`
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c_2\} \Rightarrow r, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{if}\ (e)\ \{c_1\}\ \mathtt{else}\ \{c_2\} \Rightarrow r, \rho, \sigma_2}\;\textsf{(If-F)}`
+
+*Loops*
+
+$$`\dfrac{\Gamma \vdash e : \mathsf{bool} \qquad \Gamma \vdash \{c\} \dashv \Gamma}{\Gamma \vdash \mathtt{while}\ (e)\ \{c\} \dashv \Gamma}\;\textsf{(T-While)}`
+
+$$`\dfrac{\begin{array}{c} \Gamma \vdash c_0 \dashv \Gamma_0 \qquad \Gamma_0 \vdash e : \mathsf{bool} \\ \Gamma_0 \vdash c_s \dashv \Gamma_0 \qquad \Gamma_0 \vdash \{c\} \dashv \Gamma_0 \end{array}}{\Gamma \vdash \mathtt{for}\ (c_0;\, e;\, c_s)\ \{c\} \dashv \Gamma}\;\textsf{(T-For)}`
+
+ 
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow \mathsf{normal}, \rho, \sigma_1}\;\textsf{(While-F)}`
+
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c\} \Rightarrow \mathsf{normal}, \rho, \sigma_2 \\ \rho, \sigma_2 \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow r, \rho, \sigma_3 \end{array}}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow r, \rho, \sigma_3}\;\textsf{(While-T)}`
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c\} \Rightarrow \mathsf{ret}\,v, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow \mathsf{ret}\,v, \rho, \sigma_2}\;\textsf{(While-Ret)}`
+
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash c_0 \Rightarrow \mathsf{normal}, \rho_0, \sigma_0 \\ \rho_0, \sigma_0 \vdash \mathtt{while}\ (e)\ \{\, \{c\}\ c_s \,\} \Rightarrow r, \rho_0, \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{for}\ (c_0;\, e;\, c_s)\ \{c\} \Rightarrow r, \rho, \sigma_1 \setminus (\rho_0 \setminus \rho)}\;\textsf{(For)}`
+
+*Expression statement*
+
+$$`\dfrac{\Gamma \vdash e : \tau}{\Gamma \vdash e; \dashv \Gamma}\;\textsf{(T-ExprStmt)}`
+
+ 
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash e; \Rightarrow \mathsf{normal}, \rho, \sigma'}\;\textsf{(ExprStmt)}`
