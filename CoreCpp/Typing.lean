@@ -235,6 +235,16 @@ def compat (p : Program) : Ty → Ty → Bool
   | .ptr (.cls d), .ptr (.cls b) => d == b || p.subclass d b
   | t₁, t₂ => t₁ == t₂
 
+/-- The type of a conditional whose branches denote locations of types τ₂ and
+τ₃. Equal types give that type, and a class and one of its bases give the
+base, as C++ binds the derived object as an lvalue of its base
+(N4659 §8.16 ¶4). -/
+def locJoin (p : Program) : Ty → Ty → Option Ty
+  | .cls d, .cls b =>
+    if d == b || p.subclass d b then some (.cls b)
+    else if p.subclass b d then some (.cls d) else none
+  | t₂, t₃ => if t₂ == t₃ then some t₂ else none
+
 /--Two overloads of one name are declared together only when they differ in
 arity or in a parameter of a type other than `std::function`, the check 5 of
 the design. The restriction keeps a lambda argument from deciding a call,
@@ -770,16 +780,16 @@ def lval (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
     | e@(.methodCall recv arrow m es _ _) => do
       let (md, _) ← resolveMethod fuel p Γ recv arrow m es
       if md.retRef then return md.ret else throw (.notLvalue e)
-    /-  Γ ⊢ e₁ : bool    Γ ⊢ₗ e₂ : τ    Γ ⊢ₗ e₃ : τ
-        ───────────────────────────────────────────── (T-LocCond)
-        Γ ⊢ₗ e₁ ? e₂ : e₃ : τ                                                     -/
+    /-  Γ ⊢ e₁ : bool    Γ ⊢ₗ e₂ : τ₂    Γ ⊢ₗ e₃ : τ₃    τ = locJoin(τ₂, τ₃)
+        ───────────────────────────────────────────────────────────── (T-LocCond)
+        Γ ⊢ₗ e₁ ? e₂ : e₃ : τ                  a derived and a base class join at the base -/
     | .cond e₁ e₂ e₃ => do
       let t₁ ← expr fuel p Γ e₁
       if t₁ != .bool then throw (.mismatch "condition" .bool t₁)
       let t₂ ← lval fuel p Γ e₂
       let t₃ ← lval fuel p Γ e₃
-      if t₂ != t₃ then throw (.mismatch "branches of ?:" t₂ t₃)
-      return t₂
+      let some t := locJoin p t₂ t₃ | throw (.mismatch "branches of ?:" t₂ t₃)
+      return t
     | e => .error (.notLvalue e)
 
   /-- Γ ⊢ c ⊣ Γ', under the return type τᵣ of the enclosing function. -/

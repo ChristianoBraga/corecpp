@@ -67,6 +67,8 @@ int main() { return factorial(5); }"
 #eval prog "int main() { int x = 2147483647; return x + 1; }"
 -- a conditional over locations of one type denotes a location, objects included,
 -- and the last two, of different types and with a branch that is no location, are type errors
+#eval prog "class Shape { public: virtual int area() { return 1; } }; class Square : public Shape { public: int side; Square() { side = 3; } int area() override { return side * side; } }; int main() { Square* s = new Square(); Shape* b = new Shape(); bool c = true; return (c ? *s : *b).area() * 10 + (!c ? *s : *b).area(); }"
+#eval (parseStd "class Shape { public: virtual int area() { return 1; } }; class Square : public Shape { public: int side; Square() { side = 3; } int perimeter() { return 4 * side; } }; int main() { Square* s = new Square(); Shape* b = new Shape(); bool c = true; return (c ? *s : *b).perimeter(); }").map check
 #eval prog "class Node { public: int value; Node(int v) { value = v; } }; int main() { Node* p = new Node(3); Node* q = new Node(4); bool c = false; return (c ? *p : *q).value; }"
 #eval prog "class Node { public: int value; Node(int v) { value = v; } }; int main() { Node* p = new Node(3); Node* q = new Node(4); bool c = true; Node& r = c ? *p : *q; r.value = 9; return p->value; }"
 #eval prog "int main() { int x = 1; int y = 2; bool c = false; (c ? x : y) = 7; return x * 10 + y; }"

@@ -497,12 +497,13 @@ inductive LHasType (p : Program) : TEnv → Expr → Ty → Prop where
     -- ──────────────────────────────────────────────────── (T-LocMethod)
       Γ ⊢ₗ .methodCall recv arrow m es static sig : md.ret
 
-  /-- Two branches that denote locations of one type, an lvalue in C++
-  (N4659 §8.16 ¶4). -/
+  /-- Two branches that denote locations of one type, or of a class and one
+  of its bases, an lvalue in C++ (N4659 §8.16 ¶4). -/
   | locCond
       (h₁ : Γ ⊢ e₁ : .bool)
-      (h₂ : Γ ⊢ₗ e₂ : τ)
-      (h₃ : Γ ⊢ₗ e₃ : τ) :
+      (h₂ : Γ ⊢ₗ e₂ : τ₂)
+      (h₃ : Γ ⊢ₗ e₃ : τ₃)
+      (hj : Typing.locJoin p τ₂ τ₃ = some τ) :
     -- ─────────────────────────── (T-LocCond)
       Γ ⊢ₗ .cond e₁ e₂ e₃ : τ
 
