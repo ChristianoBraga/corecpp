@@ -243,3 +243,17 @@ The preprocessor of C++ selects the same lines as Preproc (N4659 §19.1, paragra
 
 The file `tests/Preproc.lean` checks the argument on the programs of `tests/preproc`, comparing the selected lines with those of `g++ -E` and the exit status with that of `g++`. No Lean proof covers it.
 :::
+
+# Rules of the chapter
+
+Every rule of inference of this chapter, in the order of its sections. Each rule is stated with its explanation, and with the definition of its notation, in the section named above it. The lexer and the grammar are given by an automaton and by productions, not by rules of inference.
+
+*Preprocessor*
+
+$$`\dfrac{}{\varphi \vdash \texttt{\#define}\ F \Rightarrow \varepsilon, \varphi \cup \{F\}}\;\textsf{(P-Define)}`
+
+$$`\dfrac{\varphi \vdash H(h) \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#include}\ \texttt{<}h\texttt{>} \Rightarrow t, \varphi'}\;\textsf{(P-Include)}`
+
+$$`\dfrac{F \in \varphi \qquad \varphi \vdash G_1 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefT)}`
+
+$$`\dfrac{F \notin \varphi \qquad \varphi \vdash G_2 \Rightarrow t, \varphi'}{\varphi \vdash \texttt{\#ifdef}\ F\ G_1\ \texttt{\#else}\ G_2\ \texttt{\#endif} \Rightarrow t, \varphi'}\;\textsf{(P-IfdefF)}`
