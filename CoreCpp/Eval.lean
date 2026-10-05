@@ -789,9 +789,11 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
     /-  ρ, σ ⊢ e ⇒ bool true, σ₁    ρ, σ₁ ⊢ {c₁} ⇒ r, ρ, σ₂          ρ, σ ⊢ e ⇒ bool false, σ₁    ρ, σ₁ ⊢ {c₂} ⇒ r, ρ, σ₂
         ────────────────────────────────────────────────── (If-T)     ─────────────────────────────────────────────────── (If-F)
         ρ, σ ⊢ if (e) {c₁} else {c₂} ⇒ r, ρ, σ₂                        ρ, σ ⊢ if (e) {c₁} else {c₂} ⇒ r, ρ, σ₂             -/
-    | .ite e t f => traced "If" (confC c ρ σ) showR do
+    | .ite e t f => tracedCases "If-T, If-F" (confC c ρ σ) showR do
       let (v, σ₁) ← expr fuel fs ρ σ e
-      if ← expectBool "condition of if" v then cmd fuel fs ρ σ₁ (.block t) else cmd fuel fs ρ σ₁ (.block f)
+      if ← expectBool "condition of if" v then
+        return ("If-T", ← tryCatch (.ok <$> cmd fuel fs ρ σ₁ (.block t)) (pure ∘ .error))
+      else return ("If-F", ← tryCatch (.ok <$> cmd fuel fs ρ σ₁ (.block f)) (pure ∘ .error))
     /-  ρ, σ ⊢ e ⇒ bool false, σ₁
         ──────────────────────────────────────── (While-F)
         ρ, σ ⊢ while (e) {c} ⇒ normal, ρ, σ₁
@@ -806,14 +808,15 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
 
         The divergence of while (true) {} has no derivation, a limitation of
         inductive big-step semantics.                                                                 -/
-    | .while e b => traced "While" (confC c ρ σ) showR do
+    | .while e b => tracedCases "While-F, While-T, While-Ret" (confC c ρ σ) showR do
       let (v, σ₁) ← expr fuel fs ρ σ e
       if ← expectBool "condition of while" v then
-        let (r, _, σ₂) ← cmd fuel fs ρ σ₁ (.block b)
-        match r with
-        | .normal => cmd fuel fs ρ σ₂ (.while e b)
-        | .ret _  => return (r, ρ, σ₂)
-      else return (.normal, ρ, σ₁)
+        match ← tryCatch (Except.ok <$> cmd fuel fs ρ σ₁ (.block b)) (pure ∘ Except.error) with
+        | .error err => return ("While-T, While-Ret", .error err)
+        | .ok (.ret v, _, σ₂) => return ("While-Ret", .ok (.ret v, ρ, σ₂))
+        | .ok (.normal, _, σ₂) =>
+          return ("While-T", ← tryCatch (.ok <$> cmd fuel fs ρ σ₂ (.while e b)) (pure ∘ .error))
+      else return ("While-F", .ok (.normal, ρ, σ₁))
     /-  ρ, σ ⊢ c₀ ⇒ normal, ρ₀, σ₀    ρ₀, σ₀ ⊢ while (e) { {c} cₛ } ⇒ r, ρ₀, σ₁
         ────────────────────────────────────────────────────────────────────── (For)
         ρ, σ ⊢ for (c₀; e; cₛ) {c} ⇒ r, ρ, σ₁ ∖ fresh(ρ, ρ₀)
