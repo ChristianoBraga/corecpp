@@ -138,8 +138,8 @@ def tracedLib (fallback : Error → String) (ante : TraceAnte) (render : α → 
 body gives the rule it concluded with its result or its error, and an error
 before the choice of the rule is recorded under `before`. -/
 def tracedCases (before : String) (ante : TraceAnte) (render : α → TraceCons)
-    (k : M (String × Except Error α)) : M α :=
-  tracedLib (fun _ => before) ante render do
+    (k : M (String × Except Error α)) (arrow : String := "⇒") : M α :=
+  tracedLib (arrow := arrow) (fun _ => before) ante render do
     let (r, res) ← k
     match res with
     | .ok a => pure (r, a)
@@ -751,6 +751,14 @@ def lval (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc 
       let (w, σ₂) ← expr fuel fs ρ σ₁ i
       let F ← fnsOf n
       libStep ρ σ₂ s!"{n}.index({v}, {w})" showL (F.index v w σ₂)
+    /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ₗ ℓ, σ₂      ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₃ ⇒ₗ ℓ, σ₂
+        ──────────────────────────────────── (LocCond-T)    ───────────────────────────────────── (LocCond-F)
+        ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ₗ ℓ, σ₂                         ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ₗ ℓ, σ₂            -/
+    | .cond e₁ e₂ e₃ => tracedCases "LocCond-T, LocCond-F" (confE e ρ σ) showL (arrow := "⇒ₗ") do
+      let (v₁, σ₁) ← expr fuel fs ρ σ e₁
+      if ← expectBool "condition" v₁ then
+        return ("LocCond-T", ← tryCatch (.ok <$> lval fuel fs ρ σ₁ e₂) (pure ∘ .error))
+      else return ("LocCond-F", ← tryCatch (.ok <$> lval fuel fs ρ σ₁ e₃) (pure ∘ .error))
     | _ => throw (.typeError s!"expression does not denote a location: {e}")
 
   /-- The location of field f of the object stored at ℓ. -/

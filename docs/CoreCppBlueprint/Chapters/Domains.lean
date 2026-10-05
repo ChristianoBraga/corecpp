@@ -142,7 +142,7 @@ The judgment $`\Gamma \vdash e : \tau` states that the expression $`e` has type 
 :::
 
 :::definition "judg_ty_lval" (parent := "juizos") (lean := "CoreCpp.Typing.lval, CoreCpp.Semantics.LHasType") (uses := "dom_tenv, judg_relations")
-The judgment $`\Gamma \vdash_{\ell} e : \tau` holds for the expressions that denote a location, a variable not captured by copy, an unqualified field of `this`, `*e`, `e.f`, `e->f`, the element `e[i]` of a vector, and an `operator[]` or a method call whose member returns a reference.
+The judgment $`\Gamma \vdash_{\ell} e : \tau` holds for the expressions that denote a location, a variable not captured by copy, an unqualified field of `this`, `*e`, `e.f`, `e->f`, the element `e[i]` of a vector, an `operator[]` or a method call whose member returns a reference, and a conditional whose two branches denote locations of one type.
 :::
 
 :::definition "judg_ty_cmd" (parent := "juizos") (lean := "CoreCpp.Cmd, CoreCpp.Typing.cmd, CoreCpp.Typing.cmds, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks") (uses := "judg_ty_expr, gram_ast, judg_relations")
@@ -156,7 +156,7 @@ The judgment $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` states that the exp
 :::
 
 :::definition "judg_ev_lval" (parent := "juizos") (lean := "CoreCpp.Eval.lval, CoreCpp.Semantics.LEval") (uses := "dom_env, dom_store, dom_loc, judg_relations")
-The judgment $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'` states that the expression $`e` denotes the location $`\ell`. It holds for a variable, an unqualified field of `this`, a dereferenced pointer, a field of an object, a field through a pointer, a call of a member that returns a reference, and a use of the library that gives a location, such as an element of a vector.
+The judgment $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'` states that the expression $`e` denotes the location $`\ell`. It holds for a variable, an unqualified field of `this`, a dereferenced pointer, a field of an object, a field through a pointer, a call of a member that returns a reference, a use of the library that gives a location, such as an element of a vector, and a conditional, which denotes the location of the chosen branch.
 :::
 
 :::definition "judg_ev_cmd" (parent := "juizos") (lean := "CoreCpp.Eval.cmd, CoreCpp.Eval.cmds, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Execs") (uses := "judg_ev_expr, dom_ctrl, judg_relations")

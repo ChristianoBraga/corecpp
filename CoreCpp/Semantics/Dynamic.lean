@@ -409,6 +409,18 @@ inductive LEval (p : Program) : Env → Store → Expr → Loc → Store → Pro
     -- ──────────────────────────────────── (LocIndex)
       ⟨ρ, σ⟩ ⊢ .index e i ⇒ₗ ℓ, σ₃
 
+  | locCondT
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool true, σ₁)
+      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ₗ ℓ, σ₂) :
+    -- ──────────────────────────────── (LocCond-T)
+      ⟨ρ, σ⟩ ⊢ .cond e₁ e₂ e₃ ⇒ₗ ℓ, σ₂
+
+  | locCondF
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool false, σ₁)
+      (h₃ : ⟨ρ, σ₁⟩ ⊢ e₃ ⇒ₗ ℓ, σ₂) :
+    -- ──────────────────────────────── (LocCond-F)
+      ⟨ρ, σ⟩ ⊢ .cond e₁ e₂ e₃ ⇒ₗ ℓ, σ₂
+
 /-- ρ, σ ⊢ c ⇒ r, ρ′, σ′ -/
 inductive Exec (p : Program) : Env → Store → Cmd → Ctrl → Env → Store → Prop where
   /-- The block discards the extension of ρ and frees the locations it allocated, the owned bindings of ρ′ ∖ ρ. -/

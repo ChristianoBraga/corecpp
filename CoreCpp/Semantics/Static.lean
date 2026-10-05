@@ -316,6 +316,14 @@ inductive HasType (p : Program) : TEnv → Expr → Ty → Prop where
     -- ─────────────────────────── (T-Cond)
       Γ ⊢ .cond e₁ e₂ e₃ : τ
 
+  /-- Two branches that denote objects of one type, as C++ makes the
+  conditional an lvalue (N4659 §8.16 ¶4). -/
+  | condObj
+      (h : Γ ⊢ₗ .cond e₁ e₂ e₃ : τ)
+      (ho : IsObject τ) :
+    -- ─────────────────────────── (T-CondObj)
+      Γ ⊢ .cond e₁ e₂ e₃ : τ
+
   /-- A variable f of a `std::function` type, a reference parameter, hides
   the function named f. -/
   | callVar
@@ -488,6 +496,15 @@ inductive LHasType (p : Program) : TEnv → Expr → Ty → Prop where
       (hr : md.retRef = true) :
     -- ──────────────────────────────────────────────────── (T-LocMethod)
       Γ ⊢ₗ .methodCall recv arrow m es static sig : md.ret
+
+  /-- Two branches that denote locations of one type, an lvalue in C++
+  (N4659 §8.16 ¶4). -/
+  | locCond
+      (h₁ : Γ ⊢ e₁ : .bool)
+      (h₂ : Γ ⊢ₗ e₂ : τ)
+      (h₃ : Γ ⊢ₗ e₃ : τ) :
+    -- ─────────────────────────── (T-LocCond)
+      Γ ⊢ₗ .cond e₁ e₂ e₃ : τ
 
 /-- Γ ⊢ e ◁ τ, e is acceptable where τ is expected. -/
 inductive Accept (p : Program) : TEnv → Expr → Ty → Prop where

@@ -65,6 +65,14 @@ int main() { return factorial(5); }"
 
 -- int overflow is an error
 #eval prog "int main() { int x = 2147483647; return x + 1; }"
+-- a conditional over locations of one type denotes a location, objects included,
+-- and the last two, of different types and with a branch that is no location, are type errors
+#eval prog "class Node { public: int value; Node(int v) { value = v; } }; int main() { Node* p = new Node(3); Node* q = new Node(4); bool c = false; return (c ? *p : *q).value; }"
+#eval prog "class Node { public: int value; Node(int v) { value = v; } }; int main() { Node* p = new Node(3); Node* q = new Node(4); bool c = true; Node& r = c ? *p : *q; r.value = 9; return p->value; }"
+#eval prog "int main() { int x = 1; int y = 2; bool c = false; (c ? x : y) = 7; return x * 10 + y; }"
+#eval (parseStd "class A { public: int value; }; class B { public: int value; }; int main() { A* p = new A(); B* q = new B(); bool c = true; return (c ? *p : *q).value; }").map check
+#eval (parseStd "int main() { int x = 1; bool c = true; (c ? x : 2) = 7; return x; }").map check
+
 -- the quotient and the remainder of -2^31 by -1, both undefined in C++17
 #eval prog "int main() { int a = -2147483647 - 1; int b = -1; return a / b; }"
 #eval prog "int main() { int a = -2147483647 - 1; int b = -1; return a % b; }"

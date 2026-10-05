@@ -383,12 +383,19 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
         Γ ⊢ e₁ ? e₂ : e₃ : τ
 
         The join is τ₂ when the types are equal, τ₃ when τ₂ ≈ τ₃, and τ₂ when
-        τ₃ ≈ τ₂, as `Ty.join` states.                                                -/
-    | .cond e₁ e₂ e₃ => do
+        τ₃ ≈ τ₂, as `Ty.join` states.
+
+        Γ ⊢ₗ e₁ ? e₂ : e₃ : τ    τ object type
+        ─────────────────────────────────────── (T-CondObj)      two objects of one type
+        Γ ⊢ e₁ ? e₂ : e₃ : τ                                      denote a location, no copy -/
+    | e@(.cond e₁ e₂ e₃) => do
       let t₁ ← expr fuel p Γ e₁
       if t₁ != .bool then throw (.mismatch "condition" .bool t₁)
-      let t₂ ← value e₂ (← expr fuel p Γ e₂)
-      let t₃ ← value e₃ (← expr fuel p Γ e₃)
+      let t₂ ← expr fuel p Γ e₂
+      let t₃ ← expr fuel p Γ e₃
+      if Std.isObject t₂ || Std.isObject t₃ then return ← lval fuel p Γ e
+      let t₂ ← value e₂ t₂
+      let t₃ ← value e₃ t₃
       if t₂ == t₃ then .ok t₂
       else if compat p t₂ t₃ then .ok t₃
       else if compat p t₃ t₂ then .ok t₂
@@ -763,6 +770,16 @@ def lval (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
     | e@(.methodCall recv arrow m es _ _) => do
       let (md, _) ← resolveMethod fuel p Γ recv arrow m es
       if md.retRef then return md.ret else throw (.notLvalue e)
+    /-  Γ ⊢ e₁ : bool    Γ ⊢ₗ e₂ : τ    Γ ⊢ₗ e₃ : τ
+        ───────────────────────────────────────────── (T-LocCond)
+        Γ ⊢ₗ e₁ ? e₂ : e₃ : τ                                                     -/
+    | .cond e₁ e₂ e₃ => do
+      let t₁ ← expr fuel p Γ e₁
+      if t₁ != .bool then throw (.mismatch "condition" .bool t₁)
+      let t₂ ← lval fuel p Γ e₂
+      let t₃ ← lval fuel p Γ e₃
+      if t₂ != t₃ then throw (.mismatch "branches of ?:" t₂ t₃)
+      return t₂
     | e => .error (.notLvalue e)
 
   /-- Γ ⊢ c ⊣ Γ', under the return type τᵣ of the enclosing function. -/
