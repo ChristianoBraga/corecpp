@@ -191,6 +191,10 @@ int main() { Counter* p = new Counter(); Counter& c = *p; c.value = 5; return p-
 #eval prog "class Counter { public: int value; Counter() { value = 1; } };
 int main() { std::vector<Counter*>* v = new std::vector<Counter*>(1); (*v)[0] = new Counter(); Counter& c = *(*v)[0]; return c.value; }"
 
+-- a reference to a base binds an object of a derived class, and dispatches on it
+#eval prog "class Shape { public: virtual int area() { return 1; } }; class Square : public Shape { public: int side; Square() { side = 3; } int area() override { return side * side; } }; int main() { Square* s = new Square(); Shape& r = *s; return r.area(); }"
+#eval (parseStd "class Shape { public: int id; }; class Square : public Shape { public: int side; }; int main() { Shape* b = new Shape(); Square& r = *b; return 0; }").map check
+
 -- a reference to a pointer variable
 #eval prog "class P { public: int a; };
 int main() { P* p = nullptr; P*& q = p; q = new P(); q->a = 3; return p->a; }"

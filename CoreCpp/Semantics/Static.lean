@@ -639,12 +639,13 @@ inductive Check (p : Program) : Ty → TEnv → Cmd → TEnv → Prop where
     -- ──────────────────────────────────── (T-Decl)
       ⟨Γ, τᵣ⟩ ⊢ .decl τ x e ⊣ Γ.bind x τ
 
-  /-- The initialiser denotes a location, and x has the type of its
-  referent. -/
+  /-- The initialiser denotes a location of τ, or of a class derived from
+  the class τ. -/
   | declRef
       (hb : Bindable true τ)
       (hw : WF p τ)
-      (h : Γ ⊢ₗ e : τ) :
+      (h : Γ ⊢ₗ e : τ')
+      (hc : Typing.refCompat p τ' τ) :
     -- ─────────────────────────────────────── (T-DeclRef)
       ⟨Γ, τᵣ⟩ ⊢ .declRef τ x e ⊣ Γ.bind x τ
 

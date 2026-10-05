@@ -238,6 +238,13 @@ def compat (p : Program) : Ty → Ty → Bool
   | .ptr (.cls d), .ptr (.cls b) => d == b || p.subclass d b
   | t₁, t₂ => t₁ == t₂
 
+/-- τ′ ⊑ τ, a location of type τ′ binds a reference of type τ. Equal types, or
+a class and one of its bases, as C++ binds a reference to a base to an object
+of a derived class (N4659 §11.6.3 ¶5). -/
+def refCompat (p : Program) : Ty → Ty → Bool
+  | .cls d, .cls b => p.subclass d b
+  | t', t => t' == t
+
 /-- The type of a conditional whose branches denote locations of types τ₂ and
 τ₃. Equal types give that type, and a class and one of its bases give the
 base, as C++ binds the derived object as an lvalue of its base
@@ -854,14 +861,14 @@ def cmd (fuel : Nat) (p : Program) (τᵣ : Ty) (Γ : TEnv) (c : Cmd) : T TEnv :
       wellFormed fuel p t
       accept fuel p Γ s!"initialiser of {x}" e t
       return Γ.bind x t
-    /-  Bindable_true(τ)    Γ ⊢ τ ok    Γ ⊢ₗ e : τ
-        ──────────────────────────────────────────────────────── (T-DeclRef)      the initialiser denotes a location
-        Γ ⊢ τ& x = e ⊣ Γ[x ↦ τ]                                        and x has the type of its referent -/
+    /-  Bindable_true(τ)    Γ ⊢ τ ok    Γ ⊢ₗ e : τ′    τ′ ⊑ τ
+        ──────────────────────────────────────────────────────── (T-DeclRef)      the initialiser denotes a location,
+        Γ ⊢ τ& x = e ⊣ Γ[x ↦ τ]                                        of τ or of a class derived from τ -/
     | .declRef t x e => do
       bindable s!"reference {x}" true t
       wellFormed fuel p t
       let te ← lval fuel p Γ e
-      if te != t then throw (.mismatch s!"referent of {x}" t te)
+      if !refCompat p te t then throw (.mismatch s!"referent of {x}" t te)
       return Γ.bind x t
     /-  Γ ⊢ e : τ    HasValues(τ)    Storable(τ)
         ─────────────────────────────────────────── (T-Auto)      a lambda has no type for auto to copy

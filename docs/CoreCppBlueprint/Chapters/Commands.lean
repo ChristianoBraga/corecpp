@@ -45,16 +45,16 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma' \qquad (\ell, \sigma'') =
 
 # Local reference
 
-:::definition "cmd_declref" (parent := "ud3") (lean := "CoreCpp.Typing.cmd, CoreCpp.Typing.bindable, CoreCpp.Typing.wellFormed, CoreCpp.Typing.lval, CoreCpp.Eval.cmd, CoreCpp.Eval.lval, CoreCpp.Env.alias, CoreCpp.Semantics.Bindable, CoreCpp.Semantics.WF, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Check, CoreCpp.Semantics.Exec") (uses := "cmd_decl, judg_ty_lval, judg_ev_lval, dom_env, dom_tenv, dom_types")
+:::definition "cmd_declref" (parent := "ud3") (lean := "CoreCpp.Typing.cmd, CoreCpp.Typing.bindable, CoreCpp.Typing.wellFormed, CoreCpp.Typing.lval, CoreCpp.Typing.refCompat, CoreCpp.Eval.cmd, CoreCpp.Eval.lval, CoreCpp.Env.alias, CoreCpp.Semantics.Bindable, CoreCpp.Semantics.WF, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Check, CoreCpp.Semantics.Exec") (uses := "cmd_decl, judg_ty_lval, judg_ev_lval, dom_env, dom_tenv, dom_types")
 The local reference `τ& x = e` binds a second name to the location `e` denotes, without allocating.
 
-The declared type is bindable by reference and well formed, $`\mathsf{Bindable}_{\mathtt{true}}(\tau)` of {bpref "dom_tenv"}[], so it may be an object type. The initialiser denotes a location of the type $`\tau` itself, with no conversion, so a reference to a base never binds an object of a derived class. The reference has in $`\Gamma` the type of its referent, because every read and write through it is a read or write at the referent.
+The declared type is bindable by reference and well formed, $`\mathsf{Bindable}_{\mathtt{true}}(\tau)` of {bpref "dom_tenv"}[], so it may be an object type. The initialiser denotes a location of type $`\tau'` with $`\tau' \sqsubseteq \tau`, `Typing.refCompat`. The relation holds when $`\tau' = \tau`, or when both are classes and $`\tau'` derives from $`\tau`, so a reference to a base binds an object of a derived class, as in C++ (N4659 §11.6.3 paragraph 5). It never converts a value, so a reference of type `int` binds only a location of type `int`. The reference has in $`\Gamma` the declared type $`\tau`, and a call of a virtual method through it dispatches on the class of the object.
 
 The binding $`\rho[x \mapsto_{\mathsf{a}} \ell]`, `Env.alias`, is an alias and not owned, so the exit of the block that declared the reference leaves the location in $`\sigma`.
 
 The referent may be an object, as in `C& r = *p;`, since the reference binds its location and copies nothing. A reference to a temporary, to `nullptr` or to an expression without a location does not exist. A reference may still dangle. When `delete` frees an object or a vector, a reference to the object, to one of its fields or to one of its elements names a location outside $`\sigma`. A later read or write through the reference fails a premise $`\ell \in \mathrm{dom}\,\sigma`, so it has no derivation, and the evaluator gives `error` with the exit code 134. C++17 leaves that access undefined.
 
-$$`\dfrac{\mathsf{Bindable}_{\mathtt{true}}(\tau) \qquad \Gamma \vdash \tau\ \mathsf{ok} \qquad \Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \tau\mathtt{\&}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-DeclRef)}`
+$$`\dfrac{\mathsf{Bindable}_{\mathtt{true}}(\tau) \qquad \Gamma \vdash \tau\ \mathsf{ok} \qquad \Gamma \vdash_{\ell} e : \tau' \qquad \tau' \sqsubseteq \tau}{\Gamma \vdash \tau\mathtt{\&}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-DeclRef)}`
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \tau\mathtt{\&}\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto_{\mathsf{a}} \ell], \sigma'}\;\textsf{(DeclRef)}`
 :::
@@ -168,7 +168,7 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma' \qquad (\ell, \sigma'') =
 
 *Local reference*
 
-$$`\dfrac{\mathsf{Bindable}_{\mathtt{true}}(\tau) \qquad \Gamma \vdash \tau\ \mathsf{ok} \qquad \Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \tau\mathtt{\&}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-DeclRef)}`
+$$`\dfrac{\mathsf{Bindable}_{\mathtt{true}}(\tau) \qquad \Gamma \vdash \tau\ \mathsf{ok} \qquad \Gamma \vdash_{\ell} e : \tau' \qquad \tau' \sqsubseteq \tau}{\Gamma \vdash \tau\mathtt{\&}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-DeclRef)}`
 
  
 
