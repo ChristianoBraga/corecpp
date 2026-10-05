@@ -213,13 +213,16 @@ def value (e : Expr) (t : Ty) : T Ty :=
   else .ok t
 
 /--τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal
-types, nullptr against a pointer type, or, by subsumption, a pointer to a
-derived class where a pointer to its base is expected. These and the lambda
-to `std::function` are the only implicit conversions.
+types, nullptr and a pointer type in either order, or, by subsumption, a
+pointer to a derived class where a pointer to its base is expected. These are
+the only implicit conversions.
 
 ```
-D derives from B
-──────────────── (Subsumption)
+──────── (C-Refl)    ──────────────── (C-Null)    ──────────────── (C-NullR)
+τ ≈ τ                nullptr_t ≈ τ*               τ* ≈ nullptr_t
+
+D ⊑ B
+──────── (C-Sub)      D derives from B, or D = B
 D* ≈ B*
 ```
 
