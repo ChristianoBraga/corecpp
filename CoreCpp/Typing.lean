@@ -392,8 +392,8 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
         ──────────────────────────────────────────────────────────────────────── (T-Cond)
         Γ ⊢ e₁ ? e₂ : e₃ : τ
 
-        The join is τ₂ when the types are equal, τ₃ when τ₂ ≈ τ₃, and τ₂ when
-        τ₃ ≈ τ₂, as `Ty.join` states.
+        The join is τ₂ when the types are equal or τ₂ is a pointer and τ₃ is
+        nullptr_t, τ₃ when τ₂ ≈ τ₃, and τ₂ when τ₃ ≈ τ₂, as `Ty.join` states.
 
         Γ ⊢ₗ e₁ ? e₂ : e₃ : τ    τ object type
         ─────────────────────────────────────── (T-CondObj)      two objects of one type
@@ -407,6 +407,7 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
       let t₂ ← value e₂ t₂
       let t₃ ← value e₃ t₃
       if t₂ == t₃ then .ok t₂
+      else if t₃ == .nullT && t₂ matches .ptr _ then .ok t₂
       else if compat p t₂ t₃ then .ok t₃
       else if compat p t₃ t₂ then .ok t₂
       else .error (.mismatch "branches of ?:" t₂ t₃)

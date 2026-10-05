@@ -79,9 +79,11 @@ end CoreCpp.Semantics
 namespace CoreCpp
 
 /-- The type of `e₁ ? e₂ : e₃` from the types of its branches, the common one,
-or the one the other converts to. -/
+or the one the other converts to. A pointer and `nullptr` join at the pointer
+type in either order, the composite pointer type of C++ (N4659 §8.16 ¶7). -/
 def Ty.join (p : Program) (t₂ t₃ : Ty) : Option Ty :=
   if t₂ == t₃ then some t₂
+  else if t₃ == .nullT && t₂ matches .ptr _ then some t₂
   else if Typing.compat p t₂ t₃ then some t₃
   else if Typing.compat p t₃ t₂ then some t₂
   else none

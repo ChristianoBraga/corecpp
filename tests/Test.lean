@@ -75,6 +75,10 @@ int main() { return factorial(5); }"
 #eval (parseStd "class A { public: int value; }; class B { public: int value; }; int main() { A* p = new A(); B* q = new B(); bool c = true; return (c ? *p : *q).value; }").map check
 #eval (parseStd "int main() { int x = 1; bool c = true; (c ? x : 2) = 7; return x; }").map check
 
+-- a pointer and nullptr join at the pointer type in either order
+#eval (parseStd "class Node { public: int value; }; int main() { Node* p = new Node(); p->value = 7; bool c = true; auto q = c ? p : nullptr; Node* r = c ? nullptr : p; return q->value; }").map check
+#eval prog "class Node { public: int value; }; int main() { Node* p = new Node(); p->value = 7; bool c = true; return (c ? p : nullptr)->value; }"
+
 -- the quotient and the remainder of -2^31 by -1, both undefined in C++17
 #eval prog "int main() { int a = -2147483647 - 1; int b = -1; return a / b; }"
 #eval prog "int main() { int a = -2147483647 - 1; int b = -1; return a % b; }"
