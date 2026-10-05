@@ -85,6 +85,8 @@ structure TState where
   enabled : Bool := false
   depth   : Nat := 0
   log     : Array TraceEntry := #[]
+  /-- The rule an error concludes when the body of `tracedCases` chose it. -/
+  pending : Option String := none
 
 /-- The evaluation monad. The state survives an error, so the trace up to the
 failing rule is kept. -/
@@ -124,12 +126,26 @@ def tracedLib (fallback : Error → String) (ante : TraceAnte) (render : α → 
   if s.enabled then
     let (rule, cons) := match res with
       | .ok (r, a) => (r, render a)
-      | .error e   => (fallback e, { head := s!"error ({e})" })
+      | .error e   => (s.pending.getD (fallback e), { head := s!"error ({e})" })
     modify fun s =>
       { s with log := s.log.push ⟨s.depth, rule, { ante with arrow := arrow }, cons⟩ }
+  modify fun s => { s with pending := none }
   match res with
   | .ok (_, a) => pure a
   | .error e   => throw e
+
+/-- As `tracedLib`, for a case whose rules share their first premises. The
+body gives the rule it concluded with its result or its error, and an error
+before the choice of the rule is recorded under `before`. -/
+def tracedCases (before : String) (ante : TraceAnte) (render : α → TraceCons)
+    (k : M (String × Except Error α)) : M α :=
+  tracedLib (fun _ => before) ante render do
+    let (r, res) ← k
+    match res with
+    | .ok a => pure (r, a)
+    | .error e => do
+      modify fun s => { s with pending := some r }
+      throw e
 
 def confE (e : Expr) (ρ : Env) (σ : Store) : TraceAnte :=
   { env := ρ.toString, store := σ.toString, subject := toString e }
@@ -233,9 +249,8 @@ def unopRule : UnOp → String
   | .neg => "Neg"
 
 /-- The rule that an application of a binary operator concludes, once the
-right operand is known. A zero divisor concludes `DivZero`. -/
+right operand is known. -/
 def binopRule : BinOp → Val → String
-  | .div, .int 0 | .mod, .int 0 => "DivZero"
   | .div, _ | .mod, _ => "Div"
   | .add, _ | .sub, _ | .mul, _ => "Arith"
   | _, _ => "Rel"
@@ -243,7 +258,6 @@ def binopRule : BinOp → Val → String
 /-- The rule whose conclusion is the error, when the operator fails before the
 right operand names one. -/
 def binopFallback (op : BinOp) : Error → String
-  | .divisionByZero => "DivZero"
   | _ => binopRule op (.int 1)
 
 def expectBool (what : String) : Val → M Bool
@@ -402,22 +416,25 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
         ─────────────────────────────── (And-False)    ────────────────────────────────────────────── (And-True)
         ρ, σ ⊢ e₁ && e₂ ⇒ bool false, σ₁               ρ, σ ⊢ e₁ && e₂ ⇒ v, σ₂
         short circuit, e₂ is evaluated only if e₁ is true                          -/
-    | .binop .and e₁ e₂ => traced "And" (confE e ρ σ) showV do
+    | .binop .and e₁ e₂ => tracedCases "And-False, And-True" (confE e ρ σ) showV do
       let (v₁, σ₁) ← expr fuel fs ρ σ e₁
-      if ← expectBool "left operand of &&" v₁ then expr fuel fs ρ σ₁ e₂ else return (.bool false, σ₁)
+      if ← expectBool "left operand of &&" v₁ then
+        return ("And-True", ← tryCatch (.ok <$> expr fuel fs ρ σ₁ e₂) (pure ∘ .error))
+      else return ("And-False", .ok (.bool false, σ₁))
     /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁                      ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂
         ─────────────────────────────── (Or-True)      ─────────────────────────────────────────────── (Or-False)
         ρ, σ ⊢ e₁ || e₂ ⇒ bool true, σ₁                ρ, σ ⊢ e₁ || e₂ ⇒ v, σ₂                             -/
-    | .binop .or e₁ e₂ => traced "Or" (confE e ρ σ) showV do
+    | .binop .or e₁ e₂ => tracedCases "Or-True, Or-False" (confE e ρ σ) showV do
       let (v₁, σ₁) ← expr fuel fs ρ σ e₁
-      if ← expectBool "left operand of ||" v₁ then return (.bool true, σ₁) else expr fuel fs ρ σ₁ e₂
+      if ← expectBool "left operand of ||" v₁ then return ("Or-True", .ok (.bool true, σ₁))
+      else return ("Or-False", ← tryCatch (.ok <$> expr fuel fs ρ σ₁ e₂) (pure ∘ .error))
     /-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂    v₁ ⊕ v₂ = v
         ──────────────────────────────────────────────────────── (Arith), (Div), (Rel)
         ρ, σ ⊢ e₁ ⊕ e₂ ⇒ v, σ₂          left before right
 
         The premises of the three rules coincide, and `binop` tells them apart.
-        A zero divisor has no derivation, and the trace names its error
-        `DivZero`. The derivation cites the rule the operator concludes,
+        A zero divisor has no derivation, and the trace records its error
+        under Div. The derivation cites the rule the operator concludes,
         `binopRule`.                                     -/
     | .binop op e₁ e₂ => tracedLib (binopFallback op) (confE e ρ σ) showV do
       let (v₁, σ₁) ← expr fuel fs ρ σ e₁
@@ -426,9 +443,11 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
     /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂        ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₃ ⇒ v, σ₂
         ────────────────────────────────────────────── (Cond-T)   ─────────────────────────────────────────────── (Cond-F)
         ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                                ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                     -/
-    | .cond e₁ e₂ e₃ => traced "Cond" (confE e ρ σ) showV do
+    | .cond e₁ e₂ e₃ => tracedCases "Cond-T, Cond-F" (confE e ρ σ) showV do
       let (v₁, σ₁) ← expr fuel fs ρ σ e₁
-      if ← expectBool "condition" v₁ then expr fuel fs ρ σ₁ e₂ else expr fuel fs ρ σ₁ e₃
+      if ← expectBool "condition" v₁ then
+        return ("Cond-T", ← tryCatch (.ok <$> expr fuel fs ρ σ₁ e₂) (pure ∘ .error))
+      else return ("Cond-F", ← tryCatch (.ok <$> expr fuel fs ρ σ₁ e₃) (pure ∘ .error))
     /-  f ∉ ρ    f ↦ (τ f (p₁ x₁, …, pₖ xₖ) { c }) in the program
         for each i, left to right, with σ'₀ = σ,
           pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ      call by value, a fresh location with a copy
