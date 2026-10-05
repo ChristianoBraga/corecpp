@@ -95,18 +95,26 @@ The typing context $`\Gamma` is a finite map from identifiers to types. The type
 
 Class types and the types of the library whose module gives `new` a signature, `std::vector` and `std::function`, are object types, `IsObject`. They have no values, and no variable, by value parameter, result or field has one, `Storable`. A reference parameter and a local reference may have an object type, `Bindable`. An expression of object type, such as `*p`, never stands where a value is expected, `HasValues`. It occurs as the left operand of `.`, as the operand of `[]` or of an operator member, as the callee of `(*f)(ē)`, as the argument of a reference parameter and as the initialiser of a local reference.
 
-$$`\begin{array}{lcl} \mathsf{IsObject}(\tau) & \iff & \tau = C \ \lor\ (\tau = L\langle\bar{\tau}\rangle \land \text{the module of } L \text{ gives } \mathtt{new} \text{ a signature at } \bar{\tau}) \\ \mathsf{HasValues}(\tau) & \iff & \tau \neq \mathsf{void} \land \lnot\,\mathsf{IsObject}(\tau) \\ \mathsf{Storable}(\tau) & \iff & \lnot\,\mathsf{IsObject}(\tau) \land \tau \neq \mathsf{nullptr\_t} \land \tau \neq \tau'(\tau_1, \ldots, \tau_k) \\ \mathsf{Bindable}_{r}(\tau) & \iff & (r \land \mathsf{IsObject}(\tau)) \lor \mathsf{Storable}(\tau) \end{array}`
+$$`\begin{array}{lcl} \mathsf{IsObject}(\tau) & \iff & \tau = C \ \lor\ (\tau = L\langle\bar{\tau}\rangle \land \exists\, \bar{\tau}', \tau'.\ \Gamma \vdash_L \mathtt{new}\langle\bar{\tau}\rangle : \bar{\tau}' \to \tau') \\ \mathsf{HasValues}(\tau) & \iff & \tau \neq \mathsf{void} \land \lnot\,\mathsf{IsObject}(\tau) \\ \mathsf{Storable}(\tau) & \iff & \lnot\,\mathsf{IsObject}(\tau) \land \tau \neq \mathsf{nullptr\_t} \land \tau \neq \tau'(\tau_1, \ldots, \tau_k) \\ \mathsf{Bindable}_{r}(\tau) & \iff & (r \land \mathsf{IsObject}(\tau)) \lor \mathsf{Storable}(\tau) \end{array}`
 
-The flag $`r` of $`\mathsf{Bindable}_{r}` is true for a reference.
+The judgment $`\Gamma \vdash_L \mathtt{new}\langle\bar{\tau}\rangle : \bar{\tau}' \to \tau'` is the signature that the module of $`L` gives to the creation of an instance of $`L\langle\bar{\tau}\rangle`, {bpref "std_library"}[], the relation `StaticModule.new`. The flag $`r` of $`\mathsf{Bindable}_{r}` is true for a reference.
 
 Each binding carries a mark, read only or not. The mark is set on every binding of the enclosing scope when the body of a lambda is checked, so that the copies of `[=]` are read and never written. The binding of `this` gives the current class, `TEnv.self`, inside a member body.
 :::
 :::definition "dom_types" (parent := "dominios") (lean := "CoreCpp.Semantics.WF, CoreCpp.Typing.wellFormed, CoreCpp.Typing.compat, CoreCpp.Program.libDecls, CoreCpp.Program.subclass") (uses := "dom_tenv, dom_classes")
 The judgment $`\Gamma \vdash \tau\ \mathsf{ok}` states that the type $`\tau` is well formed. Every class it names is declared, $`C \in \mathrm{dom}\,p`, every type of the library it names is declared by a header with its number of template arguments, $`L/k \in \mathrm{lib}(p)`, `Program.libDecls`, and the module of $`L` accepts the arguments, $`\mathrm{wf}_L(\bar{\tau})`. A function type has a storable or `void` result and storable parameters. The judgment does not depend on $`\Gamma`.
 
-$$`\dfrac{}{\Gamma \vdash \mathsf{int}\ \mathsf{ok}}\;\textsf{(WF-Int)} \qquad \dfrac{}{\Gamma \vdash \mathsf{bool}\ \mathsf{ok}}\;\textsf{(WF-Bool)} \qquad \dfrac{}{\Gamma \vdash \mathsf{void}\ \mathsf{ok}}\;\textsf{(WF-Void)} \qquad \dfrac{}{\Gamma \vdash \mathsf{nullptr\_t}\ \mathsf{ok}}\;\textsf{(WF-Null)}`
+$$`\dfrac{}{\Gamma \vdash \mathsf{int}\ \mathsf{ok}}\;\textsf{(WF-Int)}`
 
-$$`\dfrac{C \in \mathrm{dom}\,p}{\Gamma \vdash C\ \mathsf{ok}}\;\textsf{(WF-Class)} \qquad \dfrac{\Gamma \vdash \tau\ \mathsf{ok}}{\Gamma \vdash \tau*\ \mathsf{ok}}\;\textsf{(WF-Ptr)}`
+$$`\dfrac{}{\Gamma \vdash \mathsf{bool}\ \mathsf{ok}}\;\textsf{(WF-Bool)}`
+
+$$`\dfrac{}{\Gamma \vdash \mathsf{void}\ \mathsf{ok}}\;\textsf{(WF-Void)}`
+
+$$`\dfrac{}{\Gamma \vdash \mathsf{nullptr\_t}\ \mathsf{ok}}\;\textsf{(WF-Null)}`
+
+$$`\dfrac{C \in \mathrm{dom}\,p}{\Gamma \vdash C\ \mathsf{ok}}\;\textsf{(WF-Class)}`
+
+$$`\dfrac{\Gamma \vdash \tau\ \mathsf{ok}}{\Gamma \vdash \tau*\ \mathsf{ok}}\;\textsf{(WF-Ptr)}`
 
 $$`\dfrac{L/k \in \mathrm{lib}(p) \qquad \mathrm{wf}_L(\tau_1, \ldots, \tau_k) \qquad \Gamma \vdash \tau_i\ \mathsf{ok}}{\Gamma \vdash L\langle\tau_1, \ldots, \tau_k\rangle\ \mathsf{ok}}\;\textsf{(WF-Lib)}`
 
@@ -114,7 +122,13 @@ $$`\dfrac{\tau = \mathsf{void} \lor \mathsf{Storable}(\tau) \qquad \Gamma \vdash
 
 The relation $`\tau \approx \tau'` states that a value of type $`\tau` is accepted where $`\tau'` is expected. It holds of equal types, of `nullptr` and a pointer type in either order, and of a pointer to a class and a pointer to one of its bases. The relation $`D \sqsubseteq B`, `Program.subclass`, holds when $`D = B` or $`D` derives from $`B`. These are the only implicit conversions of Core C++.
 
-$$`\dfrac{}{\tau \approx \tau}\;\textsf{(C-Refl)} \qquad \dfrac{}{\mathsf{nullptr\_t} \approx \tau*}\;\textsf{(C-Null)} \qquad \dfrac{}{\tau* \approx \mathsf{nullptr\_t}}\;\textsf{(C-NullR)} \qquad \dfrac{D \sqsubseteq B}{D* \approx B*}\;\textsf{(C-Sub)}`
+$$`\dfrac{}{\tau \approx \tau}\;\textsf{(C-Refl)}`
+
+$$`\dfrac{}{\mathsf{nullptr\_t} \approx \tau*}\;\textsf{(C-Null)}`
+
+$$`\dfrac{}{\tau* \approx \mathsf{nullptr\_t}}\;\textsf{(C-NullR)}`
+
+$$`\dfrac{D \sqsubseteq B}{D* \approx B*}\;\textsf{(C-Sub)}`
 
 The relation is directional. Its left side is the type of an expression and its right side the type its context requires. The judgment $`\Gamma \vdash e \lhd \tau` of {bpref "fun_accept"}[] uses it for an initialiser, the right side of an assignment, an argument and a returned value. The rule T-Eq tries it in both directions, and the join of the conditional chooses its type with it, both in {bpref "expr_cond"}[].
 
@@ -203,12 +217,26 @@ Every rule of inference of this chapter, in the order of its sections. Each rule
 
 *Domains*
 
-$$`\dfrac{}{\Gamma \vdash \mathsf{int}\ \mathsf{ok}}\;\textsf{(WF-Int)} \qquad \dfrac{}{\Gamma \vdash \mathsf{bool}\ \mathsf{ok}}\;\textsf{(WF-Bool)} \qquad \dfrac{}{\Gamma \vdash \mathsf{void}\ \mathsf{ok}}\;\textsf{(WF-Void)} \qquad \dfrac{}{\Gamma \vdash \mathsf{nullptr\_t}\ \mathsf{ok}}\;\textsf{(WF-Null)}`
+$$`\dfrac{}{\Gamma \vdash \mathsf{int}\ \mathsf{ok}}\;\textsf{(WF-Int)}`
 
-$$`\dfrac{C \in \mathrm{dom}\,p}{\Gamma \vdash C\ \mathsf{ok}}\;\textsf{(WF-Class)} \qquad \dfrac{\Gamma \vdash \tau\ \mathsf{ok}}{\Gamma \vdash \tau*\ \mathsf{ok}}\;\textsf{(WF-Ptr)}`
+$$`\dfrac{}{\Gamma \vdash \mathsf{bool}\ \mathsf{ok}}\;\textsf{(WF-Bool)}`
+
+$$`\dfrac{}{\Gamma \vdash \mathsf{void}\ \mathsf{ok}}\;\textsf{(WF-Void)}`
+
+$$`\dfrac{}{\Gamma \vdash \mathsf{nullptr\_t}\ \mathsf{ok}}\;\textsf{(WF-Null)}`
+
+$$`\dfrac{C \in \mathrm{dom}\,p}{\Gamma \vdash C\ \mathsf{ok}}\;\textsf{(WF-Class)}`
+
+$$`\dfrac{\Gamma \vdash \tau\ \mathsf{ok}}{\Gamma \vdash \tau*\ \mathsf{ok}}\;\textsf{(WF-Ptr)}`
 
 $$`\dfrac{L/k \in \mathrm{lib}(p) \qquad \mathrm{wf}_L(\tau_1, \ldots, \tau_k) \qquad \Gamma \vdash \tau_i\ \mathsf{ok}}{\Gamma \vdash L\langle\tau_1, \ldots, \tau_k\rangle\ \mathsf{ok}}\;\textsf{(WF-Lib)}`
 
 $$`\dfrac{\tau = \mathsf{void} \lor \mathsf{Storable}(\tau) \qquad \Gamma \vdash \tau\ \mathsf{ok} \qquad \mathsf{Storable}(\tau_i) \qquad \Gamma \vdash \tau_i\ \mathsf{ok}}{\Gamma \vdash \tau(\tau_1, \ldots, \tau_k)\ \mathsf{ok}}\;\textsf{(WF-Fn)}`
 
-$$`\dfrac{}{\tau \approx \tau}\;\textsf{(C-Refl)} \qquad \dfrac{}{\mathsf{nullptr\_t} \approx \tau*}\;\textsf{(C-Null)} \qquad \dfrac{}{\tau* \approx \mathsf{nullptr\_t}}\;\textsf{(C-NullR)} \qquad \dfrac{D \sqsubseteq B}{D* \approx B*}\;\textsf{(C-Sub)}`
+$$`\dfrac{}{\tau \approx \tau}\;\textsf{(C-Refl)}`
+
+$$`\dfrac{}{\mathsf{nullptr\_t} \approx \tau*}\;\textsf{(C-Null)}`
+
+$$`\dfrac{}{\tau* \approx \mathsf{nullptr\_t}}\;\textsf{(C-NullR)}`
+
+$$`\dfrac{D \sqsubseteq B}{D* \approx B*}\;\textsf{(C-Sub)}`
