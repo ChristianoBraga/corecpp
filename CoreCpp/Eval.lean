@@ -220,7 +220,7 @@ def binop : BinOp → Val → Val → M Val
   | .div, .int _, .int 0 => throw .divisionByZero
   | .mod, .int _, .int 0 => throw .divisionByZero
   | .div, .int a, .int b => int32 (a.tdiv b)
-  | .mod, .int a, .int b => int32 (a.tmod b)
+  | .mod, .int a, .int b => do let _ ← int32 (a.tdiv b); int32 (a.tmod b)
   | .eq,  .int a, .int b => pure (.bool (a == b))
   | .ne,  .int a, .int b => pure (.bool (a != b))
   | .lt,  .int a, .int b => pure (.bool (a < b))

@@ -76,7 +76,7 @@ In the code, the case `unop` of `Eval.expr` evaluates the operand and calls `Eva
 :::definition "expr_arith" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.BinOp, CoreCpp.BinOp.isArithmetic, CoreCpp.BinOp.isArith, CoreCpp.BinOp.arith, CoreCpp.BinOp.divide, CoreCpp.Eval.binop, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr, dom_int32")
 The arithmetic operators require `int` on both operands. The left operand is evaluated before the right one, the order Core C++ chooses where C++17 fixes none. Division and remainder truncate toward zero, as in C++. A zero divisor and a result outside the range of `int` fail a premise, so the expression has no derivation and the evaluator gives `error`.
 
-The quotient of $`-2^{31}` by $`-1` is $`2^{31}`, outside the range, so it has no derivation. The remainder of $`-2^{31}` by $`-1` is $`0`, inside the range, so it has a derivation with the value $`0`. C++17 leaves both results undefined (N4659 §8.6 paragraph 4).
+The quotient of $`-2^{31}` by $`-1` is $`2^{31}`, outside the range, so it has no derivation. C++17 leaves the remainder undefined whenever it leaves the quotient undefined (N4659 §8.6 paragraph 4), so the remainder exists only when the quotient is in the range, and the remainder of $`-2^{31}` by $`-1` has no derivation either.
 
 A left operand of class type calls a member `operator⊕` instead, rule T-OpBin of {bpref "op_member"}[].
 

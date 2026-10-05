@@ -90,10 +90,12 @@ def BinOp.arith : BinOp → Int → Int → Int
   | .mul, a, b => a * b
   | _, _, _ => 0
 
-/-- n₁ ⊘ n₂ for `/` and `%`, truncating toward zero as C++ does. -/
+/-- n₁ ⊘ n₂ for `/` and `%`, truncating toward zero as C++ does. The
+remainder exists only when the quotient is in the range of `int`, since C++
+leaves both undefined otherwise (N4659 §8.6 ¶4). -/
 def BinOp.divide : BinOp → Int → Int → Option Int
   | .div, a, b => some (a.tdiv b)
-  | .mod, a, b => some (a.tmod b)
+  | .mod, a, b => if Int32.inRange (a.tdiv b) then some (a.tmod b) else none
   | _, _, _ => none
 
 /-- v₁ ⋈ v₂ for a relational operator. Two pointers are equal when they are

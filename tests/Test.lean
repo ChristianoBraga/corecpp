@@ -65,6 +65,9 @@ int main() { return factorial(5); }"
 
 -- int overflow is an error
 #eval prog "int main() { int x = 2147483647; return x + 1; }"
+-- the quotient and the remainder of -2^31 by -1, both undefined in C++17
+#eval prog "int main() { int a = -2147483647 - 1; int b = -1; return a / b; }"
+#eval prog "int main() { int a = -2147483647 - 1; int b = -1; return a % b; }"
 
 -- division by zero is an error
 #eval prog "int main() { int z = 0; return 10 / z; }"
