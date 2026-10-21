@@ -284,8 +284,110 @@ Each step leaves every check green, `lake build`, the three test files,
 
 ## Open
 
-- Whether `locOf` and the fields `static` and `sig` stay in the AST as the
-  annotations of the type checker, or the relation is stated over the source
-  program with the annotations as premises.
+- The annotations of the AST, analysed on 2026-10-21 in the section below.
+  Undecided, to settle before step 5, since it fixes what the theorems state.
+- The style of the dynamic rules, big-step as now or pretty-big-step,
+  analysed on 2026-10-21 in the section below. Undecided, to settle before
+  step 5, since it changes how the theorems are proved.
 - The merge order with `converge-chapter-2` and `converge-chapter-3`, both
   unmerged, and the redo of their open defects on this design.
+
+## The annotations of the AST
+
+Analysis of 2026-10-21, no decision yet.
+
+`Typing.annotate` fills four things the evaluator needs and only the type
+checker knows. `sig` on `call` and `methodCall` is the parameter type list of
+the overload resolution chose, read by `FunEnv.lookupSig` and
+`Program.resolve`. `static` on `methodCall` is the class of the receiver, the
+start of dispatch. `static` on `delete` is the class of the pointer, read by
+the premise on a virtual destructor. `locOf e`, a form no program writes,
+wraps each `return e` of a member that returns a reference.
+
+Radix, in `leodemoura/RadixExperiment`, has no such annotations. Its
+evaluation never needs a static fact. A call finds its function by name, an
+operator acts on the tags of its values, and `Expr.typeOf` serves only the
+preservation theorem. Its one internal form is `scope params args body`,
+introduced by the inlining pass `Opt/Inline.lean`, with its own `BigStep`
+rule, and `Stmt.inline_correct` states that the pass keeps the derivations.
+That works because `scope` is a constructor of its own, the source form
+`callStmt` has a rule too, the pass is syntactic, and its correctness is a
+theorem about `BigStep` alone.
+
+`locOf` meets all four conditions. It is a constructor with its own rule,
+`ret (some e)` has a rule, and `Typing.refRets` reads only `m.retRef`, no
+type. Its theorem is not preservation, since the pass changes a value into a
+location, but it involves the dynamic relation alone. A call of a member that
+returns a reference denotes the location the body returns, the meaning of
+T-RetRef. So `locOf` can stay as Radix keeps `scope`.
+
+`sig` and `static` meet none. They are optional fields of existing
+constructors. Left empty, they give a wrong derivation rather than none.
+`lookupSig` with `none` takes the first function of the name, and
+`static.getD tag` resolves a non virtual method from the dynamic class and
+makes the virtual destructor premise vacuous. Filling them needs types, and
+the source program has no correct dynamic semantics for a theorem to
+preserve.
+
+The proposal that follows. Turn `sig` and `static` into constructors, as
+`scope` is. The source keeps `call f ē`, `e.m(ē)` and `delete e`, and the
+resolved forms are new, for instance `callR f τ̄ ē`, `methodCallR e S τ̄ ē`
+and `deleteR e S`. The dynamic relations have rules only for the resolved
+forms, so an unresolved call has no derivation, and the fallback of
+`lookupSig` and the uses of `getD tag` go. The resolved forms come from an
+elaboration judgement Γ ⊢ e : τ ⇝ e′ and Γ ⊢ c ⊣ Γ′ ⇝ c′, the static
+relations with the resolved term as output, each rule filling the field from
+a premise it already has. `annotate` becomes its interpreter, and the
+soundness of `annotate` for it composes with the soundness of `Eval` to
+cover the source program. That step has no counterpart in Radix, which
+resolves nothing.
+
+The composition needs each well typed term to have one elaboration, so the
+static judgements and overload resolution must be deterministic. Resolution
+rejects an ambiguous call, `examples/overload_ambiguous.cpp`, but the lemma
+is not proved.
+
+## Rules on normal forms and rules that unfold subterms
+
+Analysis of 2026-10-21, no decision yet. The question is whether the dynamic
+relations should be defined on normal forms, with general rules that unfold
+subterms, as congruence rules do.
+
+They are not now. `Semantics/Dynamic.lean` is big-step in the style of Kahn,
+and each rule evaluates its own subterms in its premises, threads σ through
+them and then applies its operation. Arith, Div and Rel repeat the premises
+⟨ρ, σ⟩ ⊢ e₁ ⇒ v₁, σ₁ and ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ v₂, σ₂ and differ only in the last
+one. The left to right order, a decision of the design, is stated again in
+every rule with two or more subterms and never once by a rule of its own.
+
+The style asked for is pretty-big-step semantics, Charguéraud, ESOP 2013,
+LNCS 7792, pp. 41–60, doi 10.1007/978-3-642-37036-6_3. Terms are related to
+results directly, as in big-step, with two kinds of rules. A rule on a normal
+form, an intermediate term whose subterms are values, has only side
+conditions, as `binop₂ op v₁ v₂ ⇒ op.arith v₁ v₂` when the result is in
+range. A general rule evaluates the next subterm and continues on the
+intermediate term, from `binop op e₁ e₂` to `binop₁ op v₁ e₂`, so the order
+is fixed once per construction and shared by every operator.
+
+The consequences for Core C++.
+
+- The order and the threading of σ are stated once each, and determinism in
+  step 5 becomes a lemma on the unfolding rules plus the determinism of each
+  operation on values.
+- The main saving of the paper is the propagation of exceptions and
+  divergence, one abort rule per intermediate form. Core C++ has `error` as
+  the absence of a derivation, so it needs no abort rule and gains less.
+- The paper reads the rules coinductively as well, relating a diverging term
+  to a divergence result. That would lift the limitation of `CLAUDE.md` that
+  divergence has no derivation.
+- The intermediate terms, `binop₁ op v e`, `call₁ f v̄ ē` and the like, are
+  constructors no program writes, as `locOf` is, in `Expr` or in a separate
+  type of extended terms.
+- The rules stop reading as the textbook rules of natural semantics, and the
+  derivations `trace` prints grow one unfolding step per subterm. That
+  touches the course, where students read them.
+
+The change rewrites `Dynamic.lean`, `Eval.lean`, the trace and chapters 3 to
+8 of the blueprint, and changes how the theorems of step 5 are proved.
+Poulsen and Mosses, ESOP 2014, derive pretty-big-step rules from small-step
+rules by refocusing, a possible check on the transcription.
