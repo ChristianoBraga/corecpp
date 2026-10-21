@@ -235,6 +235,14 @@ structure Method where
   retRef     : Bool := false
   deriving Repr, BEq, Inhabited
 
+/-- Whether the method is virtual, declared `virtual` or marked `override`.
+A method that overrides a virtual method is virtual whether or not it is
+declared `virtual` (N4659 §13.3 paragraph 2), and `override` marks exactly
+the methods that override one, by the rule T-Class. So a call through a
+pointer to a middle class of a chain dispatches, and a third class may
+override the method again. -/
+def Method.virtual (m : Method) : Bool := m.isVirtual || m.isOverride
+
 /-- The constructor of a class, named after the class and run by `new` after
 the fields are allocated. -/
 structure Ctor where

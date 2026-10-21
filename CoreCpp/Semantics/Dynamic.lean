@@ -143,7 +143,7 @@ def Program.resolve (p : Program) (s t m : String) (sig : Option (List Ty)) : Op
     | none => p.findMethod c m
   match pick s with
   | none => none
-  | some (md, k) => if md.isVirtual then pick t else some (md, k)
+  | some (md, k) => if md.virtual then pick t else some (md, k)
 
 namespace Semantics
 

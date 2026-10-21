@@ -802,10 +802,11 @@ structure ClassOk (p : Program) (c : ClassDecl) : Prop where
   only, rule T-RetRef. -/
   refs : ∀ m ∈ c.methods, m.retRef = true →
     m.ret ≠ .void ∧ RefReturns p (Typing.memberEnv c.name m.params) m.body
-  /-- A method that redefines a method of a base redefines a virtual one, is
-  marked `override`, and keeps its signature. -/
+  /-- A method that redefines a method of a base redefines a virtual one,
+  declared `virtual` or itself an override, is marked `override`, and keeps
+  its signature. -/
   inherited : ∀ m ∈ c.methods, ∀ bm k, p.inherited c m.name m.params = some (bm, k) →
-    bm.isVirtual = true ∧ m.isOverride = true ∧ bm.ret = m.ret ∧
+    bm.virtual = true ∧ m.isOverride = true ∧ bm.ret = m.ret ∧
       bm.params.map (fun q => (q.ty, q.byRef)) = m.params.map (fun q => (q.ty, q.byRef))
   /-- A method marked `override` redefines a method of a base. -/
   overrides : ∀ m ∈ c.methods, p.inherited c m.name m.params = none → m.isOverride = false

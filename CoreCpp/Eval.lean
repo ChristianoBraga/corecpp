@@ -550,7 +550,7 @@ def resolve (fuel : Nat) (fs : FunEnv) (s t m : String) (sig : Option (List Ty))
       | some sg => (fs.findMethods c m).find? fun (md, _) => sigOf md.params == sg
       | none => fs.findMethod c m
     let some (md, k) := pick s | throw (.typeError s!"class {s} has no method {m}")
-    if md.isVirtual then
+    if md.virtual then
       let some (md', k') := pick t | throw (.typeError s!"class {t} has no method {m}")
       return (md', k')
     else return (md, k)

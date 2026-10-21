@@ -273,6 +273,15 @@ Each step leaves every check green, `lake build`, the three test files,
    of 2026-10-02, the convergence of each chapter comes first.
 6. The blueprint and the design lines of `CLAUDE.md`. Done.
 
+## Closed
+
+- On 2026-10-21 an override became virtual, as in C++17 §13.3 ¶2.
+  `Method.virtual` holds for a method declared `virtual` or marked
+  `override`, and the condition `inherited` of `ClassOk`, `Typing.cls`,
+  `Program.resolve` and `Eval.resolve` use it. A third class of a chain
+  overrides the method again, and a call through the middle class
+  dispatches, `examples/override_chain.cpp`.
+
 ## Open
 
 - Whether `locOf` and the fields `static` and `sig` stay in the AST as the
@@ -280,8 +289,3 @@ Each step leaves every check green, `lake build`, the three test files,
   program with the annotations as premises.
 - The merge order with `converge-chapter-2` and `converge-chapter-3`, both
   unmerged, and the redo of their open defects on this design.
-- The condition `inherited` of `ClassOk` transcribes the type checker as it
-  is, a redefined method must be marked `virtual` in the base, which rejects
-  the third level of a chain. The decision that `override` implies `virtual`,
-  as in C++17 §13.3 ¶2, changes both the relation and the type checker, on a
-  branch of chapter 6.

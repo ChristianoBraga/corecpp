@@ -181,7 +181,7 @@ def TypeError.toString : TypeError → String
   | .privateMember c m    => s!"{m} is a private member of {c}"
   | .noConstructor c      => s!"class {c} has no constructor for these arguments"
   | .baseConstructorParams c b => s!"the base {b} of {c} has a constructor with parameters, and there is no initialiser list"
-  | .redefinesNonVirtual c m => s!"{c} redefines the method {m}, which the base does not declare virtual"
+  | .redefinesNonVirtual c m => s!"{c} redefines the method {m}, which is not virtual in the base"
   | .overrideWithoutVirtual c m => s!"{c} marks {m} override, but no base declares a virtual {m}"
   | .signatureMismatch c m => s!"the method {m} of {c} has a signature different from the one it overrides"
   | .unknownBase c b      => s!"class {c} derives from the unknown class {b}"
@@ -1036,7 +1036,7 @@ def cls (p : Program) (c : ClassDecl) : T Unit := do
       (p.findMethods b m.name).find? fun (bm, _) => sigOf bm.params == sigOf m.params
     match inherited with
     | some (bm, _) =>
-      if !bm.isVirtual then throw (.redefinesNonVirtual c.name m.name)
+      if !bm.virtual then throw (.redefinesNonVirtual c.name m.name)
       if !m.isOverride then throw (.overrideWithoutVirtual c.name m.name)
       if bm.ret != m.ret || bm.params.map (fun q => (q.ty, q.byRef)) != m.params.map (fun q => (q.ty, q.byRef)) then
         throw (.signatureMismatch c.name m.name)

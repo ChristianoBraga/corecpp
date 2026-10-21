@@ -344,6 +344,12 @@ int main() { Geometry::Shape* f = new Geometry::Square(4); int a = f->area(); de
 class D : public B { public: int g() override { return 20; } };
 int main() { B* b = new D(); return b->f() + b->g(); }"
 
+-- an override is virtual, so a third class overrides it again and a call through the middle class dispatches
+#eval prog "class A { public: virtual int f() { return 1; } };
+class B : public A { public: int f() override { return 2; } };
+class C : public B { public: int f() override { return 3; } };
+int main() { A* a = new C(); B* b = new C(); B* d = new B(); return a->f() * 100 + b->f() * 10 + d->f(); }"
+
 -- destructors run from the tag up to the root
 #eval prog "class Log { public: int n; };
 class B { public: Log* log; virtual ~B() { log->n = log->n + 1; } };

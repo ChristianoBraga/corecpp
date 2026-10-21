@@ -29,7 +29,7 @@ Abstract data types, objects, classes and inheritance.
 :::definition "cls_decl" (parent := "ud5") (lean := "CoreCpp.ClassDecl, CoreCpp.Field, CoreCpp.Method, CoreCpp.Ctor, CoreCpp.Dtor, CoreCpp.Vis, CoreCpp.Typing.cls, CoreCpp.Typing.memberEnv, CoreCpp.Semantics.ClassOk") (uses := "dom_classes, judg_ty_cmd")
 A class has an optional base, fields and methods with a visibility, at most one constructor named after the class and at most one destructor. Members before the first section label are private, as in C++.
 
-The class is well formed when the base exists and the chain is acyclic, the fields have types with values and repeat no field of a base, the members have distinct names, a method that redefines a method of a base finds it `virtual` there, carries `override` and keeps the signature, the constructor of the base takes no parameters, and every member body is well typed under `this`.
+The class is well formed when the base exists and the chain is acyclic, the fields have types with values and repeat no field of a base, the members have distinct names, a method that redefines a method of a base finds it virtual there, carries `override` and keeps the signature, the constructor of the base takes no parameters, and every member body is well typed under `this`.
 
 $$`\dfrac{\begin{array}{c} B \text{ exists, chain acyclic}\qquad \text{fields not void, storable, well formed, new in the chain} \\ \text{each redefined } m \text{ is virtual in the base, marked override, same signature} \\ B \text{ has no constructor or one without parameters} \\ [\mathtt{this} \mapsto C*, p_1, \ldots, p_k] \vdash c \dashv \Gamma' \text{ for each member body} \end{array}}{\vdash \mathtt{class}\ C\ \mathtt{:}\ \mathtt{public}\ B\ \{ \ldots \}}\;\textsf{(T-Class)}`
 
@@ -98,10 +98,12 @@ A pointer to a derived class is accepted where a pointer to its base is expected
 $$`\dfrac{D \text{ derives from } B}{D* \approx B*}\;\textsf{(Subsumption)}`
 :::
 
-:::definition "cls_dispatch" (parent := "ud5") (lean := "CoreCpp.Eval.resolve, CoreCpp.Program.findMethod, CoreCpp.Typing.cls, CoreCpp.Semantics.ClassOk, CoreCpp.Program.resolve") (uses := "cls_decl, cls_subsumption, dom_classes")
-A `virtual` method is chosen by the class tag $`T` of the receiver, the nearest declaration in the chain of $`T`, so a call through a base pointer reaches the override of the derived class. A non virtual method is chosen by the static class $`S`.
+:::definition "cls_dispatch" (parent := "ud5") (lean := "CoreCpp.Eval.resolve, CoreCpp.Program.findMethod, CoreCpp.Typing.cls, CoreCpp.Semantics.ClassOk, CoreCpp.Program.resolve, CoreCpp.Method.virtual") (uses := "cls_decl, cls_subsumption, dom_classes")
+A method is virtual when it is declared `virtual` or marked `override`, `Method.virtual`. An override is virtual without the word `virtual`, as in C++ (N4659 §13.3 paragraph 2), so a third class of a chain may override it again, and a call through a pointer to the middle class dispatches.
 
-A derived class redefines only a method the base declares `virtual`, and marks it `override`, so the method reached from $`S` and the one reached from $`T` coincide for every non virtual method.
+A virtual method is chosen by the class tag $`T` of the receiver, the nearest declaration in the chain of $`T`, so a call through a base pointer reaches the override of the derived class. A non virtual method is chosen by the static class $`S`.
+
+A derived class redefines only a method that is virtual in the base, and marks it `override`, so the method reached from $`S` and the one reached from $`T` coincide for every non virtual method.
 
 Redefining a non virtual method, marking `override` without a virtual method in a base, or changing the signature is a type error.
 :::
