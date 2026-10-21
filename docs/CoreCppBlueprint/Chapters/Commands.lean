@@ -50,7 +50,7 @@ The local reference `τ& x = e` binds a second name to the location `e` denotes,
 
 The declared type is bindable by reference and well formed, $`\mathsf{Bindable}_{\mathtt{true}}(\tau)` of {bpref "dom_tenv"}[], so it may be an object type. The initialiser denotes a location of type $`\tau'` with $`\tau' \sqsubseteq \tau`, `Typing.refCompat`. The relation holds when $`\tau' = \tau`, or when both are classes and $`\tau'` derives from $`\tau`, so a reference to a base binds an object of a derived class, as in C++ (N4659 §11.6.3 paragraph 5). It never converts a value, so a reference of type `int` binds only a location of type `int`. The reference has in $`\Gamma` the declared type $`\tau`, and a call of a virtual method through it dispatches on the class of the object.
 
-The binding $`\rho[x \mapsto_{\mathsf{a}} \ell]`, `Env.alias`, is an alias and not owned, so the exit of the block that declared the reference leaves the location in $`\sigma`.
+The binding $`\rho[x \mapsto_{\mathsf{a}} \ell]` of {bpref "dom_env"}[] is an alias and not owned, so the exit of the block that declared the reference leaves the location in $`\sigma`.
 
 The referent may be an object, as in `C& r = *p;`, since the reference binds its location and copies nothing. A reference to a temporary, to `nullptr` or to an expression without a location does not exist. A reference may still dangle. When `delete` frees an object or a vector, a reference to the object, to one of its fields or to one of its elements names a location outside $`\sigma`. A later read or write through the reference fails a premise $`\ell \in \mathrm{dom}\,\sigma`, so it has no derivation, and the evaluator gives `error` with the exit code 134. C++17 leaves that access undefined.
 
@@ -86,7 +86,7 @@ $$`\dfrac{\rho, \sigma \vdash c \Rightarrow \mathsf{ret}\,v, \rho_1, \sigma_1}{\
 :::
 
 :::definition "cmd_block" (parent := "ud3") (lean := "CoreCpp.Typing.cmd, CoreCpp.Eval.cmd, CoreCpp.Eval.fresh, CoreCpp.Env.fresh, CoreCpp.Store.free, CoreCpp.Semantics.Check, CoreCpp.Semantics.Exec") (uses := "cmd_seq, dom_store, dom_env")
-The block discards the extension of $`\rho` and removes from $`\sigma` the locations it allocated. The set $`\mathrm{fresh}(\rho, \rho')`, `Env.fresh`, holds the locations of the owned bindings of $`\rho'` that $`\rho` does not have, so the alias a reference declaration made never frees the location it names. The evaluator computes the same set with `Eval.fresh`. Scope is the restoration of $`\rho`, lifetime is the removal from $`\sigma`.
+The block discards the extension of $`\rho` and removes from $`\sigma` the locations it allocated. These are the locations $`\mathrm{fresh}(\rho, \rho')` of {bpref "dom_env"}[], so the alias a reference declaration made never frees the location it names. The evaluator computes the same set with `Eval.fresh`. Scope is the restoration of $`\rho`, lifetime is the removal from $`\sigma`.
 
 $$`\dfrac{\Gamma \vdash c_1 \ldots c_n \dashv \Gamma'}{\Gamma \vdash \{\, c_1 \ldots c_n \,\} \dashv \Gamma}\;\textsf{(T-Block)}`
 

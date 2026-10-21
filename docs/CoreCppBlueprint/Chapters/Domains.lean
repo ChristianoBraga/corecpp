@@ -63,9 +63,9 @@ $$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{int}\,n}`
 :::
 
 :::definition "dom_env" (parent := "dominios") (lean := "CoreCpp.Env, CoreCpp.Binding, CoreCpp.Env.lookup, CoreCpp.Env.extend, CoreCpp.Env.alias, CoreCpp.Env.fresh") (uses := "dom_loc")
-The environment $`\rho` is a finite map from identifiers to locations. The notation $`\rho[x \mapsto \ell]` extends $`\rho`, and the most recent binding prevails.
+The environment $`\rho` is a finite map from identifiers to locations, and the most recent binding prevails.
 
-Each binding records whether the declaration that made it allocated the location, as `τ x = e` does, or aliased an existing one, as the reference `τ& y = e` does. Block exit frees only the owned locations, the owned bindings of $`\rho' \setminus \rho` that `Env.fresh` gives.
+Each binding records whether the declaration that made it allocated the location, as `τ x = e` does, or aliased an existing one, as the reference `τ& y = e` does. The notation $`\rho[x \mapsto \ell]` extends $`\rho` with an owned binding, `Env.extend`, and $`\rho[x \mapsto_{\mathsf{a}} \ell]` with an alias binding, `Env.alias`. The set $`\mathrm{fresh}(\rho, \rho')`, `Env.fresh`, holds the locations of the owned bindings of $`\rho'` that $`\rho` does not have. Block exit frees exactly these, so an alias never frees the location it names.
 
 Inside a member body, `this` is an alias binding to the location of the receiver, made by the call and never freed by the return.
 :::
