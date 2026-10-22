@@ -17,9 +17,9 @@ set_option verso.blueprint.foldCodeBlocks true
 
 Core C++ has three semantic components. The typing context $`\Gamma` maps identifiers to types. The environment $`\rho` maps identifiers to locations $`\ell`. The store $`\sigma` maps locations to values, and its domain is the set of live locations.
 
-The notation is the sequent style of Kahn (1987). Hypotheses stand left of $`\vdash`, the subject right of it, and the result after $`\Rightarrow`.
+The notation is the sequent style of Kahn (1987). Hypotheses stand left of $`\vdash`, the subject right of it, and the result after $`:`, $`\dashv` or $`\Rightarrow`.
 
-Each judgment is an inductive proposition of `CoreCpp/Semantics/`, with one constructor per rule, and the type checker of `CoreCpp/Typing.lean` and the evaluator of `CoreCpp/Eval.lean` are the functions that interpret them, {bpref "judg_relations"}[]. Every node of this blueprint points at both, the relation and the function.
+Each judgment is an inductive proposition of `CoreCpp/Semantics/`, with one constructor per rule, and the type checker of `CoreCpp/Typing.lean` and the evaluator of `CoreCpp/Eval.lean` are the functions that interpret them, {bpref "judg_relations"}[]. Every node of a judgment points at both, the relation and the function.
 
 :::author "christiano" (name := "Christiano Braga")
 :::
@@ -43,7 +43,7 @@ The values are $`\mathsf{int}\,n`, $`\mathsf{bool}\,b`, $`\mathsf{void}`, the po
 
 The value $`\mathsf{void}` is the result of a call to a function without return value. The closure is a value too, {bpref "dom_closure"}[].
 
-The tag of an object is the class it was created with, its fields are those of the whole chain of classes, the root base first, and the tag decides the dispatch of virtual methods and the destructors that `delete` runs. Objects and instances of object types of the library live in the store at their own location and are reached only through pointers and references.
+The tag of an object is the class that `new` names when it creates the object. Its fields are those of the whole chain of classes, the root base first. The tag decides the dispatch of virtual methods and the destructors that `delete` runs. Objects and instances of object types of the library live in the store at their own location, and a program reaches them only through pointers and references.
 
 The default value of a type, which `new` gives to every field and to every element of a vector, is $`\mathsf{int}\,0`, $`\mathsf{bool}\,\mathtt{false}` or $`\mathsf{null}`.
 :::
@@ -55,7 +55,7 @@ C++17 fixes neither the width nor the representation of `int`. A plain `int` has
 
 The ABI of the platform fixes it. The System V AMD64 psABI and AAPCS64 both give `int` 32 bits, and GCC supports only two's complement integer types.
 
-An arithmetic result outside the range of `int` has undefined behaviour (N4659 §8 paragraph 4), and Core C++ makes it `error`. That boundary has to be the boundary of the implementation Core C++ is compared with, `g++` and clang on x86‑64 and ARM64. A wider range would give a value where C++ gives none, and a narrower one would give `error` where C++ gives a value.
+An arithmetic result outside the range of `int` has undefined behaviour (N4659 §8 paragraph 4), and Core C++ makes it `error`. That boundary has to coincide with the one of `g++` and clang on x86‑64 and ARM64, the implementations Core C++ follows. A wider range would give a value where C++ gives none, and a narrower one would give `error` where C++ gives a value.
 
 The representation enters only through the lower bound $`-2^{31}`. Core C++ has no bitwise operators, no shifts and no unsigned types, so no program observes a bit pattern. The width lives in `Int32.min` and `Int32.max`, and in the largest integer literal the lexer of {bpref "lex_automaton"}[] accepts.
 
@@ -65,7 +65,7 @@ $$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{int}\,n}`
 :::definition "dom_env" (parent := "dominios") (lean := "CoreCpp.Env, CoreCpp.Binding, CoreCpp.Env.lookup, CoreCpp.Env.extend, CoreCpp.Env.alias, CoreCpp.Env.fresh") (uses := "dom_loc")
 The environment $`\rho` is a finite map from identifiers to locations, and the most recent binding prevails.
 
-Each binding records whether the declaration that made it allocated the location, as `τ x = e` does, or aliased an existing one, as the reference `τ& y = e` does. The notation $`\rho[x \mapsto \ell]` extends $`\rho` with an owned binding, `Env.extend`, and $`\rho[x \mapsto_{\mathsf{a}} \ell]` with an alias binding, `Env.alias`. The set $`\mathrm{fresh}(\rho, \rho')`, `Env.fresh`, holds the locations of the owned bindings of $`\rho'` that $`\rho` does not have. Block exit frees exactly these, so an alias never frees the location it names.
+Each binding records whether the declaration that made it allocated the location, as `τ x = e` does, or aliased an existing one, as the reference `τ& y = e` does. The notation $`\rho[x \mapsto \ell]` extends $`\rho` with an owned binding, `Env.extend`, and $`\rho[x \mapsto_{\mathsf{a}} \ell]` with an alias binding, `Env.alias`. The set $`\mathrm{fresh}(\rho, \rho')`, `Env.fresh`, holds the locations of the owned bindings of $`\rho'` that $`\rho` does not have. Scope exit frees these locations at the end of a block, of a `for` loop and of a call, so an alias never frees the location it names.
 
 Inside a member body, `this` is an alias binding to the location of the receiver, made by the call and never freed by the return.
 :::
@@ -77,7 +77,7 @@ The store $`\sigma` is a finite map from locations to values, with a counter of 
 :::definition "dom_closure" (parent := "dominios") (lean := "CoreCpp.Val, CoreCpp.Ty.isFn") (uses := "dom_val")
 The value of a lambda is the closure $`\mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m])`, with the parameters, the result type, the body and the captured copies, one value per variable of the body, other than a parameter, that the environment binds.
 
-A closure is held by a `std::function` object of {bpref "std_function"}[], whose one location holds it as the target of the object, or $`\mathsf{null}` for the function with no target. No variable, field or element holds a closure directly, since a `std::function` is an object, reached by pointer or by reference. The type of a lambda is the function type $`\tau(\tau_1, \ldots, \tau_k)`, which `Ty.isFn` recognises, and it occurs only as the template argument of `std::function`.
+A `std::function` object of {bpref "std_function"}[] holds a closure in its one location, as the target of the object, or $`\mathsf{null}` for the function with no target. No variable, field or element holds a closure directly, since a `std::function` is an object, reached by pointer or by reference. The type of a lambda is the function type $`\tau(\tau_1, \ldots, \tau_k)`, which `Ty.isFn` recognises, and it occurs only as the template argument of `std::function`.
 :::
 
 :::definition "dom_ctrl" (parent := "dominios") (lean := "CoreCpp.Ctrl") (uses := "dom_val")
@@ -87,7 +87,7 @@ The control result $`r` of a command is $`\mathsf{normal}` or $`\mathsf{ret}\,v`
 :::definition "dom_erro" (parent := "dominios") (lean := "CoreCpp.Error")
 The result `error` is not a value of the language. In the relations it is the absence of a derivation. Whatever C++17 leaves undefined fails a premise of every rule that could reach it, $`\sigma(\ell) = v`, $`n_2 \neq 0`, $`n \in [-2^{31}, 2^{31}-1]`, $`0 \le i < n`, and the subject has no derivation, with nothing to propagate. The evaluator, which runs the relations, reports the case as `error`, with a message and the exit code 134, and the error replaces the result of the whole program.
 
-Its causes are division by zero, `int` overflow, the dereference of `nullptr`, an index outside a vector, a negative vector size, a failed `assert`, the call of a `std::function` with no target, a location outside $`\sigma`, a missing `return` in a non `void` function, a second `delete` of the same object, a `delete` through a pointer to a base class without a virtual destructor, and the exhaustion of the fuel of the evaluator, a bound on the depth of a derivation that no program reaches. The causes `undeclaredVariable`, `undeclaredFunction`, `arity`, `typeError` and `notCallable` guard the evaluator against a program that skipped the type checker.
+Its causes are division by zero, `int` overflow, the dereference of `nullptr`, an index outside a vector, a negative vector size, a failed `assert`, the call of a `std::function` with no target, a location outside $`\sigma`, a missing `return` in a non `void` function, a second `delete` of the same object, a `delete` through a pointer to a base class without a virtual destructor, and the exhaustion of the fuel of the evaluator, a bound on the depth of a derivation that a program without termination reaches. The causes `undeclaredVariable`, `undeclaredFunction`, `arity`, `typeError` and `notCallable` guard the evaluator against a program that skipped the type checker.
 :::
 
 :::definition "dom_tenv" (parent := "dominios") (lean := "CoreCpp.TEnv, CoreCpp.TBind, CoreCpp.TEnv.lookup, CoreCpp.TEnv.isConst, CoreCpp.TEnv.bind, CoreCpp.TEnv.captured, CoreCpp.TEnv.self, CoreCpp.Semantics.IsObject, CoreCpp.Semantics.HasValues, CoreCpp.Semantics.Storable, CoreCpp.Semantics.Bindable")
@@ -99,10 +99,10 @@ $$`\begin{array}{lcl} \mathsf{IsObject}(\tau) & \iff & \tau = C \ \lor\ (\tau = 
 
 The judgment $`\Gamma \vdash_L \mathtt{new}\langle\bar{\tau}\rangle : \bar{\tau}' \to \tau'` is the signature that the module of $`L` gives to the creation of an instance of $`L\langle\bar{\tau}\rangle`, {bpref "std_library"}[], the relation `StaticModule.new`. The flag $`r` of $`\mathsf{Bindable}_{r}` is true for a reference.
 
-Each binding carries a mark, read only or not. The mark is set on every binding of the enclosing scope when the body of a lambda is checked, so that the copies of `[=]` are read and never written. The binding of `this` gives the current class, `TEnv.self`, inside a member body.
+Each binding carries a mark, read only or not. The check of a lambda body sets the mark on every binding of the enclosing scope, so that the body reads the copies of `[=]` and never writes them. The binding of `this` gives the current class, `TEnv.self`, inside a member body.
 :::
 :::definition "dom_types" (parent := "dominios") (lean := "CoreCpp.Semantics.WF, CoreCpp.Typing.wellFormed, CoreCpp.Typing.compat, CoreCpp.Typing.refCompat, CoreCpp.Program.libDecls, CoreCpp.Program.subclass") (uses := "dom_tenv, dom_classes")
-The judgment $`\Gamma \vdash \tau\ \mathsf{ok}` states that the type $`\tau` is well formed. Every class it names is declared, $`C \in \mathrm{dom}\,p`, every type of the library it names is declared by a header with its number of template arguments, $`L/k \in \mathrm{lib}(p)`, `Program.libDecls`, and the module of $`L` accepts the arguments, $`\mathrm{wf}_L(\bar{\tau})`. A function type has a storable or `void` result and storable parameters. The judgment does not depend on $`\Gamma`.
+The judgment $`\Gamma \vdash \tau\ \mathsf{ok}` states that the type $`\tau` is well formed. The program declares every class it names, $`C \in \mathrm{dom}\,p`. A header declares every type of the library it names, with its number of template arguments, $`L/k \in \mathrm{lib}(p)`, `Program.libDecls`, and the module of $`L` accepts the arguments, $`\mathrm{wf}_L(\bar{\tau})`. A function type has a storable or `void` result and storable parameters. The judgment does not depend on $`\Gamma`.
 
 $$`\dfrac{}{\Gamma \vdash \mathsf{int}\ \mathsf{ok}}\;\textsf{(WF-Int)}`
 
@@ -134,14 +134,14 @@ The relation is directional. Its left side is the type of an expression and its 
 
 The rule C-Null is the null pointer conversion of C++ (N4659 §7.11 paragraph 1), so `Node* p = nullptr;`, `p = nullptr;` and `return nullptr;` type check. No declared type is $`\mathsf{nullptr\_t}`, so every `nullptr` ends up converted to a pointer type. The rule C-Sub lets a pointer to a derived class stand where a pointer to its base is expected, and never the converse, since Core C++ has no cast.
 
-Compatibility and subsumption are two relations. Subsumption $`D \sqsubseteq B` is a relation on classes, the subclass order of the program, reflexive and transitive. It extends to types, $`\tau' \sqsubseteq \tau` when $`\tau' = \tau` or when both are classes in that order, `Typing.refCompat`. It says that an object of class $`\tau'` is also an object of class $`\tau`, so it applies where a location is bound or chosen, the initialiser of a reference in {bpref "cmd_declref"}[] and the branches of a conditional that denotes a location in {bpref "expr_cond"}[]. No value moves there, and the object keeps its class. Compatibility $`\tau \approx \tau'` is a relation on the types of values. It says that a value of type $`\tau` is accepted where a value of type $`\tau'` is expected. It contains subsumption only through pointers, by C-Sub, since a class type has no values, and it adds the conversions of `nullptr` that subsumption knows nothing of.
+Compatibility and subsumption are two relations. Subsumption $`D \sqsubseteq B` is a relation on classes, the subclass order of the program, reflexive and transitive. It extends to types, $`\tau' \sqsubseteq \tau` when $`\tau' = \tau` or when both are classes in that order, `Typing.refCompat`. It says that an object of class $`\tau'` is also an object of class $`\tau`. It therefore applies where the semantics binds or chooses a location, the initialiser of a reference in {bpref "cmd_declref"}[] and the branches of a conditional that denotes a location in {bpref "expr_cond"}[]. No value moves there, and the object keeps its class. Compatibility $`\tau \approx \tau'` is a relation on the types of values. It says that a value of type $`\tau` may stand where the context expects a value of type $`\tau'`. It contains subsumption only through pointers, by C-Sub, since a class type has no values, and it adds the conversions of `nullptr` that subsumption knows nothing of.
 
 Despite its symbol, $`\approx` is not an equivalence. It is not symmetric, since $`D* \approx B*` holds for a proper base $`B` and $`B* \approx D*` does not. It is not transitive either, since $`C* \approx \mathsf{nullptr\_t}` and $`\mathsf{nullptr\_t} \approx D*` hold for two unrelated classes $`C` and $`D` while $`C* \approx D*` does not. The rule C-NullR causes this, and Core C++ keeps it. Without C-NullR the relation would be a preorder.
 :::
 
 
 :::definition "dom_funenv" (parent := "dominios") (lean := "CoreCpp.Decl, CoreCpp.Program, CoreCpp.Program.funs, CoreCpp.Program.funsNamed, CoreCpp.Program.libDecls, CoreCpp.FunEnv, CoreCpp.FunEnv.lookup, CoreCpp.FunEnv.lookupSig, CoreCpp.Program.pickFun")
-The function environment is the program $`p` seen as a finite map from a name to the overload set of the functions of that name, `funsNamed`, and to the declarations of the library, `libDecls`. The program is a parameter of every relation, which reads it and never changes it. The evaluator selects a function by the signature the type checker wrote into the call, `lookupSig`, and the static relation by `pickFun`. {bpref "gram_ast"}[] gives the syntax of the declarations it holds.
+The function environment is the program $`p` seen as a finite map from a name to the overload set of the functions of that name, `funsNamed`, and to the declarations of the library, `libDecls`. The program is a parameter of every relation, which reads it and never changes it. The evaluator selects a function by the signature the type checker wrote into the call, `lookupSig`, and the static relation by `pickFun`. The syntax of the declarations it holds is in {bpref "gram_ast"}[].
 :::
 
 :::definition "dom_classes" (parent := "dominios") (lean := "CoreCpp.ClassDecl, CoreCpp.Field, CoreCpp.Method, CoreCpp.Ctor, CoreCpp.Dtor, CoreCpp.Vis, CoreCpp.Program.classes, CoreCpp.Program.lookupClass, CoreCpp.Program.chain, CoreCpp.Program.allFields, CoreCpp.Program.findField, CoreCpp.Program.findMethod, CoreCpp.Program.findMethods, CoreCpp.Program.subclass, CoreCpp.Program.hasVirtualDtor")
@@ -149,13 +149,13 @@ The classes of the program form the class table, a finite map from class names t
 
 The table gives, for a class, its chain up to the root base, every field of the chain with the class that declares it, the nearest method of a given name, the overload set of a method name, one method per signature, the subclass relation and whether some class of the chain has a virtual destructor.
 
-The type checker consults it for types, visibility and dispatch, and `new` and `delete` for the fields to allocate and to free. Names are qualified by their namespace, `N::C`.
+The type checker consults it for types, visibility and dispatch, and `new` and `delete` for the fields to allocate and to free. A name carries the qualification of its namespace, `N::C`.
 :::
 
 # Relations and interpreters
 
 :::definition "judg_relations" (parent := "juizos") (lean := "CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Accept, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks, CoreCpp.Semantics.WF, CoreCpp.Semantics.FunOk, CoreCpp.Semantics.ClassOk, CoreCpp.Semantics.ProgramOk, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Execs, CoreCpp.Semantics.Runs, CoreCpp.Typing.wellFormed, CoreCpp.Typing.typingFuel, CoreCpp.runWith") (uses := "dom_tenv, dom_env, dom_store, dom_erro")
-The semantics is a set of inductive propositions, one per judgment, one constructor per rule, named as the rule is named in this blueprint, in `CoreCpp/Semantics/Static.lean` and `Dynamic.lean`, and the relations of the modules of the library in `Library.lean`. A constructor is laid out as a rule is written on the board, the premises one per line, the inference line with the name, and the conclusion under it. The program $`p` is a parameter of every relation, the function table and the class table.
+The semantics is a set of inductive propositions, one per judgment, with one constructor per rule. A constructor bears the name of its rule in this blueprint. The relations of the language are in `CoreCpp/Semantics/Static.lean` and `Dynamic.lean`, and the relations of the modules of the library in `Library.lean`. A constructor follows the layout of a rule on the board, the premises one per line, the inference line with the name, and the conclusion under it. The program $`p` is a parameter of every relation, the function table and the class table.
 
 | Judgment | Relation | Notation in Lean | Interpreter |
 | --- | --- | --- | --- |
@@ -172,9 +172,9 @@ The semantics is a set of inductive propositions, one per judgment, one construc
 | $`\rho, \sigma \vdash \bar{c} \Rightarrow r, \rho', \sigma'` | `Execs p ρ σ cs r ρ' σ'` | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Eval.cmds` |
 | $`p \Rightarrow v` | `Runs p v` | | `run` |
 
-The configuration $`\langle\rho, \sigma\rangle`, and $`\langle\Gamma, \tau_r\rangle` for a command with the result type of its body, are in angle brackets in Lean, and a sequence takes a starred arrow, two concessions to the parser of Lean. The relation is the specification and the function its interpreter. Every recursive function of the type checker and of the evaluator takes as first argument the fuel, a bound on the depth of a derivation, and recurses on it. The constant `typingFuel` and the function `runWith` set it to $`10^6`, and its exhaustion is the error `outOfFuel`. With the fuel, the functions admit two theorems, soundness, that a result of the function is a derivation of the relation, and completeness, that a derivation is reached with enough fuel. The structure follows Radix, the DSL of Leonardo de Moura's tutorial at ETAPS 2026.
+Lean writes the configuration $`\langle\rho, \sigma\rangle` in angle brackets, and $`\langle\Gamma, \tau_r\rangle` for a command with the result type of its body. A sequence takes a starred arrow. Both are concessions to the parser of Lean. The relation is the specification and the function its interpreter. Every recursive function of the type checker and of the evaluator takes as first argument the fuel, a bound on the depth of a derivation, and recurses on it. The constant `typingFuel` and the function `runWith` set it to $`10^6`, and its exhaustion is the error `outOfFuel`. The fuel makes two theorems expressible, soundness, that a result of the function is a derivation of the relation, and completeness, that the function reaches every derivation with enough fuel. Neither has a proof yet. The structure follows Radix, the language of the tutorial of de Moura at ETAPS 2026.
 
-The judgments on declarations, $`\vdash f`, $`\vdash C` and $`\vdash p`, are structures of named conditions rather than relations with one constructor, since their conditions are side conditions on the declarations and not premises on subterms. The selection of an overload, {bpref "overload_pick"}[], is the work of the type checker, which writes its choice into the call, and the relation reads it.
+The judgments on declarations, $`\vdash f`, $`\vdash C` and $`\vdash p`, are structures of named conditions rather than relations with one constructor. Their conditions are side conditions on the declarations and not premises on subterms. The selection of an overload, {bpref "overload_pick"}[], is the work of the type checker, which writes its choice into the call, and the relation reads it.
 :::
 
 # Static judgments
@@ -190,7 +190,7 @@ The judgment $`\Gamma \vdash_{\ell} e : \tau` holds for the expressions that den
 :::
 
 :::definition "judg_ty_cmd" (parent := "juizos") (lean := "CoreCpp.Cmd, CoreCpp.Typing.cmd, CoreCpp.Typing.cmds, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks") (uses := "judg_ty_expr, gram_ast, judg_relations")
-The judgment $`\Gamma \vdash c \dashv \Gamma'` states that the command $`c` is well typed and extends $`\Gamma` to $`\Gamma'`, so that a declaration reaches the following commands of the sequence. Kahn writes the output of a declaration after a colon, $`\rho_1 \vdash \mathrm{DECL} : \rho_2` (RR-0601, §2.3), and Core C++ writes $`\dashv` instead, because the colon already introduces a type in $`\Gamma \vdash e : \tau`, and $`\dashv` marks an output context, as in Dunfield and Krishnaswami (2013). The result type $`\tau_r` of the enclosing body, a function, a member or a lambda, is a parameter of the relation, written $`\langle\Gamma, \tau_r\rangle` in Lean.
+The judgment $`\Gamma \vdash c \dashv \Gamma'` states that the command $`c` is well typed and extends $`\Gamma` to $`\Gamma'`, so that a declaration reaches the following commands of the sequence. Kahn writes the output of a declaration after a colon, $`\rho_1 \vdash \mathrm{DECL} : \rho_2` (RR-0601, §2.3). Core C++ writes $`\dashv` instead, because the colon already introduces a type in $`\Gamma \vdash e : \tau`, and $`\dashv` marks an output context, as in Dunfield and Krishnaswami (2013). The result type $`\tau_r` of the enclosing body, a function, a member or a lambda, is a parameter of the relation, written $`\langle\Gamma, \tau_r\rangle` in Lean.
 :::
 
 # Dynamic judgments
@@ -208,11 +208,11 @@ The judgment $`\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'` states that 
 :::
 
 :::definition "judg_trace" (parent := "juizos") (lean := "CoreCpp.M, CoreCpp.TState, CoreCpp.TraceAnte, CoreCpp.TraceCons, CoreCpp.TraceEntry, CoreCpp.Eval.traced, CoreCpp.Eval.tracedLib, CoreCpp.Eval.libStep, CoreCpp.renderTrace") (uses := "judg_ev_expr, judg_ev_cmd")
-The evaluator runs in the monad $`M`, which carries the trace of the derivation. When tracing is enabled, each rule application records the instance of the rule it concludes, or the error, at its depth in the tree, with the antecedent and the consequent in parts. A premise of the library is recorded under the rule of its module, such as V-New or F-New. A rule whose premises fail records `error` as its consequent. The state survives the error, so the trace up to the failing rule is kept. The log holds the instances in post order, each premise before its conclusion.
+The evaluator runs in the monad $`M`, which carries the trace of the derivation. When tracing is on, each rule application records the instance of the rule it concludes, or the error, at its depth in the tree, with the antecedent and the consequent in parts. The trace records a premise of the library under the rule of its module, such as V-New or F-New. The state survives the error, so the trace keeps the rule applications up to the failing rule. The log holds the instances in post order, each premise before its conclusion.
 
-The function `renderTrace` rebuilds the tree from the log and lays it out as a derivation is written on the board, the premises over a line of inference, the conclusion under it and the rule name at the right.
+The function `renderTrace` rebuilds the tree from the log. It lays the tree out as a derivation on the board, the premises over a line of inference, the conclusion under it and the rule name at the right.
 
-A legend names the environments $`\rho_i`, the stores $`\sigma_j` and the subjects longer than 40 characters, so every judgment fits one line. A subtree wider than 100 columns is written apart under a name $`\mathcal{D}_k`.
+A legend names the environments $`\rho_i`, the stores $`\sigma_j` and the subjects longer than 40 characters, so every judgment fits one line. The function writes a subtree wider than 100 columns apart, under a name $`\mathcal{D}_k`.
 :::
 
 # Rules of the chapter
@@ -220,6 +220,8 @@ A legend names the environments $`\rho_i`, the stores $`\sigma_j` and the subjec
 Every rule of inference of this chapter, in the order of its sections. Each rule is stated with its explanation, and with the definition of its notation, in the section named above it. The rules of the judgments of the other chapters are collected at the end of each of them.
 
 *Domains*
+
+$$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{int}\,n}`
 
 $$`\dfrac{}{\Gamma \vdash \mathsf{int}\ \mathsf{ok}}\;\textsf{(WF-Int)}`
 
