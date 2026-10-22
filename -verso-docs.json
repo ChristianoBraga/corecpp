@@ -14,7 +14,8 @@
  "992": "<code>σ₁.alloc v = (ℓ, σ₂)</code>",
  "991": "<code>CoreCpp.Semantics.Eval p ρ σ a v σ₁</code>",
  "990": "<code>q.byRef = false</code>",
- "99": "<code>CoreCpp.BinOp.le : CoreCpp.BinOp</code>",
+ "99":
+ "<code>CoreCpp.BinOp.le : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Less than or equal, `&lt;=`. </code>",
  "989":
  "<code>CoreCpp.Semantics.Bind.byVal {p : CoreCpp.Program} {ρ : CoreCpp.Env} {σ : CoreCpp.Store} {a : CoreCpp.Expr}\n  {v : CoreCpp.Val} {σ₁ : CoreCpp.Store} {ℓ : CoreCpp.Loc} {σ₂ : CoreCpp.Store} {qs : List CoreCpp.Param}\n  {es : List CoreCpp.Expr} {ρ' : CoreCpp.Env} {σ' : CoreCpp.Store} {owned : List CoreCpp.Loc} {ρ₀ : CoreCpp.Env}\n  {q : CoreCpp.Param} (hq : q.byRef = false) (hv : CoreCpp.Semantics.Eval p ρ σ a v σ₁) (ha : σ₁.alloc v = (ℓ, σ₂))\n  (hs : CoreCpp.Semantics.Bind p ρ σ₂ (ρ₀.extend q.name ℓ) qs es ρ' σ' owned) :\n  CoreCpp.Semantics.Bind p ρ σ ρ₀ (q :: qs) (a :: es) ρ' σ' (ℓ :: owned)</code>",
  "988": "<code>CoreCpp.Param.name (self : CoreCpp.Param) : String</code>",
@@ -32,13 +33,14 @@
  "<code>CoreCpp.Typing.bindable (context : String) (byRef : Bool) (t : CoreCpp.Ty) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Requires a type a binding may have, an object type included when the\nbinding is a reference. </code>",
  "980":
  "<code>CoreCpp.Typing.accept (fuel : Nat) (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (context : String) (e : CoreCpp.Expr)\n  (τ : CoreCpp.Ty) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢ e ◁ τ, e is acceptable at type τ. For a lambda, `lambdaAt`. For any\nother expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.\n\n```\nΓ ⊢ e : τ'    τ' ≈ τ    τ' has values\n───────────────────────────────────── (Accept)\nΓ ⊢ e ◁ τ\n```\n</code>",
- "98": "<code>CoreCpp.BinOp.lt : CoreCpp.BinOp</code>",
+ "98":
+ "<code>CoreCpp.BinOp.lt : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Less than, `&lt;`. </code>",
  "979":
  "<code>CoreCpp.Typing.storable (context : String) (t : CoreCpp.Ty) : CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Requires that a variable, parameter or result type has values. A `τ&`\nparameter and a local reference bind the location of their argument, so an\nobject type is admissible there and nowhere else, which is how a member takes\nan object without copying it. </code>",
  "978":
  "<code>CoreCpp.Typing.fieldType (fuel : Nat) (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (c f : String) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">The type of field f of class C as seen from Γ, or the error. A private\nfield is visible only when Γ(this) is the class that declares it.\n\n```\nC has τ f declared in K    f public or Γ(this) = K*\n──────────────────────────────────────────────────── (Visible)\n```\n</code>",
  "977":
- "<code>CoreCpp.Eval.pointee (v : CoreCpp.Val) : CoreCpp.M CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">A pointer value as a live location. nullptr is error, the dereference\nthat C++ leaves undefined. </code>",
+ "<code>CoreCpp.Eval.pointee (v : CoreCpp.Val) : CoreCpp.M CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">The location a pointer value holds. nullptr is error, the dereference\nthat C++ leaves undefined. The location need not be live, and `readLoc`\nchecks that it is when it is read. </code>",
  "976": "<code>CoreCpp.Semantics.Ctors p ρ σ₁ ℓ c cds es σ'</code>",
  "975":
  "<code>ite.{u} {α : Sort u} (c : Prop) [h : Decidable c] (t e : α) : α</code><span class=\"sep\"></span><code class=\"docstring\">`if c then t else e` is notation for `ite c t e`, \"if-then-else\", which decides to\nreturn `t` or `e` depending on whether `c` is true or false. The explicit argument\n`c : Prop` does not have any actual computational content, but there is an additional\n`[Decidable c]` argument synthesized by typeclass inference which actually\ndetermines how to evaluate `c` to true or false. Write `if h : c then t else e`\ninstead for a \"dependent if-then-else\" `dite`, which allows `t`/`e` to use the fact\nthat `c` is true/false.\n</code>",
@@ -50,7 +52,8 @@
  "<code>CoreCpp.Semantics.Ctors.run {p : CoreCpp.Program} {k : CoreCpp.Ctor} {ρ : CoreCpp.Env} {σ : CoreCpp.Store}\n  {ℓ : CoreCpp.Loc} {c : String} {es : List CoreCpp.Expr} {v : CoreCpp.Val} {σ₁ : CoreCpp.Store}\n  {cds : List CoreCpp.ClassDecl} {σ' : CoreCpp.Store} {cd : CoreCpp.ClassDecl} (hk : cd.ctor = some k)\n  (hm :\n    CoreCpp.Semantics.Member p ρ σ ℓ k.params k.body (if (cd.name == c) = true then es else []) CoreCpp.Ty.void v σ₁)\n  (hs : CoreCpp.Semantics.Ctors p ρ σ₁ ℓ c cds es σ') : CoreCpp.Semantics.Ctors p ρ σ ℓ c (cd :: cds) es σ'</code>",
  "971": "<code>CoreCpp.Semantics.Ctors p ρ σ ℓ c cds es σ'</code>",
  "970": "<code>List CoreCpp.ClassDecl</code>",
- "97": "<code>CoreCpp.BinOp.ne : CoreCpp.BinOp</code>",
+ "97":
+ "<code>CoreCpp.BinOp.ne : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Inequality, `!=`. </code>",
  "969":
  "<code>CoreCpp.Semantics.Ctors.skip {p : CoreCpp.Program} {ρ : CoreCpp.Env} {σ : CoreCpp.Store} {ℓ : CoreCpp.Loc} {c : String}\n  {cds : List CoreCpp.ClassDecl} {es : List CoreCpp.Expr} {σ' : CoreCpp.Store} {cd : CoreCpp.ClassDecl}\n  (hk : cd.ctor = none) (hs : CoreCpp.Semantics.Ctors p ρ σ ℓ c cds es σ') :\n  CoreCpp.Semantics.Ctors p ρ σ ℓ c (cd :: cds) es σ'</code>",
  "968":
@@ -58,18 +61,19 @@
  "967":
  "<code>CoreCpp.Typing.value (e : CoreCpp.Expr) (t : CoreCpp.Ty) : CoreCpp.T CoreCpp.Ty</code><span class=\"sep\"></span><code class=\"docstring\">Requires a type that has values, neither void nor an object type. </code>",
  "966":
- "<code>CoreCpp.Eval.expectBool (what : String) : CoreCpp.Val → CoreCpp.M Bool</code>",
+ "<code>CoreCpp.Eval.expectBool (what : String) : CoreCpp.Val → CoreCpp.M Bool</code><span class=\"sep\"></span><code class=\"docstring\">The boolean a value holds, the premise e ⇒ bool b of the short circuit\noperators and of the conditional. Any other value is error, which a well\ntyped program never reaches. </code>",
  "965":
  "<code>CoreCpp.Typing.related (p : CoreCpp.Program) (t₁ t₂ : CoreCpp.Ty) : Bool</code><span class=\"sep\"></span><code class=\"docstring\">τ₁ ≈ τ₂ in either direction, for comparison and for the branches of `?:`. </code>",
  "964":
- "<code>CoreCpp.Eval.binop : CoreCpp.BinOp → CoreCpp.Val → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Arithmetic and relational binary operators, on already evaluated values.\n\n```\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂\n──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})\nρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂\n```\n\n```\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0\n──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})\nρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++\n```\n\nA zero divisor and a result outside the range of `int` have no derivation,\nand `binop` gives `error` for them. The quotient of −2³¹ by −1 is such a\nresult, while the remainder of −2³¹ by −1 is 0.\n\n```\nρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂\n─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, &lt;, &lt;=, &gt;, &gt;=})\nρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂\n```\n\nTwo pointers are equal when they are the same location. nullptr equals\nonly nullptr. There is no order on pointers.\n\nThe left operand is evaluated before the right one, the Core C++ choice\nwhere C++17 does not specify the order.\n</code>",
+ "<code>CoreCpp.Eval.binop : CoreCpp.BinOp → CoreCpp.Val → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Arithmetic and relational binary operators, on already evaluated values.\n\n```\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂\n──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, -, *})\nρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂\n```\n\n```\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0\n──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})\nρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++\n```\n\nA zero divisor and a result outside the range of `int` have no derivation,\nand `binop` gives `error` for them. The quotient of −2³¹ by −1 is such a\nresult, while the remainder of −2³¹ by −1 is 0.\n\n```\nρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂\n─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, &lt;, &lt;=, &gt;, &gt;=})\nρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂\n```\n\nTwo pointers are equal when they are the same location. nullptr equals\nonly nullptr. There is no order on pointers.\n\nThe left operand is evaluated before the right one, the Core C++ choice\nwhere C++17 does not specify the order.\n</code>",
  "963":
  "<code>CoreCpp.Eval.unop : CoreCpp.UnOp → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Unary operators.\n\n```\nρ, σ ⊢ e ⇒ bool b, σ'                    ρ, σ ⊢ e ⇒ int n, σ'\n──────────────────────── (Not)           ────────────────────────── (Neg)\nρ, σ ⊢ !e ⇒ bool ¬b, σ'                  ρ, σ ⊢ −e ⇒ int32 (−n), σ'\n```\n</code>",
  "962": "<code>Array CoreCpp.TraceEntry</code>",
  "961":
  "<code>CoreCpp.renderTrace (log : Array CoreCpp.TraceEntry) : String</code><span class=\"sep\"></span><code class=\"docstring\">Renders the trace as a derivation, premises over the line of inference,\nthe conclusion under it and the rule name at the right. A legend names the\nenvironments ρᵢ, the stores σⱼ and the subjects longer than 40 characters, and\na subtree wider than 100 columns is written apart under a name 𝒟ₖ. </code>",
  "960": "<code>Except CoreCpp.Error (String × α)</code>",
- "96": "<code>CoreCpp.BinOp.eq : CoreCpp.BinOp</code>",
+ "96":
+ "<code>CoreCpp.BinOp.eq : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Equality, `==`. </code>",
  "959":
  "<code>CoreCpp.Eval.libStep {α : Type} (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (subject : String)\n  (render : α → CoreCpp.TraceCons) (k : Except CoreCpp.Error (String × α)) : CoreCpp.M α</code><span class=\"sep\"></span><code class=\"docstring\">A premise of the library, σ ⊢_L u(v̄) ⇒ r, σ′, recorded in the trace under\nthe name of the rule of the module that concludes it. </code>",
  "958": "<code>CoreCpp.M (String × α)</code>",
@@ -83,7 +87,8 @@
  "951": "<code>CoreCpp.TraceAnte</code>",
  "950":
  "<code>CoreCpp.Eval.traced {α : Type} (rule : String) (ante : CoreCpp.TraceAnte) (render : α → CoreCpp.TraceCons)\n  (k : CoreCpp.M α) (arrow : String := \"⇒\") : CoreCpp.M α</code><span class=\"sep\"></span><code class=\"docstring\">Runs `k` one level deeper and, when tracing is enabled, records the\ninstance of the rule `rule` it concludes, or the error, at the current depth\nof the derivation. </code>",
- "95": "<code>CoreCpp.BinOp.mod : CoreCpp.BinOp</code>",
+ "95":
+ "<code>CoreCpp.BinOp.mod : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Remainder, `%`, with the sign of the dividend. </code>",
  "949":
  "<code>CoreCpp.TraceCons</code><span class=\"sep\"></span><code class=\"docstring\">The consequent, the result after the arrow. </code>",
  "948":
@@ -104,7 +109,8 @@
  "<code>CoreCpp.TraceAnte : Type</code><span class=\"sep\"></span><code class=\"docstring\">The antecedent of a recorded judgment. The environment and the store are\nkept apart from the subject so that the renderer can name them in a legend\ninstead of repeating them on every line. </code>",
  "940":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The arrow of the judgment, `⇒` or `⇒ₗ`. </code>",
- "94": "<code>CoreCpp.BinOp.div : CoreCpp.BinOp</code>",
+ "94":
+ "<code>CoreCpp.BinOp.div : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Division, `/`, truncated toward zero. </code>",
  "939":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The letter under which a long subject is named in the legend, `e` for an\nexpression and `c` for a command. </code>",
  "938":
@@ -125,11 +131,12 @@
  "<code>Bool</code><span class=\"sep\"></span><code class=\"docstring\">Whether the rule applications are recorded. </code>",
  "930":
  "<code>CoreCpp.Eval.cmds (fuel : Nat) (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (cs : List CoreCpp.Cmd) :\n  CoreCpp.M (CoreCpp.Ctrl × CoreCpp.Env × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">Command sequences.\n\n```\n────────────────────────── (Seq-Empty)\nρ, σ ⊢ ε ⇒ normal, ρ, σ\n```\n\n```\nρ, σ ⊢ c ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ cs ⇒ r, ρ₂, σ₂\n──────────────────────────────────────────────────── (Seq)\nρ, σ ⊢ c cs ⇒ r, ρ₂, σ₂\n```\n\nThe environment ρ₁ carries the binding of c to the rest of the sequence.\n\n```\nρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁\n───────────────────────────── (Seq-Ret)   the return interrupts the sequence\nρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁\n```\n</code>",
- "93": "<code>CoreCpp.BinOp.mul : CoreCpp.BinOp</code>",
+ "93":
+ "<code>CoreCpp.BinOp.mul : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Multiplication, `*`. </code>",
  "929":
  "<code>CoreCpp.Eval.cmd (fuel : Nat) (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (c : CoreCpp.Cmd) :\n  CoreCpp.M (CoreCpp.Ctrl × CoreCpp.Env × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ c ⇒ r, ρ', σ' </code>",
  "928":
- "<code>CoreCpp.Eval.fieldLoc (fuel : Nat) (σ : CoreCpp.Store) (l : CoreCpp.Loc) (f : String) :\n  CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The location of field f of the object stored at ℓ. </code>",
+ "<code>CoreCpp.Eval.fieldLoc (fuel : Nat) (σ : CoreCpp.Store) (l : CoreCpp.Loc) (f : String) :\n  CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The location of field f of the object stored at ℓ, the premise\nσ(ℓ) = obj C [… f ↦ ℓ_f …] of LocField and LocArrow. A location outside σ is\nerror. </code>",
  "927":
  "<code>CoreCpp.Eval.lval (fuel : Nat) (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (e : CoreCpp.Expr) :\n  CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, an\nunqualified field of `this`, a dereferenced pointer, a field of an object, a\nfield through a pointer, a call of a member that returns a reference and an\nelement of a vector.\n\n```\nρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'\n──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error\nρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'\n```\n\n```\nρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]\n─────────────────────────────────────────────── (LocField)\nρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'\n```\n\n```\nρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]\n────────────────────────────────────────────────── (LocArrow)    e-&gt;f is (*e).f\nρ, σ ⊢ e-&gt;f ⇒ₗ ℓ_f, σ'\n```\n\nAn element of a vector is a use of the library, the rule LocIndex.\n</code>",
  "926":
@@ -146,7 +153,8 @@
  "<code>CoreCpp.TypeError.undeclaredLibrary (name : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A use of the library whose header is missing. </code>",
  "920":
  "<code>CoreCpp.TypeError.library (msg : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">An error that a static rule of `CoreCpp.Std` gives. </code>",
- "92": "<code>CoreCpp.BinOp.sub : CoreCpp.BinOp</code>",
+ "92":
+ "<code>CoreCpp.BinOp.sub : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Subtraction, `-`. </code>",
  "919":
  "<code>CoreCpp.TypeError.instantiation (msg : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">An error of template instantiation. </code>",
  "918":
@@ -167,7 +175,8 @@
  "<code>CoreCpp.TypeError.voidField (c f : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A field of type `void`, which has no values. </code>",
  "910":
  "<code>CoreCpp.TypeError.fieldRedeclared (c f : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A field that repeats a field of a base. </code>",
- "91": "<code>CoreCpp.BinOp : Type</code>",
+ "91":
+ "<code>CoreCpp.BinOp : Type</code><span class=\"sep\"></span><code class=\"docstring\">The binary operators. </code>",
  "909":
  "<code>CoreCpp.TypeError.duplicateMember (c m : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">Two members of a class with the same name and signature. </code>",
  "908":
@@ -188,7 +197,8 @@
  "<code>CoreCpp.TypeError.privateMember (c m : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A private member reached from outside the class that declares it. </code>",
  "900":
  "<code>CoreCpp.TypeError.calledField (c m : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A name after `.` or `-&gt;` with an argument list is a method call, so a\nfield of function type is not called in place. </code>",
- "90": "<code>CoreCpp.BinOp.add : CoreCpp.BinOp</code>",
+ "90":
+ "<code>CoreCpp.BinOp.add : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Addition, `+`. </code>",
  "9":
  "<code>Nat : Type</code><span class=\"sep\"></span><code class=\"docstring\">The natural numbers, starting at zero.\n\nThis type is special-cased by both the kernel and the compiler, and overridden with an efficient\nimplementation. Both use a fast arbitrary-precision arithmetic library (usually\n[GMP](https://gmplib.org/)); at runtime, `Nat` values that are sufficiently small are unboxed.\n</code>",
  "899":
@@ -211,7 +221,8 @@
  "<code>CoreCpp.TypeError.notFunction (e : CoreCpp.Expr) (t : CoreCpp.Ty) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A call of a value that is not a `std::function`. </code>",
  "890":
  "<code>CoreCpp.TypeError.notVector (e : CoreCpp.Expr) (t : CoreCpp.Ty) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">An index on an expression that is not indexable. </code>",
- "89": "<code>CoreCpp.UnOp.neg : CoreCpp.UnOp</code>",
+ "89":
+ "<code>CoreCpp.UnOp.neg : CoreCpp.UnOp</code><span class=\"sep\"></span><code class=\"docstring\">Arithmetic negation, `-e`. </code>",
  "889":
  "<code>CoreCpp.TypeError.notObject (e : CoreCpp.Expr) (t : CoreCpp.Ty) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A member access on an expression that is not an object. </code>",
  "888":
@@ -232,7 +243,8 @@
  "<code>CoreCpp.TypeError.arity (f : String) (expected got : Nat) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A call with a number of arguments other than the expected one. </code>",
  "880":
  "<code>CoreCpp.TypeError.unknownField (c f : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A field that the class and its bases do not declare. </code>",
- "88": "<code>CoreCpp.UnOp : Type</code>",
+ "88":
+ "<code>CoreCpp.UnOp : Type</code><span class=\"sep\"></span><code class=\"docstring\">The unary operators. </code>",
  "879":
  "<code>CoreCpp.TypeError.unknownClass (c : String) : CoreCpp.TypeError</code><span class=\"sep\"></span><code class=\"docstring\">A type that names an undeclared class. </code>",
  "878":
@@ -252,7 +264,8 @@
  "871": "<code>optParam Nat 1000000</code>",
  "870":
  "<code>CoreCpp.runWith (trace : Bool) (p : CoreCpp.Program) (fuel : Nat := 1000000) :\n  Except CoreCpp.Error CoreCpp.Val × Array CoreCpp.TraceEntry</code><span class=\"sep\"></span><code class=\"docstring\">Program execution. The initial store is empty, because there are no global\nvariables, and the result is the value returned by `main()`.\n\n```\nmain ↦ (int main() { c })    [], ∅ ⊢ main() ⇒ v, σ\n─────────────────────────────────────────────────── (Program)\np ⇒ v\n```\n\nThe objects created with new stay in σ until delete or the end of the\nprogram. The locals of main leave σ with the return of the call, so the\nfinal store holds objects only. The program is annotated with the static\nclasses of method calls and deletes before it runs, when it is well typed,\nand otherwise runs as parsed, with every dispatch by the class tag.\n</code>",
- "87": "<code>CoreCpp.UnOp.not : CoreCpp.UnOp</code>",
+ "87":
+ "<code>CoreCpp.UnOp.not : CoreCpp.UnOp</code><span class=\"sep\"></span><code class=\"docstring\">Logical negation, `!e`. </code>",
  "869":
  "<code>CoreCpp.Typing.typingFuel : Nat</code><span class=\"sep\"></span><code class=\"docstring\">The fuel of the type checker, a bound on the depth of a derivation that no\nprogram reaches. </code>",
  "868":
@@ -1795,7 +1808,8 @@
  "<code>List CoreCpp.Ty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢_L delete ok, an instance is deleted. </code>",
  "1030":
  "<code>List CoreCpp.Ty → CoreCpp.Ty → CoreCpp.Ty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢_L operator[] : τ₁ → τ, a location, the signature of indexing. </code>",
- "103": "<code>CoreCpp.BinOp.or : CoreCpp.BinOp</code>",
+ "103":
+ "<code>CoreCpp.BinOp.or : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Disjunction, `||`, with short circuit. </code>",
  "1029":
  "<code>List CoreCpp.Ty → List CoreCpp.Ty → CoreCpp.Ty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">Γ ⊢_L new : τ̄ₐ → τ, the signature of the creation of an instance. </code>",
  "1028":
@@ -1815,7 +1829,8 @@
  "<code>CoreCpp.Typing.refRets (fuel : Nat) (cs : List CoreCpp.Cmd) : List CoreCpp.Cmd</code><span class=\"sep\"></span><code class=\"docstring\">The `return e` of a member that returns a reference becomes `return &e`,\nthe location as a value, which the caller reads or uses as a location. The\nwalk does not enter the body of a lambda. </code>",
  "1020":
  "<code>CoreCpp.Typing.refReturns (fuel : Nat) (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (m : String) (cs : List CoreCpp.Cmd) :\n  CoreCpp.T Unit</code><span class=\"sep\"></span><code class=\"docstring\">Every `return` of a member that returns a reference is a `return e` with\n`e` denoting a location. The walk does not enter the body of a lambda, whose\n`return` is the lambda's own.\n\n```\nτ has values    every return of c is return e with Γ ⊢ₗ e : τ\n─────────────────────────────────────────────────────────────── (T-RetRef)\n⊢ τ& m(…) { c } in C\n```\n</code>",
- "102": "<code>CoreCpp.BinOp.and : CoreCpp.BinOp</code>",
+ "102":
+ "<code>CoreCpp.BinOp.and : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Conjunction, `&&`, with short circuit. </code>",
  "1019":
  "<code>CoreCpp.Typing.resolveMethod (fuel : Nat) (p : CoreCpp.Program) (Γ : CoreCpp.TEnv) (recv : CoreCpp.Expr) (arrow : Bool)\n  (m : String) (es : List CoreCpp.Expr) : CoreCpp.T (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method a call selects, with the class that declares it, the rules\nT-Method and T-MethodArrow with the overload set of the name. </code>",
  "1018":
@@ -1835,7 +1850,8 @@
  "<code>CoreCpp.Typing.staticClass (t : CoreCpp.Ty) (arrow : Bool) : Option String</code><span class=\"sep\"></span><code class=\"docstring\">The class a receiver expression has, `C` for `e.m` with `e : C` and for\n`e-&gt;m` with `e : C*`, and for `delete e` with `e : C*`. </code>",
  "1010":
  "<code>CoreCpp.Typing.annotate (p₀ : CoreCpp.Program) : CoreCpp.T CoreCpp.Program</code><span class=\"sep\"></span><code class=\"docstring\">The program with the static classes, the chosen overloads and the\nreference returns filled in. Fails only on an ill typed program, which\n`check` rejects first. </code>",
- "101": "<code>CoreCpp.BinOp.ge : CoreCpp.BinOp</code>",
+ "101":
+ "<code>CoreCpp.BinOp.ge : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Greater than or equal, `&gt;=`. </code>",
  "1009":
  "<code>CoreCpp.Eval.resolve (fuel : Nat) (fs : CoreCpp.FunEnv) (s t m : String) (sig : Option (List CoreCpp.Ty)) :\n  CoreCpp.M (CoreCpp.Method × String)</code><span class=\"sep\"></span><code class=\"docstring\">The method m of class s with the signature the type checker chose, the\nnearest in the chain of s, dispatched by the tag t when that method is\nvirtual. The signature picks one member of an overload set, and without it,\nin an unannotated program, the first of the name serves. </code>",
  "1008":
@@ -2871,7 +2887,8 @@
  "1000513": "<code>op.isArith = true</code>",
  "1000512":
  "<code>CoreCpp.Semantics.Eval.arith {p : CoreCpp.Program} {ρ : CoreCpp.Env} {σ : CoreCpp.Store} {e₁ : CoreCpp.Expr} {n₁ : Int}\n  {σ₁ : CoreCpp.Store} {e₂ : CoreCpp.Expr} {n₂ : Int} {σ₂ : CoreCpp.Store} {op : CoreCpp.BinOp}\n  (hop : op.isArith = true) (h₁ : CoreCpp.Semantics.Eval p ρ σ e₁ (CoreCpp.Val.int n₁) σ₁)\n  (h₂ : CoreCpp.Semantics.Eval p ρ σ₁ e₂ (CoreCpp.Val.int n₂) σ₂) (hr : CoreCpp.Int32.inRange (op.arith n₁ n₂) = true) :\n  CoreCpp.Semantics.Eval p ρ σ (CoreCpp.Expr.binop op e₁ e₂) (CoreCpp.Val.int (op.arith n₁ n₂)) σ₂</code><span class=\"sep\"></span><code class=\"docstring\">Left before right, the Core C++ order where C++17 fixes none. An overflow has no derivation. </code>",
- "1000511": "<code>CoreCpp.UnOp.neg : CoreCpp.UnOp</code>",
+ "1000511":
+ "<code>CoreCpp.UnOp.neg : CoreCpp.UnOp</code><span class=\"sep\"></span><code class=\"docstring\">Arithmetic negation, `-e`. </code>",
  "1000510":
  "<code>Neg.neg.{u} {α : Type u} [self : Neg α] : α → α</code><span class=\"sep\"></span><code class=\"docstring\">`-a` computes the negative or opposite of `a`.\nThe meaning of this notation is type-dependent. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `-` in identifiers is `neg` (when used as a unary operator).</code>",
  "1000509": "<code>CoreCpp.Int32.inRange (-n) = true</code>",
@@ -2881,7 +2898,8 @@
  "<code>CoreCpp.Semantics.Eval.neg {p : CoreCpp.Program} {ρ : CoreCpp.Env} {σ : CoreCpp.Store} {e : CoreCpp.Expr} {n : Int}\n  {σ' : CoreCpp.Store} (h : CoreCpp.Semantics.Eval p ρ σ e (CoreCpp.Val.int n) σ')\n  (hr : CoreCpp.Int32.inRange (-n) = true) :\n  CoreCpp.Semantics.Eval p ρ σ (CoreCpp.Expr.unop CoreCpp.UnOp.neg e) (CoreCpp.Val.int (-n)) σ'</code>",
  "1000506":
  "<code>Bool.not : Bool → Bool</code><span class=\"sep\"></span><code class=\"docstring\">Boolean negation, also known as Boolean complement. `not x` can be written `!x`.\n\nThis is a function that maps the value `true` to `false` and the value `false` to `true`. The\npropositional connective is `Not : Prop → Prop`.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `!` in identifiers is `not`.</code>",
- "1000505": "<code>CoreCpp.UnOp.not : CoreCpp.UnOp</code>",
+ "1000505":
+ "<code>CoreCpp.UnOp.not : CoreCpp.UnOp</code><span class=\"sep\"></span><code class=\"docstring\">Logical negation, `!e`. </code>",
  "1000504":
  "<code>CoreCpp.Semantics.Eval p ρ σ e (CoreCpp.Val.bool b) σ'</code>",
  "1000503":
@@ -3485,7 +3503,8 @@
  "1000159": "<code>CoreCpp.Expr.nullptr : CoreCpp.Expr</code>",
  "1000158": "<code>CoreCpp.Expr.boolLit (b : Bool) : CoreCpp.Expr</code>",
  "1000157": "<code>CoreCpp.Expr.intLit (n : Int) : CoreCpp.Expr</code>",
- "1000156": "<code>CoreCpp.UnOp : Type</code>",
+ "1000156":
+ "<code>CoreCpp.UnOp : Type</code><span class=\"sep\"></span><code class=\"docstring\">The unary operators. </code>",
  "1000155":
  "<code>CoreCpp.Eval.unop : CoreCpp.UnOp → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Unary operators.\n\n```\nρ, σ ⊢ e ⇒ bool b, σ'                    ρ, σ ⊢ e ⇒ int n, σ'\n──────────────────────── (Not)           ────────────────────────── (Neg)\nρ, σ ⊢ !e ⇒ bool ¬b, σ'                  ρ, σ ⊢ −e ⇒ int32 (−n), σ'\n```\n</code>",
  "1000154": "<code>CoreCpp.M (String × α)</code>",
@@ -3509,7 +3528,7 @@
  "1000142":
  "<code>CoreCpp.Eval.readLoc (σ : CoreCpp.Store) (l : CoreCpp.Loc) : CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">σ(ℓ), or error when ℓ ∉ dom σ. </code>",
  "1000141":
- "<code>CoreCpp.Eval.pointee (v : CoreCpp.Val) : CoreCpp.M CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">A pointer value as a live location. nullptr is error, the dereference\nthat C++ leaves undefined. </code>",
+ "<code>CoreCpp.Eval.pointee (v : CoreCpp.Val) : CoreCpp.M CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">The location a pointer value holds. nullptr is error, the dereference\nthat C++ leaves undefined. The location need not be live, and `readLoc`\nchecks that it is when it is read. </code>",
  "1000140":
  "<code>CoreCpp.Eval.lval (fuel : Nat) (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (e : CoreCpp.Expr) :\n  CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, an\nunqualified field of `this`, a dereferenced pointer, a field of an object, a\nfield through a pointer, a call of a member that returns a reference and an\nelement of a vector.\n\n```\nρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'\n──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error\nρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'\n```\n\n```\nρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]\n─────────────────────────────────────────────── (LocField)\nρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'\n```\n\n```\nρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]\n────────────────────────────────────────────────── (LocArrow)    e-&gt;f is (*e).f\nρ, σ ⊢ e-&gt;f ⇒ₗ ℓ_f, σ'\n```\n\nAn element of a vector is a use of the library, the rule LocIndex.\n</code>",
  "1000139":
@@ -3526,11 +3545,11 @@
  "1000132":
  "<code>CoreCpp.Eval.fresh (ρ ρ' : CoreCpp.Env) : List CoreCpp.Loc</code><span class=\"sep\"></span><code class=\"docstring\">The set fresh(ρ, ρ'), the locations a block allocated, the owned bindings of ρ' ∖ ρ, for scope exit.\nThe bindings a reference declaration added alias locations that exist before\nor outside the block, and those locations stay in σ. </code>",
  "1000131":
- "<code>CoreCpp.Eval.fieldLoc (fuel : Nat) (σ : CoreCpp.Store) (l : CoreCpp.Loc) (f : String) :\n  CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The location of field f of the object stored at ℓ. </code>",
+ "<code>CoreCpp.Eval.fieldLoc (fuel : Nat) (σ : CoreCpp.Store) (l : CoreCpp.Loc) (f : String) :\n  CoreCpp.M (CoreCpp.Loc × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The location of field f of the object stored at ℓ, the premise\nσ(ℓ) = obj C [… f ↦ ℓ_f …] of LocField and LocArrow. A location outside σ is\nerror. </code>",
  "1000130":
  "<code>CoreCpp.Eval.expr (fuel : Nat) (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (e : CoreCpp.Expr) :\n  CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">ρ, σ ⊢ e ⇒ v, σ' </code>",
  "1000129":
- "<code>CoreCpp.Eval.expectBool (what : String) : CoreCpp.Val → CoreCpp.M Bool</code>",
+ "<code>CoreCpp.Eval.expectBool (what : String) : CoreCpp.Val → CoreCpp.M Bool</code><span class=\"sep\"></span><code class=\"docstring\">The boolean a value holds, the premise e ⇒ bool b of the short circuit\noperators and of the conditional. Any other value is error, which a well\ntyped program never reaches. </code>",
  "1000128":
  "<code>CoreCpp.Eval.cmds (fuel : Nat) (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (cs : List CoreCpp.Cmd) :\n  CoreCpp.M (CoreCpp.Ctrl × CoreCpp.Env × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">Command sequences.\n\n```\n────────────────────────── (Seq-Empty)\nρ, σ ⊢ ε ⇒ normal, ρ, σ\n```\n\n```\nρ, σ ⊢ c ⇒ normal, ρ₁, σ₁    ρ₁, σ₁ ⊢ cs ⇒ r, ρ₂, σ₂\n──────────────────────────────────────────────────── (Seq)\nρ, σ ⊢ c cs ⇒ r, ρ₂, σ₂\n```\n\nThe environment ρ₁ carries the binding of c to the rest of the sequence.\n\n```\nρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁\n───────────────────────────── (Seq-Ret)   the return interrupts the sequence\nρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁\n```\n</code>",
  "1000127":
@@ -3542,7 +3561,7 @@
  "1000123":
  "<code>CoreCpp.Eval.callMethod (fuel : Nat) (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (recv : CoreCpp.Expr)\n  (arrow : Bool) (m : String) (es : List CoreCpp.Expr) (static : Option String) (sig : Option (List CoreCpp.Ty)) :\n  CoreCpp.M (CoreCpp.Method × CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The receiver, the dispatch and the call of a method, shared by the value\nposition and the location position. The result of a member that returns a\nreference is the location, `loc ℓ`, which the value position reads and the\nlocation position takes as it is. </code>",
  "1000122":
- "<code>CoreCpp.Eval.binop : CoreCpp.BinOp → CoreCpp.Val → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Arithmetic and relational binary operators, on already evaluated values.\n\n```\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂\n──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, −, ×})\nρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂\n```\n\n```\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0\n──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})\nρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++\n```\n\nA zero divisor and a result outside the range of `int` have no derivation,\nand `binop` gives `error` for them. The quotient of −2³¹ by −1 is such a\nresult, while the remainder of −2³¹ by −1 is 0.\n\n```\nρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂\n─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, &lt;, &lt;=, &gt;, &gt;=})\nρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂\n```\n\nTwo pointers are equal when they are the same location. nullptr equals\nonly nullptr. There is no order on pointers.\n\nThe left operand is evaluated before the right one, the Core C++ choice\nwhere C++17 does not specify the order.\n</code>",
+ "<code>CoreCpp.Eval.binop : CoreCpp.BinOp → CoreCpp.Val → CoreCpp.Val → CoreCpp.M CoreCpp.Val</code><span class=\"sep\"></span><code class=\"docstring\">Arithmetic and relational binary operators, on already evaluated values.\n\n```\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂\n──────────────────────────────────────────────── (Arith, ⊕ ∈ {+, -, *})\nρ, σ ⊢ e₁ ⊕ e₂ ⇒ int32 (n₁ ⊕ n₂), σ₂\n```\n\n```\nρ, σ ⊢ e₁ ⇒ int n₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ int n₂, σ₂    n₂ ≠ 0\n──────────────────────────────────────────────────────── (Div, ⊘ ∈ {/, %})\nρ, σ ⊢ e₁ ⊘ e₂ ⇒ int32 (n₁ ⊘ n₂), σ₂          division truncates toward zero, as in C++\n```\n\nA zero divisor and a result outside the range of `int` have no derivation,\nand `binop` gives `error` for them. The quotient of −2³¹ by −1 is such a\nresult, while the remainder of −2³¹ by −1 is 0.\n\n```\nρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂\n─────────────────────────────────────────── (Rel, ⋈ ∈ {==, !=, &lt;, &lt;=, &gt;, &gt;=})\nρ, σ ⊢ e₁ ⋈ e₂ ⇒ bool (v₁ ⋈ v₂), σ₂\n```\n\nTwo pointers are equal when they are the same location. nullptr equals\nonly nullptr. There is no order on pointers.\n\nThe left operand is evaluated before the right one, the Core C++ choice\nwhere C++17 does not specify the order.\n</code>",
  "1000121": "<code>List CoreCpp.Val</code>",
  "1000120":
  "<code>CoreCpp.Eval.applyVals (fuel : Nat) (fs : CoreCpp.FunEnv) (σ : CoreCpp.Store) (v : CoreCpp.Val)\n  (vs : List CoreCpp.Val) : CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The application of a closure to values, the judgement the library uses\nthrough `apply`. </code>",
@@ -3734,23 +3753,38 @@
  "<code>CoreCpp.BinOp.arith : CoreCpp.BinOp → Int → Int → Int</code><span class=\"sep\"></span><code class=\"docstring\">n₁ ⊕ n₂ for an arithmetic operator. </code>",
  "1000014":
  "<code class=\"docstring\">A type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. </code>",
- "1000013": "<code>CoreCpp.BinOp.or : CoreCpp.BinOp</code>",
- "1000012": "<code>CoreCpp.BinOp.and : CoreCpp.BinOp</code>",
- "1000011": "<code>CoreCpp.BinOp.ge : CoreCpp.BinOp</code>",
- "1000010": "<code>CoreCpp.BinOp.gt : CoreCpp.BinOp</code>",
- "1000009": "<code>CoreCpp.BinOp.le : CoreCpp.BinOp</code>",
- "1000008": "<code>CoreCpp.BinOp.lt : CoreCpp.BinOp</code>",
- "1000007": "<code>CoreCpp.BinOp.ne : CoreCpp.BinOp</code>",
- "1000006": "<code>CoreCpp.BinOp.eq : CoreCpp.BinOp</code>",
- "1000005": "<code>CoreCpp.BinOp.mod : CoreCpp.BinOp</code>",
- "1000004": "<code>CoreCpp.BinOp.div : CoreCpp.BinOp</code>",
- "1000003": "<code>CoreCpp.BinOp.mul : CoreCpp.BinOp</code>",
- "1000002": "<code>CoreCpp.BinOp.sub : CoreCpp.BinOp</code>",
- "1000001": "<code>CoreCpp.BinOp : Type</code>",
- "1000000": "<code>CoreCpp.BinOp.add : CoreCpp.BinOp</code>",
+ "1000013":
+ "<code>CoreCpp.BinOp.or : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Disjunction, `||`, with short circuit. </code>",
+ "1000012":
+ "<code>CoreCpp.BinOp.and : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Conjunction, `&&`, with short circuit. </code>",
+ "1000011":
+ "<code>CoreCpp.BinOp.ge : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Greater than or equal, `&gt;=`. </code>",
+ "1000010":
+ "<code>CoreCpp.BinOp.gt : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Greater than, `&gt;`. </code>",
+ "1000009":
+ "<code>CoreCpp.BinOp.le : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Less than or equal, `&lt;=`. </code>",
+ "1000008":
+ "<code>CoreCpp.BinOp.lt : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Less than, `&lt;`. </code>",
+ "1000007":
+ "<code>CoreCpp.BinOp.ne : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Inequality, `!=`. </code>",
+ "1000006":
+ "<code>CoreCpp.BinOp.eq : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Equality, `==`. </code>",
+ "1000005":
+ "<code>CoreCpp.BinOp.mod : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Remainder, `%`, with the sign of the dividend. </code>",
+ "1000004":
+ "<code>CoreCpp.BinOp.div : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Division, `/`, truncated toward zero. </code>",
+ "1000003":
+ "<code>CoreCpp.BinOp.mul : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Multiplication, `*`. </code>",
+ "1000002":
+ "<code>CoreCpp.BinOp.sub : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Subtraction, `-`. </code>",
+ "1000001":
+ "<code>CoreCpp.BinOp : Type</code><span class=\"sep\"></span><code class=\"docstring\">The binary operators. </code>",
+ "1000000":
+ "<code>CoreCpp.BinOp.add : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Addition, `+`. </code>",
  "1000":
  "<code>CoreCpp.Eval.applyClosure (fuel : Nat) (fs : CoreCpp.FunEnv) (ρ : CoreCpp.Env) (σ : CoreCpp.Store) (v : CoreCpp.Val)\n  (es : List CoreCpp.Expr) : CoreCpp.M (CoreCpp.Val × CoreCpp.Store)</code><span class=\"sep\"></span><code class=\"docstring\">The application of a closure to arguments.\n\n```\nv = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])\nρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ\n(ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ\nρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]\nρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''\n─────────────────────────────────────────────────────────────── (Apply)\napply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))\n```\n\nThe arguments evaluate left to right, by value. The locations ℓ'ⱼ and ℓᵢ are\nfresh, for the copies and for the parameters. The environment ρ_c holds the\nclosure environment and nothing else is visible. On the way out the copies,\nthe parameters and the locals leave the store.\n\nWith normal in place of ret v the result is void if τ = void and error\n(missing return) otherwise. A value that is not a closure is error.\n</code>",
- "100": "<code>CoreCpp.BinOp.gt : CoreCpp.BinOp</code>",
+ "100":
+ "<code>CoreCpp.BinOp.gt : CoreCpp.BinOp</code><span class=\"sep\"></span><code class=\"docstring\">Greater than, `&gt;`. </code>",
  "10": "<code>CoreCpp.Token.sym (s : String) : CoreCpp.Token</code>",
  "1": "<code>String</code>",
  "0": "<code>CoreCpp.Token.kw (s : String) : CoreCpp.Token</code>"}

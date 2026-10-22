@@ -5536,7 +5536,7 @@ window.onload = async () => {
                 </div>
               <div class="bp_content bp_kind_definition_content definition_thmcontent">
                 <p>
-                  The variable denotes the location the environment assigns to it, and the store does not change. A variable that a lambda captures by copy is read only in <code class="bp_math inline">\Gamma</code>, so it denotes no location for the type checker and is never assigned. Inside a member body an unqualified field of <code>this</code> also denotes a location, rule LocVarField of <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-cls-005Fthis-statement" data-bp-preview-title="Definition 6.1.3" data-bp-preview-key="cls_this--statement"><a href="Encapsulation/Classes-and-visibility/#--informal-preview-cls_this--statement" title="cls_this">Definition 6.1.3</a></span></span>, with the typing rule T-LocVarField. The other expressions that denote a location, <code>*e</code>, <code>e.f</code> and <code>e-&gt;f</code>, are the nodes of the last section, and an element <code>v[i]</code> of a vector is a use of the library, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-std-005Fuses-statement" data-bp-preview-title="Definition 8.1.2" data-bp-preview-key="std_uses--statement"><a href="The-standard-library/Interface/#--informal-preview-std_uses--statement" title="std_uses">Definition 8.1.2</a></span></span>.</p>
+                  The variable denotes the location the environment assigns to it, and the store does not change. A variable that a lambda captures by copy is read only in <code class="bp_math inline">\Gamma</code>, so it denotes no location for the type checker, and no assignment reaches it. Inside a member body an unqualified field of <code>this</code> also denotes a location, rule LocVarField of <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-cls-005Fthis-statement" data-bp-preview-title="Definition 6.1.3" data-bp-preview-key="cls_this--statement"><a href="Encapsulation/Classes-and-visibility/#--informal-preview-cls_this--statement" title="cls_this">Definition 6.1.3</a></span></span>, with the typing rule T-LocVarField. The other expressions that denote a location, <code>*e</code>, <code>e.f</code> and <code>e-&gt;f</code>, are the nodes of the last section. An element <code>v[i]</code> of a vector is a use of the library, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-std-005Fuses-statement" data-bp-preview-title="Definition 8.1.2" data-bp-preview-key="std_uses--statement"><a href="The-standard-library/Interface/#--informal-preview-std_uses--statement" title="std_uses">Definition 8.1.2</a></span></span>.</p>
                 <p>
                   The set <code class="bp_math inline">\mathrm{const}(\Gamma)</code> holds the variables of <code class="bp_math inline">\Gamma</code> captured by copy inside a lambda, <code>TEnv.isConst</code>.</p>
                 <p>
@@ -5572,7 +5572,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.lval" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Typing.lean#L798-L875">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Typing.lean#L798-L884">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5625,7 +5625,7 @@ The signature of operator[] is a premise of the module, TV-Index for a vector.
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.lval" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Eval.lean#L703-L779">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Eval.lean#L707-L792">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5674,7 +5674,7 @@ An element of a vector is a use of the library, the rule LocIndex.
                       <div class="declaration decl def" data-decl="CoreCpp.TEnv.isConst" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Typing.lean#L86-L89">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Typing.lean#L86-L89">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5696,7 +5696,7 @@ lambda. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.LHasType" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Static.lean#L442-L510">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Static.lean#L442-L510">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5817,7 +5817,7 @@ of its bases, an lvalue in C++ (N4659 §8.16 ¶4). </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.LEval" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Dynamic.lean#L361-L422">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Dynamic.lean#L361-L422">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6080,7 +6080,7 @@ of its bases, an lvalue in C++ (N4659 §8.16 ¶4). </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.expr" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Typing.lean#L388-L606">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Typing.lean#L388-L606">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6106,7 +6106,7 @@ type its position expects. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.expr" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Eval.lean#L334-L555">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Eval.lean#L338-L559">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6131,7 +6131,7 @@ type its position expects. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.lval" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Eval.lean#L703-L779">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Eval.lean#L707-L792">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6180,7 +6180,7 @@ An element of a vector is a use of the library, the rule LocIndex.
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.readLoc" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Eval.lean#L284-L288">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Eval.lean#L287-L291">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6203,7 +6203,7 @@ An element of a vector is a use of the library, the rule LocIndex.
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.HasType" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(30 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Static.lean#L230-L440">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(30 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Static.lean#L230-L440">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6521,7 +6521,7 @@ is the work of the type checker. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Eval" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(28 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Dynamic.lean#L160-L359">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(28 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Dynamic.lean#L160-L359">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

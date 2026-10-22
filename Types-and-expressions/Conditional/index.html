@@ -5522,7 +5522,7 @@ window.onload = async () => {
                 </div>
               <div class="bp_content bp_kind_definition_content definition_thmcontent">
                 <p>
-                  The condition is <code>bool</code>. For a value, both branches have types with values, neither <code>void</code> nor an object type, and the type of the conditional is their join, <code>Ty.join</code>. The join is <code class="bp_math inline">\tau_2</code> when the two types are equal or when <code class="bp_math inline">\tau_2</code> is a pointer type and <code class="bp_math inline">\tau_3</code> is <code class="bp_math inline">\mathsf{nullptr\_t}</code>, <code class="bp_math inline">\tau_3</code> when <code class="bp_math inline">\tau_2 \approx \tau_3</code>, and <code class="bp_math inline">\tau_2</code> when <code class="bp_math inline">\tau_3 \approx \tau_2</code>. A pointer to a derived class and a pointer to its base thus join at the base, and a pointer and <code>nullptr</code> join at the pointer type in either order, so <code>c ? p : nullptr</code> and <code>c ? nullptr : p</code> both have the type of <code>p</code>, the composite pointer type of C++ (N4659 §8.16 paragraph 7). Only the chosen branch is evaluated, after the condition.</p>
+                  The condition is <code>bool</code>. For a value, both branches have types with values, neither <code>void</code> nor an object type, and the type of the conditional is their join, <code>Ty.join</code>. The join is <code class="bp_math inline">\tau_2</code> when the two types are equal or when <code class="bp_math inline">\tau_2</code> is a pointer type and <code class="bp_math inline">\tau_3</code> is <code class="bp_math inline">\mathsf{nullptr\_t}</code>, <code class="bp_math inline">\tau_3</code> when <code class="bp_math inline">\tau_2 \approx \tau_3</code>, and <code class="bp_math inline">\tau_2</code> when <code class="bp_math inline">\tau_3 \approx \tau_2</code>. A pointer to a derived class and a pointer to its base thus join at the base. A pointer and <code>nullptr</code> join at the pointer type in either order, so <code>c ? p : nullptr</code> and <code>c ? nullptr : p</code> both have the type of <code>p</code>, the composite pointer type of C++ (N4659 §8.16 paragraph 7). The evaluator computes the condition and then only the chosen branch.</p>
                 <p>
                   The predicates <code class="bp_math inline">\mathsf{HasValues}</code> and <code class="bp_math inline">\mathsf{IsObject}</code> are those of <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-dom-005Ftenv-statement" data-bp-preview-title="Definition 2.1.9" data-bp-preview-key="dom_tenv--statement"><a href="Judgments-and-domains/Domains/#--informal-preview-dom_tenv--statement" title="dom_tenv">Definition 2.1.9</a></span></span>.</p>
                 <p>
@@ -5534,7 +5534,7 @@ window.onload = async () => {
                 <p>
                   <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-F)}</code></p>
                 <p>
-                  When the two branches denote locations of one type, the conditional denotes the location of the chosen branch, as C++ makes it an lvalue (N4659 §8.16 paragraph 4). So <code>(c ? x : y) = 7</code> assigns to <code>x</code> or to <code>y</code>, <code>int& r = c ? x : y;</code> binds a reference, and <code>(c ? *p : *q).value</code> reaches a field without copying an object. Branches of object type must denote locations, rule T-CondObj, so <code>c ? *p : *q</code> never copies. The two types must be equal, or a class and one of its bases, which join at the base, <code>Typing.locJoin</code>. The derived object is then reached as an object of its base, as C++ binds it (N4659 §8.16 paragraph 4), so a call of a virtual method dispatches on the class of the chosen object, and a member of the derived class alone is a type error.</p>
+                  When the two branches denote locations of one type, the conditional denotes the location of the chosen branch, as C++ makes it an lvalue (N4659 §8.16 paragraph 5). So <code>(c ? x : y) = 7</code> assigns to <code>x</code> or to <code>y</code>, and <code>int& r = c ? x : y;</code> binds a reference. The access <code>(c ? *p : *q).value</code> reaches a field without copying an object. Branches of object type must denote locations, rule T-CondObj, so <code>c ? *p : *q</code> never copies. The two types must be equal, or a class and one of its bases, which join at the base, <code>Typing.locJoin</code>. The program then reaches the derived object as an object of its base, as C++ binds it (N4659 §8.16 paragraph 4). A call of a virtual method dispatches on the class of the chosen object, and a member of the derived class alone is a type error.</p>
                 <p>
                   <code class="bp_math display">\dfrac{\Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash_{\ell} e_2 : \tau_2 \qquad \Gamma \vdash_{\ell} e_3 : \tau_3 \qquad \tau = \mathrm{locJoin}(\tau_2, \tau_3)}{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-LocCond)}</code></p>
                 <p>
@@ -5592,7 +5592,7 @@ window.onload = async () => {
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.expr" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Typing.lean#L388-L606">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Typing.lean#L388-L606">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5618,7 +5618,7 @@ type its position expects. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.value" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Typing.lean#L269-L273">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Typing.lean#L269-L273">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5640,7 +5640,7 @@ type its position expects. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.compat" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Typing.lean#L275-L299">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Typing.lean#L275-L299">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5682,7 +5682,7 @@ D* ≈ B*
                       <div class="declaration decl def" data-decl="CoreCpp.Ty.join" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Static.lean#L81-L89">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Static.lean#L81-L89">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5706,7 +5706,7 @@ type in either order, the composite pointer type of C++ (N4659 §8.16 ¶7). </pr
                       <div class="declaration decl def" data-decl="CoreCpp.Semantics.HasValues" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Static.lean#L172-L173">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Static.lean#L172-L173">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5727,7 +5727,7 @@ type in either order, the composite pointer type of C++ (N4659 §8.16 ¶7). </pr
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.expr" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Eval.lean#L334-L555">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Eval.lean#L338-L559">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5752,7 +5752,7 @@ type in either order, the composite pointer type of C++ (N4659 §8.16 ¶7). </pr
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.expectBool" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Eval.lean#L280-L282">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Eval.lean#L280-L285">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5763,7 +5763,10 @@ type in either order, the composite pointer type of C++ (N4659 §8.16 ¶7). </pr
       <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.expectBool" data-verso-hover="966">CoreCpp.Eval.expectBool</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.13183" data-verso-hover="1">what</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.Val" data-verso-hover="288">CoreCpp.Val</span><span class="inter-text"> </span><span class="unknown token" data-binding="">→</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.M" data-verso-hover="305">CoreCpp.M</span><span class="inter-text"> </span><span class="const token" data-binding="const-Bool" data-verso-hover="22">Bool</span></pre></div>
     </div>
-  <div class="bp_external_decl_body"></div>
+  <div class="bp_external_decl_body">
+    <pre class="docstring">The boolean a value holds, the premise e ⇒ bool b of the short circuit
+operators and of the conditional. Any other value is error, which a well
+typed program never reaches. </pre></div>
   </div>
 </div>
                     </li>
@@ -5772,7 +5775,7 @@ type in either order, the composite pointer type of C++ (N4659 §8.16 ¶7). </pr
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.HasType" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(30 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Static.lean#L230-L440">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(30 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Static.lean#L230-L440">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6090,7 +6093,7 @@ is the work of the type checker. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Eval" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(28 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Dynamic.lean#L160-L359">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(28 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Dynamic.lean#L160-L359">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6479,7 +6482,7 @@ derivation. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.lval" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Typing.lean#L798-L875">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Typing.lean#L798-L884">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6532,7 +6535,7 @@ The signature of operator[] is a premise of the module, TV-Index for a vector.
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.locJoin" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Typing.lean#L308-L316">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Typing.lean#L308-L316">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6559,7 +6562,7 @@ base, as C++ binds the derived object as an lvalue of its base
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.lval" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Eval.lean#L703-L779">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Eval.lean#L707-L792">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6608,7 +6611,7 @@ An element of a vector is a use of the library, the rule LocIndex.
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.LHasType" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Static.lean#L442-L510">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Static.lean#L442-L510">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6729,7 +6732,7 @@ of its bases, an lvalue in C++ (N4659 §8.16 ¶4). </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.LEval" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Dynamic.lean#L361-L422">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Dynamic.lean#L361-L422">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6860,7 +6863,7 @@ of its bases, an lvalue in C++ (N4659 §8.16 ¶4). </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Semantics.IsObject" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/dad76a6d027d4b4db4b0a5b0f599eae63111d13f/CoreCpp/Semantics/Static.lean#L165-L170">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e49abbce2f3818a863233e7508dfd244e37474d1/CoreCpp/Semantics/Static.lean#L165-L170">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
