@@ -112,7 +112,8 @@ lake exe vbp build --serve  # serves the site locally
 
 The entry page is `docs/_out/site/html-multi/index.html`. The published copy
 lives on the branch `gh-pages`, the contents of that directory plus an empty
-`.nojekyll`, served by GitHub Pages.
+`.nojekyll`, served by GitHub Pages. Before publishing, `bin/group-view` makes
+Group View the initial view of the dependency graph.
 
 ## Language decisions
 

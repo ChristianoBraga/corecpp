@@ -92,8 +92,9 @@ since 2026-09-18.
   `docs/`, preview with `--serve`, output in `docs/_out/site/html-multi/`. The
   site is published at https://christianobraga.github.io/corecpp/ from the
   orphan branch `gh-pages`, which holds a copy of that directory and an empty
-  `.nojekyll`. After regenerating, copy the directory into a `gh-pages`
-  worktree, commit and push.
+  `.nojekyll`. After regenerating, run `bin/group-view`, which makes Group
+  View the initial view of the dependency graph, then copy the directory into
+  a `gh-pages` worktree, commit and push.
 - `examples/*.cpp`, one per concept, all compile with `g++ -std=c++17`, with the
   expected result in the header comment.
 - Toolchain `leanprover/lean4:v4.32.2`, one dependency, `ll1`. `lake build` works. The
