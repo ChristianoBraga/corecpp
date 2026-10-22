@@ -1,48 +1,49 @@
-import CoreCpp.Std.Intrinsic
+import CoreCpp.Std.Module
 
 /-!
-# `std::function`, the intrinsic of `<functional>`
+# `std::function`, the functions of `<functional>`
 
     namespace std { template <typename F> class function; }
 
-The template argument is a function type `τ(τ₁, …, τₖ)`. A lambda of that
-type converts to `std::function<τ(τ₁, …, τₖ)>`, and the value of the
-conversion is the closure of the lambda. A value of the type is never an
-object, and it has no default, so no field and no element has the type.
+A `std::function<F>` is an object, created with `new std::function<F>(λ)` or
+`new std::function<F>()`, reached by pointer and called as `(*f)(ē)`, the rule
+CallFn of the language. Its value is `lib std::function [ℓ_t]` with the
+target at ℓ_t, a closure, or `null` for the function with no target, which
+default construction gives (N4659 §23.14.13.2.1 ¶1). A call of it is then
+`error`, as `bad_function_call` ends a program that does not catch it. The
+relations are `CoreCpp.Semantics.Function`.
 -/
 
-namespace CoreCpp.Std
+namespace CoreCpp.Std.Function
 
-def function : Intrinsic where
-  name := "std::function"
-  arity := 1
-  hasDefault := false
-  convertible := true
-  instOk
+/-- TF-New, TF-Empty and TF-Delete. The argument of `new` has the function
+type F itself, the type of a lambda. -/
+def statics : StaticFns where
+  wf
     | [.fn ..] => .ok ()
     | [t] => .error s!"the argument of std::function is a function type, not {t}"
     | ts => .error s!"std::function has one template argument, not {ts.length}"
-  /-  ───────────────────────────────────────────────────────────────── (TF-Call)
-      Γ ⊢_function operator() : τ₁ × … × τₖ → τ    at std::function<τ(τ₁, …, τₖ)>   -/
-  sig
-    | .member "operator()", [.fn r ps] => .ok { params := ps, ret := r }
-    | u, _ => .error s!"std::function has no {u.toString}"
-  /-  ───────────────────────────────────────── (TF-Conv)
-      Γ ⊢_function F ↪ std::function<F>                                          -/
-  convFrom
-    | [f@(.fn ..)], t => t == f
-    | _, _ => false
-  eval apply use _ args σ :=
-    match use, args with
-    /-  apply(v, v̄) ⇒ v′, σ′
-        ─────────────────────────────────────── (F-Call)
-        σ ⊢_function operator()(v, v̄) ⇒ v′, σ′
+  new
+    | [f@(.fn ..)] => [([f], .ptr (.lib "std::function" [f])), ([], .ptr (.lib "std::function" [f]))]
+    | _ => []
+  delete
+    | [.fn ..] => true
+    | _ => false
 
-        The premise is the application of a closure, the judgement of the
-        language that runs the body of the lambda.                                -/
-    | .member "operator()", f :: vs => do
-      let (v, σ') ← apply f vs σ
-      return ("F-Call", .val v, σ')
-    | u, _ => throw (.typeError s!"std::function has no {u.toString} on these arguments")
+/-- F-New, F-Empty and F-Delete. -/
+def fns : Fns where
+  new
+    | [_], [w@(.closure ..)], σ => do
+      let (lt, σ₁) := σ.alloc w
+      let (l, σ₂) := σ₁.alloc (.lib "std::function" [lt])
+      return ("F-New", .loc l, σ₂)
+    | [_], [], σ => do
+      let (lt, σ₁) := σ.alloc .null
+      let (l, σ₂) := σ₁.alloc (.lib "std::function" [lt])
+      return ("F-Empty", .loc l, σ₂)
+    | _, _, _ => throw (.typeError "std::function has no new on these arguments")
+  delete
+    | .lib _ ls, σ => return ("F-Delete", σ.free ls)
+    | _, _ => throw (.typeError "std::function has no delete on this value")
 
-end CoreCpp.Std
+end CoreCpp.Std.Function

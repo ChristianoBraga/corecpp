@@ -13,7 +13,8 @@ Locations ℓ, values v, environment ρ, store σ, control results r and the
 * An object is a record of locations with a class tag, stored at its own
   location. A pointer value is the location of an object. A value of the
   library, such as a vector, carries the name of its template and a list of
-  locations, whose meaning its module of `CoreCpp.Std` gives.
+  locations, whose meaning its module of `CoreCpp.Std` gives. A
+  `std::function` is such a value, with one location, its target.
 * A closure is the value of a lambda expression, its parameters, its body
   and the read only copies of the variables it captured.
 * Inside a method, `this` is bound in ρ to the location of the receiver, an
@@ -42,8 +43,7 @@ inductive Val where
   | int  (n : Int)
   /-- A truth value of `bool`. -/
   | bool (b : Bool)
-  /-- The result of a function without return value, and the initial content
-  of a field of type `std::function`. -/
+  /-- The result of a function without return value. -/
   | void
   /-- A pointer, the location of an object or of an instance of the library. -/
   | loc  (l : Loc)
@@ -67,17 +67,21 @@ def Int32.inRange (n : Int) : Bool := Int32.min ≤ n && n ≤ Int32.max
 
 /-- The default value of a type, the one `new` gives to every field and
 element before the constructor runs, `int 0`, `bool false` and `null`. Object
-types have no value, their default is never asked. A field of type
-`std::function` starts empty, `void`, and a call through it before the
-constructor assigns a lambda is `error`, as the `bad_function_call` of C++. -/
+types have no value, their default is never asked, and a field or an element has a basic or a pointer type, so
+the last case is never reached by a well typed program. -/
 def Ty.default : Ty → Val
   | .int => .int 0
   | .bool => .bool false
   | .ptr _ => .null
   | _ => .void
 
-/-- The `error` result. It is not a value of the language. No syntax produces,
-tests or catches it. It corresponds in C++ to abnormal program termination. -/
+/-- The `error` result of the evaluator. It is not a value of the language. No
+syntax produces, tests or catches it. It corresponds in C++ to abnormal
+program termination. The relations of `CoreCpp.Semantics` have no `error`,
+and the evaluator gives one where no rule has a derivation. The causes
+`undeclaredVariable`, `undeclaredFunction`, `arity`, `typeError` and
+`notCallable` guard the evaluator against a program that skipped the type
+checker, and `outOfFuel` marks a derivation deeper than the fuel. -/
 inductive Error where
   /-- A division or a remainder by zero. -/
   | divisionByZero
@@ -93,20 +97,20 @@ inductive Error where
   | danglingLocation (l : Loc)
   /-- A variable that neither ρ nor the fields of the receiver bind. -/
   | undeclaredVariable (x : String)
-  /-- A function the program does not declare, a guard for a program that
-  skipped the type checker. -/
+  /-- A function the program does not declare. -/
   | undeclaredFunction (f : String)
-  /-- A call with the wrong number of arguments, a guard for a program that
-  skipped the type checker. -/
+  /-- A call with the wrong number of arguments. -/
   | arity (f : String)
-  /-- A value of the wrong form, a guard for a program that skipped the type
-  checker. -/
+  /-- A value of the wrong form. -/
   | typeError (msg : String)
   /-- A non `void` function whose body ends without `return`. -/
   | missingReturn (f : String)
-  /-- The call of a value that is not a closure, an unassigned `std::function`
-  field. -/
+  /-- The call of a value that is not a closure. -/
   | notCallable (v : Val)
+  /-- The call of a `std::function` with no target. -/
+  | noTarget
+  /-- A derivation deeper than the fuel. -/
+  | outOfFuel
   /-- A `delete` through a pointer to the base `static` of an object of class
   `tag`, with no virtual destructor in the chain of `static`. -/
   | deleteWithoutVirtualDtor (static tag : String)

@@ -26,8 +26,8 @@ def rules : List (Rule Term) := [
   ⟨"QualTail", .alt [.seq [.t .nsId, .t (.sym "::"), .n "QualTail"], .seq [.n "Name", .opt (.n "TemplateArgs")]]⟩,
   ⟨"TemplateArgs", .seq [.t (.sym "<"), .n "TemplateArg", .star (.seq [.t (.sym ","), .n "TemplateArg"]), .t (.sym ">")]⟩,
   ⟨"Block", .seq [.t (.sym "{"), .star (.n "Statement"), .t (.sym "}")]⟩,
-  ⟨"Statement", .alt [.n "Block", .seq [.t (.kw "if"), .t (.sym "("), .n "Expr", .t (.sym ")"), .n "Block", .opt (.seq [.t (.kw "else"), .n "Block"])], .seq [.t (.kw "while"), .t (.sym "("), .n "Expr", .t (.sym ")"), .n "Block"], .seq [.t (.kw "for"), .t (.sym "("), .n "ForInit", .t (.sym ";"), .n "Expr", .t (.sym ";"), .n "ExprStatement", .t (.sym ")"), .n "Block"], .seq [.t (.kw "return"), .opt (.n "ArgExpr"), .t (.sym ";")], .seq [.t (.kw "delete"), .n "Expr", .t (.sym ";")], .seq [.n "LocalDecl", .t (.sym ";")], .seq [.n "ExprStatement", .t (.sym ";")]]⟩,
-  ⟨"LocalDecl", .alt [.seq [.t (.kw "auto"), .t .varId, .t (.sym "="), .n "Expr"], .seq [.n "Type", .opt (.t (.sym "&")), .t .varId, .t (.sym "="), .n "ArgExpr"]]⟩,
+  ⟨"Statement", .alt [.n "Block", .seq [.t (.kw "if"), .t (.sym "("), .n "Expr", .t (.sym ")"), .n "Block", .opt (.seq [.t (.kw "else"), .n "Block"])], .seq [.t (.kw "while"), .t (.sym "("), .n "Expr", .t (.sym ")"), .n "Block"], .seq [.t (.kw "for"), .t (.sym "("), .n "ForInit", .t (.sym ";"), .n "Expr", .t (.sym ";"), .n "ExprStatement", .t (.sym ")"), .n "Block"], .seq [.t (.kw "return"), .opt (.n "Expr"), .t (.sym ";")], .seq [.t (.kw "delete"), .n "Expr", .t (.sym ";")], .seq [.n "LocalDecl", .t (.sym ";")], .seq [.n "ExprStatement", .t (.sym ";")]]⟩,
+  ⟨"LocalDecl", .alt [.seq [.t (.kw "auto"), .t .varId, .t (.sym "="), .n "Expr"], .seq [.n "Type", .opt (.t (.sym "&")), .t .varId, .t (.sym "="), .n "Expr"]]⟩,
   ⟨"ForInit", .alt [.n "LocalDecl", .n "ExprStatement"]⟩,
   ⟨"ExprStatement", .seq [.n "Expr", .opt (.seq [.t (.sym "="), .n "Expr"])]⟩,
   ⟨"Expr", .seq [.n "OrExpr", .opt (.seq [.t (.sym "?"), .n "Expr", .t (.sym ":"), .n "Expr"])]⟩,
@@ -42,9 +42,10 @@ def rules : List (Rule Term) := [
   ⟨"Chain", .opt (.alt [.seq [.t (.sym "["), .n "Expr", .t (.sym "]"), .n "Chain"], .seq [.t (.sym "."), .t .varId, .n "After"], .seq [.t (.sym "->"), .t .varId, .n "After"], .seq [.n "Args", .n "Chain"]])⟩,
   ⟨"After", .alt [.seq [.n "Args", .n "Chain"], .n "ChainNoCall"]⟩,
   ⟨"ChainNoCall", .opt (.alt [.seq [.t (.sym "["), .n "Expr", .t (.sym "]"), .n "Chain"], .seq [.t (.sym "."), .t .varId, .n "After"], .seq [.t (.sym "->"), .t .varId, .n "After"]])⟩,
-  ⟨"Primary", .alt [.t .intLit, .t (.kw "true"), .t (.kw "false"), .t (.kw "nullptr"), .t (.kw "this"), .t .varId, .seq [.t (.sym "("), .n "Expr", .t (.sym ")")], .seq [.t (.kw "new"), .n "ClassType", .n "Args"]]⟩,
-  ⟨"Args", .seq [.t (.sym "("), .opt (.seq [.n "ArgExpr", .star (.seq [.t (.sym ","), .n "ArgExpr"])]), .t (.sym ")")]⟩,
-  ⟨"ArgExpr", .alt [.n "Lambda", .n "Expr"]⟩,
+  ⟨"Primary", .alt [.t .intLit, .t (.kw "true"), .t (.kw "false"), .t (.kw "nullptr"), .t (.kw "this"), .t .varId, .seq [.t (.sym "("), .n "Expr", .t (.sym ")")], .seq [.t (.kw "new"), .n "ClassType", .n "NewArgs"]]⟩,
+  ⟨"Args", .seq [.t (.sym "("), .opt (.seq [.n "Expr", .star (.seq [.t (.sym ","), .n "Expr"])]), .t (.sym ")")]⟩,
+  ⟨"NewArgs", .seq [.t (.sym "("), .opt (.seq [.n "NewArg", .star (.seq [.t (.sym ","), .n "NewArg"])]), .t (.sym ")")]⟩,
+  ⟨"NewArg", .alt [.n "Lambda", .n "Expr"]⟩,
   ⟨"Lambda", .seq [.t (.sym "[=]"), .n "Params", .t (.sym "->"), .n "Type", .n "Block"]⟩]
 
 end CoreCpp.Grammar

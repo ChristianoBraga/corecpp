@@ -10,10 +10,10 @@ import CoreCpp.GrammarRules
 The grammar is the EBNF file `grammar/core-cpp.ebnf`. It states the grammar of
 the blueprint rule by rule over token classes. `lake exe ebnf2lean` writes it as
 the module `CoreCpp/GrammarRules.lean`, which defines `rules`. The
-translation of `LL1.lean` gives their BNF form and its predictive parsing
-table. The theorem `isLL1_grammar` states that the table has no conflict. The
-predictive parser of `LL1.lean` then recognises Core C++ programs from the
-tokens of the lexer.
+translation of the package `ll1` gives their BNF form and its predictive
+parsing table. The theorem `isLL1_grammar` states that the table has no
+conflict. The predictive parser of the package then recognises Core C++
+programs from the tokens of the lexer.
 -/
 
 namespace CoreCpp.Grammar

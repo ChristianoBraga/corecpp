@@ -1,9 +1,9 @@
 /-!
 # Core C++ abstract syntax, subset
 
-Basic types, class and pointer types, vectors, function types, expressions,
-lambdas, commands, classes with fields, methods, constructors, destructors and
-single inheritance, and functions. A statement is a command or an expression
+Basic types, class and pointer types, types of the library, function types,
+expressions, lambdas, commands, classes with fields, methods, constructors,
+destructors and single inheritance, and functions. A statement is a command or an expression
 followed by `;`. Assignment and `delete` are commands. One inductive type per
 class of nonterminals of the grammar of the blueprint, section 1.2. Namespaces
 are flattened by the parser into qualified class names, `N::C`.
@@ -39,8 +39,9 @@ partial def Ty.toString : Ty → String
 instance : ToString Ty := ⟨Ty.toString⟩
 
 /-- Class types are object types. Their values live in the store and are
-never copied, so no variable, parameter or result has an object type. The
-library says which of its types are object types too, see `Std.isObject`. -/
+never copied, so no variable, parameter or result has an object type. A type
+of the library is an object type when its module gives `new` a signature, see
+`Std.isObject`. -/
 def Ty.isObject : Ty → Bool
   | .cls _ => true
   | _ => false
@@ -49,6 +50,15 @@ def Ty.isObject : Ty → Bool
 argument of `std::function`. No variable has a function type. -/
 def Ty.isFn : Ty → Bool
   | .fn .. => true
+  | _ => false
+
+/-- The type `std::function<τ(τ₁, …, τₖ)>` of the object that holds a closure
+of result τ and parameters τ₁, …, τₖ. -/
+def Ty.function (r : Ty) (ps : List Ty) : Ty := .lib "std::function" [.fn r ps]
+
+/-- Whether a type is a `std::function`. -/
+def Ty.isFunction : Ty → Bool
+  | .lib "std::function" _ => true
   | _ => false
 
 inductive UnOp where
@@ -79,15 +89,15 @@ the object and runs the constructor, and `newLib τ args` is `new τ(args)` for
 a type of the library, `new std::vector<int>(3)` for instance. `this` is the
 location of the receiver inside a method.
 
-`call f args` calls the function named `f`, or the function value bound to `f`
-when `f` is a variable in scope, or the method `f` of `this` inside a class.
-`callFn e args` calls the function value `e`. Function call is a form of
-`Expr` because `Args` is part of `PostfixExpr`.
+`call f args` calls the function named `f`, or the `std::function` that a
+reference `f` in scope names, or the method `f` of `this` inside a class.
+`callFn e args` calls the `std::function` that `e` denotes, as in `(*f)(ē)`.
+Function call is a form of `Expr` because `Args` is part of `PostfixExpr`.
 
 `methodCall e arrow m args static sig` is `e.m(args)` when `arrow` is false
 and `e->m(args)` when it is true. `lambda ps τ c` is `[=](ps) -> τ { c }`,
-which the grammar admits only as an argument, as the initialiser of a
-declaration and as the expression of `return`.
+which the grammar admits only as an argument of `new`, and the type checker
+only as the argument of `new std::function<F>(λ)`.
 
 Two fields carry what the type checker learns and the evaluator needs. The
 field `static` of `methodCall` is the class of the receiver as the type
@@ -98,11 +108,9 @@ the overload it chose, which picks one function or method out of an overload
 set. Both fields are `none` as the parser leaves them, and `Typing.annotate`
 fills them.
 
-Two forms no program writes, both introduced by `Typing.annotate`. `locOf e`
-is the location of `e` as a value, which it puts on the `return` of a member
-that returns a reference. `intrinsic L u args` is a use `u` of the entity `L`
-of the library, which it puts where a program indexes, calls or applies an
-entity of the library, the receiver of a member being the first argument. -/
+One form no program writes, introduced by `Typing.annotate`. `locOf e` is the
+location of `e` as a value, which it puts on the `return` of a member that
+returns a reference. -/
 inductive Expr where
   | intLit  (n : Int)
   | boolLit (b : Bool)
@@ -123,7 +131,6 @@ inductive Expr where
   | lambda  (params : List Param) (ret : Ty) (body : List Cmd)
   | callFn  (f : Expr) (args : List Expr)
   | locOf   (e : Expr)
-  | intrinsic (lib : String) (use : String) (args : List Expr)
   deriving Repr, BEq, Inhabited
 
 /-- Commands. A block is a list of commands. `exprStmt` is the statement that
@@ -158,7 +165,7 @@ partial def Expr.vars : Expr → List String
   | .unop _ e | .deref e | .field e _ | .arrow e _ | .locOf e => e.vars
   | .binop _ a b | .index a b => a.vars ++ b.vars
   | .cond a b c => a.vars ++ b.vars ++ c.vars
-  | .call _ es _ | .newObj _ es | .newLib _ es | .intrinsic _ _ es => es.flatMap Expr.vars
+  | .call _ es _ | .newObj _ es | .newLib _ es => es.flatMap Expr.vars
   | .callFn f es => f.vars ++ es.flatMap Expr.vars
   | .methodCall f _ _ es _ _ => f.vars ++ es.flatMap Expr.vars
   | .lambda ps _ b => (b.flatMap Cmd.vars).filter fun x => !(ps.any (·.name == x))
@@ -228,6 +235,14 @@ structure Method where
   retRef     : Bool := false
   deriving Repr, BEq, Inhabited
 
+/-- Whether the method is virtual, declared `virtual` or marked `override`.
+A method that overrides a virtual method is virtual whether or not it is
+declared `virtual` (N4659 §13.3 paragraph 2), and `override` marks exactly
+the methods that override one, by the rule T-Class. So a call through a
+pointer to a middle class of a chain dispatches, and a third class may
+override the method again. -/
+def Method.virtual (m : Method) : Bool := m.isVirtual || m.isOverride
+
 /-- The constructor of a class, named after the class and run by `new` after
 the fields are allocated. -/
 structure Ctor where
@@ -270,7 +285,7 @@ with the type parameter `T`, which is never checked and never run. Only its
 instantiations are, and `Templates.instantiate` adds one class per
 instantiation the program mentions. A `libTmpl L Ts` is a class template of the
 library and a `libFn f τ ps` a function of the library, both declared without a
-body and implemented by an intrinsic. -/
+body and given their semantics by a module, `CoreCpp.Std`. -/
 inductive Decl where
   | cls  (c : ClassDecl)
   | fn   (f : Fun)

@@ -1,4 +1,4 @@
-import CoreCpp.Std.Intrinsic
+import CoreCpp.Std.Module
 import CoreCpp.Std.Vector
 import CoreCpp.Std.Function
 import CoreCpp.Std.Assert
@@ -6,37 +6,33 @@ import CoreCpp.Std.Assert
 /-!
 # The library of Core C++
 
-The intrinsics that the headers of Core C++ declare. The language finds an
-intrinsic by the name its header declares, and it knows no intrinsic
-otherwise.
+The functions of the modules that the headers of Core C++ declare. The
+language finds a module by the name its header declares, and it knows no
+module otherwise.
 -/
 
 namespace CoreCpp.Std
 
-/-- The intrinsics, one per declaration of a header. -/
-def library : List Intrinsic := [vector, function, assert]
+/-- The static functions of the module of a declared name. -/
+def staticFnsOf : String → Option StaticFns
+  | "std::vector" => some Vector.statics
+  | "std::function" => some Function.statics
+  | "assert" => some Assert.statics
+  | _ => none
 
-def lookup (name : String) : Option Intrinsic := library.find? (·.name == name)
+/-- The dynamic functions of the module of a declared name. -/
+def fnsOf : String → Option Fns
+  | "std::vector" => some Vector.fns
+  | "std::function" => some Function.fns
+  | "assert" => some Assert.fns
+  | _ => none
 
-/-- The static judgements of the intrinsic named `name`. -/
-def statics (name : String) : Option Statics := (lookup name).map (·.toStatics)
-
-/-- Object types, the class types and the types of the library whose values
-live in the store. -/
+/-- Object types, the class types and the types of the library created with
+`new`, whose values live in the store and are reached by pointer or by
+reference. -/
 def isObject : Ty → Bool
   | .cls _ => true
-  | .lib n _ => (statics n).any (·.isObject)
-  | _ => false
-
-/-- Types with a default value, the types a field or an element may have. -/
-def hasDefault : Ty → Bool
-  | .lib n _ => (statics n).any (·.hasDefault)
-  | .fn .. => false
-  | _ => true
-
-/-- Types to which another type converts, which tell no two overloads apart. -/
-def convertible : Ty → Bool
-  | .lib n _ => (statics n).any (·.convertible)
+  | .lib n ts => (staticFnsOf n).any fun S => !(S.new ts).isEmpty
   | _ => false
 
 end CoreCpp.Std
