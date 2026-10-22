@@ -40,7 +40,7 @@ $$`\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{bool}\,b, \sigma}\;\textsf
 # Variable
 
 :::definition "expr_lvar" (parent := "ud2") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.lval, CoreCpp.TEnv.isConst, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval") (uses := "judg_ty_lval, judg_ev_lval")
-The variable denotes the location the environment assigns to it, and the store does not change. A variable that a lambda captures by copy is read only in $`\Gamma`, so it denotes no location for the type checker and is never assigned. Inside a member body an unqualified field of `this` also denotes a location, rule LocVarField of {bpref "cls_this"}[], with the typing rule T-LocVarField. The other expressions that denote a location, `*e`, `e.f` and `e->f`, are the nodes of the last section, and an element `v[i]` of a vector is a use of the library, {bpref "std_uses"}[].
+The variable denotes the location the environment assigns to it, and the store does not change. A variable that a lambda captures by copy is read only in $`\Gamma`, so it denotes no location for the type checker, and no assignment reaches it. Inside a member body an unqualified field of `this` also denotes a location, rule LocVarField of {bpref "cls_this"}[], with the typing rule T-LocVarField. The other expressions that denote a location, `*e`, `e.f` and `e->f`, are the nodes of the last section. An element `v[i]` of a vector is a use of the library, {bpref "std_uses"}[].
 
 The set $`\mathrm{const}(\Gamma)` holds the variables of $`\Gamma` captured by copy inside a lambda, `TEnv.isConst`.
 
@@ -76,9 +76,9 @@ In the code, the case `unop` of `Eval.expr` evaluates the operand and calls `Eva
 # Binary operators
 
 :::definition "expr_arith" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.BinOp, CoreCpp.BinOp.isArithmetic, CoreCpp.BinOp.isArith, CoreCpp.BinOp.arith, CoreCpp.BinOp.divide, CoreCpp.Eval.binop, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr, dom_int32")
-The arithmetic operators require `int` on both operands. The left operand is evaluated before the right one, the order Core C++ chooses where C++17 fixes none. Division and remainder truncate toward zero, as in C++. A zero divisor and a result outside the range of `int` fail a premise, so the expression has no derivation and the evaluator gives `error`.
+The arithmetic operators require `int` on both operands. The evaluator computes the left operand before the right one, the order Core C++ chooses where C++17 fixes none. Division and remainder truncate toward zero, as in C++. A zero divisor and a result outside the range of `int` fail a premise, so the expression has no derivation and the evaluator gives `error`.
 
-The quotient of $`-2^{31}` by $`-1` is $`2^{31}`, outside the range, so it has no derivation. C++17 leaves the remainder undefined whenever it leaves the quotient undefined (N4659 §8.6 paragraph 4), so the remainder exists only when the quotient is in the range, and the remainder of $`-2^{31}` by $`-1` has no derivation either.
+The quotient of $`-2^{31}` by $`-1` is $`2^{31}`, outside the range, so it has no derivation. C++17 leaves the remainder undefined whenever it leaves the quotient undefined (N4659 §8.6 paragraph 4). The remainder therefore exists only when the quotient is in the range, and the remainder of $`-2^{31}` by $`-1` has no derivation either.
 
 A left operand of class type calls a member `operator⊕` instead, rule T-OpBin of {bpref "op_member"}[].
 
@@ -92,7 +92,7 @@ In the code, the case `binop` of `Eval.expr` evaluates both operands and calls `
 :::
 
 :::definition "expr_rel" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.binop, CoreCpp.BinOp.compare, CoreCpp.Typing.compat, CoreCpp.Typing.related, CoreCpp.Ty.comparable, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr")
-Equality compares two `int`, two `bool`, two pointers, or `nullptr` with a pointer or with `nullptr`, when $`\tau_1 \approx \tau_2` or $`\tau_2 \approx \tau_1`, the test `Ty.comparable`. A pointer to a derived class thus compares with a pointer to its base, {bpref "cls_subsumption"}[]. Two pointers are equal when they are the same location, and `nullptr` equals only `nullptr`. Order compares two `int`, and there is no order on pointers. The result is `bool`, and the left operand is evaluated before the right one. A left operand of class type calls a member operator, as in {bpref "expr_arith"}[].
+Equality compares two `int`, two `bool`, two pointers, or `nullptr` with a pointer or with `nullptr`, when $`\tau_1 \approx \tau_2` or $`\tau_2 \approx \tau_1`, the test `Ty.comparable`. A pointer to a derived class thus compares with a pointer to its base, {bpref "cls_subsumption"}[]. Two pointers are equal when they are the same location, and `nullptr` equals only `nullptr`. Order compares two `int`, and there is no order on pointers. The result is `bool`, and the evaluator computes the left operand before the right one. A left operand of class type calls a member operator, as in {bpref "expr_arith"}[].
 
 $$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 : \tau_2 \qquad \tau_1 \approx \tau_2 \lor \tau_2 \approx \tau_1 \\ \tau_1, \tau_2 \in \{\mathsf{int}, \mathsf{bool}, \tau*, \mathsf{nullptr\_t}\} \end{array}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Eq)}, \quad \bowtie \in \{==, \mathrel{!=}\}`
 
@@ -102,7 +102,7 @@ $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow v_1, \sigma_1 \qquad \rho, \sigma_
 :::
 
 :::definition "expr_logic" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.expectBool, CoreCpp.BinOp.isLogical, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr")
-Conjunction and disjunction require `bool` and short circuit. The second operand is evaluated only when the first one does not decide the result. A class never overloads them.
+Conjunction and disjunction require `bool` and short circuit. The evaluator computes the second operand only when the first one does not decide the result. A class never overloads them.
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash e_2 : \mathsf{bool}}{\Gamma \vdash e_1 \odot e_2 : \mathsf{bool}}\;\textsf{(T-Logic)}, \quad \odot \in \{\&\&, ||\}`
 
@@ -120,7 +120,7 @@ In the code, the cases `binop .and` and `binop .or` of `Eval.expr` implement the
 # Conditional
 
 :::definition "expr_cond" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.value, CoreCpp.Typing.compat, CoreCpp.Ty.join, CoreCpp.Semantics.HasValues, CoreCpp.Eval.expr, CoreCpp.Eval.expectBool, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval, CoreCpp.Typing.lval, CoreCpp.Typing.locJoin, CoreCpp.Eval.lval, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval, CoreCpp.Semantics.IsObject") (uses := "judg_ty_expr, judg_ev_expr, judg_ty_lval, judg_ev_lval")
-The condition is `bool`. For a value, both branches have types with values, neither `void` nor an object type, and the type of the conditional is their join, `Ty.join`. The join is $`\tau_2` when the two types are equal or when $`\tau_2` is a pointer type and $`\tau_3` is $`\mathsf{nullptr\_t}`, $`\tau_3` when $`\tau_2 \approx \tau_3`, and $`\tau_2` when $`\tau_3 \approx \tau_2`. A pointer to a derived class and a pointer to its base thus join at the base, and a pointer and `nullptr` join at the pointer type in either order, so `c ? p : nullptr` and `c ? nullptr : p` both have the type of `p`, the composite pointer type of C++ (N4659 §8.16 paragraph 7). Only the chosen branch is evaluated, after the condition.
+The condition is `bool`. For a value, both branches have types with values, neither `void` nor an object type, and the type of the conditional is their join, `Ty.join`. The join is $`\tau_2` when the two types are equal or when $`\tau_2` is a pointer type and $`\tau_3` is $`\mathsf{nullptr\_t}`, $`\tau_3` when $`\tau_2 \approx \tau_3`, and $`\tau_2` when $`\tau_3 \approx \tau_2`. A pointer to a derived class and a pointer to its base thus join at the base. A pointer and `nullptr` join at the pointer type in either order, so `c ? p : nullptr` and `c ? nullptr : p` both have the type of `p`, the composite pointer type of C++ (N4659 §8.16 paragraph 7). The evaluator computes the condition and then only the chosen branch.
 
 The predicates $`\mathsf{HasValues}` and $`\mathsf{IsObject}` are those of {bpref "dom_tenv"}[].
 
@@ -132,7 +132,7 @@ $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sig
 
 $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-F)}`
 
-When the two branches denote locations of one type, the conditional denotes the location of the chosen branch, as C++ makes it an lvalue (N4659 §8.16 paragraph 4). So `(c ? x : y) = 7` assigns to `x` or to `y`, `int& r = c ? x : y;` binds a reference, and `(c ? *p : *q).value` reaches a field without copying an object. Branches of object type must denote locations, rule T-CondObj, so `c ? *p : *q` never copies. The two types must be equal, or a class and one of its bases, which join at the base, `Typing.locJoin`. The derived object is then reached as an object of its base, as C++ binds it (N4659 §8.16 paragraph 4), so a call of a virtual method dispatches on the class of the chosen object, and a member of the derived class alone is a type error.
+When the two branches denote locations of one type, the conditional denotes the location of the chosen branch, as C++ makes it an lvalue (N4659 §8.16 paragraph 5). So `(c ? x : y) = 7` assigns to `x` or to `y`, and `int& r = c ? x : y;` binds a reference. The access `(c ? *p : *q).value` reaches a field without copying an object. Branches of object type must denote locations, rule T-CondObj, so `c ? *p : *q` never copies. The two types must be equal, or a class and one of its bases, which join at the base, `Typing.locJoin`. The program then reaches the derived object as an object of its base, as C++ binds it (N4659 §8.16 paragraph 4). A call of a virtual method dispatches on the class of the chosen object, and a member of the derived class alone is a type error.
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash_{\ell} e_2 : \tau_2 \qquad \Gamma \vdash_{\ell} e_3 : \tau_3 \qquad \tau = \mathrm{locJoin}(\tau_2, \tau_3)}{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-LocCond)}`
 
@@ -154,9 +154,9 @@ $$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sig
 :::
 
 :::definition "expr_new" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Program.lookupClass, CoreCpp.Program.allFields, CoreCpp.Store.alloc, CoreCpp.Store.allocMany, CoreCpp.Ty.default, CoreCpp.Semantics.Ctors, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr, dom_classes, dom_store")
-The expression `new C()` allocates one location per field of $`C` and of its bases, each with the default value of its type, `Ty.default`, then the record itself, tagged with the class. The constructors of the chain then run on the record, from the root base down, and the expression evaluates to a pointer to the record. Its type is $`C*`. A class without a constructor takes no arguments, so the empty parentheses are its whole argument list. The typing rule below is the one of a class without constructor, and the evaluation rule is the case without arguments, in which a constructor of a base runs with none. A class with a constructor takes its arguments in the parentheses, {bpref "cls_new"}[].
+The expression `new C()` allocates one location per field of $`C` and of its bases, each with the default value of its type, `Ty.default`, then the record itself, tagged with the class. The constructors of the chain then run on the record, from the root base down, and the expression evaluates to a pointer to the record. Its type is $`C*`. A class without a constructor takes no arguments, so the empty parentheses are its whole argument list. The typing rule below is the one of a class without constructor. The evaluation rule is the case without arguments, in which a constructor of a base runs with none. A class with a constructor takes its arguments in the parentheses, {bpref "cls_new"}[].
 
-The program $`p` maps a class $`C` to its declaration $`\mathit{cd}`, `Program.lookupClass`, whose constructor $`\mathit{cd}.\mathrm{ctor}` is $`\bot` when it has none, and $`C \in \mathrm{dom}\,p` states that $`p` declares $`C`, a nonempty `Program.chain`. The list $`\mathrm{fields}(C)` holds the fields of $`C` and of its bases, the root base first, `Program.allFields`. The judgment $`\rho, \sigma \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'` runs the constructors of the chain of $`C` on the object at $`\ell`, from the root base down, each with $`\mathtt{this} \mapsto \ell`, the relation `Ctors`.
+The program $`p` maps a class $`C` to its declaration $`\mathit{cd}`, `Program.lookupClass`, whose constructor $`\mathit{cd}.\mathrm{ctor}` is $`\bot` when it has none. The premise $`C \in \mathrm{dom}\,p` states that $`p` declares $`C`, a nonempty `Program.chain`. The list $`\mathrm{fields}(C)` holds the fields of $`C` and of its bases, the root base first, `Program.allFields`. The judgment $`\rho, \sigma \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'` runs the constructors of the chain of $`C` on the object at $`\ell`, from the root base down, each with $`\mathtt{this} \mapsto \ell`, the relation `Ctors`.
 
 $$`\dfrac{p(C) = \mathit{cd} \qquad \mathit{cd}.\mathrm{ctor} = \bot}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
 
@@ -199,7 +199,7 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in
 
 # Rules of the chapter
 
-Every typing rule and every evaluation rule of this chapter, in the order of its sections. Each rule is stated with its explanation, and with the definition of its notation, in the section named above it. The rules of the same expressions that involve classes, T-VarField, T-LocVarField and LocVarField for a field of `this`, T-OpBin for an operator member, T-New with a constructor and T-NewLib, are stated in the chapters on encapsulation, on type systems and on the library.
+Every typing rule and every evaluation rule of this chapter, in the order of its sections. The section named above each rule states it with its explanation and with the definition of its notation. The chapters on encapsulation, on type systems and on the library state the rules of the same expressions that involve classes. These are T-VarField, T-LocVarField and LocVarField for a field of `this`, T-OpBin for an operator member, T-New with a constructor and T-NewLib.
 
 *Literals*
 
