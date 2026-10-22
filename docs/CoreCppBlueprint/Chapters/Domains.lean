@@ -188,7 +188,7 @@ The judgment $`\Gamma \vdash_{\ell} e : \tau` holds for the expressions that den
 :::
 
 :::definition "judg_ty_cmd" (parent := "juizos") (lean := "CoreCpp.Cmd, CoreCpp.Typing.cmd, CoreCpp.Typing.cmds, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks") (uses := "judg_ty_expr, gram_ast, judg_relations")
-The judgment $`\Gamma \vdash c \dashv \Gamma'` states that the command $`c` is well typed and extends $`\Gamma` to $`\Gamma'`, so that a declaration reaches the following commands of the sequence. The result type $`\tau_r` of the enclosing body, a function, a member or a lambda, is a parameter of the relation, written $`\langle\Gamma, \tau_r\rangle` in Lean.
+The judgment $`\Gamma \vdash c \dashv \Gamma'` states that the command $`c` is well typed and extends $`\Gamma` to $`\Gamma'`, so that a declaration reaches the following commands of the sequence. Kahn writes the output of a declaration after a colon, $`\rho_1 \vdash \mathrm{DECL} : \rho_2` (RR-0601, §2.3), and Core C++ writes $`\dashv` instead, because the colon already introduces a type in $`\Gamma \vdash e : \tau`, and $`\dashv` marks an output context, as in Dunfield and Krishnaswami (2013). The result type $`\tau_r` of the enclosing body, a function, a member or a lambda, is a parameter of the relation, written $`\langle\Gamma, \tau_r\rangle` in Lean.
 :::
 
 # Dynamic judgments
