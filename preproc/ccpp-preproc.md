@@ -108,7 +108,7 @@ C++ allows a header only outside any declaration or definition, and before the f
 
 ## Assert
 
-The C++ header `<cassert>` has the contents of the C header `<assert.h>` (N4659 §22.3.1 [cassert.syn]). With `NDEBUG` undefined, a failed `assert` writes a diagnostic and calls `abort` (N1570 §7.2.1.1). The header of Core C++ declares `assert` as a function without a body. Its semantics is an intrinsic of the library, `CoreCpp/Std/Assert.lean`, and a failed assertion gives `error`. Core C++ ends an `error` with exit code 134, and the shell reports 134 for a process that `abort` ends.
+The C++ header `<cassert>` has the contents of the C header `<assert.h>` (N4659 §22.3.1 [cassert.syn]). With `NDEBUG` undefined, a failed `assert` writes a diagnostic and calls `abort` (N1570 §7.2.1.1). The header of Core C++ declares `assert` as a function without a body. Its semantics is the module `Assert` of the library, the relation of `CoreCpp/Semantics/Library.lean` and the function of `CoreCpp/Std/Assert.lean`, and a failed assertion gives `error`. Core C++ ends an `error` with exit code 134, and the shell reports 134 for a process that `abort` ends.
 
 ## Correctness
 

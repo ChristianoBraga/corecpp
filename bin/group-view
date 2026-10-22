@@ -1,0 +1,9 @@
+#!/bin/sh
+# Makes Group View the initial view of the dependency graph in the built blueprint.
+# Usage: bin/group-view, after lake exe vbp build in docs/. The graph script
+# starts on the option the view selector marks selected, and verso-blueprint
+# marks none, so this script marks the group option.
+cd "$(dirname "$0")/.."
+page=docs/_out/site/html-multi/Dependency-Graph/index.html
+grep -q '<option value="group"' "$page" || { echo "$page has no group view option" >&2; exit 1; }
+perl -0pi -e 's/<option value="group"( selected="")?>/<option value="group" selected="">/' "$page"

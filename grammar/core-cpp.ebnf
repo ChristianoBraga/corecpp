@@ -59,13 +59,13 @@ Statement = Block
           | "if" "(" Expr ")" Block [ "else" Block ]
           | "while" "(" Expr ")" Block
           | "for" "(" ForInit ";" Expr ";" ExprStatement ")" Block
-          | "return" [ ArgExpr ] ";"
+          | "return" [ Expr ] ";"
           | "delete" Expr ";"
           | LocalDecl ";"
           | ExprStatement ";"
           ;
 LocalDecl = "auto" VarId "=" Expr
-          | Type [ "&" ] VarId "=" ArgExpr
+          | Type [ "&" ] VarId "=" Expr
           ;
 ForInit = LocalDecl
         | ExprStatement
@@ -94,10 +94,11 @@ Primary = IntLit
         | "this"
         | VarId
         | "(" Expr ")"
-        | "new" ClassType Args
+        | "new" ClassType NewArgs
         ;
-Args = "(" [ ArgExpr { "," ArgExpr } ] ")" ;
-ArgExpr = Lambda
-        | Expr
-        ;
+Args = "(" [ Expr { "," Expr } ] ")" ;
+NewArgs = "(" [ NewArg { "," NewArg } ] ")" ;
+NewArg = Lambda
+       | Expr
+       ;
 Lambda = "[=]" Params "->" Type Block ;

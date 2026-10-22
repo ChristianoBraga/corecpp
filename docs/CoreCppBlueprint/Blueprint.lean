@@ -20,7 +20,7 @@ open Informal
 
 Core C++ is a subset of C++17 with an LL(1) grammar, a deterministic semantics and no undefined behaviour.
 
-This blueprint holds the lexer, the grammar, and the typing and evaluation rules in natural semantics, in the sequent style of Kahn (1987), and points each rule to the Lean code that implements it in `core-cpp/CoreCpp/`.
+This blueprint holds the lexer, the grammar, and the typing and evaluation rules in natural semantics, in the sequent style of Kahn (1987). Each rule is a constructor of an inductive proposition in `core-cpp/CoreCpp/Semantics/`, and each node points at that relation and at the function of the type checker or the evaluator that interprets it.
 
 The source, the interpreter and this blueprint live in the repository [github.com/ChristianoBraga/corecpp](https://github.com/ChristianoBraga/corecpp).
 
@@ -39,6 +39,8 @@ One chapter per group of constructions, one node per construction or nonterminal
 
 * Gilles Kahn, Natural Semantics, STACS 1987, LNCS 247, Springer.
 * Gilles Kahn, Natural semantics, Research Report RR-0601, INRIA, 1987, [HAL](https://inria.hal.science/inria-00075953).
+* Jana Dunfield and Neelakantan R. Krishnaswami, Complete and Easy Bidirectional Typechecking for Higher-Rank Polymorphism, ICFP 2013, ACM, [arXiv:1306.6032](https://arxiv.org/abs/1306.6032).
+* Leonardo de Moura, The Lean Programming Language and Theorem Prover, tutorial, ETAPS 2026, Turin, with the language Radix, [github.com/leodemoura/RadixExperiment](https://github.com/leodemoura/RadixExperiment) and [github.com/leodemoura/ETAPSTutorial2026](https://github.com/leodemoura/ETAPSTutorial2026).
 * Bjarne Stroustrup, The C++ Programming Language, 4th edition, Addison-Wesley, 2013.
 * ISO/IEC 14882:2017, Programming Languages, C++, cited as N4659, the final working draft of WG21, [open-std.org](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf).
 * ISO/IEC 9899:2011, Programming Languages, C, cited as N1570, the committee draft of WG14, [open-std.org](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf).
