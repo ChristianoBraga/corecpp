@@ -5430,7 +5430,7 @@ window.onload = async () => {
             <p>
               <strong>Assignment</strong></p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} \Gamma \vdash_{\ell} e_1 : \tau \qquad \mathsf{HasValues}(\tau) \\ \Gamma \vdash e_2 : \tau' \qquad \mathsf{HasValues}(\tau') \qquad \tau' \approx \tau \end{array}}{\Gamma \vdash e_1 = e_2 \dashv \Gamma}\;\textsf{(T-Assign)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \Gamma \vdash_{\ell} e_1 : \tau \qquad \mathsf{HasValues}(\tau) \\ \Gamma \vdash e_2 : \tau' \qquad \mathsf{HasValues}(\tau') \qquad \mathsf{Compat}(\tau', \tau) \end{array}}{\Gamma \vdash e_1 = e_2 \dashv \Gamma}\;\textsf{(T-Assign)}</code></p>
             <p>
                </p>
             <p>

@@ -5448,7 +5448,7 @@ window.onload = async () => {
             <p>
               <code class="bp_math display">\dfrac{\Gamma \vdash e_1 : \mathsf{int} \qquad \Gamma \vdash e_2 : \mathsf{int}}{\Gamma \vdash e_1 \oplus e_2 : \mathsf{int}}\;\textsf{(T-Arith)}, \quad \oplus \in \{+, -, *, /, \%\}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 : \tau_2 \qquad \tau_1 \approx \tau_2 \lor \tau_2 \approx \tau_1 \\ \tau_1, \tau_2 \in \{\mathsf{int}, \mathsf{bool}, \tau*, \mathsf{nullptr\_t}\} \end{array}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Eq)}, \quad \bowtie \in \{==, \mathrel{!=}\}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 : \tau_2 \qquad \mathsf{Compat}(\tau_1, \tau_2) \lor \mathsf{Compat}(\tau_2, \tau_1) \\ \tau_1, \tau_2 \in \{\mathsf{int}, \mathsf{bool}, \tau*, \mathsf{nullptr\_t}\} \end{array}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Eq)}, \quad \bowtie \in \{==, \mathrel{!=}\}</code></p>
             <p>
               <code class="bp_math display">\dfrac{\Gamma \vdash e_1 : \mathsf{int} \qquad \Gamma \vdash e_2 : \mathsf{int}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Rel)}, \quad \bowtie \in \{&lt;, &lt;=, &gt;, &gt;=\}</code></p>
             <p>

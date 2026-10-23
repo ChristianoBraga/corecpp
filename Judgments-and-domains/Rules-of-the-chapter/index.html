@@ -5428,13 +5428,13 @@ window.onload = async () => {
             <p>
               <code class="bp_math display">\dfrac{\tau = \mathsf{void} \lor \mathsf{Storable}(\tau) \qquad \Gamma \vdash \tau\ \mathsf{ok} \qquad \mathsf{Storable}(\tau_i) \qquad \Gamma \vdash \tau_i\ \mathsf{ok}}{\Gamma \vdash \tau(\tau_1, \ldots, \tau_k)\ \mathsf{ok}}\;\textsf{(WF-Fn)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{}{\tau \approx \tau}\;\textsf{(C-Refl)}</code></p>
+              <code class="bp_math display">\dfrac{}{\mathsf{Compat}(\tau, \tau)}\;\textsf{(C-Refl)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{}{\mathsf{nullptr\_t} \approx \tau*}\;\textsf{(C-Null)}</code></p>
+              <code class="bp_math display">\dfrac{}{\mathsf{Compat}(\mathsf{nullptr\_t}, \tau*)}\;\textsf{(C-Null)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{}{\tau* \approx \mathsf{nullptr\_t}}\;\textsf{(C-NullR)}</code></p>
+              <code class="bp_math display">\dfrac{}{\mathsf{Compat}(\tau*, \mathsf{nullptr\_t})}\;\textsf{(C-NullR)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{D \sqsubseteq B}{D* \approx B*}\;\textsf{(C-Sub)}</code>
+              <code class="bp_math display">\dfrac{D \sqsubseteq B}{\mathsf{Compat}(D*, B*)}\;\textsf{(C-Sub)}</code>
 </p>
             </section>
           <nav class="prev-next-buttons">
