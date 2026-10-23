@@ -217,11 +217,13 @@ A legend names the environments $`\rho_i`, the stores $`\sigma_j` and the subjec
 
 # Rules of the chapter
 
-Every rule of inference of this chapter, in the order of its sections. Each rule is stated with its explanation, and with the definition of its notation, in the section named above it. The rules of the judgments of the other chapters are collected at the end of each of them.
+Every definition and every rule of inference of this chapter, in the order of its sections. Each rule is stated with its explanation, and with the definition of its notation, in the section named above it. The rules of the judgments of the other chapters are collected at the end of each of them.
 
 *Domains*
 
 $$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{int}\,n}`
+
+$$`\begin{array}{lcl} \mathsf{IsObject}(\tau) & \iff & \tau = C \ \lor\ (\tau = L\langle\bar{\tau}\rangle \land \exists\, \bar{\tau}', \tau'.\ \Gamma \vdash_L \mathtt{new}\langle\bar{\tau}\rangle : \bar{\tau}' \to \tau') \\ \mathsf{HasValues}(\tau) & \iff & \tau \neq \mathsf{void} \land \lnot\,\mathsf{IsObject}(\tau) \\ \mathsf{Storable}(\tau) & \iff & \lnot\,\mathsf{IsObject}(\tau) \land \tau \neq \mathsf{nullptr\_t} \land \tau \neq \tau'(\tau_1, \ldots, \tau_k) \\ \mathsf{Bindable}_{r}(\tau) & \iff & (r \land \mathsf{IsObject}(\tau)) \lor \mathsf{Storable}(\tau) \end{array}`
 
 $$`\dfrac{}{\Gamma \vdash \mathsf{int}\ \mathsf{ok}}\;\textsf{(WF-Int)}`
 

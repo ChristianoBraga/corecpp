@@ -17,9 +17,9 @@ set_option verso.blueprint.foldCodeBlocks true
 
 Overloading of functions and methods by the type of the arguments, operator members, class templates instantiated by substitution, subtyping and type inference.
 
-A name denotes an overload set, and a call selects one candidate. An infix operator on an object, and the indexing of an object, are the calls of the members `operator⊕` and `operator[]`, and a member may return $`\tau\&`, which is what makes `v[i] = x` work.
+A name denotes an overload set, and a call selects one candidate. An infix operator on an object, and the indexing of an object, are the calls of the members `operator⊕` and `operator[]`. A member may return $`\tau\&`, so `v[i] = x` assigns to the location `operator[]` returns.
 
-A template is expanded before the program is checked, so instantiation costs nothing at run time and a template is never checked, only its instantiations are.
+A template is expanded before the program is checked, so instantiation costs nothing at run time. Only the instantiations are checked.
 
 :::group "ud6"
 Overloading, polymorphism, subtyping and inference.
@@ -28,11 +28,11 @@ Overloading, polymorphism, subtyping and inference.
 # Overloading
 
 :::definition "overload_set" (parent := "ud6") (lean := "CoreCpp.sigOf, CoreCpp.Program.funsNamed, CoreCpp.Program.findMethods, CoreCpp.Typing.distinguishable") (uses := "fun_decl, cls_decl")
-A name denotes an overload set, the functions of the program with that name, or the methods of that name along the chain of a class, one per signature. A method of a derived class replaces the one of a base with the same signature, and a different signature is another overload, so the subset has no name hiding. Two declarations of one name live together only when they differ.
+A name denotes an overload set. It holds the functions of the program with that name, or the methods of that name along the chain of a class, one per signature. A method of a derived class replaces the one of a base with the same signature. A different signature is another overload, so the subset has no name hiding. Two declarations of one name coexist only when they are distinguishable.
 
 $$`\dfrac{\text{arities differ, or } \exists i.\ p_i \neq q_i \text{ and neither } p_i \text{ nor } q_i \text{ is a } \mathtt{std{:}{:}function}}{\text{the two declarations are overloads}}\;\textsf{(Distinguishable)}`
 
-The restriction is the check 5 of the design. It keeps a lambda argument from deciding a call, which would ask for the type of the lambda before the candidate that gives it is known. Since a `std::function` is an object of {bpref "std_function"}[], no parameter has it by value, and a lambda is only the argument of `new`, so the exclusion is never exercised and two overloads are distinct exactly when a parameter type differs.
+The restriction keeps a lambda argument from deciding a call, which would ask for the type of the lambda before the candidate that gives it is known. A `std::function` is an object of {bpref "std_function"}[], so a parameter has it only by reference. The exclusion applies there, and two functions `g` whose parameters are `std::function<int(int)>&` and `std::function<bool(int)>&` are not distinguishable.
 :::
 
 :::definition "overload_pick" (parent := "ud6") (lean := "CoreCpp.Typing.pickOverload, CoreCpp.Typing.resolveFun, CoreCpp.Typing.resolveMethod, CoreCpp.Semantics.MethodSel") (uses := "overload_set, fun_call, cls_method")
@@ -40,11 +40,11 @@ A call collects the candidates of its arity that accept the arguments, each argu
 
 $$`\dfrac{\begin{array}{c} A = \text{the candidates of } \mathrm{cand}(f, k) \text{ that accept } e_1, \ldots, e_k \\ A \text{ has one element whose parameters are} \\ \text{exactly the types of the arguments, or } A \text{ is a singleton} \end{array}}{\text{the call of } f \text{ selects that candidate}}\;\textsf{(T-Overload)}`
 
-With $`A` empty the error is the one of the single candidate of that arity, when there is one, and no overload otherwise. With two or more in $`A` and no exact one the call is ambiguous. Core C++ does not rank conversion sequences as C++ does, so the rule fits in one line on the board and the error is predictable.
+With no candidate of the arity the error is an arity error, measured on the first candidate. With $`A` empty the error is the one of the single candidate of that arity, when there is one, and no overload otherwise. With two or more in $`A` and no exact one the call is ambiguous. Core C++ does not rank implicit conversion sequences, as C++ does (N4659 §16.3.3.2).
 :::
 
 :::definition "overload_sig" (parent := "ud6") (lean := "CoreCpp.FunEnv.lookupSig, CoreCpp.Eval.resolve, CoreCpp.Typing.annotate, CoreCpp.Program.resolve") (uses := "overload_pick, judg_ev_expr")
-Overloading adds no evaluation rule. The type checker writes the signature of the chosen candidate into the tree, the field `sig` of a call, and the evaluator looks a function or a method up by name and signature instead of by name alone. A program that was not annotated, which the checker rejects first, runs with the first candidate of the name.
+Overloading adds no evaluation rule. The type checker writes the signature of the chosen candidate into the field `sig` of the call. The evaluator looks a function or a method up by name and signature instead of by name alone. A program that was not annotated, which the checker rejects first, runs with the first candidate of the name.
 :::
 
 # Operator members
@@ -52,21 +52,23 @@ Overloading adds no evaluation rule. The type checker writes the signature of th
 :::definition "op_member" (parent := "ud6") (lean := "CoreCpp.operatorName, CoreCpp.Typing.methodCall, CoreCpp.Semantics.MethodSel") (uses := "overload_pick, cls_method")
 An infix operator whose left operand is an object, and the indexing of an object, are the calls of members. The left operand decides, so no operator on `int` or `bool` changes meaning, and `&&` and `||` are not overloaded.
 
-$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : C\qquad C \text{ has } \mathtt{operator}\oplus \text{ visible from } \Gamma \\ \Gamma \vdash e_1.\mathtt{operator}\oplus(e_2) : \tau \end{array}}{\Gamma \vdash e_1 \oplus e_2 : \tau}\;\textsf{(T-OpBin)}`
+$$`\dfrac{\begin{array}{c} \star \text{ a binary operator other than } \mathtt{\&\&} \text{ and } \mathtt{||}\qquad \Gamma \vdash e_1 : C \\ C \text{ has } \mathtt{operator}\star \text{ visible from } \Gamma\qquad \Gamma \vdash e_1.\mathtt{operator}\star(e_2) : \tau \end{array}}{\Gamma \vdash e_1 \star e_2 : \tau}\;\textsf{(T-OpBin)}`
 
 $$`\dfrac{\begin{array}{c} \Gamma \vdash e : C\qquad C \text{ has } \mathtt{operator[]} \text{ visible from } \Gamma \\ \Gamma \vdash e.\mathtt{operator[]}(i) : \tau \end{array}}{\Gamma \vdash e[i] : \tau}\;\textsf{(T-OpIndex)}`
 
-The type checker rewrites both forms into the call of the member, and from there they are ordinary method calls, with the visibility, the overload resolution and the dispatch of a method. The trace shows the rule `MethodCall` under the infix form, which is the point.
+The type checker rewrites both forms into the call of the member, and from there they are ordinary method calls, with the visibility, the overload resolution and the dispatch of a method. The trace shows the rule `MethodCall` under the infix form.
 :::
 
 :::definition "op_refret" (parent := "ud6") (lean := "CoreCpp.Method, CoreCpp.Typing.refReturns, CoreCpp.Typing.refRets, CoreCpp.Eval.callMethod, CoreCpp.Semantics.RefReturns, CoreCpp.Semantics.CallMethod") (uses := "op_member, judg_ev_lval")
-A member may return $`\tau\&`. Every `return` of its body is then over an expression that denotes a location, checked by a walk that does not enter the body of a lambda, because the `return` of a lambda is the lambda's.
+A member may return $`\tau\&`, with $`\tau` not `void`. Every `return e` of its body then has an operand that denotes a location under $`\Gamma_m`, the context of `this` and of the parameters, without the locals of the body. The walk does not enter the body of a lambda, because the `return` of a lambda is the lambda's. The rule T-Ret of the body then requires $`\Gamma \vdash e \lhd \tau`.
 
-$$`\dfrac{\tau \text{ has values} \qquad \text{every return of } c \text{ is return } e \text{ with } \Gamma \vdash_{\ell} e : \tau}{\vdash \tau\&\ m(\ldots)\ \{c\} \text{ in } C}\;\textsf{(T-RetRef)}`
+$$`\dfrac{\tau \neq \mathsf{void} \qquad \text{every } \mathtt{return}\ e \text{ of } c \text{ has } \Gamma_m \vdash_{\ell} e : \tau' \text{ for some } \tau'}{\vdash \tau\&\ m(\ldots)\ \{c\} \text{ in } C}\;\textsf{(T-RetRef)}`
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\&\ \mathtt{operator[]} \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocOpIndex)}`
+$$`\dfrac{\Gamma \vdash e : C \qquad \mathtt{operator[]} \text{ selected as in T-Method, returning } \tau\&}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocOpIndex)}`
 
-$$`\dfrac{\Gamma \vdash e : C \qquad C \text{ has } \tau\&\ m(\ldots) \text{ visible from } \Gamma}{\Gamma \vdash_{\ell} e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-LocMethod)}`
+$$`\dfrac{m \text{ selected as in T-Method, returning } \tau\&}{\Gamma \vdash_{\ell} e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-LocMethod)}`
+
+The rule T-LocMethod also covers `e->m(…)`, with the selection of T-MethodArrow.
 
 The annotation rewrites the `return e` of such a member as `return &e`, the location as a value, an expression no program writes. Its type is the type of the location it denotes.
 
@@ -74,15 +76,17 @@ $$`\dfrac{\Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \&e : \tau}\;\textsf{(T-L
 
 $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \&e \Rightarrow \mathsf{loc}\ \ell, \sigma'}\;\textsf{(LocOf)}`
 
-$$`\dfrac{\text{the member } m \text{ of } C \text{ returns } \tau\& \qquad \text{member } \ell\ (e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\ \ell', \sigma'}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell', \sigma'}\;\textsf{(MethodLoc)}`
+$$`\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell'}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell', \sigma'}\;\textsf{(MethodLoc)}`
 
-In value position the same call reads $`\sigma'(\ell')`. A location a member returns is that of a field or of an element of a vector of the receiver, and it survives the call because the object lives in $`\sigma`. A member that returned the location of a parameter by value would return a freed location, and reading it has no derivation, an `error` of the evaluator by the general rule of locations outside $`\sigma`.
+$$`\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell' \qquad \sigma'(\ell') = w}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow w, \sigma'}\;\textsf{(MethodCallRef)}`
+
+Since the locals of the body are outside $`\Gamma_m`, a member never returns the location of one of them. The return frees the location of a parameter by value, so a member that returns it returns a freed location. Reading that location has no derivation, an `error` of the evaluator by the general rule of locations outside $`\sigma`.
 :::
 
 # Parametric polymorphism
 
 :::definition "tmpl_decl" (parent := "ud6") (lean := "CoreCpp.Decl, CoreCpp.Program.templates, CoreCpp.classType") (uses := "cls_decl, gram_full")
-A class template is a class with a type parameter, `template<typename T> class C`, and it is instantiated only in type position, `C<int>`. The name of an instantiation is the chain the design prints for the type, so the name in the source and the name of the expanded class agree, and the parser builds it when it reads a type. One type parameter, by the grammar, which is the check 3 of the design.
+A class template is a class with a type parameter, `template<typename T> class C`, and it is instantiated only in type position, `C<int>`. The name of an instantiation is the text of its type, `Stack<int>`, so the name in the source and the name of the expanded class agree. The parser builds it when it reads a type. The grammar admits one type parameter.
 :::
 
 :::definition "tmpl_inst" (parent := "ud6") (lean := "CoreCpp.Templates.instantiate, CoreCpp.Templates.substClass, CoreCpp.Templates.substTy, CoreCpp.Templates.substName") (uses := "tmpl_decl")
@@ -90,29 +94,65 @@ Instantiation is substitution, and it precedes every other judgment.
 
 $$`\dfrac{\begin{array}{c} p \text{ has } \mathtt{template{<}typename\ T{>}\ class}\ C\qquad C{<}\tau{>} \text{ mentioned in } p \\ C{<}\tau{>} \notin \text{class table of } p \end{array}}{p \longrightarrow p, \mathtt{class}\ C{<}\tau{>}\ \{ \ldots [T := \tau] \ldots \}}\;\textsf{(Inst)}`
 
-The substitution replaces the type `T` in every field, parameter, result, local declaration, vector element and class name the body mentions, and it rewrites the name of a mentioned class in its own chain, so `Node<T>*` inside `Lista<T>` becomes `Node<int>*` in `Lista<int>`.
+The substitution replaces the type `T` in the base, the fields, the parameters, the results and the bodies, the types of local declarations, of `new` and of lambdas included. It also substitutes the type arguments in the name of every class it mentions, so `Node<T>*` inside `List<T>` becomes `Node<int>*` in `List<int>`.
 
-The rule applies to a fixed point, because the class it adds may mention another instantiation, and it is idempotent, so `check` and `runWith` may both apply it.
+The rule applies to a fixed point, because the class it adds may mention another instantiation. After 32 rounds the expansion fails, which rejects a template that mentions ever larger instantiations of itself. The expansion is idempotent, so `check` and `annotate`, which `runWith` calls, both apply it.
 
-A template is never checked, only its instantiations are, as in C++, and two instantiations of one template are two independent classes with no subtype relation between them.
+A template is never checked, only its instantiations are. Two instantiations of one template are two independent classes with no subtype relation between them.
 :::
 
 # Subtyping and inference
 
 :::theorem "subtyping" (parent := "ud6") (uses := "cls_subsumption, tmpl_inst")
-Subsumption is the typing rule of subtyping, and it is the only conversion between class types.
+Subtyping is the rule Subsumption of {bpref "cls_subsumption"}[], the relation $`\mathsf{Compat}(D*, B*)`. It is the only conversion between pointers to classes. No typing rule derives $`\Gamma \vdash e : B*` from $`\Gamma \vdash e : D*`. The rules that require $`\mathsf{Compat}` apply it instead, in declarations, assignments, arguments, results, comparisons and the branches of `?:`.
 
-$$`\dfrac{\Gamma \vdash e : D* \qquad D \text{ derives from } B}{\Gamma \vdash e : B*}\;\textsf{(T-Sub)}`
-
-It holds in declarations, assignments, arguments, results, comparisons and in the branches of `?:`.
-
-Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so `Stack<D*>` is not a subtype of `Stack<B*>`, and the reason is that a `Stack<B*>` accepts an `push` of any `B*`, which a `Stack<D*>` does not. Variance is left out of the subset.
+Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so a `Stack<D*>*` is not accepted where a `Stack<B*>*` is expected. Such a conversion would be unsound, because a `Stack<B*>` accepts a `push` of any `B*` and a `Stack<D*>` does not. Variance is left out of the subset.
 :::
 
 :::definition "inference" (parent := "ud6") (lean := "CoreCpp.Cmd") (uses := "cmd_decl")
-Type inference in Core C++ is local. The rule of `auto` is the one of the earlier units, and it already reaches pointers and instantiations, because a pointer has values and an instantiation is a class.
+Type inference in Core C++ is local. The rule of `auto` is T-Auto of {bpref "cmd_decl"}[], and it covers pointers to instantiations, since a pointer has values.
 
-$$`\dfrac{\Gamma \vdash e : \tau \qquad \tau \text{ has values} \qquad \tau \neq \mathtt{nullptr\_t}}{\Gamma \vdash \mathtt{auto}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-Auto)}`
+$$`\dfrac{\Gamma \vdash e : \tau \qquad \mathsf{HasValues}(\tau) \qquad \mathsf{Storable}(\tau)}{\Gamma \vdash \mathtt{auto}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-Auto)}`
 
-A lambda has no type of its own, so it never initialises an `auto`, which the grammar already guarantees. Inference over a whole program, as Hindley and Milner give it for Haskell, has no rule here, and it is shown as a contrast.
+A lambda has no type of its own, so it never initialises an `auto`, which the grammar already guarantees. Core C++ has no inference over a whole program, such as the type inference of Hindley (Trans. AMS 146, 1969, pp. 29–60, doi:10.1090/S0002-9947-1969-0253905-6) and Milner (JCSS 17, 1978, pp. 348–375, doi:10.1016/0022-0000(78)90014-4).
 :::
+
+# Rules of the chapter
+
+Every definition, every typing rule and every evaluation rule of this chapter, in the order of its sections, the typing rules of each section before its evaluation rules. The section named above each rule states it with its explanation and with the definition of its notation.
+
+*Overloading*
+
+$$`\dfrac{\text{arities differ, or } \exists i.\ p_i \neq q_i \text{ and neither } p_i \text{ nor } q_i \text{ is a } \mathtt{std{:}{:}function}}{\text{the two declarations are overloads}}\;\textsf{(Distinguishable)}`
+
+$$`\dfrac{\begin{array}{c} A = \text{the candidates of } \mathrm{cand}(f, k) \text{ that accept } e_1, \ldots, e_k \\ A \text{ has one element whose parameters are} \\ \text{exactly the types of the arguments, or } A \text{ is a singleton} \end{array}}{\text{the call of } f \text{ selects that candidate}}\;\textsf{(T-Overload)}`
+
+*Operator members*
+
+$$`\dfrac{\begin{array}{c} \star \text{ a binary operator other than } \mathtt{\&\&} \text{ and } \mathtt{||}\qquad \Gamma \vdash e_1 : C \\ C \text{ has } \mathtt{operator}\star \text{ visible from } \Gamma\qquad \Gamma \vdash e_1.\mathtt{operator}\star(e_2) : \tau \end{array}}{\Gamma \vdash e_1 \star e_2 : \tau}\;\textsf{(T-OpBin)}`
+
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e : C\qquad C \text{ has } \mathtt{operator[]} \text{ visible from } \Gamma \\ \Gamma \vdash e.\mathtt{operator[]}(i) : \tau \end{array}}{\Gamma \vdash e[i] : \tau}\;\textsf{(T-OpIndex)}`
+
+$$`\dfrac{\tau \neq \mathsf{void} \qquad \text{every } \mathtt{return}\ e \text{ of } c \text{ has } \Gamma_m \vdash_{\ell} e : \tau' \text{ for some } \tau'}{\vdash \tau\&\ m(\ldots)\ \{c\} \text{ in } C}\;\textsf{(T-RetRef)}`
+
+$$`\dfrac{\Gamma \vdash e : C \qquad \mathtt{operator[]} \text{ selected as in T-Method, returning } \tau\&}{\Gamma \vdash_{\ell} e[i] : \tau}\;\textsf{(T-LocOpIndex)}`
+
+$$`\dfrac{m \text{ selected as in T-Method, returning } \tau\&}{\Gamma \vdash_{\ell} e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-LocMethod)}`
+
+$$`\dfrac{\Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \&e : \tau}\;\textsf{(T-LocOf)}`
+
+ 
+
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \&e \Rightarrow \mathsf{loc}\ \ell, \sigma'}\;\textsf{(LocOf)}`
+
+$$`\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell'}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell', \sigma'}\;\textsf{(MethodLoc)}`
+
+$$`\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell' \qquad \sigma'(\ell') = w}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow w, \sigma'}\;\textsf{(MethodCallRef)}`
+
+*Parametric polymorphism*
+
+$$`\dfrac{\begin{array}{c} p \text{ has } \mathtt{template{<}typename\ T{>}\ class}\ C\qquad C{<}\tau{>} \text{ mentioned in } p \\ C{<}\tau{>} \notin \text{class table of } p \end{array}}{p \longrightarrow p, \mathtt{class}\ C{<}\tau{>}\ \{ \ldots [T := \tau] \ldots \}}\;\textsf{(Inst)}`
+
+*Subtyping and inference*
+
+$$`\dfrac{\Gamma \vdash e : \tau \qquad \mathsf{HasValues}(\tau) \qquad \mathsf{Storable}(\tau)}{\Gamma \vdash \mathtt{auto}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-Auto)}`

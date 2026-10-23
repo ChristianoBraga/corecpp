@@ -199,7 +199,7 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in
 
 # Rules of the chapter
 
-Every typing rule and every evaluation rule of this chapter, in the order of its sections. The section named above each rule states it with its explanation and with the definition of its notation. The chapters on encapsulation, on type systems and on the library state the rules of the same expressions that involve classes. These are T-VarField, T-LocVarField and LocVarField for a field of `this`, T-OpBin for an operator member, T-New with a constructor and T-NewLib.
+Every definition, every typing rule and every evaluation rule of this chapter, in the order of its sections. The section named above each rule states it with its explanation and with the definition of its notation. The chapters on encapsulation, on type systems and on the library state the rules of the same expressions that involve classes. These are T-VarField, T-LocVarField and LocVarField for a field of `this`, T-OpBin for an operator member, T-New with a constructor and T-NewLib.
 
 *Literals*
 
@@ -266,6 +266,8 @@ $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \si
 *Conditional*
 
 $$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash e_2 : \tau_2 \qquad \Gamma \vdash e_3 : \tau_3 \\ \mathsf{HasValues}(\tau_2) \qquad \mathsf{HasValues}(\tau_3) \qquad \tau = \mathrm{join}(\tau_2, \tau_3) \end{array}}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-Cond)}`
+
+$$`\mathrm{join}(\tau_2, \tau_3) = \begin{cases} \tau_2 & \text{if } \tau_2 = \tau_3 \text{ or } \tau_2 = \tau'* \text{ and } \tau_3 = \mathsf{nullptr\_t} \\ \tau_3 & \text{else if } \mathsf{Compat}(\tau_2, \tau_3) \\ \tau_2 & \text{else if } \mathsf{Compat}(\tau_3, \tau_2) \end{cases}`
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash_{\ell} e_2 : \tau_2 \qquad \Gamma \vdash_{\ell} e_3 : \tau_3 \qquad \tau = \mathrm{locJoin}(\tau_2, \tau_3)}{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-LocCond)}`
 
