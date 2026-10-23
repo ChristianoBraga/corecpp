@@ -5389,7 +5389,7 @@ window.onload = async () => {
             <div class="split-toc">
               <div class="title">
                 <label for="--verso-manual-toc-Core-C______--Type-systems" class="toggle-split-toc"><input type="checkbox" class="toggle-split-toc" id="--verso-manual-toc-Core-C______--Type-systems" checked="checked"></label><span class="number">7.</span> <span class="current"><a href="Type-systems/#Core-C______--Type-systems">Type systems</a></span></div>
-              <table><tr class="numbered"><td class="num">7.1.</td><td><a href="Type-systems/Overloading/#Core-C______--Type-systems--Overloading">Overloading</a></td></tr><tr class="numbered"><td class="num">7.2.</td><td><a href="Type-systems/Operator-members/#Core-C______--Type-systems--Operator-members">Operator members</a></td></tr><tr class="numbered"><td class="num">7.3.</td><td><a href="Type-systems/Parametric-polymorphism/#Core-C______--Type-systems--Parametric-polymorphism">Parametric polymorphism</a></td></tr><tr class="numbered"><td class="num">7.4.</td><td><a href="Type-systems/Subtyping-and-inference/#Core-C______--Type-systems--Subtyping-and-inference">Subtyping and inference</a></td></tr></table></div>
+              <table><tr class="numbered"><td class="num">7.1.</td><td><a href="Type-systems/Overloading/#Core-C______--Type-systems--Overloading">Overloading</a></td></tr><tr class="numbered"><td class="num">7.2.</td><td><a href="Type-systems/Operator-members/#Core-C______--Type-systems--Operator-members">Operator members</a></td></tr><tr class="numbered"><td class="num">7.3.</td><td><a href="Type-systems/Parametric-polymorphism/#Core-C______--Type-systems--Parametric-polymorphism">Parametric polymorphism</a></td></tr><tr class="numbered"><td class="num">7.4.</td><td><a href="Type-systems/Subtyping-and-inference/#Core-C______--Type-systems--Subtyping-and-inference">Subtyping and inference</a></td></tr><tr class="numbered"><td class="num">7.5.</td><td><a href="Type-systems/Rules-of-the-chapter/#Core-C______--Type-systems--Rules-of-the-chapter">Rules of the chapter</a></td></tr></table></div>
             </div>
           </div>
         <div class="last"></div>
@@ -5404,9 +5404,9 @@ window.onload = async () => {
             <p>
               Overloading of functions and methods by the type of the arguments, operator members, class templates instantiated by substitution, subtyping and type inference.</p>
             <p>
-              A name denotes an overload set, and a call selects one candidate. An infix operator on an object, and the indexing of an object, are the calls of the members <code>operator⊕</code> and <code>operator[]</code>, and a member may return <code class="bp_math inline">\tau\&</code>, which is what makes <code>v[i] = x</code> work.</p>
+              A name denotes an overload set, and a call selects one candidate. An infix operator on an object, and the indexing of an object, are the calls of the members <code>operator⊕</code> and <code>operator[]</code>. A member may return <code class="bp_math inline">\tau\&</code>, so <code>v[i] = x</code> assigns to the location <code>operator[]</code> returns.</p>
             <p>
-              A template is expanded before the program is checked, so instantiation costs nothing at run time and a template is never checked, only its instantiations are.</p>
+              A template is expanded before the program is checked, so instantiation costs nothing at run time. Only the instantiations are checked.</p>
             <ol class="section-toc">
               <li>
                 <a href="Type-systems/Overloading/#Core-C______--Type-systems--Overloading"><span class="number">7.1.</span> Overloading</a></li>
@@ -5416,6 +5416,8 @@ window.onload = async () => {
                 <a href="Type-systems/Parametric-polymorphism/#Core-C______--Type-systems--Parametric-polymorphism"><span class="number">7.3.</span> Parametric polymorphism</a></li>
               <li>
                 <a href="Type-systems/Subtyping-and-inference/#Core-C______--Type-systems--Subtyping-and-inference"><span class="number">7.4.</span> Subtyping and inference</a></li>
+              <li>
+                <a href="Type-systems/Rules-of-the-chapter/#Core-C______--Type-systems--Rules-of-the-chapter"><span class="number">7.5.</span> Rules of the chapter</a></li>
               </ol>
             </section>
           <nav class="prev-next-buttons">
