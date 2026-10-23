@@ -32,7 +32,7 @@ ground truth".
 | Γ ⊢ c̄ ⊣ Γ′ | `Semantics.Checks p τᵣ Γ c̄ Γ′` | `Typing.cmds` |
 | Γ ⊢ τ ok | `Semantics.WF p τ` | `Typing.wellFormed` |
 | ⊢ f, ⊢ C, ⊢ p | `Semantics.FunOk`, `ClassOk`, `ProgramOk` | `Typing.fn`, `Typing.cls`, `check` |
-| τ′ ≈ τ | `Typing.compat p τ′ τ`, a function | `Typing.compat` |
+| Compat(τ′, τ) | `Typing.compat p τ′ τ`, a function | `Typing.compat` |
 
 The program p is a parameter of every relation, the function table and the
 class table of the rules. The subject of a rule is the pointer to the

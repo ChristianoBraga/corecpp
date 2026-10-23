@@ -15,7 +15,7 @@ set_option verso.blueprint.foldCodeBlocks true
 
 #doc (Manual) "Storage and commands" =>
 
-The typing and evaluation rules of the commands, the constructors of `Cmd`. The typing rules are constructors of `Semantics.Check` and `Semantics.Checks`, which `Typing.cmd` and `Typing.cmds` implement. The evaluation rules are constructors of `Semantics.Exec` and `Semantics.Execs`, which `Eval.cmd` and `Eval.cmds` implement, each rule in the comment of the case that implements it. The command `return` has its rules in {bpref "fun_return"}[] and the command `delete` in {bpref "cls_delete"}[].
+The typing and evaluation rules of the commands, the constructors of `Cmd`. The typing rules are constructors of `Semantics.Check` and `Semantics.Checks`, which `Typing.cmd` and `Typing.cmds` implement. The evaluation rules are constructors of `Semantics.Exec` and `Semantics.Execs`, which `Eval.cmd` and `Eval.cmds` implement, each rule in the comment of the case that implements it. The command `return` yields the control $`\mathsf{ret}\,v` to the enclosing call, with its rules in {bpref "fun_return"}[]. The command `delete` frees the object a pointer points to, with its rules in {bpref "cls_delete"}[].
 
 The typing relation has the result type $`\tau_r` of the enclosing body as a parameter, {bpref "judg_ty_cmd"}[]. The rules of this chapter pass it unchanged to their premises and never read it, so they leave it implicit.
 
@@ -28,7 +28,7 @@ Variables, update and commands.
 # Declaration
 
 :::definition "cmd_decl" (parent := "ud3") (lean := "CoreCpp.Typing.cmd, CoreCpp.Typing.storable, CoreCpp.Typing.wellFormed, CoreCpp.Typing.accept, CoreCpp.Typing.value, CoreCpp.TEnv.bind, CoreCpp.Eval.cmd, CoreCpp.Store.alloc, CoreCpp.Env.extend, CoreCpp.Semantics.Storable, CoreCpp.Semantics.HasValues, CoreCpp.Semantics.WF, CoreCpp.Semantics.Accept, CoreCpp.Semantics.Check, CoreCpp.Semantics.Exec") (uses := "judg_ty_cmd, judg_ev_cmd, dom_store, dom_env, dom_tenv, dom_types, fun_accept")
-Every local declaration has an initialiser, by the grammar. The declared type is storable and well formed, the predicate $`\mathsf{Storable}` of {bpref "dom_tenv"}[] and the judgment $`\Gamma \vdash \tau\ \mathsf{ok}` of {bpref "dom_types"}[]. So no variable has an object type, the type $`\mathsf{nullptr\_t}` or a function type. The initialiser is acceptable at the declared type, the judgment $`\Gamma \vdash e \lhd \tau` of {bpref "fun_accept"}[], which requires of the initialiser a type $`\tau'` with values and $`\tau' \approx \tau`. A variable of type `void` therefore has no initialiser that type checks.
+Every local declaration has an initialiser, by the grammar. The declared type is storable and well formed, the predicate $`\mathsf{Storable}` of {bpref "dom_tenv"}[] and the judgment $`\Gamma \vdash \tau\ \mathsf{ok}` of {bpref "dom_types"}[]. So no variable has an object type, the type $`\mathsf{nullptr\_t}` or a function type. The initialiser is acceptable at the declared type, the judgment $`\Gamma \vdash e \lhd \tau` of {bpref "fun_accept"}[], which requires of the initialiser a type $`\tau'` with values and $`\mathsf{Compat}(\tau', \tau)`. A variable of type `void` therefore has no initialiser that type checks.
 
 With `auto`, $`\tau` is the type of the initialiser, which has values and is storable.
 
@@ -62,9 +62,9 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \
 # Assignment
 
 :::definition "cmd_assign" (parent := "ud3") (lean := "CoreCpp.Typing.cmd, CoreCpp.Typing.lval, CoreCpp.Typing.value, CoreCpp.Typing.compat, CoreCpp.Eval.cmd, CoreCpp.Eval.lval, CoreCpp.Store.read, CoreCpp.Store.write, CoreCpp.Semantics.HasValues, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Check, CoreCpp.Semantics.Exec") (uses := "judg_ty_cmd, judg_ev_cmd, expr_lvar, dom_types, dom_store")
-The left side denotes a location whose type has values, and the right side has a type with values that $`\approx` accepts at it, {bpref "dom_types"}[]. No assignment writes an object, since an object type has no values. The order is the one C++17 fixes for assignment, the right operand before the left one (N4659 §8.18 paragraph 1). The location must be live, $`\ell \in \mathrm{dom}\,\sigma_2`, so an assignment through a reference that dangles has no derivation.
+The left side denotes a location whose type has values, and the right side has a type with values that $`\mathsf{Compat}` accepts at it, {bpref "dom_types"}[]. No assignment writes an object, since an object type has no values. The order is the one C++17 fixes for assignment, the right operand before the left one (N4659 §8.18 paragraph 1). The location must be live, $`\ell \in \mathrm{dom}\,\sigma_2`, so an assignment through a reference that dangles has no derivation.
 
-$$`\dfrac{\begin{array}{c} \Gamma \vdash_{\ell} e_1 : \tau \qquad \mathsf{HasValues}(\tau) \\ \Gamma \vdash e_2 : \tau' \qquad \mathsf{HasValues}(\tau') \qquad \tau' \approx \tau \end{array}}{\Gamma \vdash e_1 = e_2 \dashv \Gamma}\;\textsf{(T-Assign)}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash_{\ell} e_1 : \tau \qquad \mathsf{HasValues}(\tau) \\ \Gamma \vdash e_2 : \tau' \qquad \mathsf{HasValues}(\tau') \qquad \mathsf{Compat}(\tau', \tau) \end{array}}{\Gamma \vdash e_1 = e_2 \dashv \Gamma}\;\textsf{(T-Assign)}`
 
 $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_2 \Rightarrow v, \sigma_1 \qquad \rho, \sigma_1 \vdash e_1 \Rightarrow_{\ell} \ell, \sigma_2 \\ \ell \in \mathrm{dom}\,\sigma_2 \end{array}}{\rho, \sigma \vdash e_1 = e_2 \Rightarrow \mathsf{normal}, \rho, \sigma_2[\ell \mapsto v]}\;\textsf{(Assign)}`
 :::
@@ -133,9 +133,9 @@ $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash c_0 \Rightarrow \mathsf{normal}, 
 Once a call inside an expression may write the store, the order of evaluation of the operands is part of the meaning. Core C++ fixes one order for every construction, and each rule states it by the order of its premises, the store of one premise being the input of the next.
 
  * In the arithmetic and relational operators, the left operand before the right one, rules Arith, Div and Rel.
- * In a call, the arguments left to right, rule Call through the relation `Bind`.
+ * In a call, the arguments left to right, rule Call of {bpref "fun_call"}[] through the relation `Bind`.
  * In the assignment, the right side before the left one, rule Assign.
- * In the indexing of a vector, the receiver before the index, rule LocIndex.
+ * In the indexing of a vector, the receiver before the index, rule LocIndex of {bpref "std_uses"}[], which gives the location of the element.
 
 The first two are choices of Core C++ where C++17 fixes no order. The last two are the orders C++17 fixes, for the assignment (N4659 §8.18 paragraph 1) and for the subscript (N4659 §8.2.1 paragraph 1), which an overloaded `operator[]` keeps (N4659 §16.3.1.2 paragraph 2). For `f() + g()` with effects, C++17 also admits the evaluation of `g()` first, and Core C++ has no such derivation, because Arith has one order of premises. The example `call_order.cpp` returns 21 in Core C++, and 21 or 12 under a C++ compiler.
 :::
@@ -176,7 +176,7 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \
 
 *Assignment*
 
-$$`\dfrac{\begin{array}{c} \Gamma \vdash_{\ell} e_1 : \tau \qquad \mathsf{HasValues}(\tau) \\ \Gamma \vdash e_2 : \tau' \qquad \mathsf{HasValues}(\tau') \qquad \tau' \approx \tau \end{array}}{\Gamma \vdash e_1 = e_2 \dashv \Gamma}\;\textsf{(T-Assign)}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash_{\ell} e_1 : \tau \qquad \mathsf{HasValues}(\tau) \\ \Gamma \vdash e_2 : \tau' \qquad \mathsf{HasValues}(\tau') \qquad \mathsf{Compat}(\tau', \tau) \end{array}}{\Gamma \vdash e_1 = e_2 \dashv \Gamma}\;\textsf{(T-Assign)}`
 
  
 

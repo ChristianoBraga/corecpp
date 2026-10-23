@@ -95,7 +95,7 @@ $$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma
 :::definition "cls_subsumption" (parent := "ud5") (lean := "CoreCpp.Typing.compat, CoreCpp.Typing.related, CoreCpp.Program.subclass") (uses := "cls_decl, judg_ty_expr")
 A pointer to a derived class is accepted where a pointer to its base is expected, in declarations, assignments, arguments, returns, comparisons and the branches of `?:`. It is the only conversion between class types, and the other direction is a type error.
 
-$$`\dfrac{D \text{ derives from } B}{D* \approx B*}\;\textsf{(Subsumption)}`
+$$`\dfrac{D \text{ derives from } B}{\mathsf{Compat}(D*, B*)}\;\textsf{(Subsumption)}`
 :::
 
 :::definition "cls_dispatch" (parent := "ud5") (lean := "CoreCpp.Eval.resolve, CoreCpp.Program.findMethod, CoreCpp.Typing.cls, CoreCpp.Semantics.ClassOk, CoreCpp.Program.resolve, CoreCpp.Method.virtual") (uses := "cls_decl, cls_subsumption, dom_classes")
@@ -115,7 +115,7 @@ The nearest declaration of a non virtual $`m` from $`S` is also the nearest from
 :::
 
 :::definition "cls_delete" (parent := "ud5") (lean := "CoreCpp.Typing.cmd, CoreCpp.Eval.cmd, CoreCpp.Program.hasVirtualDtor, CoreCpp.Semantics.Check, CoreCpp.Semantics.Exec") (uses := "cls_member, cls_dispatch, judg_ty_cmd, judg_ev_cmd, dom_store, dom_erro")
-The command `delete e` applies to a pointer to a class or to an object type of the library, whose rule `DeleteLib` is in {bpref "std_uses"}[].
+The command `delete e` applies to a pointer to a class or to an object type of the library, whose rule `DeleteLib` in {bpref "std_uses"}[] frees what the module owns and then the location of the instance.
 
 On an object it runs the destructors of the chain from the tag up to the root, each with `this` bound to the object, and removes the record and the field locations from $`\sigma`.
 

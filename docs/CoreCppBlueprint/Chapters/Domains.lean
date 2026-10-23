@@ -120,23 +120,23 @@ $$`\dfrac{L/k \in \mathrm{lib}(p) \qquad \mathrm{wf}_L(\tau_1, \ldots, \tau_k) \
 
 $$`\dfrac{\tau = \mathsf{void} \lor \mathsf{Storable}(\tau) \qquad \Gamma \vdash \tau\ \mathsf{ok} \qquad \mathsf{Storable}(\tau_i) \qquad \Gamma \vdash \tau_i\ \mathsf{ok}}{\Gamma \vdash \tau(\tau_1, \ldots, \tau_k)\ \mathsf{ok}}\;\textsf{(WF-Fn)}`
 
-The relation $`\tau \approx \tau'` states that a value of type $`\tau` is accepted where $`\tau'` is expected. It holds of equal types, of `nullptr` and a pointer type in either order, and of a pointer to a class and a pointer to one of its bases. The relation $`D \sqsubseteq B`, `Program.subclass`, holds when $`D = B` or $`D` derives from $`B`. These are the only implicit conversions of Core C++.
+The relation $`\mathsf{Compat}(\tau, \tau')` states that a value of type $`\tau` is accepted where $`\tau'` is expected. It holds of equal types, of `nullptr` and a pointer type in either order, and of a pointer to a class and a pointer to one of its bases. The relation $`D \sqsubseteq B`, `Program.subclass`, holds when $`D = B` or $`D` derives from $`B`. These are the only implicit conversions of Core C++.
 
-$$`\dfrac{}{\tau \approx \tau}\;\textsf{(C-Refl)}`
+$$`\dfrac{}{\mathsf{Compat}(\tau, \tau)}\;\textsf{(C-Refl)}`
 
-$$`\dfrac{}{\mathsf{nullptr\_t} \approx \tau*}\;\textsf{(C-Null)}`
+$$`\dfrac{}{\mathsf{Compat}(\mathsf{nullptr\_t}, \tau*)}\;\textsf{(C-Null)}`
 
-$$`\dfrac{}{\tau* \approx \mathsf{nullptr\_t}}\;\textsf{(C-NullR)}`
+$$`\dfrac{}{\mathsf{Compat}(\tau*, \mathsf{nullptr\_t})}\;\textsf{(C-NullR)}`
 
-$$`\dfrac{D \sqsubseteq B}{D* \approx B*}\;\textsf{(C-Sub)}`
+$$`\dfrac{D \sqsubseteq B}{\mathsf{Compat}(D*, B*)}\;\textsf{(C-Sub)}`
 
-The relation is directional. Its left side is the type of an expression and its right side the type its context requires. The judgment $`\Gamma \vdash e \lhd \tau` of {bpref "fun_accept"}[] uses it for an initialiser, the right side of an assignment, an argument and a returned value. The rule T-Eq tries it in both directions, and the join of the conditional chooses its type with it, both in {bpref "expr_cond"}[].
+The relation is directional. Its left side is the type of an expression and its right side the type its context requires. The judgment $`\Gamma \vdash e \lhd \tau` of {bpref "fun_accept"}[] uses it for an initialiser, the right side of an assignment, an argument and a returned value. The rule T-Eq of {bpref "expr_rel"}[] tries it in both directions, and the join of the conditional in {bpref "expr_cond"}[] chooses its type with it.
 
 The rule C-Null is the null pointer conversion of C++ (N4659 §7.11 paragraph 1), so `Node* p = nullptr;`, `p = nullptr;` and `return nullptr;` type check. No declared type is $`\mathsf{nullptr\_t}`, so every `nullptr` ends up converted to a pointer type. The rule C-Sub lets a pointer to a derived class stand where a pointer to its base is expected, and never the converse, since Core C++ has no cast.
 
-Compatibility and subsumption are two relations. Subsumption $`D \sqsubseteq B` is a relation on classes, the subclass order of the program, reflexive and transitive. It extends to types, $`\tau' \sqsubseteq \tau` when $`\tau' = \tau` or when both are classes in that order, `Typing.refCompat`. It says that an object of class $`\tau'` is also an object of class $`\tau`. It therefore applies where the semantics binds or chooses a location, the initialiser of a reference in {bpref "cmd_declref"}[] and the branches of a conditional that denotes a location in {bpref "expr_cond"}[]. No value moves there, and the object keeps its class. Compatibility $`\tau \approx \tau'` is a relation on the types of values. It says that a value of type $`\tau` may stand where the context expects a value of type $`\tau'`. It contains subsumption only through pointers, by C-Sub, since a class type has no values, and it adds the conversions of `nullptr` that subsumption knows nothing of.
+Compatibility and subsumption are two relations. Subsumption $`D \sqsubseteq B` is a relation on classes, the subclass order of the program, reflexive and transitive. It extends to types, $`\tau' \sqsubseteq \tau` when $`\tau' = \tau` or when both are classes in that order, `Typing.refCompat`. It says that an object of class $`\tau'` is also an object of class $`\tau`. It therefore applies where the semantics binds or chooses a location, the initialiser of a reference in {bpref "cmd_declref"}[] and the branches of a conditional that denotes a location in {bpref "expr_cond"}[]. No value moves there, and the object keeps its class. Compatibility $`\mathsf{Compat}(\tau, \tau')` is a relation on the types of values. It says that a value of type $`\tau` may stand where the context expects a value of type $`\tau'`. It contains subsumption only through pointers, by C-Sub, since a class type has no values, and it adds the conversions of `nullptr` that subsumption knows nothing of.
 
-Despite its symbol, $`\approx` is not an equivalence. It is not symmetric, since $`D* \approx B*` holds for a proper base $`B` and $`B* \approx D*` does not. It is not transitive either, since $`C* \approx \mathsf{nullptr\_t}` and $`\mathsf{nullptr\_t} \approx D*` hold for two unrelated classes $`C` and $`D` while $`C* \approx D*` does not. The rule C-NullR causes this, and Core C++ keeps it. Without C-NullR the relation would be a preorder.
+The relation $`\mathsf{Compat}` is not an equivalence. It is not symmetric, since $`\mathsf{Compat}(D*, B*)` holds for a proper base $`B` and $`\mathsf{Compat}(B*, D*)` does not. It is not transitive either, since $`\mathsf{Compat}(C*, \mathsf{nullptr\_t})` and $`\mathsf{Compat}(\mathsf{nullptr\_t}, D*)` hold for two unrelated classes $`C` and $`D` while $`\mathsf{Compat}(C*, D*)` does not. The rule C-NullR causes this, and Core C++ keeps it. Without C-NullR the relation would be a preorder.
 :::
 
 
@@ -180,7 +180,7 @@ The judgments on declarations, $`\vdash f`, $`\vdash C` and $`\vdash p`, are str
 # Static judgments
 
 :::definition "judg_ty_expr" (parent := "juizos") (lean := "CoreCpp.Expr, CoreCpp.Typing.expr, CoreCpp.TypeError, CoreCpp.T, CoreCpp.Semantics.HasType") (uses := "dom_tenv, gram_ast, judg_relations")
-The judgment $`\Gamma \vdash e : \tau` states that the expression $`e` has type $`\tau` in the context $`\Gamma`. Each rule concludes about one constructor of `Expr`, and a constructor may have several rules, as the call of a name has T-Call, T-CallLib, T-CallThis and T-CallFn. A lambda has no rule of this judgment. The judgment $`\Gamma \vdash e \lhd \tau` accepts it at its function type, and accepts any other expression by its type.
+The judgment $`\Gamma \vdash e : \tau` states that the expression $`e` has type $`\tau` in the context $`\Gamma`. Each rule concludes about one constructor of `Expr`, and a constructor may have several rules, as the call of a name has four. T-Call calls a function of the program, {bpref "fun_call"}[]. T-CallFn calls a function object that a variable names, {bpref "fun_callfn"}[]. T-CallThis calls a method of the receiver inside a member body, {bpref "cls_this"}[]. T-CallLib calls a function a header declares, {bpref "std_uses"}[]. A lambda has no rule of this judgment. The judgment $`\Gamma \vdash e \lhd \tau` accepts it at its function type, and accepts any other expression by its type.
 
 A static judgment that fails gives a type error, and the type checker stops at the first one.
 :::
@@ -208,7 +208,7 @@ The judgment $`\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'` states that 
 :::
 
 :::definition "judg_trace" (parent := "juizos") (lean := "CoreCpp.M, CoreCpp.TState, CoreCpp.TraceAnte, CoreCpp.TraceCons, CoreCpp.TraceEntry, CoreCpp.Eval.traced, CoreCpp.Eval.tracedLib, CoreCpp.Eval.libStep, CoreCpp.renderTrace") (uses := "judg_ev_expr, judg_ev_cmd")
-The evaluator runs in the monad $`M`, which carries the trace of the derivation. When tracing is on, each rule application records the instance of the rule it concludes, or the error, at its depth in the tree, with the antecedent and the consequent in parts. The trace records a premise of the library under the rule of its module, such as V-New or F-New. The state survives the error, so the trace keeps the rule applications up to the failing rule. The log holds the instances in post order, each premise before its conclusion.
+The evaluator runs in the monad $`M`, which carries the trace of the derivation. When tracing is on, each rule application records the instance of the rule it concludes, or the error, at its depth in the tree, with the antecedent and the consequent in parts. The trace records a premise of the library under the rule of its module, such as V-New, the creation of a vector in {bpref "std_vector"}[], or F-New, the creation of a function object in {bpref "std_function"}[]. The state survives the error, so the trace keeps the rule applications up to the failing rule. The log holds the instances in post order, each premise before its conclusion.
 
 The function `renderTrace` rebuilds the tree from the log. It lays the tree out as a derivation on the board, the premises over a line of inference, the conclusion under it and the rule name at the right.
 
@@ -239,10 +239,10 @@ $$`\dfrac{L/k \in \mathrm{lib}(p) \qquad \mathrm{wf}_L(\tau_1, \ldots, \tau_k) \
 
 $$`\dfrac{\tau = \mathsf{void} \lor \mathsf{Storable}(\tau) \qquad \Gamma \vdash \tau\ \mathsf{ok} \qquad \mathsf{Storable}(\tau_i) \qquad \Gamma \vdash \tau_i\ \mathsf{ok}}{\Gamma \vdash \tau(\tau_1, \ldots, \tau_k)\ \mathsf{ok}}\;\textsf{(WF-Fn)}`
 
-$$`\dfrac{}{\tau \approx \tau}\;\textsf{(C-Refl)}`
+$$`\dfrac{}{\mathsf{Compat}(\tau, \tau)}\;\textsf{(C-Refl)}`
 
-$$`\dfrac{}{\mathsf{nullptr\_t} \approx \tau*}\;\textsf{(C-Null)}`
+$$`\dfrac{}{\mathsf{Compat}(\mathsf{nullptr\_t}, \tau*)}\;\textsf{(C-Null)}`
 
-$$`\dfrac{}{\tau* \approx \mathsf{nullptr\_t}}\;\textsf{(C-NullR)}`
+$$`\dfrac{}{\mathsf{Compat}(\tau*, \mathsf{nullptr\_t})}\;\textsf{(C-NullR)}`
 
-$$`\dfrac{D \sqsubseteq B}{D* \approx B*}\;\textsf{(C-Sub)}`
+$$`\dfrac{D \sqsubseteq B}{\mathsf{Compat}(D*, B*)}\;\textsf{(C-Sub)}`

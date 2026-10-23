@@ -24,7 +24,7 @@ of a local reference.
 A lambda expression has no type of its own. It is checked against the
 function type expected where it occurs, the argument of
 `new std::function<F>(λ)`, by the judgment Γ ⊢ e ◁ τ, "e is acceptable at
-type τ", which for every other expression is Γ ⊢ e : τ' with τ' ≈ τ. A
+type τ", which for every other expression is Γ ⊢ e : τ' with Compat(τ', τ). A
 `std::function<F>` is an object, created with `new`, reached by pointer and
 called as `(*f)(ē)`. Inside a lambda body the captured variables are read
 only, recorded by the `const` mark of their bindings in Γ.
@@ -272,24 +272,24 @@ def value (e : Expr) (t : Ty) : T Ty :=
   else if Std.isObject t then .error (.objectValue e t)
   else .ok t
 
-/--τ ≈ τ', the type τ of a value is accepted where τ' is expected. Equal
-types, nullptr and a pointer type in either order, or, by subsumption, a
+/-- The relation Compat(τ, τ') holds when a value of type τ is accepted where
+τ' is expected. Equal types, nullptr and a pointer type in either order, or, by subsumption, a
 pointer to a derived class where a pointer to its base is expected. These are
 the only implicit conversions.
 
 ```
-──────── (C-Refl)    ──────────────── (C-Null)    ──────────────── (C-NullR)
-τ ≈ τ                nullptr_t ≈ τ*               τ* ≈ nullptr_t
+──────────── (C-Refl)    ───────────────────── (C-Null)    ───────────────────── (C-NullR)
+Compat(τ, τ)              Compat(nullptr_t, τ*)             Compat(τ*, nullptr_t)
 
 D ⊑ B
-──────── (C-Sub)      D derives from B, or D = B
-D* ≈ B*
+────────────── (C-Sub)      D derives from B, or D = B
+Compat(D*, B*)
 ```
 
 ```
 Γ ⊢ e : D*    D derives from B
 ────────────────────────────── (T-Sub)      subsumption where a value is
-Γ ⊢ e : B*                                  used, wherever ≈ is required
+Γ ⊢ e : B*                                  used, wherever Compat is required
 ```
 -/
 def compat (p : Program) : Ty → Ty → Bool
@@ -330,7 +330,7 @@ def distinguishable (ps qs : List Param) : Bool :=
   ps.length != qs.length ||
     (ps.zip qs).any fun (a, b) => a.ty != b.ty && !a.ty.isFunction && !b.ty.isFunction
 
-/-- τ₁ ≈ τ₂ in either direction, for comparison and for the branches of `?:`. -/
+/-- The relation Compat(τ₁, τ₂) in either direction, for comparison and for the branches of `?:`. -/
 def related (p : Program) (t₁ t₂ : Ty) : Bool := compat p t₁ t₂ || compat p t₂ t₁
 
 /-- Requires that a variable, parameter or result type has values. A `τ&`
@@ -448,7 +448,7 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
       | .add | .sub | .mul | .div | .mod =>
         if t₁ == .int && t₂ == .int then .ok .int
         else .error (.badOperand op.toString (if t₁ != .int then t₁ else t₂))
-      /-  Γ ⊢ e₁ : τ₁    Γ ⊢ e₂ : τ₂    τ₁ ≈ τ₂ or τ₂ ≈ τ₁    τ₁, τ₂ ∈ {int, bool, τ*, nullptr_t}
+      /-  Γ ⊢ e₁ : τ₁    Γ ⊢ e₂ : τ₂    Compat(τ₁, τ₂) or Compat(τ₂, τ₁)    τ₁, τ₂ ∈ {int, bool, τ*, nullptr_t}
           ──────────────────────────────────────────────────────────────────── (T-Eq, ⋈ ∈ {==, !=})
           Γ ⊢ e₁ ⋈ e₂ : bool                                                         -/
       | .eq | .ne =>
@@ -465,7 +465,7 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
         Γ ⊢ e₁ ? e₂ : e₃ : τ
 
         The join is τ₂ when the types are equal or τ₂ is a pointer and τ₃ is
-        nullptr_t, τ₃ when τ₂ ≈ τ₃, and τ₂ when τ₃ ≈ τ₂, as `Ty.join` states.
+        nullptr_t, τ₃ when Compat(τ₂, τ₃), and τ₂ when Compat(τ₃, τ₂), as `Ty.join` states.
 
         Γ ⊢ₗ e₁ ? e₂ : e₃ : τ    IsObject(τ)
         ─────────────────────────────────────── (T-CondObj)      two objects of one type
@@ -634,10 +634,10 @@ def acceptArgs (fuel : Nat) (p : Program) (Γ : TEnv) (context : String) (ps : L
       accept fuel p Γ s!"argument of {context}" e τ
 
   /--Γ ⊢ e ◁ τ, e is acceptable at type τ. For a lambda, `lambdaAt`. For any
-  other expression, Γ ⊢ e : τ' with τ' ≈ τ and τ' with values.
+  other expression, Γ ⊢ e : τ' with Compat(τ', τ) and τ' with values.
 
   ```
-  Γ ⊢ e : τ'    τ' ≈ τ    τ' has values
+  Γ ⊢ e : τ'    Compat(τ', τ)    τ' has values
   ───────────────────────────────────── (Accept)
   Γ ⊢ e ◁ τ
   ```
@@ -955,7 +955,7 @@ def cmd (fuel : Nat) (p : Program) (τᵣ : Ty) (Γ : TEnv) (c : Cmd) : T TEnv :
       let te ← value e (← expr fuel p Γ e)
       storable s!"variable {x}" te
       return Γ.bind x te
-    /-  Γ ⊢ₗ e₁ : τ    HasValues(τ)    Γ ⊢ e₂ : τ'    HasValues(τ')    τ' ≈ τ
+    /-  Γ ⊢ₗ e₁ : τ    HasValues(τ)    Γ ⊢ e₂ : τ'    HasValues(τ')    Compat(τ', τ)
         ───────────────────────────────────────────────────────────────────── (T-Assign)
         Γ ⊢ e₁ = e₂ ⊣ Γ                                                              -/
     | .assign e₁ e₂ => do

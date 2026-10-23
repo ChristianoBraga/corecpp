@@ -92,9 +92,9 @@ In the code, the case `binop` of `Eval.expr` evaluates both operands and calls `
 :::
 
 :::definition "expr_rel" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.binop, CoreCpp.BinOp.compare, CoreCpp.Typing.compat, CoreCpp.Typing.related, CoreCpp.Ty.comparable, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr")
-Equality compares two `int`, two `bool`, two pointers, or `nullptr` with a pointer or with `nullptr`, when $`\tau_1 \approx \tau_2` or $`\tau_2 \approx \tau_1`, the test `Ty.comparable`. A pointer to a derived class thus compares with a pointer to its base, {bpref "cls_subsumption"}[]. Two pointers are equal when they are the same location, and `nullptr` equals only `nullptr`. Order compares two `int`, and there is no order on pointers. The result is `bool`, and the evaluator computes the left operand before the right one. A left operand of class type calls a member operator, as in {bpref "expr_arith"}[].
+Equality compares two `int`, two `bool`, two pointers, or `nullptr` with a pointer or with `nullptr`, when $`\mathsf{Compat}(\tau_1, \tau_2)` or $`\mathsf{Compat}(\tau_2, \tau_1)`, the test `Ty.comparable`. A pointer to a derived class thus compares with a pointer to its base, {bpref "cls_subsumption"}[]. Two pointers are equal when they are the same location, and `nullptr` equals only `nullptr`. Order compares two `int`, and there is no order on pointers. The result is `bool`, and the evaluator computes the left operand before the right one. A left operand of class type calls a member operator, as in {bpref "expr_arith"}[].
 
-$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 : \tau_2 \qquad \tau_1 \approx \tau_2 \lor \tau_2 \approx \tau_1 \\ \tau_1, \tau_2 \in \{\mathsf{int}, \mathsf{bool}, \tau*, \mathsf{nullptr\_t}\} \end{array}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Eq)}, \quad \bowtie \in \{==, \mathrel{!=}\}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 : \tau_2 \qquad \mathsf{Compat}(\tau_1, \tau_2) \lor \mathsf{Compat}(\tau_2, \tau_1) \\ \tau_1, \tau_2 \in \{\mathsf{int}, \mathsf{bool}, \tau*, \mathsf{nullptr\_t}\} \end{array}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Eq)}, \quad \bowtie \in \{==, \mathrel{!=}\}`
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{int} \qquad \Gamma \vdash e_2 : \mathsf{int}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Rel)}, \quad \bowtie \in \{<, <=, >, >=\}`
 
@@ -120,13 +120,13 @@ In the code, the cases `binop .and` and `binop .or` of `Eval.expr` implement the
 # Conditional
 
 :::definition "expr_cond" (parent := "ud2") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.value, CoreCpp.Typing.compat, CoreCpp.Ty.join, CoreCpp.Semantics.HasValues, CoreCpp.Eval.expr, CoreCpp.Eval.expectBool, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval, CoreCpp.Typing.lval, CoreCpp.Typing.locJoin, CoreCpp.Eval.lval, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval, CoreCpp.Semantics.IsObject") (uses := "judg_ty_expr, judg_ev_expr, judg_ty_lval, judg_ev_lval")
-The condition is `bool`. For a value, both branches have types with values, neither `void` nor an object type, and the type of the conditional is their join, `Ty.join`. The join is $`\tau_2` when the two types are equal or when $`\tau_2` is a pointer type and $`\tau_3` is $`\mathsf{nullptr\_t}`, $`\tau_3` when $`\tau_2 \approx \tau_3`, and $`\tau_2` when $`\tau_3 \approx \tau_2`. A pointer to a derived class and a pointer to its base thus join at the base. A pointer and `nullptr` join at the pointer type in either order, so `c ? p : nullptr` and `c ? nullptr : p` both have the type of `p`, the composite pointer type of C++ (N4659 §8.16 paragraph 7). The evaluator computes the condition and then only the chosen branch.
+The condition is `bool`. For a value, both branches have types with values, neither `void` nor an object type, and the type of the conditional is their join, `Ty.join`. The join is $`\tau_2` when the two types are equal or when $`\tau_2` is a pointer type and $`\tau_3` is $`\mathsf{nullptr\_t}`, $`\tau_3` when $`\mathsf{Compat}(\tau_2, \tau_3)`, and $`\tau_2` when $`\mathsf{Compat}(\tau_3, \tau_2)`. A pointer to a derived class and a pointer to its base thus join at the base. A pointer and `nullptr` join at the pointer type in either order, so `c ? p : nullptr` and `c ? nullptr : p` both have the type of `p`, the composite pointer type of C++ (N4659 §8.16 paragraph 7). The evaluator computes the condition and then only the chosen branch.
 
 The predicates $`\mathsf{HasValues}` and $`\mathsf{IsObject}` are those of {bpref "dom_tenv"}[].
 
 $$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash e_2 : \tau_2 \qquad \Gamma \vdash e_3 : \tau_3 \\ \mathsf{HasValues}(\tau_2) \qquad \mathsf{HasValues}(\tau_3) \qquad \tau = \mathrm{join}(\tau_2, \tau_3) \end{array}}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-Cond)}`
 
-$$`\mathrm{join}(\tau_2, \tau_3) = \begin{cases} \tau_2 & \text{if } \tau_2 = \tau_3 \text{ or } \tau_2 = \tau'* \text{ and } \tau_3 = \mathsf{nullptr\_t} \\ \tau_3 & \text{else if } \tau_2 \approx \tau_3 \\ \tau_2 & \text{else if } \tau_3 \approx \tau_2 \end{cases}`
+$$`\mathrm{join}(\tau_2, \tau_3) = \begin{cases} \tau_2 & \text{if } \tau_2 = \tau_3 \text{ or } \tau_2 = \tau'* \text{ and } \tau_3 = \mathsf{nullptr\_t} \\ \tau_3 & \text{else if } \mathsf{Compat}(\tau_2, \tau_3) \\ \tau_2 & \text{else if } \mathsf{Compat}(\tau_3, \tau_2) \end{cases}`
 
 $$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-T)}`
 
@@ -241,7 +241,7 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{int}\,n, \sigma' \qquad -n \
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{int} \qquad \Gamma \vdash e_2 : \mathsf{int}}{\Gamma \vdash e_1 \oplus e_2 : \mathsf{int}}\;\textsf{(T-Arith)}, \quad \oplus \in \{+, -, *, /, \%\}`
 
-$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 : \tau_2 \qquad \tau_1 \approx \tau_2 \lor \tau_2 \approx \tau_1 \\ \tau_1, \tau_2 \in \{\mathsf{int}, \mathsf{bool}, \tau*, \mathsf{nullptr\_t}\} \end{array}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Eq)}, \quad \bowtie \in \{==, \mathrel{!=}\}`
+$$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 : \tau_2 \qquad \mathsf{Compat}(\tau_1, \tau_2) \lor \mathsf{Compat}(\tau_2, \tau_1) \\ \tau_1, \tau_2 \in \{\mathsf{int}, \mathsf{bool}, \tau*, \mathsf{nullptr\_t}\} \end{array}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Eq)}, \quad \bowtie \in \{==, \mathrel{!=}\}`
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{int} \qquad \Gamma \vdash e_2 : \mathsf{int}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Rel)}, \quad \bowtie \in \{<, <=, >, >=\}`
 
