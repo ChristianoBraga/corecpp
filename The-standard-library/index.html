@@ -5389,7 +5389,7 @@ window.onload = async () => {
             <div class="split-toc">
               <div class="title">
                 <label for="--verso-manual-toc-Core-C______--The-standard-library" class="toggle-split-toc"><input type="checkbox" class="toggle-split-toc" id="--verso-manual-toc-Core-C______--The-standard-library" checked="checked"></label><span class="number">8.</span> <span class="current"><a href="The-standard-library/#Core-C______--The-standard-library">The standard library</a></span></div>
-              <table><tr class="numbered"><td class="num">8.1.</td><td><a href="The-standard-library/Interface/#Core-C______--The-standard-library--Interface">Interface</a></td></tr><tr class="numbered"><td class="num">8.2.</td><td><a href="The-standard-library/Headers/#Core-C______--The-standard-library--Headers">Headers</a></td></tr></table></div>
+              <table><tr class="numbered"><td class="num">8.1.</td><td><a href="The-standard-library/Interface/#Core-C______--The-standard-library--Interface">Interface</a></td></tr><tr class="numbered"><td class="num">8.2.</td><td><a href="The-standard-library/Headers/#Core-C______--The-standard-library--Headers">Headers</a></td></tr><tr class="numbered"><td class="num">8.3.</td><td><a href="The-standard-library/Rules-of-the-chapter/#Core-C______--The-standard-library--Rules-of-the-chapter">Rules of the chapter</a></td></tr></table></div>
             </div>
           </div>
         <div class="last"></div>
@@ -5402,16 +5402,18 @@ window.onload = async () => {
             <h1>
               8. The standard library<span class="permalink-widget inline"><a href="find/?domain=Verso.Genre.Manual.section&amp;name=Core-C______--The-standard-library" title="Permalink">🔗</a></span></h1>
             <p>
-              The headers of Core C++ declare the entities of the library without a body, the class templates <code>std::vector</code> and <code>std::function</code> and the function <code>assert</code>. Each declaration names a module, a relation plus a function. The relations, in <code>CoreCpp/Semantics/Library.lean</code>, are the specification of the entity, in the forms of the judgments of the language, and the rules of the language take them as premises. The functions, in <code>CoreCpp/Std/</code>, are the implementation, which the type checker and the evaluator call where a rule has the relation as a premise.</p>
+              The headers of Core C++ declare the entities of the library without a body, the class templates <code>std::vector</code> and <code>std::function</code> and the function <code>assert</code>. Each declared name has a module, which holds relations and functions. The relations, in <code>CoreCpp/Semantics/Library.lean</code>, specify the entity in the forms of the judgments of the language. The rules of the language take them as premises. The functions, in <code>CoreCpp/Std/</code>, implement them, and the type checker and the evaluator call a function where a rule has its relation as a premise.</p>
             <p>
-              The type checker and the evaluator know no module by name. They find the module of a declared name, and a use of an undeclared entity is a type error, so a program uses the library only through its <code>#include</code>.</p>
+              The type checker and the evaluator know no module by name. They find the module of a declared name. A use of an undeclared entity is a type error, so a program uses the library only through its <code>#include</code>.</p>
             <p>
-              Nothing of this is built into the syntax. The grammar has no production and the lexer no reserved word for the library, <code>namespace std</code> is an ordinary namespace and <code>std::vector</code> an ordinary qualified name, and what tells a class of the library from one of the program is the case of its name, lowercase for the first and uppercase for the second.</p>
+              Nothing of this is built into the syntax. The grammar has no production and the lexer no reserved word for the library. The declaration <code>namespace std</code> opens an ordinary namespace, and <code>std::vector</code> is an ordinary qualified name. The case of the name tells a class of the library, lowercase, from a class of the program, uppercase.</p>
             <ol class="section-toc">
               <li>
                 <a href="The-standard-library/Interface/#Core-C______--The-standard-library--Interface"><span class="number">8.1.</span> Interface</a></li>
               <li>
                 <a href="The-standard-library/Headers/#Core-C______--The-standard-library--Headers"><span class="number">8.2.</span> Headers</a></li>
+              <li>
+                <a href="The-standard-library/Rules-of-the-chapter/#Core-C______--The-standard-library--Rules-of-the-chapter"><span class="number">8.3.</span> Rules of the chapter</a></li>
               </ol>
             </section>
           <nav class="prev-next-buttons">
