@@ -1258,6 +1258,32 @@ html[data-bp-style="bold"] .bp_wrapper div.proof_content {
   opacity: 0.5;
 }
 </style><style>
+table.tabular {
+  margin: auto;
+  border-spacing: 1rem;
+}
+table.tabular.left-align {
+  margin-right: auto;
+  margin-left: 0;
+}
+table.tabular.center-align {
+  margin: auto;
+}
+table.tabular.right-align {
+  margin-left auto;
+  margin-right: 0;
+}
+table.tabular td, table.tabular th {
+  text-align: left;
+  vertical-align: top;
+}
+table.tabular td > p:first-child, table.tabular th > p:first-child {
+  margin-top: 0;
+}
+table.tabular td > p:last-child, table.tabular th > p:first-child {
+  margin-bottom: 0;
+}
+</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -3784,6 +3810,315 @@ html[data-bp-style="bold"] .bp_graph_legend_swatch {
 .bp_inline_preview_panel[data-bp-preview-mode="hover"] .bp_inline_preview_panel_close {
   display: none;
 }
+</style><style>.bp_summary {
+  margin-top: 1rem;
+}
+
+.bp_summary_section {
+  border: 1px solid var(--bp-color-border-muted);
+  border-radius: 0.6rem;
+  padding: 0.2rem 0.8rem 0.75rem;
+  margin-bottom: 0.8rem;
+  background: var(--bp-color-surface);
+}
+
+.bp_summary_section > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.6rem 0;
+}
+
+.bp_summary_subsection {
+  margin-top: 0.45rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-md);
+  padding: 0.25rem 0.55rem 0.45rem;
+  background: var(--bp-color-surface-subtle);
+}
+
+.bp_summary_subsection > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.35rem 0;
+}
+
+.bp_summary_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.bp_summary_card {
+  border: 1px solid var(--bp-color-border-muted);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface-subtle);
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bp_summary_card_warn {
+  background: var(--bp-color-surface-warn);
+  color: var(--bp-color-status-warning-strong);
+  border-color: var(--bp-color-status-warning-border);
+}
+
+.bp_summary_subsection_warn {
+  background: var(--bp-color-surface-warn);
+  border-color: var(--bp-color-status-warning-border);
+}
+
+.bp_summary_label {
+  font-size: 0.82rem;
+  color: var(--bp-color-text-subtle);
+}
+
+.bp_summary_value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--bp-color-text);
+}
+
+.bp_summary_status {
+  font-size: 0.76rem;
+  line-height: 1.3;
+  color: var(--bp-color-text-subtle);
+}
+
+.bp_summary_list {
+  margin: 0.25rem 0 0.15rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.bp_summary_item {
+  margin: 0.4rem 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface);
+}
+
+.bp_summary_empty {
+  color: var(--bp-color-text-faint);
+  font-style: italic;
+}
+
+.bp_summary_item_top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.45rem;
+}
+
+.bp_summary_item_head {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_head a,
+.bp_summary_item_head code,
+.bp_summary_item_head .bp_summary_preview_wrap {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_item_meta {
+  color: var(--bp-color-text-subtle);
+  border: 1px solid var(--bp-color-border-panel);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.03rem 0.45rem;
+  font-size: 0.78rem;
+}
+
+.bp_summary_preview_wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.bp_summary_preview_wrap_active {
+  cursor: pointer;
+}
+
+.bp_summary_preview_panel {
+  position: fixed;
+  z-index: 35;
+  width: min(36rem, calc(100vw - 1.4rem));
+  max-height: min(68vh, 36rem);
+}
+
+.bp_summary_preview_panel[data-bp-preview-placement="docked"] {
+  top: 0.9rem;
+  right: 0.9rem;
+  left: auto;
+}
+
+.bp_summary_preview_panel_title {
+  font-size: 0.84rem;
+}
+
+.bp_summary_preview_panel_body {
+  padding-left: 0.5rem;
+  max-height: min(56vh, 30rem);
+}
+
+.bp_summary_item_body {
+  margin-top: 0.22rem;
+  color: var(--bp-color-text-strong);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_body a,
+.bp_summary_item_body code,
+.bp_summary_item_body .bp_inline_preview_ref {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_item_actions {
+  margin-top: 0.2rem;
+  color: var(--bp-color-text-muted);
+  font-size: 0.85rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_actions a,
+.bp_summary_item_actions code,
+.bp_summary_item_actions .bp_summary_preview_wrap,
+.bp_summary_item_actions .bp_inline_preview_ref {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_sep {
+  color: var(--bp-color-text-faint);
+}
+
+.bp_summary_decl_list {
+  margin: 0.2rem 0 0;
+  padding-left: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_decl_list > li {
+  min-width: 0;
+}
+
+.bp_summary_decl_list a,
+.bp_summary_decl_list code,
+.bp_summary_decl_list .bp_inline_preview_ref {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_decls {
+  margin-top: 0.22rem;
+}
+
+.bp_summary_decls > summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_summary_badge {
+  display: inline-block;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.05rem 0.35rem;
+  background: var(--bp-color-surface-muted);
+  color: var(--bp-color-text-muted);
+  font-size: 0.78rem;
+}
+
+.bp_summary_badge_warn {
+  border-color: var(--bp-color-status-warning-border-soft);
+  background: var(--bp-color-surface-warn-soft);
+  color: var(--bp-color-status-warning-strong);
+}
+
+.bp_summary_badge_error {
+  border-color: var(--bp-color-status-error-border-soft);
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--bp-color-status-error-strong);
+}
+
+.bp_summary_badge_row {
+  margin-top: 0.28rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.bp_summary_item_nested {
+  background: var(--bp-color-surface-muted);
+}
+
+.bp_summary_nested > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_summary_nested .bp_summary_list {
+  margin-top: 0.45rem;
+}
+
+@media (max-width: 700px) {
+  .bp_summary_section {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+}
+
+html[data-bp-style="modern"] .bp_summary_card {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_summary_section {
+  border-color: var(--bp-color-modern-border);
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+}
+
+html[data-bp-style="modern"] .bp_summary_subsection {
+  background: var(--bp-color-modern-surface-alt);
+  border-color: var(--bp-color-modern-caption);
+}
+
+html[data-bp-style="bold"] .bp_summary_card {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  background: var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_summary_section {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: 0.9rem;
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_summary_subsection {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: 0.7rem;
+  background: var(--bp-color-surface);
+}
 </style><style>
 
 .hl.lean {
@@ -4463,315 +4798,6 @@ Some CSS frameworks customize details/summary in ways not compatible with Verso'
   white-space: pre-wrap;
 }
 
-</style><style>.bp_summary {
-  margin-top: 1rem;
-}
-
-.bp_summary_section {
-  border: 1px solid var(--bp-color-border-muted);
-  border-radius: 0.6rem;
-  padding: 0.2rem 0.8rem 0.75rem;
-  margin-bottom: 0.8rem;
-  background: var(--bp-color-surface);
-}
-
-.bp_summary_section > summary {
-  cursor: pointer;
-  font-weight: 700;
-  padding: 0.6rem 0;
-}
-
-.bp_summary_subsection {
-  margin-top: 0.45rem;
-  border: 1px solid var(--bp-color-border-soft);
-  border-radius: var(--bp-radius-md);
-  padding: 0.25rem 0.55rem 0.45rem;
-  background: var(--bp-color-surface-subtle);
-}
-
-.bp_summary_subsection > summary {
-  cursor: pointer;
-  font-weight: 600;
-  padding: 0.35rem 0;
-}
-
-.bp_summary_grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: 0.6rem;
-  margin-bottom: 1rem;
-}
-
-.bp_summary_card {
-  border: 1px solid var(--bp-color-border-muted);
-  border-radius: var(--bp-radius-md);
-  background: var(--bp-color-surface-subtle);
-  padding: 0.65rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.bp_summary_card_warn {
-  background: var(--bp-color-surface-warn);
-  color: var(--bp-color-status-warning-strong);
-  border-color: var(--bp-color-status-warning-border);
-}
-
-.bp_summary_subsection_warn {
-  background: var(--bp-color-surface-warn);
-  border-color: var(--bp-color-status-warning-border);
-}
-
-.bp_summary_label {
-  font-size: 0.82rem;
-  color: var(--bp-color-text-subtle);
-}
-
-.bp_summary_value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--bp-color-text);
-}
-
-.bp_summary_status {
-  font-size: 0.76rem;
-  line-height: 1.3;
-  color: var(--bp-color-text-subtle);
-}
-
-.bp_summary_list {
-  margin: 0.25rem 0 0.15rem;
-  padding-left: 0;
-  list-style: none;
-}
-
-.bp_summary_item {
-  margin: 0.4rem 0;
-  padding: 0.45rem 0.55rem;
-  border: 1px solid var(--bp-color-border-soft);
-  border-radius: var(--bp-radius-md);
-  background: var(--bp-color-surface);
-}
-
-.bp_summary_empty {
-  color: var(--bp-color-text-faint);
-  font-style: italic;
-}
-
-.bp_summary_item_top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.45rem;
-}
-
-.bp_summary_item_head {
-  min-width: 0;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_item_head a,
-.bp_summary_item_head code,
-.bp_summary_item_head .bp_summary_preview_wrap {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_item_meta {
-  color: var(--bp-color-text-subtle);
-  border: 1px solid var(--bp-color-border-panel);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.03rem 0.45rem;
-  font-size: 0.78rem;
-}
-
-.bp_summary_preview_wrap {
-  display: inline-flex;
-  align-items: center;
-}
-
-.bp_summary_preview_wrap_active {
-  cursor: pointer;
-}
-
-.bp_summary_preview_panel {
-  position: fixed;
-  z-index: 35;
-  width: min(36rem, calc(100vw - 1.4rem));
-  max-height: min(68vh, 36rem);
-}
-
-.bp_summary_preview_panel[data-bp-preview-placement="docked"] {
-  top: 0.9rem;
-  right: 0.9rem;
-  left: auto;
-}
-
-.bp_summary_preview_panel_title {
-  font-size: 0.84rem;
-}
-
-.bp_summary_preview_panel_body {
-  padding-left: 0.5rem;
-  max-height: min(56vh, 30rem);
-}
-
-.bp_summary_item_body {
-  margin-top: 0.22rem;
-  color: var(--bp-color-text-strong);
-  font-size: 0.9rem;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_item_body a,
-.bp_summary_item_body code,
-.bp_summary_item_body .bp_inline_preview_ref {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_item_actions {
-  margin-top: 0.2rem;
-  color: var(--bp-color-text-muted);
-  font-size: 0.85rem;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_item_actions a,
-.bp_summary_item_actions code,
-.bp_summary_item_actions .bp_summary_preview_wrap,
-.bp_summary_item_actions .bp_inline_preview_ref {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_sep {
-  color: var(--bp-color-text-faint);
-}
-
-.bp_summary_decl_list {
-  margin: 0.2rem 0 0;
-  padding-left: 1.2rem;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_decl_list > li {
-  min-width: 0;
-}
-
-.bp_summary_decl_list a,
-.bp_summary_decl_list code,
-.bp_summary_decl_list .bp_inline_preview_ref {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_decls {
-  margin-top: 0.22rem;
-}
-
-.bp_summary_decls > summary {
-  cursor: pointer;
-  font-size: 0.88rem;
-  color: var(--bp-color-text-muted);
-}
-
-.bp_summary_badge {
-  display: inline-block;
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.05rem 0.35rem;
-  background: var(--bp-color-surface-muted);
-  color: var(--bp-color-text-muted);
-  font-size: 0.78rem;
-}
-
-.bp_summary_badge_warn {
-  border-color: var(--bp-color-status-warning-border-soft);
-  background: var(--bp-color-surface-warn-soft);
-  color: var(--bp-color-status-warning-strong);
-}
-
-.bp_summary_badge_error {
-  border-color: var(--bp-color-status-error-border-soft);
-  background: rgba(220, 38, 38, 0.08);
-  color: var(--bp-color-status-error-strong);
-}
-
-.bp_summary_badge_row {
-  margin-top: 0.28rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.bp_summary_item_nested {
-  background: var(--bp-color-surface-muted);
-}
-
-.bp_summary_nested > summary {
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--bp-color-text-muted);
-}
-
-.bp_summary_nested .bp_summary_list {
-  margin-top: 0.45rem;
-}
-
-@media (max-width: 700px) {
-  .bp_summary_section {
-    padding-left: 0.6rem;
-    padding-right: 0.6rem;
-  }
-}
-
-html[data-bp-style="modern"] .bp_summary_card {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_summary_section {
-  border-color: var(--bp-color-modern-border);
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-}
-
-html[data-bp-style="modern"] .bp_summary_subsection {
-  background: var(--bp-color-modern-surface-alt);
-  border-color: var(--bp-color-modern-caption);
-}
-
-html[data-bp-style="bold"] .bp_summary_card {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  background: var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_summary_section {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: 0.9rem;
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_summary_subsection {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: 0.7rem;
-  background: var(--bp-color-surface);
-}
 </style><script>
       
 window.onload = async () => {
@@ -5561,22 +5587,123 @@ window.onload = async () => {
               <div class="bp_content bp_kind_definition_content definition_thmcontent">
                 <p>
                   The semantics is a set of inductive propositions, one per judgment, with one constructor per rule. A constructor bears the name of its rule in this blueprint. The relations of the language are in <code>CoreCpp/Semantics/Static.lean</code> and <code>Dynamic.lean</code>, and the relations of the modules of the library in <code>Library.lean</code>. A constructor follows the layout of a rule on the board, the premises one per line, the inference line with the name, and the conclusion under it. The program <code class="bp_math inline">p</code> is a parameter of every relation, the function table and the class table.</p>
-                <p>
-                  | Judgment | Relation | Notation in Lean | Interpreter |
-| --- | --- | --- | --- |
-| <code class="bp_math inline">\Gamma \vdash e : \tau</code> | <code>HasType p Γ e τ</code> | <code>Γ ⊢ e : τ</code> | <code>Typing.expr</code> |
-| <code class="bp_math inline">\Gamma \vdash_{\ell} e : \tau</code> | <code>LHasType p Γ e τ</code> | <code>Γ ⊢ₗ e : τ</code> | <code>Typing.lval</code> |
-| <code class="bp_math inline">\Gamma \vdash e \lhd \tau</code> | <code>Accept p Γ e τ</code> | <code>Γ ⊢ e ◁ τ</code> | <code>Typing.accept</code> |
-| <code class="bp_math inline">\Gamma \vdash c \dashv \Gamma'</code> | <code>Check p τᵣ Γ c Γ'</code> | <code>⟨Γ, τᵣ⟩ ⊢ c ⊣ Γ'</code> | <code>Typing.cmd</code> |
-| <code class="bp_math inline">\Gamma \vdash \bar{c} \dashv \Gamma'</code> | <code>Checks p τᵣ Γ cs Γ'</code> | <code>⟨Γ, τᵣ⟩ ⊢ cs ⊣* Γ'</code> | <code>Typing.cmds</code> |
-| <code class="bp_math inline">\Gamma \vdash \tau\ \mathsf{ok}</code> | <code>WF p τ</code> | | <code>Typing.wellFormed</code> |
-| <code class="bp_math inline">\vdash f</code>, <code class="bp_math inline">\vdash C</code>, <code class="bp_math inline">\vdash p</code> | <code>FunOk</code>, <code>ClassOk</code>, <code>ProgramOk</code> | | <code>Typing.fn</code>, <code>Typing.cls</code>, <code>check</code> |
-| <code class="bp_math inline">\rho, \sigma \vdash e \Rightarrow v, \sigma'</code> | <code>Eval p ρ σ e v σ'</code> | <code>⟨ρ, σ⟩ ⊢ e ⇒ v, σ'</code> | <code>Eval.expr</code> |
-| <code class="bp_math inline">\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'</code> | <code>LEval p ρ σ e ℓ σ'</code> | <code>⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'</code> | <code>Eval.lval</code> |
-| <code class="bp_math inline">\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'</code> | <code>Exec p ρ σ c r ρ' σ'</code> | <code>⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'</code> | <code>Eval.cmd</code> |
-| <code class="bp_math inline">\rho, \sigma \vdash \bar{c} \Rightarrow r, \rho', \sigma'</code> | <code>Execs p ρ σ cs r ρ' σ'</code> | <code>⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'</code> | <code>Eval.cmds</code> |
-| <code class="bp_math inline">p \Rightarrow v</code> | <code>Runs p v</code> | | <code>run</code> |</p>
-                <p>
+                <table class="tabular"><thead><tr><th><p>
+                          Judgment</p>
+                        </th><th><p>
+                          Relation</p>
+                        </th><th><p>
+                          Notation in Lean</p>
+                        </th><th><p>
+                          Interpreter
+</p>
+                        </th></tr></thead><tr><td><p>
+                        <code class="bp_math inline">\Gamma \vdash e : \tau</code></p>
+                      </td><td><p>
+                        <code>HasType p Γ e τ</code></p>
+                      </td><td><p>
+                        <code>Γ ⊢ e : τ</code></p>
+                      </td><td><p>
+                        <code>Typing.expr</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\Gamma \vdash_{\ell} e : \tau</code></p>
+                      </td><td><p>
+                        <code>LHasType p Γ e τ</code></p>
+                      </td><td><p>
+                        <code>Γ ⊢ₗ e : τ</code></p>
+                      </td><td><p>
+                        <code>Typing.lval</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\Gamma \vdash e \lhd \tau</code></p>
+                      </td><td><p>
+                        <code>Accept p Γ e τ</code></p>
+                      </td><td><p>
+                        <code>Γ ⊢ e ◁ τ</code></p>
+                      </td><td><p>
+                        <code>Typing.accept</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\Gamma \vdash c \dashv \Gamma'</code></p>
+                      </td><td><p>
+                        <code>Check p τᵣ Γ c Γ'</code></p>
+                      </td><td><p>
+                        <code>⟨Γ, τᵣ⟩ ⊢ c ⊣ Γ'</code></p>
+                      </td><td><p>
+                        <code>Typing.cmd</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\Gamma \vdash \bar{c} \dashv \Gamma'</code></p>
+                      </td><td><p>
+                        <code>Checks p τᵣ Γ cs Γ'</code></p>
+                      </td><td><p>
+                        <code>⟨Γ, τᵣ⟩ ⊢ cs ⊣* Γ'</code></p>
+                      </td><td><p>
+                        <code>Typing.cmds</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\Gamma \vdash \tau\ \mathsf{ok}</code></p>
+                      </td><td><p>
+                        <code>WF p τ</code></p>
+                      </td><td><p>
+                        none</p>
+                      </td><td><p>
+                        <code>Typing.wellFormed</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\vdash f</code>, <code class="bp_math inline">\vdash C</code>, <code class="bp_math inline">\vdash p</code></p>
+                      </td><td><p>
+                        <code>FunOk</code>, <code>ClassOk</code>, <code>ProgramOk</code></p>
+                      </td><td><p>
+                        none</p>
+                      </td><td><p>
+                        <code>Typing.fn</code>, <code>Typing.cls</code>, <code>check</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\rho, \sigma \vdash e \Rightarrow v, \sigma'</code></p>
+                      </td><td><p>
+                        <code>Eval p ρ σ e v σ'</code></p>
+                      </td><td><p>
+                        <code>⟨ρ, σ⟩ ⊢ e ⇒ v, σ'</code></p>
+                      </td><td><p>
+                        <code>Eval.expr</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'</code></p>
+                      </td><td><p>
+                        <code>LEval p ρ σ e ℓ σ'</code></p>
+                      </td><td><p>
+                        <code>⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'</code></p>
+                      </td><td><p>
+                        <code>Eval.lval</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'</code></p>
+                      </td><td><p>
+                        <code>Exec p ρ σ c r ρ' σ'</code></p>
+                      </td><td><p>
+                        <code>⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'</code></p>
+                      </td><td><p>
+                        <code>Eval.cmd</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">\rho, \sigma \vdash \bar{c} \Rightarrow r, \rho', \sigma'</code></p>
+                      </td><td><p>
+                        <code>Execs p ρ σ cs r ρ' σ'</code></p>
+                      </td><td><p>
+                        <code>⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'</code></p>
+                      </td><td><p>
+                        <code>Eval.cmds</code>
+</p>
+                      </td></tr><tr><td><p>
+                        <code class="bp_math inline">p \Rightarrow v</code></p>
+                      </td><td><p>
+                        <code>Runs p v</code></p>
+                      </td><td><p>
+                        none</p>
+                      </td><td><p>
+                        <code>run</code></p>
+                      </td></tr></table><p>
                   Lean writes the configuration <code class="bp_math inline">\langle\rho, \sigma\rangle</code> in angle brackets, and <code class="bp_math inline">\langle\Gamma, \tau_r\rangle</code> for a command with the result type of its body. A sequence takes a starred arrow. Both are concessions to the parser of Lean. The relation is the specification and the function its interpreter. Every recursive function of the type checker and of the evaluator takes as first argument the fuel, a bound on the depth of a derivation, and recurses on it. The constant <code>typingFuel</code> and the function <code>runWith</code> set it to <code class="bp_math inline">10^6</code>, and its exhaustion is the error <code>outOfFuel</code>. The fuel makes two theorems expressible, soundness, that a result of the function is a derivation of the relation, and completeness, that the function reaches every derivation with enough fuel. Neither has a proof yet. The structure follows Radix, the language of the tutorial of de Moura at ETAPS 2026.</p>
                 <p>
                   The judgments on declarations, <code class="bp_math inline">\vdash f</code>, <code class="bp_math inline">\vdash C</code> and <code class="bp_math inline">\vdash p</code>, are structures of named conditions rather than relations with one constructor. Their conditions are side conditions on the declarations and not premises on subterms. The selection of an overload, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-overload-005Fpick-statement" data-bp-preview-title="Definition 7.1.2" data-bp-preview-key="overload_pick--statement"><a href="Type-systems/Overloading/#--informal-preview-overload_pick--statement" title="overload_pick">Definition 7.1.2</a></span></span>, is the work of the type checker, which writes its choice into the call, and the relation reads it.</p>
@@ -5633,7 +5760,7 @@ window.onload = async () => {
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.HasType" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(30 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Static.lean#L230-L440">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(30 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L230-L440">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5951,7 +6078,7 @@ is the work of the type checker. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.LHasType" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Static.lean#L442-L510">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L442-L510">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6072,7 +6199,7 @@ of its bases, an lvalue in C++ (N4659 §8.16 ¶4). </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Accept" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Static.lean#L512-L534">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L512-L534">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6132,7 +6259,7 @@ parameters of the lambda as ordinary variables. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Check" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(13 constructors, Prop, 5 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Static.lean#L595-L687">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(13 constructors, Prop, 5 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L595-L687">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6297,7 +6424,7 @@ the class τ. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Checks" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors, Prop, 5 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Static.lean#L689-L699">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors, Prop, 5 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L689-L699">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6341,7 +6468,7 @@ the class τ. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.WF" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(8 constructors, Prop, 2 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Static.lean#L182-L226">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(8 constructors, Prop, 2 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L182-L226">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6417,7 +6544,7 @@ function type has a storable or `void` result and storable parameters. </pre><di
                       <div class="declaration decl structure" data-decl="CoreCpp.Semantics.FunOk" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(5 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Static.lean#L753-L767">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(5 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L753-L767">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6466,7 +6593,7 @@ type of its referent, as a local reference does. </pre><div class="bp_external_d
                       <div class="declaration decl structure" data-decl="CoreCpp.Semantics.ClassOk" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(21 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Static.lean#L769-L827">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(21 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L769-L827">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6617,7 +6744,7 @@ there is no initialiser list. </pre></div>
                       <div class="declaration decl structure" data-decl="CoreCpp.Semantics.ProgramOk" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(8 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Static.lean#L829-L854">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(8 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L829-L854">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6688,7 +6815,7 @@ with the declaration. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Eval" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(28 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Dynamic.lean#L160-L359">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(28 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L160-L359">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7077,7 +7204,7 @@ derivation. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.LEval" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Dynamic.lean#L361-L422">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L361-L422">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7208,7 +7335,7 @@ derivation. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Exec" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(17 constructors, Prop, 7 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Dynamic.lean#L424-L535">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(17 constructors, Prop, 7 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L424-L535">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7450,7 +7577,7 @@ derivation. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Execs" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(3 constructors, Prop, 7 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Dynamic.lean#L537-L554">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(3 constructors, Prop, 7 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L537-L554">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7515,7 +7642,7 @@ derivation. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Semantics.Runs" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics/Dynamic.lean#L693-L700">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L693-L700">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7543,7 +7670,7 @@ p ⇒ v
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.wellFormed" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Typing.lean#L361-L384">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Typing.lean#L361-L384">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7569,7 +7696,7 @@ storable parameters. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.typingFuel" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Typing.lean#L357-L359">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Typing.lean#L357-L359">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7590,7 +7717,7 @@ program reaches. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.runWith" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Eval.lean#L983-L1001">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Eval.lean#L983-L1001">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>

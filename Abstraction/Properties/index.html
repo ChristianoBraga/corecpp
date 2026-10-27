@@ -1258,6 +1258,32 @@ html[data-bp-style="bold"] .bp_wrapper div.proof_content {
   opacity: 0.5;
 }
 </style><style>
+table.tabular {
+  margin: auto;
+  border-spacing: 1rem;
+}
+table.tabular.left-align {
+  margin-right: auto;
+  margin-left: 0;
+}
+table.tabular.center-align {
+  margin: auto;
+}
+table.tabular.right-align {
+  margin-left auto;
+  margin-right: 0;
+}
+table.tabular td, table.tabular th {
+  text-align: left;
+  vertical-align: top;
+}
+table.tabular td > p:first-child, table.tabular th > p:first-child {
+  margin-top: 0;
+}
+table.tabular td > p:last-child, table.tabular th > p:first-child {
+  margin-bottom: 0;
+}
+</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -3784,6 +3810,315 @@ html[data-bp-style="bold"] .bp_graph_legend_swatch {
 .bp_inline_preview_panel[data-bp-preview-mode="hover"] .bp_inline_preview_panel_close {
   display: none;
 }
+</style><style>.bp_summary {
+  margin-top: 1rem;
+}
+
+.bp_summary_section {
+  border: 1px solid var(--bp-color-border-muted);
+  border-radius: 0.6rem;
+  padding: 0.2rem 0.8rem 0.75rem;
+  margin-bottom: 0.8rem;
+  background: var(--bp-color-surface);
+}
+
+.bp_summary_section > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.6rem 0;
+}
+
+.bp_summary_subsection {
+  margin-top: 0.45rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-md);
+  padding: 0.25rem 0.55rem 0.45rem;
+  background: var(--bp-color-surface-subtle);
+}
+
+.bp_summary_subsection > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.35rem 0;
+}
+
+.bp_summary_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.bp_summary_card {
+  border: 1px solid var(--bp-color-border-muted);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface-subtle);
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bp_summary_card_warn {
+  background: var(--bp-color-surface-warn);
+  color: var(--bp-color-status-warning-strong);
+  border-color: var(--bp-color-status-warning-border);
+}
+
+.bp_summary_subsection_warn {
+  background: var(--bp-color-surface-warn);
+  border-color: var(--bp-color-status-warning-border);
+}
+
+.bp_summary_label {
+  font-size: 0.82rem;
+  color: var(--bp-color-text-subtle);
+}
+
+.bp_summary_value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--bp-color-text);
+}
+
+.bp_summary_status {
+  font-size: 0.76rem;
+  line-height: 1.3;
+  color: var(--bp-color-text-subtle);
+}
+
+.bp_summary_list {
+  margin: 0.25rem 0 0.15rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.bp_summary_item {
+  margin: 0.4rem 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface);
+}
+
+.bp_summary_empty {
+  color: var(--bp-color-text-faint);
+  font-style: italic;
+}
+
+.bp_summary_item_top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.45rem;
+}
+
+.bp_summary_item_head {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_head a,
+.bp_summary_item_head code,
+.bp_summary_item_head .bp_summary_preview_wrap {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_item_meta {
+  color: var(--bp-color-text-subtle);
+  border: 1px solid var(--bp-color-border-panel);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.03rem 0.45rem;
+  font-size: 0.78rem;
+}
+
+.bp_summary_preview_wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.bp_summary_preview_wrap_active {
+  cursor: pointer;
+}
+
+.bp_summary_preview_panel {
+  position: fixed;
+  z-index: 35;
+  width: min(36rem, calc(100vw - 1.4rem));
+  max-height: min(68vh, 36rem);
+}
+
+.bp_summary_preview_panel[data-bp-preview-placement="docked"] {
+  top: 0.9rem;
+  right: 0.9rem;
+  left: auto;
+}
+
+.bp_summary_preview_panel_title {
+  font-size: 0.84rem;
+}
+
+.bp_summary_preview_panel_body {
+  padding-left: 0.5rem;
+  max-height: min(56vh, 30rem);
+}
+
+.bp_summary_item_body {
+  margin-top: 0.22rem;
+  color: var(--bp-color-text-strong);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_body a,
+.bp_summary_item_body code,
+.bp_summary_item_body .bp_inline_preview_ref {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_item_actions {
+  margin-top: 0.2rem;
+  color: var(--bp-color-text-muted);
+  font-size: 0.85rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_actions a,
+.bp_summary_item_actions code,
+.bp_summary_item_actions .bp_summary_preview_wrap,
+.bp_summary_item_actions .bp_inline_preview_ref {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_sep {
+  color: var(--bp-color-text-faint);
+}
+
+.bp_summary_decl_list {
+  margin: 0.2rem 0 0;
+  padding-left: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_decl_list > li {
+  min-width: 0;
+}
+
+.bp_summary_decl_list a,
+.bp_summary_decl_list code,
+.bp_summary_decl_list .bp_inline_preview_ref {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_decls {
+  margin-top: 0.22rem;
+}
+
+.bp_summary_decls > summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_summary_badge {
+  display: inline-block;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.05rem 0.35rem;
+  background: var(--bp-color-surface-muted);
+  color: var(--bp-color-text-muted);
+  font-size: 0.78rem;
+}
+
+.bp_summary_badge_warn {
+  border-color: var(--bp-color-status-warning-border-soft);
+  background: var(--bp-color-surface-warn-soft);
+  color: var(--bp-color-status-warning-strong);
+}
+
+.bp_summary_badge_error {
+  border-color: var(--bp-color-status-error-border-soft);
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--bp-color-status-error-strong);
+}
+
+.bp_summary_badge_row {
+  margin-top: 0.28rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.bp_summary_item_nested {
+  background: var(--bp-color-surface-muted);
+}
+
+.bp_summary_nested > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_summary_nested .bp_summary_list {
+  margin-top: 0.45rem;
+}
+
+@media (max-width: 700px) {
+  .bp_summary_section {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+}
+
+html[data-bp-style="modern"] .bp_summary_card {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_summary_section {
+  border-color: var(--bp-color-modern-border);
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+}
+
+html[data-bp-style="modern"] .bp_summary_subsection {
+  background: var(--bp-color-modern-surface-alt);
+  border-color: var(--bp-color-modern-caption);
+}
+
+html[data-bp-style="bold"] .bp_summary_card {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  background: var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_summary_section {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: 0.9rem;
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_summary_subsection {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: 0.7rem;
+  background: var(--bp-color-surface);
+}
 </style><style>
 
 .hl.lean {
@@ -4463,315 +4798,6 @@ Some CSS frameworks customize details/summary in ways not compatible with Verso'
   white-space: pre-wrap;
 }
 
-</style><style>.bp_summary {
-  margin-top: 1rem;
-}
-
-.bp_summary_section {
-  border: 1px solid var(--bp-color-border-muted);
-  border-radius: 0.6rem;
-  padding: 0.2rem 0.8rem 0.75rem;
-  margin-bottom: 0.8rem;
-  background: var(--bp-color-surface);
-}
-
-.bp_summary_section > summary {
-  cursor: pointer;
-  font-weight: 700;
-  padding: 0.6rem 0;
-}
-
-.bp_summary_subsection {
-  margin-top: 0.45rem;
-  border: 1px solid var(--bp-color-border-soft);
-  border-radius: var(--bp-radius-md);
-  padding: 0.25rem 0.55rem 0.45rem;
-  background: var(--bp-color-surface-subtle);
-}
-
-.bp_summary_subsection > summary {
-  cursor: pointer;
-  font-weight: 600;
-  padding: 0.35rem 0;
-}
-
-.bp_summary_grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: 0.6rem;
-  margin-bottom: 1rem;
-}
-
-.bp_summary_card {
-  border: 1px solid var(--bp-color-border-muted);
-  border-radius: var(--bp-radius-md);
-  background: var(--bp-color-surface-subtle);
-  padding: 0.65rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.bp_summary_card_warn {
-  background: var(--bp-color-surface-warn);
-  color: var(--bp-color-status-warning-strong);
-  border-color: var(--bp-color-status-warning-border);
-}
-
-.bp_summary_subsection_warn {
-  background: var(--bp-color-surface-warn);
-  border-color: var(--bp-color-status-warning-border);
-}
-
-.bp_summary_label {
-  font-size: 0.82rem;
-  color: var(--bp-color-text-subtle);
-}
-
-.bp_summary_value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--bp-color-text);
-}
-
-.bp_summary_status {
-  font-size: 0.76rem;
-  line-height: 1.3;
-  color: var(--bp-color-text-subtle);
-}
-
-.bp_summary_list {
-  margin: 0.25rem 0 0.15rem;
-  padding-left: 0;
-  list-style: none;
-}
-
-.bp_summary_item {
-  margin: 0.4rem 0;
-  padding: 0.45rem 0.55rem;
-  border: 1px solid var(--bp-color-border-soft);
-  border-radius: var(--bp-radius-md);
-  background: var(--bp-color-surface);
-}
-
-.bp_summary_empty {
-  color: var(--bp-color-text-faint);
-  font-style: italic;
-}
-
-.bp_summary_item_top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.45rem;
-}
-
-.bp_summary_item_head {
-  min-width: 0;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_item_head a,
-.bp_summary_item_head code,
-.bp_summary_item_head .bp_summary_preview_wrap {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_item_meta {
-  color: var(--bp-color-text-subtle);
-  border: 1px solid var(--bp-color-border-panel);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.03rem 0.45rem;
-  font-size: 0.78rem;
-}
-
-.bp_summary_preview_wrap {
-  display: inline-flex;
-  align-items: center;
-}
-
-.bp_summary_preview_wrap_active {
-  cursor: pointer;
-}
-
-.bp_summary_preview_panel {
-  position: fixed;
-  z-index: 35;
-  width: min(36rem, calc(100vw - 1.4rem));
-  max-height: min(68vh, 36rem);
-}
-
-.bp_summary_preview_panel[data-bp-preview-placement="docked"] {
-  top: 0.9rem;
-  right: 0.9rem;
-  left: auto;
-}
-
-.bp_summary_preview_panel_title {
-  font-size: 0.84rem;
-}
-
-.bp_summary_preview_panel_body {
-  padding-left: 0.5rem;
-  max-height: min(56vh, 30rem);
-}
-
-.bp_summary_item_body {
-  margin-top: 0.22rem;
-  color: var(--bp-color-text-strong);
-  font-size: 0.9rem;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_item_body a,
-.bp_summary_item_body code,
-.bp_summary_item_body .bp_inline_preview_ref {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_item_actions {
-  margin-top: 0.2rem;
-  color: var(--bp-color-text-muted);
-  font-size: 0.85rem;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_item_actions a,
-.bp_summary_item_actions code,
-.bp_summary_item_actions .bp_summary_preview_wrap,
-.bp_summary_item_actions .bp_inline_preview_ref {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_sep {
-  color: var(--bp-color-text-faint);
-}
-
-.bp_summary_decl_list {
-  margin: 0.2rem 0 0;
-  padding-left: 1.2rem;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_decl_list > li {
-  min-width: 0;
-}
-
-.bp_summary_decl_list a,
-.bp_summary_decl_list code,
-.bp_summary_decl_list .bp_inline_preview_ref {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_decls {
-  margin-top: 0.22rem;
-}
-
-.bp_summary_decls > summary {
-  cursor: pointer;
-  font-size: 0.88rem;
-  color: var(--bp-color-text-muted);
-}
-
-.bp_summary_badge {
-  display: inline-block;
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.05rem 0.35rem;
-  background: var(--bp-color-surface-muted);
-  color: var(--bp-color-text-muted);
-  font-size: 0.78rem;
-}
-
-.bp_summary_badge_warn {
-  border-color: var(--bp-color-status-warning-border-soft);
-  background: var(--bp-color-surface-warn-soft);
-  color: var(--bp-color-status-warning-strong);
-}
-
-.bp_summary_badge_error {
-  border-color: var(--bp-color-status-error-border-soft);
-  background: rgba(220, 38, 38, 0.08);
-  color: var(--bp-color-status-error-strong);
-}
-
-.bp_summary_badge_row {
-  margin-top: 0.28rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.bp_summary_item_nested {
-  background: var(--bp-color-surface-muted);
-}
-
-.bp_summary_nested > summary {
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--bp-color-text-muted);
-}
-
-.bp_summary_nested .bp_summary_list {
-  margin-top: 0.45rem;
-}
-
-@media (max-width: 700px) {
-  .bp_summary_section {
-    padding-left: 0.6rem;
-    padding-right: 0.6rem;
-  }
-}
-
-html[data-bp-style="modern"] .bp_summary_card {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_summary_section {
-  border-color: var(--bp-color-modern-border);
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-}
-
-html[data-bp-style="modern"] .bp_summary_subsection {
-  background: var(--bp-color-modern-surface-alt);
-  border-color: var(--bp-color-modern-caption);
-}
-
-html[data-bp-style="bold"] .bp_summary_card {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  background: var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_summary_section {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: 0.9rem;
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_summary_subsection {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: 0.7rem;
-  background: var(--bp-color-surface);
-}
 </style><script>
       
 window.onload = async () => {
@@ -5445,17 +5471,17 @@ window.onload = async () => {
                         </div>
                       </div>
                     </span><span class="bp_extra_slot bp_extra_slot_uses"><div class="bp_relation_wrap">
-                      <button type="button" class="bp_relation_chip" title="Statement dependencies used by progress" aria-expanded="false">uses 5</button><div class="bp_relation_panel">
+                      <button type="button" class="bp_relation_chip" title="Statement dependencies used by progress" aria-expanded="false">uses 7</button><div class="bp_relation_panel">
                         <div class="bp_relation_panel_header">
                           <div class="bp_relation_panel_title">
-                            Statement uses 5</div>
+                            Statement uses 7</div>
                           <div class="bp_relation_panel_meta">
                             Statement dependency previews</div>
                           </div>
                         <div class="bp_relation_panel_body">
                           <ul class="bp_relation_list">
                             <script type="application/json" class="bp-relation-entries">
-                              [["Definition 2.2.1","judg_relations--statement","judg_relations","Judgments-and-domains/Relations-and-interpreters/#--informal-preview-judg_relations--statement",["s"],true],["Definition 2.3.1","judg_ty_expr--statement","judg_ty_expr","Judgments-and-domains/Static-judgments/#--informal-preview-judg_ty_expr--statement",["s"],false],["Definition 2.3.3","judg_ty_cmd--statement","judg_ty_cmd","Judgments-and-domains/Static-judgments/#--informal-preview-judg_ty_cmd--statement",["s"],false],["Definition 2.4.1","judg_ev_expr--statement","judg_ev_expr","Judgments-and-domains/Dynamic-judgments/#--informal-preview-judg_ev_expr--statement",["s"],false],["Definition 2.4.3","judg_ev_cmd--statement","judg_ev_cmd","Judgments-and-domains/Dynamic-judgments/#--informal-preview-judg_ev_cmd--statement",["s"],false]]</script>
+                              [["Definition 2.2.1","judg_relations--statement","judg_relations","Judgments-and-domains/Relations-and-interpreters/#--informal-preview-judg_relations--statement",["s"],true],["Definition 2.3.1","judg_ty_expr--statement","judg_ty_expr","Judgments-and-domains/Static-judgments/#--informal-preview-judg_ty_expr--statement",["s"],false],["Definition 2.3.3","judg_ty_cmd--statement","judg_ty_cmd","Judgments-and-domains/Static-judgments/#--informal-preview-judg_ty_cmd--statement",["s"],false],["Definition 2.4.1","judg_ev_expr--statement","judg_ev_expr","Judgments-and-domains/Dynamic-judgments/#--informal-preview-judg_ev_expr--statement",["s"],false],["Definition 2.4.3","judg_ev_cmd--statement","judg_ev_cmd","Judgments-and-domains/Dynamic-judgments/#--informal-preview-judg_ev_cmd--statement",["s"],false],["Definition 8.2.2","std_function--statement","std_function","The-standard-library/Headers/#--informal-preview-std_function--statement",["s"],false],["Definition 8.2.3","std_assert--statement","std_assert","The-standard-library/Headers/#--informal-preview-std_assert--statement",["s"],false]]</script>
                             </ul>
                           <div class="bp_relation_preview_surface">
                             <div class="bp_relation_preview_header">
@@ -5494,7 +5520,7 @@ window.onload = async () => {
                 </div>
               <div class="bp_content bp_kind_theorem_content theorem_thmcontent">
                 <p>
-                  A well typed program has a derivation, does not terminate, or is stuck. It is stuck at a case C++17 leaves undefined, or at the end of a <code>main</code> without <code>return</code>, and the evaluator reports it as <code>error</code>. Every well typed constructor has an evaluation rule, checked by inspection of the rule set. There is no Lean proof yet.</p>
+                  A well typed program has a derivation, does not terminate, or is stuck. It is stuck at a case C++17 leaves undefined, at the end of a <code>main</code> without <code>return</code>, at the call of a <code>std::function</code> with no target, or at a failed <code>assert</code>. The evaluator reports it as <code>error</code>. C++17 defines the last two cases. The call of a <code>std::function</code> with no target throws <code>bad_function_call</code> (N4659 §23.14.13.1 ¶1), and a failed <code>assert</code> calls <code>abort</code>, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-std-005Fassert-statement" data-bp-preview-title="Definition 8.2.3" data-bp-preview-key="std_assert--statement"><a href="The-standard-library/Headers/#--informal-preview-std_assert--statement" title="std_assert">Definition 8.2.3</a></span></span>. Core C++ has no exceptions, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-design-005Fout-statement" data-bp-preview-title="Definition 9.6.1" data-bp-preview-key="design_out--statement"><a href="Design-restrictions/Constructs-left-out/#--informal-preview-design_out--statement" title="design_out">Definition 9.6.1</a></span></span>, so both end the program. Every well typed constructor has an evaluation rule, checked by inspection of the rule set. There is no Lean proof yet.</p>
                 </div>
               </div>
             <div class="bp_wrapper bp_kind_theorem_wrapper theorem_thmwrapper theorem_thmwrapper theorem-style-plain bp_kind_theorem bp_style_plain" title="determinism" id="--informal-preview-determinism--statement">
@@ -5570,11 +5596,19 @@ window.onload = async () => {
                           </div>
                         </div>
                       </div>
-                    </span><span class="bp_extra_slot bp_extra_slot_used_by"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-used-by-determinism-design-005Forder" data-bp-preview-title="Definition 9.1.3" data-bp-preview-key="design_order--statement" data-bp-preview-header-label="design_order" data-bp-preview-header-href="Design-restrictions/Behaviour/#--informal-preview-design_order--statement" data-bp-preview-footer-html="<span class=&quot;bp_relation_axis_badge bp_relation_badge_axis bp_relation_badge_statement&quot; title=&quot;Declared in the statement&quot;>statement</span>"><a class="bp_relation_chip bp_code_link" href="Design-restrictions/Behaviour/#--informal-preview-design_order--statement" title="Reverse dependency: Definition 9.1.3">used by 1</a></span></span><span class="bp_extra_slot bp_extra_slot_code"><span class="bp_code_summary_preview_root" data-bp-template-preview-root="true" data-bp-template-preview-panel-selector=".bp_code_summary_preview_panel" data-bp-template-preview-template-selector="template.bp_code_summary_preview_tpl[data-bp-preview-id]" data-bp-template-preview-trigger-selector=".bp_code_summary_preview_wrap_active[data-bp-preview-id]" data-bp-template-preview-key-attr="data-bp-preview-id" data-bp-template-preview-title-attr="data-bp-preview-title" data-bp-template-preview-title-selector=".bp_code_summary_preview_title" data-bp-template-preview-body-selector=".bp_code_summary_preview_body" data-bp-template-preview-close-selector=".bp_code_summary_preview_close" data-bp-template-preview-trigger-bound-attr="data-bp-bound" data-bp-template-preview-mode="hover" data-bp-template-preview-placement="anchored"><span class="bp_code_summary_preview_wrap bp_code_summary_preview_wrap_active" data-bp-preview-id="bp-code-summary" data-bp-preview-title="determinism" tabindex="0" role="button" aria-label="No associated Lean declarations"><span class="bp_code_link bp_code_link_status bp_code_link_status_absent bp_code_link_empty" title="No associated Lean declarations"><span class="bp_code_status_symbol">X</span><span class="bp_code_link_label">L∃∀N</span></span></span><template class="bp_code_summary_preview_tpl" data-bp-preview-id="bp-code-summary"><div class="bp_code_summary_preview_content">
+                    </span><span class="bp_extra_slot bp_extra_slot_used_by"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-used-by-determinism-design-005Forder" data-bp-preview-title="Definition 9.1.3" data-bp-preview-key="design_order--statement" data-bp-preview-header-label="design_order" data-bp-preview-header-href="Design-restrictions/Behaviour/#--informal-preview-design_order--statement" data-bp-preview-footer-html="<span class=&quot;bp_relation_axis_badge bp_relation_badge_axis bp_relation_badge_statement&quot; title=&quot;Declared in the statement&quot;>statement</span>"><a class="bp_relation_chip bp_code_link" href="Design-restrictions/Behaviour/#--informal-preview-design_order--statement" title="Reverse dependency: Definition 9.1.3">used by 1</a></span></span><span class="bp_extra_slot bp_extra_slot_code"><span class="bp_code_summary_preview_root" data-bp-template-preview-root="true" data-bp-template-preview-panel-selector=".bp_code_summary_preview_panel" data-bp-template-preview-template-selector="template.bp_code_summary_preview_tpl[data-bp-preview-id]" data-bp-template-preview-trigger-selector=".bp_code_summary_preview_wrap_active[data-bp-preview-id]" data-bp-template-preview-key-attr="data-bp-preview-id" data-bp-template-preview-title-attr="data-bp-preview-title" data-bp-template-preview-title-selector=".bp_code_summary_preview_title" data-bp-template-preview-body-selector=".bp_code_summary_preview_body" data-bp-template-preview-close-selector=".bp_code_summary_preview_close" data-bp-template-preview-trigger-bound-attr="data-bp-bound" data-bp-template-preview-mode="hover" data-bp-template-preview-placement="anchored"><span class="bp_code_summary_preview_wrap bp_code_summary_preview_wrap_active" data-bp-preview-id="bp-code-summary" data-bp-preview-title="determinism" tabindex="0" role="button" aria-label="Lean declarations (0/5 present)"><span class="bp_code_link bp_code_link_status bp_code_link_status_missing" title="Lean declarations (0/5 present)"><span class="bp_code_status_symbol">!</span><span class="bp_code_link_label">L∃∀N</span></span></span><template class="bp_code_summary_preview_tpl" data-bp-preview-id="bp-code-summary"><div class="bp_code_summary_preview_content">
                           <div class="bp_code_hover_section">
-                            <span class="bp_code_hover_label">Lean status</span><ul class="bp_code_hover_list">
-                              <li class="bp_code_hover_none">
-                                No associated Lean code or declarations.</li>
+                            <span class="bp_code_hover_label">Associated Lean declarations</span><ul class="bp_code_hover_list">
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002ERuns-002Edet" data-bp-preview-title="CoreCpp.Semantics.Runs.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Runs.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Runs___det"><code>CoreCpp.Semantics.Runs.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002EEval-002Edet" data-bp-preview-title="CoreCpp.Semantics.Eval.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Eval.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Eval___det"><code>CoreCpp.Semantics.Eval.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002ELEval-002Edet" data-bp-preview-title="CoreCpp.Semantics.LEval.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.LEval.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___LEval___det"><code>CoreCpp.Semantics.LEval.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002EExec-002Edet" data-bp-preview-title="CoreCpp.Semantics.Exec.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Exec.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Exec___det"><code>CoreCpp.Semantics.Exec.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002EExecs-002Edet" data-bp-preview-title="CoreCpp.Semantics.Execs.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Execs.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Execs___det"><code>CoreCpp.Semantics.Execs.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
                               </ul>
                             </div>
                           </div>
@@ -5586,9 +5620,53 @@ window.onload = async () => {
                 </div>
               <div class="bp_content bp_kind_theorem_content theorem_thmcontent">
                 <p>
-                  Every construct has rules with mutually exclusive premises, and a Core C++ program has at most one result. The evaluation order fixed left to right removes the choice C++17 leaves to the compiler. The relations of <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-judg-005Frelations-statement" data-bp-preview-title="Definition 2.2.1" data-bp-preview-key="judg_relations--statement"><a href="Judgments-and-domains/Relations-and-interpreters/#--informal-preview-judg_relations--statement" title="judg_relations">Definition 2.2.1</a></span></span> make the statement precise. Two derivations of <code class="bp_math inline">\rho, \sigma \vdash e \Rightarrow v, \sigma'</code> for the same <code class="bp_math inline">e</code> give the same <code class="bp_math inline">v</code> and <code class="bp_math inline">\sigma'</code>. There is no Lean proof yet.</p>
+                  Every construct has rules with mutually exclusive premises, and a Core C++ program has at most one result. The evaluation order fixed left to right removes the choice C++17 leaves to the compiler. The relations of <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-judg-005Frelations-statement" data-bp-preview-title="Definition 2.2.1" data-bp-preview-key="judg_relations--statement"><a href="Judgments-and-domains/Relations-and-interpreters/#--informal-preview-judg_relations--statement" title="judg_relations">Definition 2.2.1</a></span></span> make the statement precise. Two derivations of <code class="bp_math inline">\rho, \sigma \vdash e \Rightarrow v, \sigma'</code> for the same <code class="bp_math inline">e</code> give the same <code class="bp_math inline">v</code> and <code class="bp_math inline">\sigma'</code>. The same holds for <code>LEval</code>, <code>Exec</code>, <code>Execs</code> and the auxiliary dynamic relations. The proof in <code>CoreCpp/Semantics/Determinism.lean</code> is one mutual structural recursion on the first derivation. Each case either applies the rule of the second derivation or contradicts one of its premises.</p>
                 </div>
               </div>
+            <div class="bp_wrapper bp_code_panel_wrapper">
+              <details class="bp_code_block bp_code_panel"><summary class="bp_heading lemma_thmheading" title="Lean code for determinism: Lean declarations (0/5 present)"><span class="bp_heading_title_row"><span class="bp_caption lemma_thmcaption bp_code_summary_text">Lean code for Theorem</span><span class="bp_label lemma_thmlabel bp_code_summary_label">5.6.2</span></span><span class="bp_code_summary_indicator"><span class="bp_code_summary_preview_root" data-bp-template-preview-root="true" data-bp-template-preview-panel-selector=".bp_code_summary_preview_panel" data-bp-template-preview-template-selector="template.bp_code_summary_preview_tpl[data-bp-preview-id]" data-bp-template-preview-trigger-selector=".bp_code_summary_preview_wrap_active[data-bp-preview-id]" data-bp-template-preview-key-attr="data-bp-preview-id" data-bp-template-preview-title-attr="data-bp-preview-title" data-bp-template-preview-title-selector=".bp_code_summary_preview_title" data-bp-template-preview-body-selector=".bp_code_summary_preview_body" data-bp-template-preview-close-selector=".bp_code_summary_preview_close" data-bp-template-preview-trigger-bound-attr="data-bp-bound" data-bp-template-preview-mode="hover" data-bp-template-preview-placement="anchored"><span class="bp_code_summary_preview_wrap bp_code_summary_preview_wrap_active" data-bp-preview-id="bp-code-summary" data-bp-preview-title="determinism" tabindex="0" role="button" aria-label="Lean code for determinism: Lean declarations (0/5 present)"><span class="bp_external_status_badge bp_external_status_badge_summary bp_external_status_missing" title="Lean declarations: 0/5 present (5 missing)"><span class="bp_external_status_icon bp_external_status_missing">●</span><span class="bp_external_status_badge_text">5 declarations, 5 missing</span></span></span><template class="bp_code_summary_preview_tpl" data-bp-preview-id="bp-code-summary"><div class="bp_code_summary_preview_content">
+                          <div class="bp_code_hover_section">
+                            <span class="bp_code_hover_label">Associated Lean declarations</span><ul class="bp_code_hover_list">
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002ERuns-002Edet" data-bp-preview-title="CoreCpp.Semantics.Runs.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Runs.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Runs___det"><code>CoreCpp.Semantics.Runs.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002EEval-002Edet" data-bp-preview-title="CoreCpp.Semantics.Eval.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Eval.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Eval___det"><code>CoreCpp.Semantics.Eval.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002ELEval-002Edet" data-bp-preview-title="CoreCpp.Semantics.LEval.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.LEval.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___LEval___det"><code>CoreCpp.Semantics.LEval.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002EExec-002Edet" data-bp-preview-title="CoreCpp.Semantics.Exec.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Exec.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Exec___det"><code>CoreCpp.Semantics.Exec.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
+                              <li class="bp_code_decl_item">
+                                <span class="bp_code_decl_name"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002EExecs-002Edet" data-bp-preview-title="CoreCpp.Semantics.Execs.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Execs.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Execs___det"><code>CoreCpp.Semantics.Execs.det</code></a></span></span><span class="bp_code_decl_status bp_code_decl_status_missing">[missing declaration]</span></li>
+                              </ul>
+                            </div>
+                          </div>
+                        </template><aside class="bp_code_summary_preview_panel bp_preview_panel" data-bp-preview-mode="hover" data-bp-preview-placement="anchored" hidden=""><div class="bp_code_summary_preview_header bp_preview_panel_header">
+                          <div class="bp_code_summary_preview_title bp_preview_panel_title"></div>
+                          <button type="button" class="bp_code_summary_preview_close bp_preview_panel_close" aria-label="Close Lean summary preview">Close</button></div>
+                        <div class="bp_code_summary_preview_body bp_preview_panel_body"></div>
+                        </aside></span></span></summary><ul class="bp_code_hover_list bp_external_decl_list">
+                  <li class="bp_external_decl_item" id="--informal-external-decl-determinism-CoreCpp___Semantics___Runs___det">
+                    <div class="bp_external_decl_head">
+                      <span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002ERuns-002Edet" data-bp-preview-title="CoreCpp.Semantics.Runs.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Runs.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Runs___det"><code>CoreCpp.Semantics.Runs.det</code></a></span><span class="bp_external_decl_missing">missing declaration</span></div>
+                    <pre class="bp_external_decl_stmt bp_code_hover_none">declaration not found (name was not present during directive/code-block registration)</pre></li>
+                  <li class="bp_external_decl_item" id="--informal-external-decl-determinism-CoreCpp___Semantics___Eval___det">
+                    <div class="bp_external_decl_head">
+                      <span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002EEval-002Edet" data-bp-preview-title="CoreCpp.Semantics.Eval.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Eval.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Eval___det"><code>CoreCpp.Semantics.Eval.det</code></a></span><span class="bp_external_decl_missing">missing declaration</span></div>
+                    <pre class="bp_external_decl_stmt bp_code_hover_none">declaration not found (name was not present during directive/code-block registration)</pre></li>
+                  <li class="bp_external_decl_item" id="--informal-external-decl-determinism-CoreCpp___Semantics___LEval___det">
+                    <div class="bp_external_decl_head">
+                      <span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002ELEval-002Edet" data-bp-preview-title="CoreCpp.Semantics.LEval.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.LEval.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___LEval___det"><code>CoreCpp.Semantics.LEval.det</code></a></span><span class="bp_external_decl_missing">missing declaration</span></div>
+                    <pre class="bp_external_decl_stmt bp_code_hover_none">declaration not found (name was not present during directive/code-block registration)</pre></li>
+                  <li class="bp_external_decl_item" id="--informal-external-decl-determinism-CoreCpp___Semantics___Exec___det">
+                    <div class="bp_external_decl_head">
+                      <span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002EExec-002Edet" data-bp-preview-title="CoreCpp.Semantics.Exec.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Exec.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Exec___det"><code>CoreCpp.Semantics.Exec.det</code></a></span><span class="bp_external_decl_missing">missing declaration</span></div>
+                    <pre class="bp_external_decl_stmt bp_code_hover_none">declaration not found (name was not present during directive/code-block registration)</pre></li>
+                  <li class="bp_external_decl_item" id="--informal-external-decl-determinism-CoreCpp___Semantics___Execs___det">
+                    <div class="bp_external_decl_head">
+                      <span class="bp_inline_preview_ref" data-bp-preview-id="bp-lean-code-Informal-002ELeanCodePreview-002ECoreCpp-002ESemantics-002EExecs-002Edet" data-bp-preview-title="CoreCpp.Semantics.Execs.det" data-bp-preview-key="Informal.LeanCodePreview.CoreCpp.Semantics.Execs.det"><a href="Abstraction/Properties/#--informal-external-decl-determinism-CoreCpp___Semantics___Execs___det"><code>CoreCpp.Semantics.Execs.det</code></a></span><span class="bp_external_decl_missing">missing declaration</span></div>
+                    <pre class="bp_external_decl_stmt bp_code_hover_none">declaration not found (name was not present during directive/code-block registration)</pre></li>
+                  </ul>
+                </details></div>
             </section>
           <nav class="prev-next-buttons">
             <a class="local-button active" href="Abstraction/Function-and-program/#Core-C______--Abstraction--Function-and-program" rel="prev" title="5.5. Function and program"><span class="arrow">←</span><span class="where">5.5. Function and program</span></a><a class="local-button active" href="Abstraction/Rules-of-the-chapter/#Core-C______--Abstraction--Rules-of-the-chapter" rel="next" title="5.7. Rules of the chapter"><span class="where">5.7. Rules of the chapter</span><span class="arrow">→</span></a></nav>

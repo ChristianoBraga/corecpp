@@ -1258,6 +1258,32 @@ html[data-bp-style="bold"] .bp_wrapper div.proof_content {
   opacity: 0.5;
 }
 </style><style>
+table.tabular {
+  margin: auto;
+  border-spacing: 1rem;
+}
+table.tabular.left-align {
+  margin-right: auto;
+  margin-left: 0;
+}
+table.tabular.center-align {
+  margin: auto;
+}
+table.tabular.right-align {
+  margin-left auto;
+  margin-right: 0;
+}
+table.tabular td, table.tabular th {
+  text-align: left;
+  vertical-align: top;
+}
+table.tabular td > p:first-child, table.tabular th > p:first-child {
+  margin-top: 0;
+}
+table.tabular td > p:last-child, table.tabular th > p:first-child {
+  margin-bottom: 0;
+}
+</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -3784,6 +3810,315 @@ html[data-bp-style="bold"] .bp_graph_legend_swatch {
 .bp_inline_preview_panel[data-bp-preview-mode="hover"] .bp_inline_preview_panel_close {
   display: none;
 }
+</style><style>.bp_summary {
+  margin-top: 1rem;
+}
+
+.bp_summary_section {
+  border: 1px solid var(--bp-color-border-muted);
+  border-radius: 0.6rem;
+  padding: 0.2rem 0.8rem 0.75rem;
+  margin-bottom: 0.8rem;
+  background: var(--bp-color-surface);
+}
+
+.bp_summary_section > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.6rem 0;
+}
+
+.bp_summary_subsection {
+  margin-top: 0.45rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-md);
+  padding: 0.25rem 0.55rem 0.45rem;
+  background: var(--bp-color-surface-subtle);
+}
+
+.bp_summary_subsection > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.35rem 0;
+}
+
+.bp_summary_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.bp_summary_card {
+  border: 1px solid var(--bp-color-border-muted);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface-subtle);
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bp_summary_card_warn {
+  background: var(--bp-color-surface-warn);
+  color: var(--bp-color-status-warning-strong);
+  border-color: var(--bp-color-status-warning-border);
+}
+
+.bp_summary_subsection_warn {
+  background: var(--bp-color-surface-warn);
+  border-color: var(--bp-color-status-warning-border);
+}
+
+.bp_summary_label {
+  font-size: 0.82rem;
+  color: var(--bp-color-text-subtle);
+}
+
+.bp_summary_value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--bp-color-text);
+}
+
+.bp_summary_status {
+  font-size: 0.76rem;
+  line-height: 1.3;
+  color: var(--bp-color-text-subtle);
+}
+
+.bp_summary_list {
+  margin: 0.25rem 0 0.15rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.bp_summary_item {
+  margin: 0.4rem 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface);
+}
+
+.bp_summary_empty {
+  color: var(--bp-color-text-faint);
+  font-style: italic;
+}
+
+.bp_summary_item_top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.45rem;
+}
+
+.bp_summary_item_head {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_head a,
+.bp_summary_item_head code,
+.bp_summary_item_head .bp_summary_preview_wrap {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_item_meta {
+  color: var(--bp-color-text-subtle);
+  border: 1px solid var(--bp-color-border-panel);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.03rem 0.45rem;
+  font-size: 0.78rem;
+}
+
+.bp_summary_preview_wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.bp_summary_preview_wrap_active {
+  cursor: pointer;
+}
+
+.bp_summary_preview_panel {
+  position: fixed;
+  z-index: 35;
+  width: min(36rem, calc(100vw - 1.4rem));
+  max-height: min(68vh, 36rem);
+}
+
+.bp_summary_preview_panel[data-bp-preview-placement="docked"] {
+  top: 0.9rem;
+  right: 0.9rem;
+  left: auto;
+}
+
+.bp_summary_preview_panel_title {
+  font-size: 0.84rem;
+}
+
+.bp_summary_preview_panel_body {
+  padding-left: 0.5rem;
+  max-height: min(56vh, 30rem);
+}
+
+.bp_summary_item_body {
+  margin-top: 0.22rem;
+  color: var(--bp-color-text-strong);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_body a,
+.bp_summary_item_body code,
+.bp_summary_item_body .bp_inline_preview_ref {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_item_actions {
+  margin-top: 0.2rem;
+  color: var(--bp-color-text-muted);
+  font-size: 0.85rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_actions a,
+.bp_summary_item_actions code,
+.bp_summary_item_actions .bp_summary_preview_wrap,
+.bp_summary_item_actions .bp_inline_preview_ref {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_sep {
+  color: var(--bp-color-text-faint);
+}
+
+.bp_summary_decl_list {
+  margin: 0.2rem 0 0;
+  padding-left: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_decl_list > li {
+  min-width: 0;
+}
+
+.bp_summary_decl_list a,
+.bp_summary_decl_list code,
+.bp_summary_decl_list .bp_inline_preview_ref {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_decls {
+  margin-top: 0.22rem;
+}
+
+.bp_summary_decls > summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_summary_badge {
+  display: inline-block;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.05rem 0.35rem;
+  background: var(--bp-color-surface-muted);
+  color: var(--bp-color-text-muted);
+  font-size: 0.78rem;
+}
+
+.bp_summary_badge_warn {
+  border-color: var(--bp-color-status-warning-border-soft);
+  background: var(--bp-color-surface-warn-soft);
+  color: var(--bp-color-status-warning-strong);
+}
+
+.bp_summary_badge_error {
+  border-color: var(--bp-color-status-error-border-soft);
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--bp-color-status-error-strong);
+}
+
+.bp_summary_badge_row {
+  margin-top: 0.28rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.bp_summary_item_nested {
+  background: var(--bp-color-surface-muted);
+}
+
+.bp_summary_nested > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_summary_nested .bp_summary_list {
+  margin-top: 0.45rem;
+}
+
+@media (max-width: 700px) {
+  .bp_summary_section {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+}
+
+html[data-bp-style="modern"] .bp_summary_card {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_summary_section {
+  border-color: var(--bp-color-modern-border);
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+}
+
+html[data-bp-style="modern"] .bp_summary_subsection {
+  background: var(--bp-color-modern-surface-alt);
+  border-color: var(--bp-color-modern-caption);
+}
+
+html[data-bp-style="bold"] .bp_summary_card {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  background: var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_summary_section {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: 0.9rem;
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_summary_subsection {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: 0.7rem;
+  background: var(--bp-color-surface);
+}
 </style><style>
 
 .hl.lean {
@@ -4463,315 +4798,6 @@ Some CSS frameworks customize details/summary in ways not compatible with Verso'
   white-space: pre-wrap;
 }
 
-</style><style>.bp_summary {
-  margin-top: 1rem;
-}
-
-.bp_summary_section {
-  border: 1px solid var(--bp-color-border-muted);
-  border-radius: 0.6rem;
-  padding: 0.2rem 0.8rem 0.75rem;
-  margin-bottom: 0.8rem;
-  background: var(--bp-color-surface);
-}
-
-.bp_summary_section > summary {
-  cursor: pointer;
-  font-weight: 700;
-  padding: 0.6rem 0;
-}
-
-.bp_summary_subsection {
-  margin-top: 0.45rem;
-  border: 1px solid var(--bp-color-border-soft);
-  border-radius: var(--bp-radius-md);
-  padding: 0.25rem 0.55rem 0.45rem;
-  background: var(--bp-color-surface-subtle);
-}
-
-.bp_summary_subsection > summary {
-  cursor: pointer;
-  font-weight: 600;
-  padding: 0.35rem 0;
-}
-
-.bp_summary_grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: 0.6rem;
-  margin-bottom: 1rem;
-}
-
-.bp_summary_card {
-  border: 1px solid var(--bp-color-border-muted);
-  border-radius: var(--bp-radius-md);
-  background: var(--bp-color-surface-subtle);
-  padding: 0.65rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.bp_summary_card_warn {
-  background: var(--bp-color-surface-warn);
-  color: var(--bp-color-status-warning-strong);
-  border-color: var(--bp-color-status-warning-border);
-}
-
-.bp_summary_subsection_warn {
-  background: var(--bp-color-surface-warn);
-  border-color: var(--bp-color-status-warning-border);
-}
-
-.bp_summary_label {
-  font-size: 0.82rem;
-  color: var(--bp-color-text-subtle);
-}
-
-.bp_summary_value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--bp-color-text);
-}
-
-.bp_summary_status {
-  font-size: 0.76rem;
-  line-height: 1.3;
-  color: var(--bp-color-text-subtle);
-}
-
-.bp_summary_list {
-  margin: 0.25rem 0 0.15rem;
-  padding-left: 0;
-  list-style: none;
-}
-
-.bp_summary_item {
-  margin: 0.4rem 0;
-  padding: 0.45rem 0.55rem;
-  border: 1px solid var(--bp-color-border-soft);
-  border-radius: var(--bp-radius-md);
-  background: var(--bp-color-surface);
-}
-
-.bp_summary_empty {
-  color: var(--bp-color-text-faint);
-  font-style: italic;
-}
-
-.bp_summary_item_top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.45rem;
-}
-
-.bp_summary_item_head {
-  min-width: 0;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_item_head a,
-.bp_summary_item_head code,
-.bp_summary_item_head .bp_summary_preview_wrap {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_item_meta {
-  color: var(--bp-color-text-subtle);
-  border: 1px solid var(--bp-color-border-panel);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.03rem 0.45rem;
-  font-size: 0.78rem;
-}
-
-.bp_summary_preview_wrap {
-  display: inline-flex;
-  align-items: center;
-}
-
-.bp_summary_preview_wrap_active {
-  cursor: pointer;
-}
-
-.bp_summary_preview_panel {
-  position: fixed;
-  z-index: 35;
-  width: min(36rem, calc(100vw - 1.4rem));
-  max-height: min(68vh, 36rem);
-}
-
-.bp_summary_preview_panel[data-bp-preview-placement="docked"] {
-  top: 0.9rem;
-  right: 0.9rem;
-  left: auto;
-}
-
-.bp_summary_preview_panel_title {
-  font-size: 0.84rem;
-}
-
-.bp_summary_preview_panel_body {
-  padding-left: 0.5rem;
-  max-height: min(56vh, 30rem);
-}
-
-.bp_summary_item_body {
-  margin-top: 0.22rem;
-  color: var(--bp-color-text-strong);
-  font-size: 0.9rem;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_item_body a,
-.bp_summary_item_body code,
-.bp_summary_item_body .bp_inline_preview_ref {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_item_actions {
-  margin-top: 0.2rem;
-  color: var(--bp-color-text-muted);
-  font-size: 0.85rem;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_item_actions a,
-.bp_summary_item_actions code,
-.bp_summary_item_actions .bp_summary_preview_wrap,
-.bp_summary_item_actions .bp_inline_preview_ref {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_sep {
-  color: var(--bp-color-text-faint);
-}
-
-.bp_summary_decl_list {
-  margin: 0.2rem 0 0;
-  padding-left: 1.2rem;
-  overflow-wrap: anywhere;
-}
-
-.bp_summary_decl_list > li {
-  min-width: 0;
-}
-
-.bp_summary_decl_list a,
-.bp_summary_decl_list code,
-.bp_summary_decl_list .bp_inline_preview_ref {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.bp_summary_decls {
-  margin-top: 0.22rem;
-}
-
-.bp_summary_decls > summary {
-  cursor: pointer;
-  font-size: 0.88rem;
-  color: var(--bp-color-text-muted);
-}
-
-.bp_summary_badge {
-  display: inline-block;
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.05rem 0.35rem;
-  background: var(--bp-color-surface-muted);
-  color: var(--bp-color-text-muted);
-  font-size: 0.78rem;
-}
-
-.bp_summary_badge_warn {
-  border-color: var(--bp-color-status-warning-border-soft);
-  background: var(--bp-color-surface-warn-soft);
-  color: var(--bp-color-status-warning-strong);
-}
-
-.bp_summary_badge_error {
-  border-color: var(--bp-color-status-error-border-soft);
-  background: rgba(220, 38, 38, 0.08);
-  color: var(--bp-color-status-error-strong);
-}
-
-.bp_summary_badge_row {
-  margin-top: 0.28rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.bp_summary_item_nested {
-  background: var(--bp-color-surface-muted);
-}
-
-.bp_summary_nested > summary {
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--bp-color-text-muted);
-}
-
-.bp_summary_nested .bp_summary_list {
-  margin-top: 0.45rem;
-}
-
-@media (max-width: 700px) {
-  .bp_summary_section {
-    padding-left: 0.6rem;
-    padding-right: 0.6rem;
-  }
-}
-
-html[data-bp-style="modern"] .bp_summary_card {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_summary_section {
-  border-color: var(--bp-color-modern-border);
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-}
-
-html[data-bp-style="modern"] .bp_summary_subsection {
-  background: var(--bp-color-modern-surface-alt);
-  border-color: var(--bp-color-modern-caption);
-}
-
-html[data-bp-style="bold"] .bp_summary_card {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  background: var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_summary_section {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: 0.9rem;
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_summary_subsection {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: 0.7rem;
-  background: var(--bp-color-surface);
-}
 </style><script>
       
 window.onload = async () => {
@@ -5546,7 +5572,7 @@ window.onload = async () => {
                       <div class="declaration decl inductive" data-decl="CoreCpp.Error" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(17 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics.lean#L78-L121">CoreCpp/Semantics.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(17 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics.lean#L78-L121">CoreCpp/Semantics.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5579,42 +5605,42 @@ checker, and `outOfFuel` marks a derivation deeper than the fuel. </pre><div cla
           <pre class="docstring">The dereference of `nullptr`. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.outOfBounds" data-verso-hover="336">CoreCpp.Error.outOfBounds</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.13" data-verso-hover="107">i</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.14" data-verso-hover="107">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Int" data-verso-hover="108">Int</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.outOfBounds" data-verso-hover="336">CoreCpp.Error.outOfBounds</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.14" data-verso-hover="107">i</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.15" data-verso-hover="107">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Int" data-verso-hover="108">Int</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">The index `i` outside a vector of `n` elements. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.negativeSize" data-verso-hover="337">CoreCpp.Error.negativeSize</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.15" data-verso-hover="107">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Int" data-verso-hover="108">Int</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.negativeSize" data-verso-hover="337">CoreCpp.Error.negativeSize</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.16" data-verso-hover="107">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Int" data-verso-hover="108">Int</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A vector created with the negative size `n`. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.danglingLocation" data-verso-hover="338">CoreCpp.Error.danglingLocation</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.16" data-verso-hover="292">l</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.danglingLocation" data-verso-hover="338">CoreCpp.Error.danglingLocation</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.17" data-verso-hover="292">l</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A read or a write of a location outside dom σ. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.undeclaredVariable" data-verso-hover="339">CoreCpp.Error.undeclaredVariable</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.17" data-verso-hover="1">x</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.undeclaredVariable" data-verso-hover="339">CoreCpp.Error.undeclaredVariable</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.18" data-verso-hover="1">x</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A variable that neither ρ nor the fields of the receiver bind. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.undeclaredFunction" data-verso-hover="340">CoreCpp.Error.undeclaredFunction</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.18" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.undeclaredFunction" data-verso-hover="340">CoreCpp.Error.undeclaredFunction</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.19" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A function the program does not declare. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.arity" data-verso-hover="341">CoreCpp.Error.arity</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.19" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.arity" data-verso-hover="341">CoreCpp.Error.arity</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.20" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A call with the wrong number of arguments. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.typeError" data-verso-hover="342">CoreCpp.Error.typeError</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.20" data-verso-hover="1">msg</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.typeError" data-verso-hover="342">CoreCpp.Error.typeError</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.21" data-verso-hover="1">msg</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A value of the wrong form. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.missingReturn" data-verso-hover="343">CoreCpp.Error.missingReturn</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.21" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.missingReturn" data-verso-hover="343">CoreCpp.Error.missingReturn</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.22" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A non `void` function whose body ends without `return`. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.notCallable" data-verso-hover="344">CoreCpp.Error.notCallable</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.22" data-verso-hover="321">v</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Val" data-verso-hover="288">CoreCpp.Val</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.notCallable" data-verso-hover="344">CoreCpp.Error.notCallable</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.23" data-verso-hover="321">v</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Val" data-verso-hover="288">CoreCpp.Val</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">The call of a value that is not a closure. </pre></div>
         </div>
       <div class="constructor">
@@ -5627,16 +5653,16 @@ checker, and `outOfFuel` marks a derivation deeper than the fuel. </pre><div cla
         </div>
       <div class="constructor">
         <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.deleteWithoutVirtualDtor" data-verso-hover="347">CoreCpp.Error.deleteWithoutVirtualDtor</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.23" data-verso-hover="1">static</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.24" data-verso-hover="1">tag</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.24" data-verso-hover="1">static</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.25" data-verso-hover="1">tag</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A `delete` through a pointer to the base `static` of an object of class
 `tag`, with no virtual destructor in the chain of `static`. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.doubleDelete" data-verso-hover="348">CoreCpp.Error.doubleDelete</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.25" data-verso-hover="292">l</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.doubleDelete" data-verso-hover="348">CoreCpp.Error.doubleDelete</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.26" data-verso-hover="292">l</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A second `delete` of the object at ℓ. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.library" data-verso-hover="349">CoreCpp.Error.library</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.26" data-verso-hover="1">msg</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.library" data-verso-hover="349">CoreCpp.Error.library</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.27" data-verso-hover="1">msg</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">An error that a rule of `CoreCpp.Std` gives, a failed `assert`. </pre></div>
         </div>
       </div>
@@ -5649,19 +5675,19 @@ checker, and `outOfFuel` marks a derivation deeper than the fuel. </pre><div cla
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.expr" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Eval.lean#L338-L559">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Eval.lean#L338-L559">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
   <div class="bp_external_decl_signature_wrap">
     <div class="wide-only">
-      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.expr" data-verso-hover="926">CoreCpp.Eval.expr</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.27" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.28" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.29" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.30" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.31" data-verso-hover="115">e</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Expr" data-verso-hover="109">CoreCpp.Expr</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.expr" data-verso-hover="926">CoreCpp.Eval.expr</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.28" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.29" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.30" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.31" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.32" data-verso-hover="115">e</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Expr" data-verso-hover="109">CoreCpp.Expr</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.M" data-verso-hover="305">CoreCpp.M</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">(</span><span class="const token" data-binding="const-CoreCpp.Val" data-verso-hover="288">CoreCpp.Val</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">×</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="const token" data-binding="const-Prod" data-verso-hover="34">)</span></pre></div>
     <div class="narrow-only">
-      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.expr" data-verso-hover="926">CoreCpp.Eval.expr</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.27" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.28" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.29" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.30" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.31" data-verso-hover="115">e</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Expr" data-verso-hover="109">CoreCpp.Expr</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.expr" data-verso-hover="926">CoreCpp.Eval.expr</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.28" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.29" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.30" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.31" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.32" data-verso-hover="115">e</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Expr" data-verso-hover="109">CoreCpp.Expr</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.M" data-verso-hover="305">CoreCpp.M</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">(</span><span class="const token" data-binding="const-CoreCpp.Val" data-verso-hover="288">CoreCpp.Val</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">×</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="const token" data-binding="const-Prod" data-verso-hover="34">)</span></pre></div>
     </div>
   <div class="bp_external_decl_body">
@@ -5674,19 +5700,19 @@ checker, and `outOfFuel` marks a derivation deeper than the fuel. </pre><div cla
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.lval" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Eval.lean#L707-L792">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Eval.lean#L707-L792">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
   <div class="bp_external_decl_signature_wrap">
     <div class="wide-only">
-      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.lval" data-verso-hover="927">CoreCpp.Eval.lval</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.33" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.34" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.35" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.36" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.37" data-verso-hover="115">e</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Expr" data-verso-hover="109">CoreCpp.Expr</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.lval" data-verso-hover="927">CoreCpp.Eval.lval</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.34" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.35" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.36" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.37" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.38" data-verso-hover="115">e</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Expr" data-verso-hover="109">CoreCpp.Expr</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.M" data-verso-hover="305">CoreCpp.M</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">(</span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">×</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="const token" data-binding="const-Prod" data-verso-hover="34">)</span></pre></div>
     <div class="narrow-only">
-      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.lval" data-verso-hover="927">CoreCpp.Eval.lval</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.33" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.34" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.35" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.36" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.37" data-verso-hover="115">e</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Expr" data-verso-hover="109">CoreCpp.Expr</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.lval" data-verso-hover="927">CoreCpp.Eval.lval</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.34" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.35" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.36" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.37" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.38" data-verso-hover="115">e</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Expr" data-verso-hover="109">CoreCpp.Expr</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.M" data-verso-hover="305">CoreCpp.M</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">(</span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">×</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="const token" data-binding="const-Prod" data-verso-hover="34">)</span></pre></div>
     </div>
   <div class="bp_external_decl_body">
@@ -5723,19 +5749,19 @@ An element of a vector is a use of the library, the rule LocIndex.
                       <div class="declaration decl def" data-decl="CoreCpp.Eval.cmd" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Eval.lean#L806-L944">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Eval.lean#L806-L944">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
   <div class="bp_external_decl_signature_wrap">
     <div class="wide-only">
-      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.cmd" data-verso-hover="929">CoreCpp.Eval.cmd</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.39" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.40" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.41" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.42" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.43" data-verso-hover="141">c</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Cmd" data-verso-hover="134">CoreCpp.Cmd</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.cmd" data-verso-hover="929">CoreCpp.Eval.cmd</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.40" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.41" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.42" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.43" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.44" data-verso-hover="141">c</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Cmd" data-verso-hover="134">CoreCpp.Cmd</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.M" data-verso-hover="305">CoreCpp.M</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">(</span><span class="const token" data-binding="const-CoreCpp.Ctrl" data-verso-hover="330">CoreCpp.Ctrl</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">×</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">×</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="const token" data-binding="const-Prod" data-verso-hover="34">)</span></pre></div>
     <div class="narrow-only">
-      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.cmd" data-verso-hover="929">CoreCpp.Eval.cmd</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.39" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.40" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.41" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.42" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.43" data-verso-hover="141">c</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Cmd" data-verso-hover="134">CoreCpp.Cmd</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Eval.cmd" data-verso-hover="929">CoreCpp.Eval.cmd</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.40" data-verso-hover="8">fuel</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Nat" data-verso-hover="9">Nat</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.41" data-verso-hover="406">fs</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.FunEnv" data-verso-hover="404">CoreCpp.FunEnv</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.42" data-verso-hover="311">ρ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.43" data-verso-hover="319">σ</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.44" data-verso-hover="141">c</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Cmd" data-verso-hover="134">CoreCpp.Cmd</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.M" data-verso-hover="305">CoreCpp.M</span><span class="inter-text">
     </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">(</span><span class="const token" data-binding="const-CoreCpp.Ctrl" data-verso-hover="330">CoreCpp.Ctrl</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">×</span><span class="inter-text">
       </span><span class="const token" data-binding="const-CoreCpp.Env" data-verso-hover="306">CoreCpp.Env</span><span class="inter-text"> </span><span class="const token" data-binding="const-Prod" data-verso-hover="34">×</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Store" data-verso-hover="317">CoreCpp.Store</span><span class="const token" data-binding="const-Prod" data-verso-hover="34">)</span></pre></div>
@@ -5853,16 +5879,55 @@ An element of a vector is a use of the library, the rule LocIndex.
                   Core C++ admits none of these cases, since a premise excludes each one, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-design-005Fpattern-statement" data-bp-preview-title="Definition 9.1.1" data-bp-preview-key="design_pattern--statement"><a href="Design-restrictions/Behaviour/#--informal-preview-design_pattern--statement" title="design_pattern">Definition 9.1.1</a></span></span>. The evaluator reports <code>error</code> with the exit code 134, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-dom-005Ferror-statement" data-bp-preview-title="Definition 2.1.8" data-bp-preview-key="dom_error--statement"><a href="Judgments-and-domains/Domains/#--informal-preview-dom_error--statement" title="dom_error">Definition 2.1.8</a></span></span>.</p>
                 <p>
                   The restriction gives every well typed program one of three outcomes, a value, <code>error</code>, or no termination. The semantics fixes the outcome, and no compiler chooses it. The examples of the repository show the difference, through <code>bin/compare</code>.</p>
-                <p>
-                  | Example | <code>g++</code> | Core C++ |
-| --- | --- | --- |
-| <code>overflow.cpp</code> | 0 | 134 |
-| <code>division_by_zero.cpp</code> | 0 | 134 |
-| <code>out_of_bounds.cpp</code> | 0 | 134 |
-| <code>null_dereference.cpp</code> | 139 | 134 |
-| <code>double_delete.cpp</code> | 133 | 134 |
-| <code>delete_nonvirtual.cpp</code> | 1 | 134 |</p>
-                <p>
+                <table class="tabular"><thead><tr><th><p>
+                          Example</p>
+                        </th><th><p>
+                          <code>g++</code></p>
+                        </th><th><p>
+                          Core C++
+</p>
+                        </th></tr></thead><tr><td><p>
+                        <code>overflow.cpp</code></p>
+                      </td><td><p>
+                        0</p>
+                      </td><td><p>
+                        134
+</p>
+                      </td></tr><tr><td><p>
+                        <code>division_by_zero.cpp</code></p>
+                      </td><td><p>
+                        0</p>
+                      </td><td><p>
+                        134
+</p>
+                      </td></tr><tr><td><p>
+                        <code>out_of_bounds.cpp</code></p>
+                      </td><td><p>
+                        0</p>
+                      </td><td><p>
+                        134
+</p>
+                      </td></tr><tr><td><p>
+                        <code>null_dereference.cpp</code></p>
+                      </td><td><p>
+                        139</p>
+                      </td><td><p>
+                        134
+</p>
+                      </td></tr><tr><td><p>
+                        <code>double_delete.cpp</code></p>
+                      </td><td><p>
+                        133</p>
+                      </td><td><p>
+                        134
+</p>
+                      </td></tr><tr><td><p>
+                        <code>delete_nonvirtual.cpp</code></p>
+                      </td><td><p>
+                        1</p>
+                      </td><td><p>
+                        134</p>
+                      </td></tr></table><p>
                   A non terminating program has no derivation either. This is a limitation of the inductive big step style, not a restriction of the subset (Kahn, RR-0601, §4.4, p. 11).</p>
                 </div>
               </div>
@@ -5885,7 +5950,7 @@ An element of a vector is a use of the library, the rule LocIndex.
                       <div class="declaration decl inductive" data-decl="CoreCpp.Error" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(17 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/e9cb40819b2762c13f6e521183cceb97934784c2/CoreCpp/Semantics.lean#L78-L121">CoreCpp/Semantics.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(17 constructors)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics.lean#L78-L121">CoreCpp/Semantics.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -5918,42 +5983,42 @@ checker, and `outOfFuel` marks a derivation deeper than the fuel. </pre><div cla
           <pre class="docstring">The dereference of `nullptr`. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.outOfBounds" data-verso-hover="336">CoreCpp.Error.outOfBounds</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.362" data-verso-hover="107">i</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.363" data-verso-hover="107">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Int" data-verso-hover="108">Int</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.outOfBounds" data-verso-hover="336">CoreCpp.Error.outOfBounds</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.363" data-verso-hover="107">i</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.364" data-verso-hover="107">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Int" data-verso-hover="108">Int</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">The index `i` outside a vector of `n` elements. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.negativeSize" data-verso-hover="337">CoreCpp.Error.negativeSize</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.364" data-verso-hover="107">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Int" data-verso-hover="108">Int</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.negativeSize" data-verso-hover="337">CoreCpp.Error.negativeSize</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.365" data-verso-hover="107">n</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Int" data-verso-hover="108">Int</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A vector created with the negative size `n`. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.danglingLocation" data-verso-hover="338">CoreCpp.Error.danglingLocation</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.365" data-verso-hover="292">l</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.danglingLocation" data-verso-hover="338">CoreCpp.Error.danglingLocation</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.366" data-verso-hover="292">l</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A read or a write of a location outside dom σ. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.undeclaredVariable" data-verso-hover="339">CoreCpp.Error.undeclaredVariable</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.366" data-verso-hover="1">x</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.undeclaredVariable" data-verso-hover="339">CoreCpp.Error.undeclaredVariable</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.367" data-verso-hover="1">x</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A variable that neither ρ nor the fields of the receiver bind. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.undeclaredFunction" data-verso-hover="340">CoreCpp.Error.undeclaredFunction</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.367" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.undeclaredFunction" data-verso-hover="340">CoreCpp.Error.undeclaredFunction</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.368" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A function the program does not declare. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.arity" data-verso-hover="341">CoreCpp.Error.arity</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.368" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.arity" data-verso-hover="341">CoreCpp.Error.arity</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.369" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A call with the wrong number of arguments. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.typeError" data-verso-hover="342">CoreCpp.Error.typeError</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.369" data-verso-hover="1">msg</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.typeError" data-verso-hover="342">CoreCpp.Error.typeError</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.370" data-verso-hover="1">msg</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A value of the wrong form. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.missingReturn" data-verso-hover="343">CoreCpp.Error.missingReturn</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.370" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.missingReturn" data-verso-hover="343">CoreCpp.Error.missingReturn</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.371" data-verso-hover="1">f</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A non `void` function whose body ends without `return`. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.notCallable" data-verso-hover="344">CoreCpp.Error.notCallable</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.371" data-verso-hover="321">v</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Val" data-verso-hover="288">CoreCpp.Val</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.notCallable" data-verso-hover="344">CoreCpp.Error.notCallable</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.372" data-verso-hover="321">v</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Val" data-verso-hover="288">CoreCpp.Val</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">The call of a value that is not a closure. </pre></div>
         </div>
       <div class="constructor">
@@ -5966,16 +6031,16 @@ checker, and `outOfFuel` marks a derivation deeper than the fuel. </pre><div cla
         </div>
       <div class="constructor">
         <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.deleteWithoutVirtualDtor" data-verso-hover="347">CoreCpp.Error.deleteWithoutVirtualDtor</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.372" data-verso-hover="1">static</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.373" data-verso-hover="1">tag</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.373" data-verso-hover="1">static</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.374" data-verso-hover="1">tag</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A `delete` through a pointer to the base `static` of an object of class
 `tag`, with no virtual destructor in the chain of `static`. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.doubleDelete" data-verso-hover="348">CoreCpp.Error.doubleDelete</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.374" data-verso-hover="292">l</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.doubleDelete" data-verso-hover="348">CoreCpp.Error.doubleDelete</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.375" data-verso-hover="292">l</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Loc" data-verso-hover="286">CoreCpp.Loc</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">A second `delete` of the object at ℓ. </pre></div>
         </div>
       <div class="constructor">
-        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.library" data-verso-hover="349">CoreCpp.Error.library</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.375" data-verso-hover="1">msg</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
+        <pre class="name-and-type hl lean"><span class="inter-text"></span><span class="const token" data-binding="const-CoreCpp.Error.library" data-verso-hover="349">CoreCpp.Error.library</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.376" data-verso-hover="1">msg</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="2">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-CoreCpp.Error" data-verso-hover="333">CoreCpp.Error</span></pre><div class="docs">
           <pre class="docstring">An error that a rule of `CoreCpp.Std` gives, a failed `assert`. </pre></div>
         </div>
       </div>
