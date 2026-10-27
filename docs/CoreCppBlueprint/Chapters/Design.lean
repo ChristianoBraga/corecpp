@@ -21,6 +21,8 @@ Each syntactic class, such as the expressions or the commands, has its own judge
 
 Core C++ is a subset of C++17, and every Core C++ program compiles with `g++ -std=c++17`. Each restriction of the subset removes a construct, or a freedom that C++17 leaves to the compiler. For each restriction, this chapter states what C++17 allows, what Core C++ admits and the property of the semantics the restriction gives.
 
+Core C++ takes C++17 rather than C++20 for the maturity of its compiler support. Both are ISO standards, ISO/IEC 14882:2017 and ISO/IEC 14882:2020. Clang 5 and later implement every feature of C++17, and Clang supports some of the features of C++20, [clang.llvm.org](https://clang.llvm.org/cxx_status.html). GCC supports both revisions almost fully. Its support of C++20 was experimental, with an unstable ABI, until GCC 16, and its C++20 modules remain experimental, [gcc.gnu.org](https://gcc.gnu.org/projects/cxx-status.html).
+
 The properties are those the earlier chapters state. Every construct has a typing rule and an evaluation rule. A program has at most one result, {bpref "determinism"}[]. A well typed program has a derivation, does not terminate, or reaches a case that the evaluator reports as `error`, {bpref "progress"}[]. Lean proves the first statement. The second has no Lean proof yet, so it is a property checked by inspection of the rule set.
 
 The behaviour of C++ in this chapter comes from N4659, the final working draft of C++17, [open-std.org](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf). It also comes from `g++ -std=c++17`, which on the machine of these tests is Apple clang 21.
@@ -41,24 +43,46 @@ The function returns into the monad `CoreCpp.M`, the exception transformer `Exce
 Two kinds of cause stay outside the pattern. The causes `undeclaredVariable`, `undeclaredFunction`, `arity`, `typeError` and `notCallable` arise only in a program that skipped the type checker. The cause `outOfFuel` marks a derivation deeper than the fuel, and it is not a result of the semantics. The agreement between each relation and its function has no Lean proof, and issue #6 records the check.
 :::
 
-:::definition "design_ub" (parent := "design") (lean := "CoreCpp.Error") (uses := "dom_error, progress, design_pattern")
+::::definition "design_ub" (parent := "design") (lean := "CoreCpp.Error") (uses := "dom_error, progress, design_pattern")
 C++17 defines undefined behaviour as behaviour for which the standard imposes no requirements (N4659 §3.27). An expression whose result is not mathematically defined or not representable in its type has undefined behaviour (N4659 §8 ¶4). So does a zero divisor (N4659 §8.6 ¶4). So does a `delete` through a pointer to a base without a virtual destructor (N4659 §8.3.5 ¶3). The end of the storage duration of an object makes every pointer to it invalid. Indirection through an invalid pointer and its deallocation by a second `delete` have undefined behaviour (N4659 §6.7 ¶4).
 
 Core C++ admits none of these cases, since a premise excludes each one, {bpref "design_pattern"}[]. The evaluator reports `error` with the exit code 134, {bpref "dom_error"}[].
 
 The restriction gives every well typed program one of three outcomes, a value, `error`, or no termination. The semantics fixes the outcome, and no compiler chooses it. The examples of the repository show the difference, through `bin/compare`.
 
-| Example | `g++` | Core C++ |
-| --- | --- | --- |
-| `overflow.cpp` | 0 | 134 |
-| `division_by_zero.cpp` | 0 | 134 |
-| `out_of_bounds.cpp` | 0 | 134 |
-| `null_dereference.cpp` | 139 | 134 |
-| `double_delete.cpp` | 133 | 134 |
-| `delete_nonvirtual.cpp` | 1 | 134 |
+:::table +header
+*
+  * Example
+  * `g++`
+  * Core C++
+*
+  * `overflow.cpp`
+  * 0
+  * 134
+*
+  * `division_by_zero.cpp`
+  * 0
+  * 134
+*
+  * `out_of_bounds.cpp`
+  * 0
+  * 134
+*
+  * `null_dereference.cpp`
+  * 139
+  * 134
+*
+  * `double_delete.cpp`
+  * 133
+  * 134
+*
+  * `delete_nonvirtual.cpp`
+  * 1
+  * 134
+:::
 
 A non terminating program has no derivation either. This is a limitation of the inductive big step style, not a restriction of the subset (Kahn, RR-0601, §4.4, p. 11).
-:::
+::::
 
 :::definition "design_order" (parent := "design") (uses := "eval_order, determinism")
 In C++17 the evaluations of the operands of an operator are unsequenced, except where the standard notes otherwise (N4659 §4.6 ¶17). The initialisations of the parameters of a call are indeterminately sequenced with respect to each other (N4659 §8.2.2 ¶5). A side effect on a memory location has undefined behaviour when it is unsequenced relative to another access to that location (N4659 §4.6 ¶17).

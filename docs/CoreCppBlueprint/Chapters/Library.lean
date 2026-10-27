@@ -26,25 +26,56 @@ The library, its interface and its modules.
 
 # Interface
 
-:::definition "std_library" (parent := "library") (lean := "CoreCpp.Semantics.StaticModule, CoreCpp.Semantics.Module, CoreCpp.Semantics.staticOf, CoreCpp.Semantics.moduleOf, CoreCpp.Std.StaticFns, CoreCpp.Std.Fns, CoreCpp.Std.staticFnsOf, CoreCpp.Std.fnsOf, CoreCpp.Std.isObject") (uses := "pp_headers, judg_ty_expr, judg_ev_expr")
+::::definition "std_library" (parent := "library") (lean := "CoreCpp.Semantics.StaticModule, CoreCpp.Semantics.Module, CoreCpp.Semantics.staticOf, CoreCpp.Semantics.moduleOf, CoreCpp.Std.StaticFns, CoreCpp.Std.Fns, CoreCpp.Std.staticFnsOf, CoreCpp.Std.fnsOf, CoreCpp.Std.isObject") (uses := "pp_headers, judg_ty_expr, judg_ev_expr")
 A module $`L` gives at most five static relations and four dynamic ones. Each relation other than the predicate $`\mathrm{wf}_L` is an instance of a judgment of the language. In each, $`\bar{\tau}` denotes the template arguments of the instance. A relation the entity does not have is left at $`\mathsf{False}`.
 
-| Relation | Meaning | Lean |
-| --- | --- | --- |
-| $`\mathrm{wf}_L(\bar{\tau})` | the instance is well formed | `wf` |
-| $`\Gamma \vdash_L \mathtt{new} : \tau_1 \times \cdots \times \tau_k \to \tau` | a signature of `new` | `new` |
-| $`\Gamma \vdash_L \mathtt{operator[]} : \tau_1 \to \tau` | the signature of indexing, a location | `index` |
-| $`\Gamma \vdash_L \mathtt{delete}\ \mathsf{ok}` | an instance is deleted | `delete` |
-| $`\Gamma \vdash_L f : \tau_1 \times \cdots \times \tau_k \to \tau` | the signature of a function without a body | `call` |
-| $`\sigma \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'` | the creation of an instance | `new` |
-| $`\sigma \vdash_L v[i] \Rightarrow_{\ell} \ell, \sigma'` | the location of an element | `index` |
-| $`\sigma \vdash_L \mathtt{delete}\ v \Rightarrow \sigma'` | the store after the instance leaves it | `delete` |
-| $`\sigma \vdash_L f(v_1, \ldots, v_k) \Rightarrow v, \sigma'` | the call of a function without a body | `call` |
+:::table +header
+*
+  * Relation
+  * Meaning
+  * Lean
+*
+  * $`\mathrm{wf}_L(\bar{\tau})`
+  * the instance is well formed
+  * `wf`
+*
+  * $`\Gamma \vdash_L \mathtt{new} : \tau_1 \times \cdots \times \tau_k \to \tau`
+  * a signature of `new`
+  * `new`
+*
+  * $`\Gamma \vdash_L \mathtt{operator[]} : \tau_1 \to \tau`
+  * the signature of indexing, a location
+  * `index`
+*
+  * $`\Gamma \vdash_L \mathtt{delete}\ \mathsf{ok}`
+  * an instance is deleted
+  * `delete`
+*
+  * $`\Gamma \vdash_L f : \tau_1 \times \cdots \times \tau_k \to \tau`
+  * the signature of a function without a body
+  * `call`
+*
+  * $`\sigma \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'`
+  * the creation of an instance
+  * `new`
+*
+  * $`\sigma \vdash_L v[i] \Rightarrow_{\ell} \ell, \sigma'`
+  * the location of an element
+  * `index`
+*
+  * $`\sigma \vdash_L \mathtt{delete}\ v \Rightarrow \sigma'`
+  * the store after the instance leaves it
+  * `delete`
+*
+  * $`\sigma \vdash_L f(v_1, \ldots, v_k) \Rightarrow v, \sigma'`
+  * the call of a function without a body
+  * `call`
+:::
 
 The static relations form `StaticModule` and the dynamic ones `Module`, found by the declared name through `staticOf` and `moduleOf`. The functions `StaticFns` and `Fns` implement them, found through `staticFnsOf` and `fnsOf`. Each dynamic function names the rule it concludes, for the trace. The predicate $`\mathrm{wf}_L` is a premise of the rule WF-Lib of {bpref "dom_types"}[]. The module of `assert` leaves it at $`\mathsf{False}`, since `assert` is no type.
 
 An object type is a class or an entity of the library whose module gives `new` a signature, `Std.isObject`. Its values live in the store and are reached by pointer or by reference, so no variable, field, parameter or result has the type by value. A vector and a `std::function` are objects.
-:::
+::::
 
 :::definition "std_uses" (parent := "library") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.lval, CoreCpp.Typing.cmd, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Eval.cmd, CoreCpp.Eval.libStep, CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Check") (uses := "std_library, judg_ty_lval, judg_ev_lval, dom_store")
 The rules of the language for a subject of the library take the relation of its module as a premise. The arguments are values, evaluated left to right, and a module premise with no derivation makes the use `error` in the evaluator.

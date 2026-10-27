@@ -154,28 +154,81 @@ The type checker consults it for types, visibility and dispatch, and `new` and `
 
 # Relations and interpreters
 
-:::definition "judg_relations" (parent := "judgments") (lean := "CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Accept, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks, CoreCpp.Semantics.WF, CoreCpp.Semantics.FunOk, CoreCpp.Semantics.ClassOk, CoreCpp.Semantics.ProgramOk, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Execs, CoreCpp.Semantics.Runs, CoreCpp.Typing.wellFormed, CoreCpp.Typing.typingFuel, CoreCpp.runWith") (uses := "dom_tenv, dom_env, dom_store, dom_error")
+::::definition "judg_relations" (parent := "judgments") (lean := "CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Accept, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks, CoreCpp.Semantics.WF, CoreCpp.Semantics.FunOk, CoreCpp.Semantics.ClassOk, CoreCpp.Semantics.ProgramOk, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Execs, CoreCpp.Semantics.Runs, CoreCpp.Typing.wellFormed, CoreCpp.Typing.typingFuel, CoreCpp.runWith") (uses := "dom_tenv, dom_env, dom_store, dom_error")
 The semantics is a set of inductive propositions, one per judgment, with one constructor per rule. A constructor bears the name of its rule in this blueprint. The relations of the language are in `CoreCpp/Semantics/Static.lean` and `Dynamic.lean`, and the relations of the modules of the library in `Library.lean`. A constructor follows the layout of a rule on the board, the premises one per line, the inference line with the name, and the conclusion under it. The program $`p` is a parameter of every relation, the function table and the class table.
 
-| Judgment | Relation | Notation in Lean | Interpreter |
-| --- | --- | --- | --- |
-| $`\Gamma \vdash e : \tau` | `HasType p Γ e τ` | `Γ ⊢ e : τ` | `Typing.expr` |
-| $`\Gamma \vdash_{\ell} e : \tau` | `LHasType p Γ e τ` | `Γ ⊢ₗ e : τ` | `Typing.lval` |
-| $`\Gamma \vdash e \lhd \tau` | `Accept p Γ e τ` | `Γ ⊢ e ◁ τ` | `Typing.accept` |
-| $`\Gamma \vdash c \dashv \Gamma'` | `Check p τᵣ Γ c Γ'` | `⟨Γ, τᵣ⟩ ⊢ c ⊣ Γ'` | `Typing.cmd` |
-| $`\Gamma \vdash \bar{c} \dashv \Gamma'` | `Checks p τᵣ Γ cs Γ'` | `⟨Γ, τᵣ⟩ ⊢ cs ⊣* Γ'` | `Typing.cmds` |
-| $`\Gamma \vdash \tau\ \mathsf{ok}` | `WF p τ` | | `Typing.wellFormed` |
-| $`\vdash f`, $`\vdash C`, $`\vdash p` | `FunOk`, `ClassOk`, `ProgramOk` | | `Typing.fn`, `Typing.cls`, `check` |
-| $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` | `Eval p ρ σ e v σ'` | `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'` | `Eval.expr` |
-| $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'` | `LEval p ρ σ e ℓ σ'` | `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'` | `Eval.lval` |
-| $`\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'` | `Exec p ρ σ c r ρ' σ'` | `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'` | `Eval.cmd` |
-| $`\rho, \sigma \vdash \bar{c} \Rightarrow r, \rho', \sigma'` | `Execs p ρ σ cs r ρ' σ'` | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Eval.cmds` |
-| $`p \Rightarrow v` | `Runs p v` | | `run` |
+:::table +header
+*
+  * Judgment
+  * Relation
+  * Notation in Lean
+  * Interpreter
+*
+  * $`\Gamma \vdash e : \tau`
+  * `HasType p Γ e τ`
+  * `Γ ⊢ e : τ`
+  * `Typing.expr`
+*
+  * $`\Gamma \vdash_{\ell} e : \tau`
+  * `LHasType p Γ e τ`
+  * `Γ ⊢ₗ e : τ`
+  * `Typing.lval`
+*
+  * $`\Gamma \vdash e \lhd \tau`
+  * `Accept p Γ e τ`
+  * `Γ ⊢ e ◁ τ`
+  * `Typing.accept`
+*
+  * $`\Gamma \vdash c \dashv \Gamma'`
+  * `Check p τᵣ Γ c Γ'`
+  * `⟨Γ, τᵣ⟩ ⊢ c ⊣ Γ'`
+  * `Typing.cmd`
+*
+  * $`\Gamma \vdash \bar{c} \dashv \Gamma'`
+  * `Checks p τᵣ Γ cs Γ'`
+  * `⟨Γ, τᵣ⟩ ⊢ cs ⊣* Γ'`
+  * `Typing.cmds`
+*
+  * $`\Gamma \vdash \tau\ \mathsf{ok}`
+  * `WF p τ`
+  * none
+  * `Typing.wellFormed`
+*
+  * $`\vdash f`, $`\vdash C`, $`\vdash p`
+  * `FunOk`, `ClassOk`, `ProgramOk`
+  * none
+  * `Typing.fn`, `Typing.cls`, `check`
+*
+  * $`\rho, \sigma \vdash e \Rightarrow v, \sigma'`
+  * `Eval p ρ σ e v σ'`
+  * `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'`
+  * `Eval.expr`
+*
+  * $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'`
+  * `LEval p ρ σ e ℓ σ'`
+  * `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'`
+  * `Eval.lval`
+*
+  * $`\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'`
+  * `Exec p ρ σ c r ρ' σ'`
+  * `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'`
+  * `Eval.cmd`
+*
+  * $`\rho, \sigma \vdash \bar{c} \Rightarrow r, \rho', \sigma'`
+  * `Execs p ρ σ cs r ρ' σ'`
+  * `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'`
+  * `Eval.cmds`
+*
+  * $`p \Rightarrow v`
+  * `Runs p v`
+  * none
+  * `run`
+:::
 
 Lean writes the configuration $`\langle\rho, \sigma\rangle` in angle brackets, and $`\langle\Gamma, \tau_r\rangle` for a command with the result type of its body. A sequence takes a starred arrow. Both are concessions to the parser of Lean. The relation is the specification and the function its interpreter. Every recursive function of the type checker and of the evaluator takes as first argument the fuel, a bound on the depth of a derivation, and recurses on it. The constant `typingFuel` and the function `runWith` set it to $`10^6`, and its exhaustion is the error `outOfFuel`. The fuel makes two theorems expressible, soundness, that a result of the function is a derivation of the relation, and completeness, that the function reaches every derivation with enough fuel. Neither has a proof yet. The structure follows Radix, the language of the tutorial of de Moura at ETAPS 2026.
 
 The judgments on declarations, $`\vdash f`, $`\vdash C` and $`\vdash p`, are structures of named conditions rather than relations with one constructor. Their conditions are side conditions on the declarations and not premises on subterms. The selection of an overload, {bpref "overload_pick"}[], is the work of the type checker, which writes its choice into the call, and the relation reads it.
-:::
+::::
 
 # Static judgments
 
