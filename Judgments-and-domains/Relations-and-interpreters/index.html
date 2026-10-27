@@ -5704,6 +5704,8 @@ window.onload = async () => {
                       </td><td><p>
                         <code>run</code></p>
                       </td></tr></table><p>
+                  The judgments <code class="bp_math inline">\Gamma \vdash e \lhd \tau</code> and <code class="bp_math inline">\Gamma \vdash c \dashv \Gamma'</code> differ in subject and in output. Acceptance judges an expression at a type its context expects, so <code class="bp_math inline">\tau</code> is an input. It extends <code class="bp_math inline">\Gamma \vdash e : \tau</code> by the compatibility of types and by lambdas. The judgment on commands judges a command under the result type <code class="bp_math inline">\tau_r</code> of the enclosing body. Its output is the context <code class="bp_math inline">\Gamma'</code> the command extends <code class="bp_math inline">\Gamma</code> to, as a declaration does.</p>
+                <p>
                   Lean writes the configuration <code class="bp_math inline">\langle\rho, \sigma\rangle</code> in angle brackets, and <code class="bp_math inline">\langle\Gamma, \tau_r\rangle</code> for a command with the result type of its body. A sequence takes a starred arrow. Both are concessions to the parser of Lean. The relation is the specification and the function its interpreter. Every recursive function of the type checker and of the evaluator takes as first argument the fuel, a bound on the depth of a derivation, and recurses on it. The constant <code>typingFuel</code> and the function <code>runWith</code> set it to <code class="bp_math inline">10^6</code>, and its exhaustion is the error <code>outOfFuel</code>. The fuel makes two theorems expressible, soundness, that a result of the function is a derivation of the relation, and completeness, that the function reaches every derivation with enough fuel. Neither has a proof yet. The structure follows Radix, the language of the tutorial of de Moura at ETAPS 2026.</p>
                 <p>
                   The judgments on declarations, <code class="bp_math inline">\vdash f</code>, <code class="bp_math inline">\vdash C</code> and <code class="bp_math inline">\vdash p</code>, are structures of named conditions rather than relations with one constructor. Their conditions are side conditions on the declarations and not premises on subterms. The selection of an overload, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-overload-005Fpick-statement" data-bp-preview-title="Definition 7.1.2" data-bp-preview-key="overload_pick--statement"><a href="Type-systems/Overloading/#--informal-preview-overload_pick--statement" title="overload_pick">Definition 7.1.2</a></span></span>, is the work of the type checker, which writes its choice into the call, and the relation reads it.</p>
@@ -5760,7 +5762,7 @@ window.onload = async () => {
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.HasType" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(30 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L230-L440">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(30 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Static.lean#L230-L440">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6078,7 +6080,7 @@ is the work of the type checker. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.LHasType" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L442-L510">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Static.lean#L442-L510">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6199,7 +6201,7 @@ of its bases, an lvalue in C++ (N4659 §8.16 ¶4). </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Accept" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L512-L534">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors, Prop, 4 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Static.lean#L512-L534">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6259,7 +6261,7 @@ parameters of the lambda as ordinary variables. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Check" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(13 constructors, Prop, 5 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L595-L687">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(13 constructors, Prop, 5 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Static.lean#L595-L687">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6424,7 +6426,7 @@ the class τ. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Checks" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors, Prop, 5 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L689-L699">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(2 constructors, Prop, 5 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Static.lean#L689-L699">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6468,7 +6470,7 @@ the class τ. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.WF" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(8 constructors, Prop, 2 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L182-L226">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(8 constructors, Prop, 2 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Static.lean#L182-L226">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6544,7 +6546,7 @@ function type has a storable or `void` result and storable parameters. </pre><di
                       <div class="declaration decl structure" data-decl="CoreCpp.Semantics.FunOk" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(5 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L753-L767">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(5 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Static.lean#L753-L767">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6593,7 +6595,7 @@ type of its referent, as a local reference does. </pre><div class="bp_external_d
                       <div class="declaration decl structure" data-decl="CoreCpp.Semantics.ClassOk" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(21 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L769-L827">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(21 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Static.lean#L769-L827">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6744,7 +6746,7 @@ there is no initialiser list. </pre></div>
                       <div class="declaration decl structure" data-decl="CoreCpp.Semantics.ProgramOk" data-kind="structure">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(8 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Static.lean#L829-L854">CoreCpp/Semantics/Static.lean</a></span></div>
+      <span class="bp_external_decl_kind">structure</span><span class="bp_external_decl_header_meta">(8 fields)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Static.lean#L829-L854">CoreCpp/Semantics/Static.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -6815,7 +6817,7 @@ with the declaration. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Eval" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(28 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L160-L359">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(28 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Dynamic.lean#L160-L359">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7204,7 +7206,7 @@ derivation. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.LEval" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L361-L422">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(9 constructors, Prop, 6 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Dynamic.lean#L361-L422">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7335,7 +7337,7 @@ derivation. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Exec" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(17 constructors, Prop, 7 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L424-L535">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(17 constructors, Prop, 7 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Dynamic.lean#L424-L535">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7577,7 +7579,7 @@ derivation. </pre></div>
                       <div class="declaration decl inductive" data-decl="CoreCpp.Semantics.Execs" data-kind="inductive">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(3 constructors, Prop, 7 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L537-L554">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">inductive</span><span class="bp_external_decl_header_meta">(3 constructors, Prop, 7 parameters)</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Dynamic.lean#L537-L554">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7642,7 +7644,7 @@ derivation. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Semantics.Runs" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Semantics/Dynamic.lean#L693-L700">CoreCpp/Semantics/Dynamic.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Semantics/Dynamic.lean#L693-L700">CoreCpp/Semantics/Dynamic.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7670,7 +7672,7 @@ p ⇒ v
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.wellFormed" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Typing.lean#L361-L384">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Typing.lean#L361-L384">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7696,7 +7698,7 @@ storable parameters. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.Typing.typingFuel" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Typing.lean#L357-L359">CoreCpp/Typing.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Typing.lean#L357-L359">CoreCpp/Typing.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
@@ -7717,7 +7719,7 @@ program reaches. </pre></div>
                       <div class="declaration decl def" data-decl="CoreCpp.runWith" data-kind="def">
   <div class="bp_external_decl_kicker">
     <div class="bp_external_decl_kicker_main">
-      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/79342908ad76b6f7f0aa526ad93b18e8b5d96b4a/CoreCpp/Eval.lean#L983-L1001">CoreCpp/Eval.lean</a></span></div>
+      <span class="bp_external_decl_kind">def</span><span class="bp_external_decl_source">defined in <a class="bp_external_decl_source_path" href="https://github.com/ChristianoBraga/corecpp/blob/ca12cb13846debbabe83af6b3f75ce4caed75915/CoreCpp/Eval.lean#L983-L1001">CoreCpp/Eval.lean</a></span></div>
     <div class="bp_external_decl_kicker_status">
       <span class="bp_external_status_badge bp_external_decl_header_status bp_external_decl_ok">complete</span></div>
     </div>
