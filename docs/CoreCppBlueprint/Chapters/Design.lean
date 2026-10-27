@@ -21,7 +21,7 @@ Each syntactic class, such as the expressions or the commands, has its own judge
 
 Core C++ is a subset of C++17, and every Core C++ program compiles with `g++ -std=c++17`. Each restriction of the subset removes a construct, or a freedom that C++17 leaves to the compiler. For each restriction, this chapter states what C++17 allows, what Core C++ admits and the property of the semantics the restriction gives.
 
-The properties are those the earlier chapters state. Every construct has a typing rule and an evaluation rule. A program has at most one result, {bpref "determinismo"}[]. A well typed program has a derivation, does not terminate, or reaches a case that the evaluator reports as `error`, {bpref "progresso"}[]. Neither statement has a Lean proof yet, so both are properties checked by inspection of the rule set.
+The properties are those the earlier chapters state. Every construct has a typing rule and an evaluation rule. A program has at most one result, {bpref "determinism"}[]. A well typed program has a derivation, does not terminate, or reaches a case that the evaluator reports as `error`, {bpref "progress"}[]. Neither statement has a Lean proof yet, so both are properties checked by inspection of the rule set.
 
 The behaviour of C++ in this chapter comes from N4659, the final working draft of C++17, [open-std.org](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf). It also comes from `g++ -std=c++17`, which on the machine of these tests is Apple clang 21.
 
@@ -31,7 +31,7 @@ The restrictions of Core C++ with respect to C++17, and the properties they give
 
 # Behaviour
 
-:::definition "design_pattern" (parent := "design") (lean := "CoreCpp.Error, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Eval.cmd, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec") (uses := "dom_erro, judg_ev_expr, judg_ev_cmd")
+:::definition "design_pattern" (parent := "design") (lean := "CoreCpp.Error, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Eval.cmd, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec") (uses := "dom_error, judg_ev_expr, judg_ev_cmd")
 Each syntactic class has a relation and a function of the evaluator. The expressions have `Eval` and `expr`, the expressions that denote a location `LEval` and `lval`, and the commands `Exec` and `cmd`. The relation states the cases of its class with a result. The function covers every case of the same class, and its result is that of the relation or an `error`.
 
 The rules exclude each undefined case of C++ by a premise. The rule Div requires a divisor other than zero, and Arith and Div require a result in the range of `int`. The rule Delete requires an object at ℓ, and a virtual destructor when the static class differs from the class of the object. When one of these premises fails, the subject has no derivation. The function of the same class then gives the cause of `error` that names the premise, `divisionByZero`, `overflow`, `doubleDelete` or `deleteWithoutVirtualDtor`.
@@ -41,10 +41,10 @@ The function returns into the monad `CoreCpp.M`, the exception transformer `Exce
 Two kinds of cause stay outside the pattern. The causes `undeclaredVariable`, `undeclaredFunction`, `arity`, `typeError` and `notCallable` arise only in a program that skipped the type checker. The cause `outOfFuel` marks a derivation deeper than the fuel, and it is not a result of the semantics. The agreement between each relation and its function has no Lean proof, and issue #6 records the check.
 :::
 
-:::definition "design_ub" (parent := "design") (lean := "CoreCpp.Error") (uses := "dom_erro, progresso, design_pattern")
+:::definition "design_ub" (parent := "design") (lean := "CoreCpp.Error") (uses := "dom_error, progress, design_pattern")
 C++17 defines undefined behaviour as behaviour for which the standard imposes no requirements (N4659 §3.27). An expression whose result is not mathematically defined or not representable in its type has undefined behaviour (N4659 §8 ¶4). So does a zero divisor (N4659 §8.6 ¶4). So does a `delete` through a pointer to a base without a virtual destructor (N4659 §8.3.5 ¶3). The end of the storage duration of an object makes every pointer to it invalid. Indirection through an invalid pointer and its deallocation by a second `delete` have undefined behaviour (N4659 §6.7 ¶4).
 
-Core C++ admits none of these cases, since a premise excludes each one, {bpref "design_pattern"}[]. The evaluator reports `error` with the exit code 134, {bpref "dom_erro"}[].
+Core C++ admits none of these cases, since a premise excludes each one, {bpref "design_pattern"}[]. The evaluator reports `error` with the exit code 134, {bpref "dom_error"}[].
 
 The restriction gives every well typed program one of three outcomes, a value, `error`, or no termination. The semantics fixes the outcome, and no compiler chooses it. The examples of the repository show the difference, through `bin/compare`.
 
@@ -60,12 +60,12 @@ The restriction gives every well typed program one of three outcomes, a value, `
 A non terminating program has no derivation either. This is a limitation of the inductive big step style, not a restriction of the subset (Kahn, RR-0601, §4.4, p. 11).
 :::
 
-:::definition "design_order" (parent := "design") (uses := "eval_order, determinismo")
+:::definition "design_order" (parent := "design") (uses := "eval_order, determinism")
 In C++17 the evaluations of the operands of an operator are unsequenced, except where the standard notes otherwise (N4659 §4.6 ¶17). The initialisations of the parameters of a call are indeterminately sequenced with respect to each other (N4659 §8.2.2 ¶5). A side effect on a memory location has undefined behaviour when it is unsequenced relative to another access to that location (N4659 §4.6 ¶17).
 
 Core C++ evaluates left to right wherever C++17 leaves the order open, {bpref "eval_order"}[]. It keeps the orders C++17 fixes, such as the right operand before the left one in an assignment (N4659 §8.18 ¶1).
 
-The restriction makes the order of the premises of each rule part of the rule. The store of one premise is the input of the next, so the effects of a construct happen in one order. With the mutually exclusive premises of the rules, a construct has one result, {bpref "determinismo"}[].
+The restriction makes the order of the premises of each rule part of the rule. The store of one premise is the input of the next, so the effects of a construct happen in one order. With the mutually exclusive premises of the rules, a construct has one result, {bpref "determinism"}[].
 :::
 
 # Types and declarations

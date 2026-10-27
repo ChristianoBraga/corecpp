@@ -20,13 +20,13 @@ The type checker and the evaluator know no module by name. They find the module 
 
 Nothing of this is built into the syntax. The grammar has no production and the lexer no reserved word for the library. The declaration `namespace std` opens an ordinary namespace, and `std::vector` is an ordinary qualified name. The case of the name tells a class of the library, lowercase, from a class of the program, uppercase.
 
-:::group "ud7"
+:::group "library"
 The library, its interface and its modules.
 :::
 
 # Interface
 
-:::definition "std_library" (parent := "ud7") (lean := "CoreCpp.Semantics.StaticModule, CoreCpp.Semantics.Module, CoreCpp.Semantics.staticOf, CoreCpp.Semantics.moduleOf, CoreCpp.Std.StaticFns, CoreCpp.Std.Fns, CoreCpp.Std.staticFnsOf, CoreCpp.Std.fnsOf, CoreCpp.Std.isObject") (uses := "pp_headers, judg_ty_expr, judg_ev_expr")
+:::definition "std_library" (parent := "library") (lean := "CoreCpp.Semantics.StaticModule, CoreCpp.Semantics.Module, CoreCpp.Semantics.staticOf, CoreCpp.Semantics.moduleOf, CoreCpp.Std.StaticFns, CoreCpp.Std.Fns, CoreCpp.Std.staticFnsOf, CoreCpp.Std.fnsOf, CoreCpp.Std.isObject") (uses := "pp_headers, judg_ty_expr, judg_ev_expr")
 A module $`L` gives at most five static relations and four dynamic ones. Each relation other than the predicate $`\mathrm{wf}_L` is an instance of a judgment of the language. In each, $`\bar{\tau}` denotes the template arguments of the instance. A relation the entity does not have is left at $`\mathsf{False}`.
 
 | Relation | Meaning | Lean |
@@ -46,7 +46,7 @@ The static relations form `StaticModule` and the dynamic ones `Module`, found by
 An object type is a class or an entity of the library whose module gives `new` a signature, `Std.isObject`. Its values live in the store and are reached by pointer or by reference, so no variable, field, parameter or result has the type by value. A vector and a `std::function` are objects.
 :::
 
-:::definition "std_uses" (parent := "ud7") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.lval, CoreCpp.Typing.cmd, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Eval.cmd, CoreCpp.Eval.libStep, CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Check") (uses := "std_library, judg_ty_lval, judg_ev_lval, dom_store")
+:::definition "std_uses" (parent := "library") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.lval, CoreCpp.Typing.cmd, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Eval.cmd, CoreCpp.Eval.libStep, CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Check") (uses := "std_library, judg_ty_lval, judg_ev_lval, dom_store")
 The rules of the language for a subject of the library take the relation of its module as a premise. The arguments are values, evaluated left to right, and a module premise with no derivation makes the use `error` in the evaluator.
 
 $$`\dfrac{\Gamma \vdash L\langle\bar{\tau}\rangle\ \mathsf{ok} \qquad \Gamma \vdash_L \mathtt{new} : \tau_1 \times \cdots \times \tau_k \to \tau \qquad \Gamma \vdash e_i \lhd \tau_i}{\Gamma \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) : \tau}\;\textsf{(T-NewLib)}`
@@ -74,7 +74,7 @@ The command `delete e` on a pointer to an instance frees what the module owns an
 
 # Headers
 
-:::definition "std_vector" (parent := "ud7") (lean := "CoreCpp.Semantics.Vector.TNew, CoreCpp.Semantics.Vector.TIndex, CoreCpp.Semantics.Vector.TDelete, CoreCpp.Semantics.Vector.New, CoreCpp.Semantics.Vector.Index, CoreCpp.Semantics.Vector.Delete, CoreCpp.Std.Vector.statics, CoreCpp.Std.Vector.fns, CoreCpp.Std.Vector.elementOk, CoreCpp.Semantics.Vector.isElement, CoreCpp.Semantics.Vector.statics") (uses := "std_library, std_uses")
+:::definition "std_vector" (parent := "library") (lean := "CoreCpp.Semantics.Vector.TNew, CoreCpp.Semantics.Vector.TIndex, CoreCpp.Semantics.Vector.TDelete, CoreCpp.Semantics.Vector.New, CoreCpp.Semantics.Vector.Index, CoreCpp.Semantics.Vector.Delete, CoreCpp.Std.Vector.statics, CoreCpp.Std.Vector.fns, CoreCpp.Std.Vector.elementOk, CoreCpp.Semantics.Vector.isElement, CoreCpp.Semantics.Vector.statics") (uses := "std_library, std_uses")
 The header `<vector>` declares `template <typename T> class vector;` in `namespace std`. A vector is an object, created with `new` and reached by pointer. Its value $`\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}]` holds one location per element.
 
 The element type has values and a default, so it is not a class, a type of the library, a function type, `void` or $`\mathsf{nullptr\_t}`. A vector therefore holds an object only through a pointer to it.
@@ -100,7 +100,7 @@ $$`\dfrac{}{\sigma \vdash_{\mathit{vector}} \mathtt{delete}\ (\mathsf{lib}\ \mat
 A negative size and an index outside $`[0, n)` have no derivation, and the evaluator gives `error` for them. C++17 defines `a[n]` as `*(a.begin() + n)` with no bounds check, which only `at` performs (N4659 §26.2.3, Table 88).
 :::
 
-:::definition "std_function" (parent := "ud7") (lean := "CoreCpp.Semantics.Function.TNew, CoreCpp.Semantics.Function.TDelete, CoreCpp.Semantics.Function.New, CoreCpp.Semantics.Function.Delete, CoreCpp.Std.Function.statics, CoreCpp.Std.Function.fns, CoreCpp.Ty.function, CoreCpp.Semantics.Function.statics") (uses := "std_library, std_uses, fun_accept, fun_callfn")
+:::definition "std_function" (parent := "library") (lean := "CoreCpp.Semantics.Function.TNew, CoreCpp.Semantics.Function.TDelete, CoreCpp.Semantics.Function.New, CoreCpp.Semantics.Function.Delete, CoreCpp.Std.Function.statics, CoreCpp.Std.Function.fns, CoreCpp.Ty.function, CoreCpp.Semantics.Function.statics") (uses := "std_library, std_uses, fun_accept, fun_callfn")
 The header `<functional>` declares `template <typename F> class function;` in `namespace std`. The template argument is a function type $`F = \tau(\tau_1, \ldots, \tau_k)`. A `std::function<F>` is an object, since its module gives `new` a signature. It is created with `new`, reached by pointer and destroyed with `delete`. Its value $`\mathsf{lib}\ \mathtt{std{:}{:}function}\,[\ell_t]` holds one location $`\ell_t`. That location holds the target, a closure, or $`\mathsf{null}` for the function with no target.
 
 The predicate $`\mathrm{wf}_{\mathit{function}}` states that the template argument is a function type.
@@ -124,7 +124,7 @@ $$`\dfrac{}{\sigma \vdash_{\mathit{function}} \mathtt{delete}\ (\mathsf{lib}\ \m
 The call of the object, `(*f)(e₁, …, eₖ)` for a pointer `f`, is the rule `CallFn` of {bpref "fun_callfn"}[], a rule of the language. That rule reads the target and applies it. The function with no target has no derivation there, and the evaluator gives `error`, as the `bad_function_call` of C++ ends a program that does not catch it.
 :::
 
-:::definition "std_assert" (parent := "ud7") (lean := "CoreCpp.Semantics.Assert.TCall, CoreCpp.Semantics.Assert.Call, CoreCpp.Std.Assert.statics, CoreCpp.Std.Assert.fns") (uses := "std_library, std_uses")
+:::definition "std_assert" (parent := "library") (lean := "CoreCpp.Semantics.Assert.TCall, CoreCpp.Semantics.Assert.Call, CoreCpp.Std.Assert.statics, CoreCpp.Std.Assert.fns") (uses := "std_library, std_uses")
 The header `<cassert>` declares `void assert(bool condition);`. In C++ `assert` is a macro, and with `NDEBUG` undefined a failed assertion calls `abort` (N1570 §7.2.1.1). Core C++ gives `error`, which ends with the same exit status.
 
 $$`\dfrac{}{\Gamma \vdash_{\mathit{assert}} \mathtt{assert} : \mathsf{bool} \to \mathsf{void}}\;\textsf{(TA-Call)}`

@@ -23,13 +23,13 @@ Type identifiers start with an uppercase letter and variable identifiers with a 
 
 The lexer is a hand written finite automaton with the longest match rule, and the parser is recursive descent.
 
-:::group "ud1"
+:::group "syntax"
 Syntax, tokens and the parser.
 :::
 
 # Lexer
 
-:::definition "lex_tokens" (parent := "ud1") (lean := "CoreCpp.Token, CoreCpp.keywords, CoreCpp.cppReserved, CoreCpp.symbols3, CoreCpp.symbols2, CoreCpp.symbols1, CoreCpp.Lexer.isIdentStart, CoreCpp.Lexer.isIdentChar")
+:::definition "lex_tokens" (parent := "syntax") (lean := "CoreCpp.Token, CoreCpp.keywords, CoreCpp.cppReserved, CoreCpp.symbols3, CoreCpp.symbols2, CoreCpp.symbols1, CoreCpp.Lexer.isIdentStart, CoreCpp.Lexer.isIdentChar")
 Tokens fall in six classes, and the end token `eof` closes the array.
 
  * Reserved words, the 24 words `int`, `bool`, `void`, `if`, `else`, `while`, `for`, `return`, `true`, `false`, `auto`, `delete`, `new`, `nullptr`, `this`, `class`, `public`, `private`, `virtual`, `override`, `namespace`, `template`, `typename` and `operator`.
@@ -46,7 +46,7 @@ $$`\begin{array}{lcl} \textit{Token} & ::= & \textit{Keyword}\ \mid\ \textit{Typ
 The lexer covers the input by a sequence of `Token` and `Skip`, discards `Skip`, and takes the longest match at each position. A line comment ends at a newline or at the end of the input. The automaton tries the symbols of three characters before those of two and of one.
 :::
 
-:::definition "lex_conventions" (parent := "ud1") (lean := "CoreCpp.Lexer.identifier, CoreCpp.Lexer.qualifiers") (uses := "lex_tokens")
+:::definition "lex_conventions" (parent := "syntax") (lean := "CoreCpp.Lexer.identifier, CoreCpp.Lexer.qualifiers") (uses := "lex_tokens")
 The function `identifier` first looks an identifier up in the reserved words and then classifies it by its initial. A further pass over the token array, `qualifiers`, marks as an `NsId` every identifier whose next token is `::`, of either case.
 
 The pass runs after the automaton, so it sees neither white space nor comments and marks `std :: vector` as it marks `std::vector`. The function `parseUnit` of {bpref "parse_program"}[] runs the automaton on each line of the Preproc output alone and the pass once on the tokens of all the lines, so a `::` that starts a line marks the identifier that ends the line before.
@@ -54,7 +54,7 @@ The pass runs after the automaton, so it sees neither white space nor comments a
 That class is what lets a qualified name open a type where the case convention alone would read a variable, so `std::vector<int>` needs no reserved word.
 :::
 
-:::definition "lex_automaton" (parent := "ud1") (lean := "CoreCpp.lex, CoreCpp.Lexer.run, CoreCpp.Lexer.takeWhile, CoreCpp.Lexer.matchSymbol, CoreCpp.Lexer.skipLine") (uses := "lex_tokens, lex_conventions")
+:::definition "lex_automaton" (parent := "syntax") (lean := "CoreCpp.lex, CoreCpp.Lexer.run, CoreCpp.Lexer.takeWhile, CoreCpp.Lexer.matchSymbol, CoreCpp.Lexer.skipLine") (uses := "lex_tokens, lex_conventions")
 The function `lex` maps a string to an array of tokens ended by `eof`. It runs the automaton `Lexer.run` and then the pass of {bpref "lex_conventions"}[]. It discards white space and line comments, reads the longest run of digits as an integer literal, the longest run of identifier characters as an identifier, and tries the symbols of three, two and one characters in that order. Any other character is a lexical error.
 
 The lexer also rejects what C++ would read otherwise, so that every Core C++ program is a C++ program with the same meaning.
@@ -68,7 +68,7 @@ The automaton `Lexer.run` is `partial`, so Lean records an opaque constant that 
 
 # Grammar
 
-:::definition "gram_full" (parent := "ud1") (lean := "CoreCpp.Grammar.Term, CoreCpp.Grammar.rules, CoreCpp.Grammar.grammar")
+:::definition "gram_full" (parent := "syntax") (lean := "CoreCpp.Grammar.Term, CoreCpp.Grammar.rules, CoreCpp.Grammar.grammar")
 The grammar of Core C++, in EBNF. The superscript $`X^{*}` repeats $`X` zero or more times, and the superscript $`X^{?}` makes $`X` optional. Large parentheses group, the bar separates alternatives, and terminals are in typewriter font. The grammar has no left recursive production, and it is left factored.
 
 $$`\begin{array}{lcl} \textit{Program} & ::= & \textit{Declaration}^{*} \\ \textit{Declaration} & ::= & \texttt{namespace}\ \textit{Name}\ \texttt{\{}\ \textit{Declaration}^{*}\ \texttt{\}} \\  & \mid & \texttt{template}\ \texttt{<}\ \texttt{typename}\ \textit{TypeId}\ \big(\ \texttt{,}\ \texttt{typename}\ \textit{TypeId}\ \big)^{*}\ \texttt{>} \\  & & \qquad \texttt{class}\ \big(\ \textit{TypeId}\ \textit{ClassRest}\ \mid\ \textit{VarId}\ \texttt{;}\ \big) \\  & \mid & \textit{Class} \\  & \mid & \textit{Function} \\ \textit{Name} & ::= & \textit{TypeId}\ \mid\ \textit{VarId} \\ \textit{Class} & ::= & \texttt{class}\ \textit{TypeId}\ \textit{ClassRest} \\ \textit{ClassRest} & ::= & \big(\ \texttt{:}\ \texttt{public}\ \textit{ClassType}\ \big)^{?}\ \texttt{\{}\ \textit{Member}^{*}\ \textit{Section}^{*}\ \texttt{\}}\ \texttt{;} \\ \textit{Section} & ::= & \big(\ \texttt{public}\ \mid\ \texttt{private}\ \big)\ \texttt{:}\ \textit{Member}^{*} \\ \textit{Member} & ::= & \texttt{virtual}\ \big(\ \textit{Type}\ \texttt{\&}^{?}\ \textit{MemberRest}\ \mid\ \texttt{\textasciitilde}\ \textit{TypeId}\ \texttt{(}\ \texttt{)}\ \textit{Block}\ \big) \\  & \mid & \texttt{\textasciitilde}\ \textit{TypeId}\ \texttt{(}\ \texttt{)}\ \textit{Block} \\  & \mid & \big(\ \textit{BasicType}\ \mid\ \textit{NsId}\ \texttt{::}\ \textit{QualTail}\ \texttt{*}^{?}\ \big)\ \texttt{\&}^{?}\ \textit{MemberRest} \\  & \mid & \textit{TypeId}\ \big(\ \textit{Params}\ \textit{Block} \\  & & \qquad \mid\ \textit{TemplateArgs}^{?}\ \texttt{*}^{?}\ \texttt{\&}^{?}\ \textit{MemberRest}\ \big) \\ \textit{MemberRest} & ::= & \textit{VarId}\ \big(\ \texttt{;}\ \mid\ \textit{Params}\ \texttt{override}^{?}\ \textit{Block}\ \big) \\  & \mid & \texttt{operator}\ \textit{Op}\ \textit{Params}\ \textit{Block} \\ \textit{Op} & ::= & \texttt{+}\ \mid\ \texttt{-}\ \mid\ \texttt{*}\ \mid\ \texttt{/}\ \mid\ \texttt{\%}\ \mid\ \texttt{==}\ \mid\ \texttt{!=}\ \mid\ \texttt{<}\ \mid\ \texttt{<=}\ \mid\ \texttt{>}\ \mid\ \texttt{>=}\ \mid\ \texttt{[}\ \texttt{]} \\ \textit{Function} & ::= & \textit{Type}\ \textit{VarId}\ \textit{Params}\ \big(\ \textit{Block}\ \mid\ \texttt{;}\ \big) \\  \textit{Params} & ::= & \texttt{(}\ \big(\ \textit{Param}\ \big(\ \texttt{,}\ \textit{Param}\ \big)^{*}\ \big)^{?}\ \texttt{)} \\ \textit{Param} & ::= & \textit{Type}\ \texttt{\&}^{?}\ \textit{VarId} \\ \textit{Type} & ::= & \textit{BasicType}\ \mid\ \textit{ClassType}\ \texttt{*}^{?} \\ \textit{TemplateArg} & ::= & \textit{Type}\ \big(\ \texttt{(}\ \big(\ \textit{Type}\ \big(\ \texttt{,}\ \textit{Type}\ \big)^{*}\ \big)^{?}\ \texttt{)}\ \big)^{?} \\ \textit{BasicType} & ::= & \texttt{int}\ \mid\ \texttt{bool}\ \mid\ \texttt{void} \\ \textit{ClassType} & ::= & \textit{NsId}\ \texttt{::}\ \textit{QualTail}\ \mid\ \textit{TypeId}\ \textit{TemplateArgs}^{?} \\ \textit{QualTail} & ::= & \textit{NsId}\ \texttt{::}\ \textit{QualTail}\ \mid\ \textit{Name}\ \textit{TemplateArgs}^{?} \\ \textit{TemplateArgs} & ::= & \texttt{<}\ \textit{TemplateArg}\ \big(\ \texttt{,}\ \textit{TemplateArg}\ \big)^{*}\ \texttt{>} \\ \textit{Block} & ::= & \texttt{\{}\ \textit{Statement}^{*}\ \texttt{\}} \\ \textit{Statement} & ::= & \textit{Block} \\  & \mid & \texttt{if}\ \texttt{(}\ \textit{Expr}\ \texttt{)}\ \textit{Block}\ \big(\ \texttt{else}\ \textit{Block}\ \big)^{?} \\  & \mid & \texttt{while}\ \texttt{(}\ \textit{Expr}\ \texttt{)}\ \textit{Block} \\  & \mid & \texttt{for}\ \texttt{(}\ \textit{ForInit}\ \texttt{;}\ \textit{Expr}\ \texttt{;}\ \textit{ExprStatement}\ \texttt{)}\ \textit{Block} \\  & \mid & \texttt{return}\ \textit{Expr}^{?}\ \texttt{;} \\  & \mid & \texttt{delete}\ \textit{Expr}\ \texttt{;} \\  & \mid & \textit{LocalDecl}\ \texttt{;} \\  & \mid & \textit{ExprStatement}\ \texttt{;} \\ \textit{LocalDecl} & ::= & \texttt{auto}\ \textit{VarId}\ \texttt{=}\ \textit{Expr} \\  & \mid & \textit{Type}\ \texttt{\&}^{?}\ \textit{VarId}\ \texttt{=}\ \textit{Expr} \\ \textit{ForInit} & ::= & \textit{LocalDecl}\ \mid\ \textit{ExprStatement} \\ \textit{ExprStatement} & ::= & \textit{Expr}\ \big(\ \texttt{=}\ \textit{Expr}\ \big)^{?} \\ \textit{Expr} & ::= & \textit{OrExpr}\ \big(\ \texttt{?}\ \textit{Expr}\ \texttt{:}\ \textit{Expr}\ \big)^{?} \\ \textit{OrExpr} & ::= & \textit{AndExpr}\ \big(\ \texttt{||}\ \textit{AndExpr}\ \big)^{*} \\ \textit{AndExpr} & ::= & \textit{EqExpr}\ \big(\ \texttt{\&\&}\ \textit{EqExpr}\ \big)^{*} \\ \textit{EqExpr} & ::= & \textit{RelExpr}\ \big(\ \big(\ \texttt{==}\ \mid\ \texttt{!=}\ \big)\ \textit{RelExpr}\ \big)^{*} \\ \textit{RelExpr} & ::= & \textit{AddExpr}\ \big(\ \big(\ \texttt{<}\ \mid\ \texttt{<=}\ \mid\ \texttt{>}\ \mid\ \texttt{>=}\ \big)\ \textit{AddExpr}\ \big)^{*} \\ \textit{AddExpr} & ::= & \textit{MulExpr}\ \big(\ \big(\ \texttt{+}\ \mid\ \texttt{-}\ \big)\ \textit{MulExpr}\ \big)^{*} \\ \textit{MulExpr} & ::= & \textit{UnaryExpr}\ \big(\ \big(\ \texttt{*}\ \mid\ \texttt{/}\ \mid\ \texttt{\%}\ \big)\ \textit{UnaryExpr}\ \big)^{*} \\ \textit{UnaryExpr} & ::= & \big(\ \texttt{!}\ \mid\ \texttt{-}\ \mid\ \texttt{*}\ \big)\ \textit{UnaryExpr}\ \mid\ \textit{PostfixExpr} \\ \textit{PostfixExpr} & ::= & \textit{Primary}\ \textit{Chain} \\ \textit{Chain} & ::= & \big(\ \texttt{[}\ \textit{Expr}\ \texttt{]}\ \textit{Chain}\ \mid\ \texttt{.}\ \textit{VarId}\ \textit{After} \\  & & \qquad \mid\ \texttt{->}\ \textit{VarId}\ \textit{After}\ \mid\ \textit{Args}\ \textit{Chain}\ \big)^{?} \\ \textit{After} & ::= & \textit{Args}\ \textit{Chain}\ \mid\ \textit{ChainNoCall} \\ \textit{ChainNoCall} & ::= & \big(\ \texttt{[}\ \textit{Expr}\ \texttt{]}\ \textit{Chain}\ \mid\ \texttt{.}\ \textit{VarId}\ \textit{After} \\  & & \qquad \mid\ \texttt{->}\ \textit{VarId}\ \textit{After}\ \big)^{?} \\  \textit{Primary} & ::= & \textit{IntLit}\ \mid\ \texttt{true}\ \mid\ \texttt{false}\ \mid\ \texttt{nullptr}\ \mid\ \texttt{this}\ \mid\ \textit{VarId} \\  & \mid & \texttt{(}\ \textit{Expr}\ \texttt{)} \\  & \mid & \texttt{new}\ \textit{ClassType}\ \textit{NewArgs} \\ \textit{Args} & ::= & \texttt{(}\ \big(\ \textit{Expr}\ \big(\ \texttt{,}\ \textit{Expr}\ \big)^{*}\ \big)^{?}\ \texttt{)} \\ \textit{NewArgs} & ::= & \texttt{(}\ \big(\ \textit{NewArg}\ \big(\ \texttt{,}\ \textit{NewArg}\ \big)^{*}\ \big)^{?}\ \texttt{)} \\ \textit{NewArg} & ::= & \textit{Lambda}\ \mid\ \textit{Expr} \\ \textit{Lambda} & ::= & \texttt{[=]}\ \textit{Params}\ \texttt{->}\ \textit{Type}\ \textit{Block} \end{array}`
@@ -90,7 +90,7 @@ Only a header of Core C++ opens the namespace `std`, declares a function without
 The parser also checks the names of the constructor and the destructor against their class. A class has at most one of each, both are public, and a field is never virtual. The public destructor is a restriction of the subset, since C++ accepts a private destructor that no code outside the class calls.
 :::
 
-:::theorem "gram_ll1" (parent := "ud1") (lean := "CoreCpp.Grammar.isLL1_grammar, CoreCpp.Grammar.table, CoreCpp.Grammar.derive, CoreCpp.Grammar.parseTree, CoreCpp.Grammar.Term.ofToken, CoreCpp.Grammar.ofEbnf, CoreCpp.Grammar.leanModule, LL1.translate, LL1.Grammar.isLL1, LL1.Grammar.table, LL1.Grammar.parse")
+:::theorem "gram_ll1" (parent := "syntax") (lean := "CoreCpp.Grammar.isLL1_grammar, CoreCpp.Grammar.table, CoreCpp.Grammar.derive, CoreCpp.Grammar.parseTree, CoreCpp.Grammar.Term.ofToken, CoreCpp.Grammar.ofEbnf, CoreCpp.Grammar.leanModule, LL1.translate, LL1.Grammar.isLL1, LL1.Grammar.table, LL1.Grammar.parse")
 The grammar is LL(1).
 :::
 
@@ -122,7 +122,7 @@ The same table drives the nonrecursive predictive parser `LL1.Grammar.parse`, wh
 
 # Abstract syntax and parser
 
-:::definition "gram_ast" (parent := "ud1") (lean := "CoreCpp.Ty, CoreCpp.UnOp, CoreCpp.BinOp, CoreCpp.Param, CoreCpp.Expr, CoreCpp.Cmd, CoreCpp.Fun, CoreCpp.Vis, CoreCpp.Field, CoreCpp.Method, CoreCpp.Ctor, CoreCpp.Dtor, CoreCpp.ClassDecl, CoreCpp.Decl, CoreCpp.Program")
+:::definition "gram_ast" (parent := "syntax") (lean := "CoreCpp.Ty, CoreCpp.UnOp, CoreCpp.BinOp, CoreCpp.Param, CoreCpp.Expr, CoreCpp.Cmd, CoreCpp.Fun, CoreCpp.Vis, CoreCpp.Field, CoreCpp.Method, CoreCpp.Ctor, CoreCpp.Dtor, CoreCpp.ClassDecl, CoreCpp.Decl, CoreCpp.Program")
 The abstract syntax is the tree form of the grammar of {bpref "gram_full"}[], with one inductive type or structure per class of nonterminals. It has no parentheses and no precedence, because the tree fixes the structure. The table below gives the alternatives of every constructor of `Syntax.lean`, in the order of the file, with the constructor in the right column.
 
 The type `Ty` has the basic types `int`, `bool` and `void`, class types, pointer types, the types of the library such as `std::vector<int>`, function types, and $`\mathsf{nullptr\_t}`, the internal type of `nullptr`.
@@ -156,7 +156,7 @@ A constructor here is a case of an inductive definition of Lean, and not the mem
 Every field and every method carries a `Vis`, which the parser takes from the section that holds it. The constructor and the destructor are public and carry no visibility.
 :::
 
-:::definition "parse_expr" (parent := "ud1") (lean := "CoreCpp.P, CoreCpp.PState, CoreCpp.expr, CoreCpp.orExpr, CoreCpp.andExpr, CoreCpp.eqExpr, CoreCpp.relExpr, CoreCpp.addExpr, CoreCpp.mulExpr, CoreCpp.unaryExpr, CoreCpp.postfixExpr, CoreCpp.primary, CoreCpp.args, CoreCpp.newArgs, CoreCpp.newArg, CoreCpp.lambda") (uses := "gram_ast, lex_automaton")
+:::definition "parse_expr" (parent := "syntax") (lean := "CoreCpp.P, CoreCpp.PState, CoreCpp.expr, CoreCpp.orExpr, CoreCpp.andExpr, CoreCpp.eqExpr, CoreCpp.relExpr, CoreCpp.addExpr, CoreCpp.mulExpr, CoreCpp.unaryExpr, CoreCpp.postfixExpr, CoreCpp.primary, CoreCpp.args, CoreCpp.newArgs, CoreCpp.newArg, CoreCpp.lambda") (uses := "gram_ast, lex_automaton")
 A parser has the type `P α`, a state monad over `PState` that gives an `α` or fails with a message. The state holds the tokens, the position of the next one, the prefix of the enclosing namespaces and, for each token, whether it comes from a header.
 
 One parser function per expression nonterminal, from `Expr` down to `Primary`, named after it. Each level of the grammar is one level of precedence, and the repetition of an operator and its operand builds a left associative tree.
@@ -166,7 +166,7 @@ The function `postfixExpr` reads `Chain`, `After` and `ChainNoCall` inline. It c
 The function `unaryExpr` reads `!`, unary `-` and the dereference `*`, and `primary` covers literals, `nullptr`, `this`, variables, parenthesised expressions and the two forms of `new`, `newObj` for a class of the program and `newLib` for a type of the library. The function `newArgs` reads the arguments of `new`, and `newArg` reads a lambda there, the one position the grammar gives it.
 :::
 
-:::definition "parse_statement" (parent := "ud1") (lean := "CoreCpp.block, CoreCpp.statement, CoreCpp.localDecl, CoreCpp.forInit, CoreCpp.exprStatement, CoreCpp.isTypeStart, CoreCpp.type, CoreCpp.basicType, CoreCpp.classType, CoreCpp.qualTail, CoreCpp.templateArgs, CoreCpp.templateArg") (uses := "gram_ast, parse_expr")
+:::definition "parse_statement" (parent := "syntax") (lean := "CoreCpp.block, CoreCpp.statement, CoreCpp.localDecl, CoreCpp.forInit, CoreCpp.exprStatement, CoreCpp.isTypeStart, CoreCpp.type, CoreCpp.basicType, CoreCpp.classType, CoreCpp.qualTail, CoreCpp.templateArgs, CoreCpp.templateArg") (uses := "gram_ast, parse_expr")
 One parser function per command nonterminal and per type nonterminal, named after it. The function `statement` chooses the production by the first token, and a token that opens a type, by `isTypeStart`, opens a declaration. The function `exprStatement` reads an expression and then decides between assignment and expression statement by the presence of `=`.
 
 A `Type` is a basic type or a class type, optionally followed by `*`. A class type is a name, qualified by namespaces or not, with template arguments or without. The function `classType` reads an unqualified name in the enclosing namespace. The case of the last component of a qualified name says which type it is, an uppercase one names a class of the program and a lowercase one a class of the library, whose names are lowercase, so `Geometry::Shape` is the first and `std::vector<int>` the second.
@@ -174,7 +174,7 @@ A `Type` is a basic type or a class type, optionally followed by `*`. A class ty
 A template argument is a type, and a function type `Type(Type, …)` as well. A local declaration with a type may be a reference, and its initialiser is an `Expr`, never a lambda.
 :::
 
-:::definition "parse_program" (parent := "ud1") (lean := "CoreCpp.program, CoreCpp.declaration, CoreCpp.P.name, CoreCpp.P.qualify, CoreCpp.P.inHeader, CoreCpp.classDecl, CoreCpp.classRest, CoreCpp.member, CoreCpp.operatorName, CoreCpp.function, CoreCpp.params, CoreCpp.param, CoreCpp.className, CoreCpp.runParser, CoreCpp.parseProgram, CoreCpp.parseExpr, CoreCpp.parseStatement, CoreCpp.parseUnit") (uses := "gram_ast, parse_statement")
+:::definition "parse_program" (parent := "syntax") (lean := "CoreCpp.program, CoreCpp.declaration, CoreCpp.P.name, CoreCpp.P.qualify, CoreCpp.P.inHeader, CoreCpp.classDecl, CoreCpp.classRest, CoreCpp.member, CoreCpp.operatorName, CoreCpp.function, CoreCpp.params, CoreCpp.param, CoreCpp.className, CoreCpp.runParser, CoreCpp.parseProgram, CoreCpp.parseExpr, CoreCpp.parseStatement, CoreCpp.parseUnit") (uses := "gram_ast, parse_statement")
 A program is a sequence of declarations up to `eof`. Each one is a class, a class template, a namespace, a function, or a class template or a function of the library declared without a body.
 
 The functions carry the names of their nonterminals, with three exceptions. The function `classDecl` reads `Class`, `operatorName` reads `Op` and `P.name` reads `Name`. The function `classRest` reads `Section` inline, and `member` reads `MemberRest`.
@@ -188,7 +188,7 @@ The function `runParser` runs the lexer and a parser on a string and fails when 
 
 The tests of `tests/preproc/` and an inspection of the headers check the agreement stated at the end of this section. No Lean proof covers it.
 
-:::definition "pp_language" (parent := "ud1") (lean := "Preproc.Directive, Preproc.Line, Preproc.Item, Preproc.lines, Preproc.parse, Preproc.group, Preproc.condRest")
+:::definition "pp_language" (parent := "syntax") (lean := "Preproc.Directive, Preproc.Line, Preproc.Item, Preproc.lines, Preproc.parse, Preproc.group, Preproc.condRest")
 Preproc is the preprocessor of Core C++, a language of its own that runs before the lexer of {bpref "lex_automaton"}[]. It reads a file as a sequence of lines and never lexes or parses Core C++, so the two languages share no surface. Every Preproc program is also a valid input of the preprocessor of `g++`.
 
 The terminals of its grammar are whole lines. $`\textit{Text}` stands for any text line, and $`\textit{NL}` ends a directive line.
@@ -198,7 +198,7 @@ $$`\begin{array}{lcl} \textit{File} & ::= & \textit{Group} \\ \textit{Group} & :
 Preproc supports conditional compilation on flags, the inclusion of a subset of the standard library and of the STL, and the function `assert` of `<cassert>`. A flag has no value and never reaches the code. The design is `preproc/ccpp-preproc.md`.
 :::
 
-:::definition "pp_lexical" (parent := "ud1") (lean := "Preproc.lexLine, Preproc.directive, Preproc.checkChars, Preproc.isFlag, Preproc.words") (uses := "pp_language")
+:::definition "pp_lexical" (parent := "syntax") (lean := "Preproc.lexLine, Preproc.directive, Preproc.checkChars, Preproc.isFlag, Preproc.words") (uses := "pp_language")
 Every line satisfies five rules, including the lines of a branch that is not selected and the lines of every header. The C++ preprocessor splices lines and removes comments before it recognises directives (N4659 §5.2, phases 2 to 4), and the rules keep the line structure the same for both.
 
  * A directive line is exactly one of the forms of the grammar.
@@ -208,7 +208,7 @@ Every line satisfies five rules, including the lines of a branch that is not sel
  * No word of a text line starts with `CCPP_`, so a flag never occurs in the code. A word is a maximal run of letters, digits and `_`.
 :::
 
-:::definition "pp_meaning" (parent := "ud1") (lean := "Preproc.run, Preproc.runItem, Preproc.Item.size, Preproc.blank, Preproc.translateLines, Preproc.translate") (uses := "pp_language, pp_headers")
+:::definition "pp_meaning" (parent := "syntax") (lean := "Preproc.run, Preproc.runItem, Preproc.Item.size, Preproc.blank, Preproc.translateLines, Preproc.translate") (uses := "pp_language, pp_headers")
 The flag environment $`\varphi` is a finite set of flags, initially the flags given as `-D CCPP_X=`. The judgement $`\varphi \vdash G \Rightarrow t, \varphi'` gives the output lines $`t` of a group and the environment after it. $`H(h)` is the contents of the Core C++ header $`h`.
 
 $$`\dfrac{}{\varphi \vdash \texttt{\#define}\ F \Rightarrow \varepsilon, \varphi \cup \{F\}}\;\textsf{(P-Define)}`
@@ -226,7 +226,7 @@ The function `translateLines` gives the output lines of a file under the initial
 The functions `run`, `runItem` and `Item.size` are `partial`, so Lean records opaque constants that carry the type and not the body, and no property of them is proved here.
 :::
 
-:::definition "pp_headers" (parent := "ud1") (lean := "Preproc.Env") (uses := "pp_language")
+:::definition "pp_headers" (parent := "syntax") (lean := "Preproc.Env") (uses := "pp_language")
 The headers of Core C++ are Core C++ code for the Core C++ compiler, in `preproc/include`, and `g++` uses its own headers. Each is a Preproc file whose guard makes it idempotent, as a C++ header is (N4659 §20.5.2.2, paragraph 2).
 
 The headers `<vector>` and `<functional>` declare the class templates `std::vector` and `std::function`, and `<cassert>` declares the function `assert`. Chapter {bpref "std_library"}[] gives their semantics.
@@ -234,7 +234,7 @@ The headers `<vector>` and `<functional>` declare the class templates `std::vect
 An `#include` inside a function body puts declarations inside a block, which the grammar of {bpref "gram_full"}[] rejects. Inclusion fails beyond a depth of 64, which bounds a cycle of headers without a guard.
 :::
 
-:::theorem "pp_agree" (parent := "ud1") (uses := "pp_meaning, pp_lexical, pp_headers")
+:::theorem "pp_agree" (parent := "syntax") (uses := "pp_meaning, pp_lexical, pp_headers")
 Take a Preproc program $`p` whose output Core C++ accepts. Compiling $`p` with `g++` and running the output in Core C++ give the same exit status under the same `-D` options.
 :::
 

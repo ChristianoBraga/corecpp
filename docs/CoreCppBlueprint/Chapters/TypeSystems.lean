@@ -21,13 +21,13 @@ A name denotes an overload set, and a call selects one candidate. An infix opera
 
 A template is expanded before the program is checked, so instantiation costs nothing at run time. Only the instantiations are checked.
 
-:::group "ud6"
+:::group "type_systems"
 Overloading, polymorphism, subtyping and inference.
 :::
 
 # Overloading
 
-:::definition "overload_set" (parent := "ud6") (lean := "CoreCpp.sigOf, CoreCpp.Program.funsNamed, CoreCpp.Program.findMethods, CoreCpp.Typing.distinguishable") (uses := "fun_decl, cls_decl")
+:::definition "overload_set" (parent := "type_systems") (lean := "CoreCpp.sigOf, CoreCpp.Program.funsNamed, CoreCpp.Program.findMethods, CoreCpp.Typing.distinguishable") (uses := "fun_decl, cls_decl")
 A name denotes an overload set. It holds the functions of the program with that name, or the methods of that name along the chain of a class, one per signature. A method of a derived class replaces the one of a base with the same signature. A different signature is another overload, so the subset has no name hiding. Two declarations of one name coexist only when they are distinguishable.
 
 $$`\dfrac{\text{arities differ, or } \exists i.\ p_i \neq q_i \text{ and neither } p_i \text{ nor } q_i \text{ is a } \mathtt{std{:}{:}function}}{\text{the two declarations are overloads}}\;\textsf{(Distinguishable)}`
@@ -35,7 +35,7 @@ $$`\dfrac{\text{arities differ, or } \exists i.\ p_i \neq q_i \text{ and neither
 The restriction keeps a lambda argument from deciding a call, which would ask for the type of the lambda before the candidate that gives it is known. A `std::function` is an object of {bpref "std_function"}[], so a parameter has it only by reference. The exclusion applies there, and two functions `g` whose parameters are `std::function<int(int)>&` and `std::function<bool(int)>&` are not distinguishable.
 :::
 
-:::definition "overload_pick" (parent := "ud6") (lean := "CoreCpp.Typing.pickOverload, CoreCpp.Typing.resolveFun, CoreCpp.Typing.resolveMethod, CoreCpp.Semantics.MethodSel") (uses := "overload_set, fun_call, cls_method")
+:::definition "overload_pick" (parent := "type_systems") (lean := "CoreCpp.Typing.pickOverload, CoreCpp.Typing.resolveFun, CoreCpp.Typing.resolveMethod, CoreCpp.Semantics.MethodSel") (uses := "overload_set, fun_call, cls_method")
 A call collects the candidates of its arity that accept the arguments, each argument by value acceptable at the type of its parameter and each argument of a reference parameter denoting a location of that type. The choice is the exact candidate when several accept.
 
 $$`\dfrac{\begin{array}{c} A = \text{the candidates of } \mathrm{cand}(f, k) \text{ that accept } e_1, \ldots, e_k \\ A \text{ has one element whose parameters are} \\ \text{exactly the types of the arguments, or } A \text{ is a singleton} \end{array}}{\text{the call of } f \text{ selects that candidate}}\;\textsf{(T-Overload)}`
@@ -43,13 +43,13 @@ $$`\dfrac{\begin{array}{c} A = \text{the candidates of } \mathrm{cand}(f, k) \te
 With no candidate of the arity the error is an arity error, measured on the first candidate. With $`A` empty the error is the one of the single candidate of that arity, when there is one, and no overload otherwise. With two or more in $`A` and no exact one the call is ambiguous. Core C++ does not rank implicit conversion sequences, as C++ does (N4659 §16.3.3.2).
 :::
 
-:::definition "overload_sig" (parent := "ud6") (lean := "CoreCpp.FunEnv.lookupSig, CoreCpp.Eval.resolve, CoreCpp.Typing.annotate, CoreCpp.Program.resolve") (uses := "overload_pick, judg_ev_expr")
+:::definition "overload_sig" (parent := "type_systems") (lean := "CoreCpp.FunEnv.lookupSig, CoreCpp.Eval.resolve, CoreCpp.Typing.annotate, CoreCpp.Program.resolve") (uses := "overload_pick, judg_ev_expr")
 Overloading adds no evaluation rule. The type checker writes the signature of the chosen candidate into the field `sig` of the call. The evaluator looks a function or a method up by name and signature instead of by name alone. A program that was not annotated, which the checker rejects first, runs with the first candidate of the name.
 :::
 
 # Operator members
 
-:::definition "op_member" (parent := "ud6") (lean := "CoreCpp.operatorName, CoreCpp.Typing.methodCall, CoreCpp.Semantics.MethodSel") (uses := "overload_pick, cls_method")
+:::definition "op_member" (parent := "type_systems") (lean := "CoreCpp.operatorName, CoreCpp.Typing.methodCall, CoreCpp.Semantics.MethodSel") (uses := "overload_pick, cls_method")
 An infix operator whose left operand is an object, and the indexing of an object, are the calls of members. The left operand decides, so no operator on `int` or `bool` changes meaning, and `&&` and `||` are not overloaded.
 
 $$`\dfrac{\begin{array}{c} \star \text{ a binary operator other than } \mathtt{\&\&} \text{ and } \mathtt{||}\qquad \Gamma \vdash e_1 : C \\ C \text{ has } \mathtt{operator}\star \text{ visible from } \Gamma\qquad \Gamma \vdash e_1.\mathtt{operator}\star(e_2) : \tau \end{array}}{\Gamma \vdash e_1 \star e_2 : \tau}\;\textsf{(T-OpBin)}`
@@ -59,7 +59,7 @@ $$`\dfrac{\begin{array}{c} \Gamma \vdash e : C\qquad C \text{ has } \mathtt{oper
 The type checker rewrites both forms into the call of the member, and from there they are ordinary method calls, with the visibility, the overload resolution and the dispatch of a method. The trace shows the rule `MethodCall` under the infix form.
 :::
 
-:::definition "op_refret" (parent := "ud6") (lean := "CoreCpp.Method, CoreCpp.Typing.refReturns, CoreCpp.Typing.refRets, CoreCpp.Eval.callMethod, CoreCpp.Semantics.RefReturns, CoreCpp.Semantics.CallMethod") (uses := "op_member, judg_ev_lval")
+:::definition "op_refret" (parent := "type_systems") (lean := "CoreCpp.Method, CoreCpp.Typing.refReturns, CoreCpp.Typing.refRets, CoreCpp.Eval.callMethod, CoreCpp.Semantics.RefReturns, CoreCpp.Semantics.CallMethod") (uses := "op_member, judg_ev_lval")
 A member may return $`\tau\&`, with $`\tau` not `void`. Every `return e` of its body then has an operand that denotes a location under $`\Gamma_m`, the context of `this` and of the parameters, without the locals of the body. The walk does not enter the body of a lambda, because the `return` of a lambda is the lambda's. The rule T-Ret of the body then requires $`\Gamma \vdash e \lhd \tau`.
 
 $$`\dfrac{\tau \neq \mathsf{void} \qquad \text{every } \mathtt{return}\ e \text{ of } c \text{ has } \Gamma_m \vdash_{\ell} e : \tau' \text{ for some } \tau'}{\vdash \tau\&\ m(\ldots)\ \{c\} \text{ in } C}\;\textsf{(T-RetRef)}`
@@ -85,11 +85,11 @@ Since the locals of the body are outside $`\Gamma_m`, a member never returns the
 
 # Parametric polymorphism
 
-:::definition "tmpl_decl" (parent := "ud6") (lean := "CoreCpp.Decl, CoreCpp.Program.templates, CoreCpp.classType") (uses := "cls_decl, gram_full")
+:::definition "tmpl_decl" (parent := "type_systems") (lean := "CoreCpp.Decl, CoreCpp.Program.templates, CoreCpp.classType") (uses := "cls_decl, gram_full")
 A class template is a class with a type parameter, `template<typename T> class C`, and it is instantiated only in type position, `C<int>`. The name of an instantiation is the text of its type, `Stack<int>`, so the name in the source and the name of the expanded class agree. The parser builds it when it reads a type. The grammar admits one type parameter.
 :::
 
-:::definition "tmpl_inst" (parent := "ud6") (lean := "CoreCpp.Templates.instantiate, CoreCpp.Templates.substClass, CoreCpp.Templates.substTy, CoreCpp.Templates.substName") (uses := "tmpl_decl")
+:::definition "tmpl_inst" (parent := "type_systems") (lean := "CoreCpp.Templates.instantiate, CoreCpp.Templates.substClass, CoreCpp.Templates.substTy, CoreCpp.Templates.substName") (uses := "tmpl_decl")
 Instantiation is substitution, and it precedes every other judgment.
 
 $$`\dfrac{\begin{array}{c} p \text{ has } \mathtt{template{<}typename\ T{>}\ class}\ C\qquad C{<}\tau{>} \text{ mentioned in } p \\ C{<}\tau{>} \notin \text{class table of } p \end{array}}{p \longrightarrow p, \mathtt{class}\ C{<}\tau{>}\ \{ \ldots [T := \tau] \ldots \}}\;\textsf{(Inst)}`
@@ -103,13 +103,13 @@ A template is never checked, only its instantiations are. Two instantiations of 
 
 # Subtyping and inference
 
-:::theorem "subtyping" (parent := "ud6") (uses := "cls_subsumption, tmpl_inst")
+:::theorem "subtyping" (parent := "type_systems") (uses := "cls_subsumption, tmpl_inst")
 Subtyping is the rule Subsumption of {bpref "cls_subsumption"}[], the relation $`\mathsf{Compat}(D*, B*)`. It is the only conversion between pointers to classes. No typing rule derives $`\Gamma \vdash e : B*` from $`\Gamma \vdash e : D*`. The rules that require $`\mathsf{Compat}` apply it instead, in declarations, assignments, arguments, results, comparisons and the branches of `?:`.
 
 Subtype polymorphism and parametric polymorphism do not compose in the subset. Two instantiations of one template have no subtype relation, so a `Stack<D*>*` is not accepted where a `Stack<B*>*` is expected. Such a conversion would be unsound, because a `Stack<B*>` accepts a `push` of any `B*` and a `Stack<D*>` does not. Variance is left out of the subset.
 :::
 
-:::definition "inference" (parent := "ud6") (lean := "CoreCpp.Cmd") (uses := "cmd_decl")
+:::definition "inference" (parent := "type_systems") (lean := "CoreCpp.Cmd") (uses := "cmd_decl")
 Type inference in Core C++ is local. The rule of `auto` is T-Auto of {bpref "cmd_decl"}[], and it covers pointers to instantiations, since a pointer has values.
 
 $$`\dfrac{\Gamma \vdash e : \tau \qquad \mathsf{HasValues}(\tau) \qquad \mathsf{Storable}(\tau)}{\Gamma \vdash \mathtt{auto}\ x = e \dashv \Gamma[x \mapsto \tau]}\;\textsf{(T-Auto)}`
