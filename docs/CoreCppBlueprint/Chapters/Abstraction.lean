@@ -123,12 +123,12 @@ $$`\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow v, \sigma}{p \Right
 
 # Properties
 
-:::theorem "progress" (parent := "abstraction") (uses := "judg_ev_expr, judg_ev_cmd, judg_ty_expr, judg_ty_cmd, judg_relations")
-A well typed program has a derivation, does not terminate, or is stuck. It is stuck at a case C++17 leaves undefined, or at the end of a `main` without `return`, and the evaluator reports it as `error`. Every well typed constructor has an evaluation rule, checked by inspection of the rule set. There is no Lean proof yet.
+:::theorem "progress" (parent := "abstraction") (uses := "judg_ev_expr, judg_ev_cmd, judg_ty_expr, judg_ty_cmd, judg_relations, std_function, std_assert")
+A well typed program has a derivation, does not terminate, or is stuck. It is stuck at a case C++17 leaves undefined, at the end of a `main` without `return`, at the call of a `std::function` with no target, or at a failed `assert`. The evaluator reports it as `error`. C++17 defines the last two cases. The call of a `std::function` with no target throws `bad_function_call` (N4659 §23.14.13.1 ¶1), and a failed `assert` calls `abort`, {bpref "std_assert"}[]. Core C++ has no exceptions, {bpref "design_out"}[], so both end the program. Every well typed constructor has an evaluation rule, checked by inspection of the rule set. There is no Lean proof yet.
 :::
 
-:::theorem "determinism" (parent := "abstraction") (uses := "judg_ev_expr, judg_ev_cmd, judg_relations")
-Every construct has rules with mutually exclusive premises, and a Core C++ program has at most one result. The evaluation order fixed left to right removes the choice C++17 leaves to the compiler. The relations of {bpref "judg_relations"}[] make the statement precise. Two derivations of $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` for the same $`e` give the same $`v` and $`\sigma'`. There is no Lean proof yet.
+:::theorem "determinism" (parent := "abstraction") (lean := "CoreCpp.Semantics.Runs.det, CoreCpp.Semantics.Eval.det, CoreCpp.Semantics.LEval.det, CoreCpp.Semantics.Exec.det, CoreCpp.Semantics.Execs.det") (uses := "judg_ev_expr, judg_ev_cmd, judg_relations")
+Every construct has rules with mutually exclusive premises, and a Core C++ program has at most one result. The evaluation order fixed left to right removes the choice C++17 leaves to the compiler. The relations of {bpref "judg_relations"}[] make the statement precise. Two derivations of $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` for the same $`e` give the same $`v` and $`\sigma'`. The same holds for `LEval`, `Exec`, `Execs` and the auxiliary dynamic relations. The proof in `CoreCpp/Semantics/Determinism.lean` is one mutual structural recursion on the first derivation. Each case either applies the rule of the second derivation or contradicts one of its premises.
 :::
 
 # Rules of the chapter

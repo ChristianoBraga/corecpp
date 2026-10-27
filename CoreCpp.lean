@@ -13,3 +13,5 @@ import CoreCpp.Eval
 import CoreCpp.Semantics.Library
 import CoreCpp.Semantics.Dynamic
 import CoreCpp.Semantics.Static
+import CoreCpp.Semantics.Determinism
+import CoreCpp.Semantics.Progress

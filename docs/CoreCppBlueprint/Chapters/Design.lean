@@ -21,7 +21,7 @@ Each syntactic class, such as the expressions or the commands, has its own judge
 
 Core C++ is a subset of C++17, and every Core C++ program compiles with `g++ -std=c++17`. Each restriction of the subset removes a construct, or a freedom that C++17 leaves to the compiler. For each restriction, this chapter states what C++17 allows, what Core C++ admits and the property of the semantics the restriction gives.
 
-The properties are those the earlier chapters state. Every construct has a typing rule and an evaluation rule. A program has at most one result, {bpref "determinism"}[]. A well typed program has a derivation, does not terminate, or reaches a case that the evaluator reports as `error`, {bpref "progress"}[]. Neither statement has a Lean proof yet, so both are properties checked by inspection of the rule set.
+The properties are those the earlier chapters state. Every construct has a typing rule and an evaluation rule. A program has at most one result, {bpref "determinism"}[]. A well typed program has a derivation, does not terminate, or reaches a case that the evaluator reports as `error`, {bpref "progress"}[]. Lean proves the first statement. The second has no Lean proof yet, so it is a property checked by inspection of the rule set.
 
 The behaviour of C++ in this chapter comes from N4659, the final working draft of C++17, [open-std.org](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/n4659.pdf). It also comes from `g++ -std=c++17`, which on the machine of these tests is Apple clang 21.
 
