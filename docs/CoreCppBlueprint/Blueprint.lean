@@ -11,6 +11,7 @@ import CoreCppBlueprint.Chapters.Abstraction
 import CoreCppBlueprint.Chapters.Encapsulation
 import CoreCppBlueprint.Chapters.TypeSystems
 import CoreCppBlueprint.Chapters.Library
+import CoreCppBlueprint.Chapters.Design
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -34,6 +35,7 @@ One chapter per group of constructions, one node per construction or nonterminal
 {include 0 CoreCppBlueprint.Chapters.Encapsulation}
 {include 0 CoreCppBlueprint.Chapters.TypeSystems}
 {include 0 CoreCppBlueprint.Chapters.Library}
+{include 0 CoreCppBlueprint.Chapters.Design}
 
 # References
 
