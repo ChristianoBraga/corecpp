@@ -115,7 +115,7 @@ The C++ header `<cassert>` has the contents of the C header `<assert.h>` (N4659 
 Take a Preproc program p whose output T(p) Core C++ accepts. The property is that compiling p with `g++` and running T(p) in Core C++ give the same exit status under the same `-D` options. It rests on two facts.
 
 1. The C++ preprocessor selects the same lines as Preproc (N4659 §19.1 [cpp.cond], paragraphs 11 and 12), and rule 5 keeps the flags out of the code.
-2. For the names the subset admits, each Core C++ header agrees with the `g++` header of the same name. This is one obligation per header. `bin/compare` tests it by running `g++` on p and `bin/corecpp` on T(p).
+2. For the names Core C++ admits, each Core C++ header agrees with the `g++` header of the same name. This is one obligation per header. `bin/compare` tests it by running `g++` on p and `bin/corecpp` on T(p).
 
 A name of the library is in scope only after its `#include`. Without it the type checker of Core C++ rejects the program, as `g++` does.
 

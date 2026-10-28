@@ -3,7 +3,7 @@ import CoreCpp.Lexer
 import CoreCpp.Syntax
 
 /-!
-# Core C++ parser, subset
+# Core C++ parser
 
 Recursive descent over the `Array Token` that the lexer produces, one function
 per nonterminal of `grammar/core-cpp.ebnf`, named after it. Five nonterminals
@@ -12,7 +12,7 @@ inline, `member` reads `MemberRest`, and `postfixExpr` reads `Chain`, `After`
 and `ChainNoCall`.
 Three functions carry another name, `classDecl` for `Class`, `operatorName` for
 `Op` and `P.name` for `Name`. A function chooses the production by the next
-token, and `member` also looks at the token after it. The subset covers
+token, and `member` also looks at the token after it. Core C++ covers
 basic, class, pointer, library and function types, expressions, lambdas in
 their three positions, commands, `delete`, classes with sections, fields,
 methods, constructors, destructors and single inheritance, namespaces and
@@ -178,7 +178,7 @@ partial def qualTail (pre : String) : P Ty := do
     let base := pre ++ n
     if (← peek) == .sym "<" then
       let ts ← templateArgs
-      if ts.length != 1 then fail "a class template of this subset has one type parameter"
+      if ts.length != 1 then fail "a class template of Core C++ has one type parameter"
       return .cls s!"{base}<{ts.head!}>"
     return .cls base
   | .varId n =>
@@ -208,7 +208,7 @@ partial def classType : P Ty := do
     let base ← qualify n
     if (← peek) == .sym "<" then
       let ts ← templateArgs
-      if ts.length != 1 then fail "a class template of this subset has one type parameter"
+      if ts.length != 1 then fail "a class template of Core C++ has one type parameter"
       return .cls s!"{base}<{ts.head!}>"
     return .cls base
 
@@ -469,7 +469,7 @@ Lambda = "[=]" Params "->" Type Block ;
 partial def lambda : P Expr := do
   expectSym "[=]"
   let ps ← params
-  if ps.any (·.byRef) then fail "lambda parameters are by value in this subset"
+  if ps.any (·.byRef) then fail "lambda parameters are by value in Core C++"
   expectSym "->"
   let r ← type
   let b ← block
@@ -704,7 +704,7 @@ partial def member (cls : String) (vis : Vis) : P MemberItem := do
       return .method ⟨name, t, ps, b, vis, isVirtual, false, isRef⟩
     let name ← varId
     if (← peek) == .sym ";" then
-      if isRef then fail "a field is not a reference in this subset"
+      if isRef then fail "a field is not a reference in Core C++"
       if isVirtual then fail s!"field {name} is virtual, only a method or a destructor is"
       advance
       return .field ⟨t, name, vis⟩
@@ -824,7 +824,7 @@ partial def declaration : P (List Decl) := do
       if !h then fail s!"the declaration of class template {n} without a body belongs to a header of Core C++"
       return [.libTmpl (← qualify n) ps]
     | _ =>
-      if ps.length != 1 then fail "a class template of this subset has one type parameter"
+      if ps.length != 1 then fail "a class template of Core C++ has one type parameter"
       return [.tmpl ps.head! (← classRest (← qualify (← typeId)))]
   | .kw "namespace" =>
     let h ← inHeader
@@ -840,7 +840,7 @@ partial def declaration : P (List Decl) := do
     while (← peek) != .sym "}" do
       if (← peek) == .eof then fail "unclosed namespace"
       if (← peek) != .kw "class" && (← peek) != .kw "namespace" && (← peek) != .kw "template" then
-        fail "a namespace holds classes, templates and namespaces in this subset"
+        fail "a namespace holds classes, templates and namespaces in Core C++"
       acc := acc ++ (← declaration)
     expectSym "}"
     modify fun s => { s with ns := outer }

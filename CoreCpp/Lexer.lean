@@ -9,7 +9,7 @@ the token array that marks the namespace identifiers. The uppercase and
 lowercase convention is realised here, in `identifier`. The lexer rejects what
 C++ would read otherwise, so that every Core C++ program is a C++ program with
 the same meaning. It rejects a keyword or alternative representation of C++
-outside the subset, an integer literal with a leading `0`, which C++ reads in
+outside Core C++, an integer literal with a leading `0`, which C++ reads in
 octal, and an integer literal above 2147483647, to which C++ gives a type
 wider than `int`.
 -/
@@ -70,7 +70,7 @@ partial def run (cs : List Char) (acc : Array Token) : Except String (Array Toke
     else if isIdentStart c then
       let (name, rest') := takeWhile isIdentChar cs
       if cppReserved.contains name && !keywords.contains name then
-        .error s!"'{name}' is a reserved word of C++ outside the subset"
+        .error s!"'{name}' is a reserved word of C++ outside Core C++"
       else run rest' (acc.push (identifier name))
     else
       match matchSymbol symbols3 cs with

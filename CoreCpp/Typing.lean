@@ -4,7 +4,7 @@ import CoreCpp.Templates
 import CoreCpp.Std
 
 /-!
-# Static semantics of Core C++, subset
+# Static semantics of Core C++
 
 The judgment Γ ⊢ e : τ for expressions, Γ ⊢ₗ e : τ for the expressions that
 denote a location, and Γ ⊢ c ⊣ Γ' for commands, where Γ' is Γ extended by the
@@ -46,7 +46,7 @@ differ in arity or in a parameter of a type other than `std::function`. An infix
 class type, and the indexing of an object, are the calls of the members
 `operator⊕` and `operator[]`, which the type checker rewrites. A member may
 return `τ&`, and then a call to it denotes a location, which is what makes
-`v[i] = x` work on a class of the subset.
+`v[i] = x` work on a class of Core C++.
 
 Class templates are expanded before checking, by `Templates.instantiate`. A
 template is never checked, only its instantiations are.
@@ -1104,7 +1104,7 @@ def cls (p : Program) (c : ClassDecl) : T Unit := do
     storable s!"field {f.name} of {c.name}" f.ty
     wellFormed typingFuel p f.ty
   for m in c.methods do
-    -- Every operator of the subset is binary, the receiver and one parameter.
+    -- Every operator of Core C++ is binary, the receiver and one parameter.
     if m.name.startsWith "operator" && m.params.length != 1 then
       throw (.operatorArity c.name m.name)
     if m.retRef then

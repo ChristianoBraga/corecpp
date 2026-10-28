@@ -1,5 +1,5 @@
 /-!
-# Core C++ abstract syntax, subset
+# Core C++ abstract syntax
 
 Basic types, class and pointer types, types of the library, function types,
 expressions, lambdas, commands, classes with fields, methods, constructors,

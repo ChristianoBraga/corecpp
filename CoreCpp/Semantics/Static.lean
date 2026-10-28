@@ -796,7 +796,7 @@ structure ClassOk (p : Program) (c : ClassDecl) : Prop where
   fieldTypes : ∀ f ∈ c.fields, Storable f.ty
   /-- Each field type is well formed. -/
   fieldsWF : ∀ f ∈ c.fields, WF p f.ty
-  /-- Every operator of the subset is binary, the receiver and one parameter. -/
+  /-- Every operator of Core C++ is binary, the receiver and one parameter. -/
   operators : ∀ m ∈ c.methods, m.name.startsWith "operator" → m.params.length = 1
   /-- A method that returns a reference has a result and returns locations
   only, rule T-RetRef. -/

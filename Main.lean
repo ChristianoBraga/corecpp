@@ -21,7 +21,10 @@ the file.
 behaves like compiling with g++ and running the program. The exit code of `run`
 and `trace` is the value returned by main, reduced modulo 256 as the operating
 system does. An `error` result exits with 134, the code of an aborted process,
-and a syntax or type error exits with 1.
+and a syntax or type error exits with 1. When Core C++ does not parse a file that
+`g++ -std=c++17 -pedantic-errors` accepts, the message says that the file is a
+C++17 program outside Core C++. Without `g++`, the message says that this check
+could not run.
 
 The mode `trace` lays the derivation out as one writes it on the board, the
 premises over a line of inference and the conclusion under it, with a legend
@@ -46,13 +49,47 @@ def includeDir : IO System.FilePath := do
   let root := app.parent.bind (·.parent) |>.bind (·.parent) |>.bind (·.parent)
   return (root.getD ".") / "preproc" / "include"
 
+/-- Whether `g++` runs. -/
+def gxxInstalled : IO Bool := do
+  try
+    let out ← IO.Process.output { cmd := "g++", args := #["--version"] }
+    return out.exitCode == 0
+  catch _ => return false
+
+/-- Whether `g++ -std=c++17 -pedantic-errors` accepts the source, with the same
+flags. -/
+def gxxAccepts (flags : List String) (src : String) : IO Bool := do
+  try
+    let args := #["-std=c++17", "-pedantic-errors", "-fsyntax-only"]
+      ++ (flags.map (s!"-D{·}=")).toArray ++ #["-x", "c++", "-"]
+    let child ← IO.Process.spawn
+      { cmd := "g++", args, stdin := .piped, stdout := .null, stderr := .null }
+    child.stdin.putStr src
+    let (_, child) ← child.takeStdin
+    return (← child.wait) == 0
+  catch _ => return false
+
+/-- Reports a source Core C++ does not parse. When `g++` accepts it, the source
+is a C++17 program outside Core C++. Otherwise the error of Core C++ stands.
+Without `g++`, the message says that the check could not run. -/
+def reject (flags : List String) (path src e : String) : IO Unit := do
+  if !(← gxxInstalled) then
+    IO.eprintln e
+    IO.eprintln s!"{path}: g++ is not installed, so corecpp cannot check whether \
+      this is a valid C++17 program. Binaries of g++ are listed at \
+      https://gcc.gnu.org/install/binaries.html"
+  else if ← gxxAccepts flags src then
+    IO.eprintln s!"{path}: not a Core C++ program, but a valid C++17 program"
+  else IO.eprintln e
+
 def load (flags : List String) (path : String) : IO (Option Program) := do
-  let lines ← match ← Preproc.translateLines (← includeDir) flags path (← readSource path) with
+  let src ← readSource path
+  let lines ← match ← Preproc.translateLines (← includeDir) flags path src with
     | .ok t => pure t
-    | .error e => IO.eprintln e; return none
+    | .error e => reject flags path src e; return none
   match parseUnit lines with
   | .ok p => return some p
-  | .error e => IO.eprintln s!"{path}: {e}"; return none
+  | .error e => reject flags path src s!"{path}: {e}"; return none
 
 def typed (p : Program) : IO Bool := do
   match check p with

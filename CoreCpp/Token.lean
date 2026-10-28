@@ -32,7 +32,7 @@ def Token.toString : Token → String
 
 instance : ToString Token := ⟨Token.toString⟩
 
-/-- Reserved words of the subset handled by this parser. -/
+/-- Reserved words of Core C++. -/
 def keywords : List String :=
   ["int", "bool", "void", "if", "else", "while", "for", "return",
    "true", "false", "auto", "delete", "new", "nullptr", "this",

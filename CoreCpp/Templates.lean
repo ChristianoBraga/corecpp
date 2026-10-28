@@ -203,7 +203,7 @@ def expand (p : Program) (n : String) : Except String ClassDecl := do
   let [a] := args | throw s!"the instantiation {n} does not have one type argument"
   let some (param, cd) := p.lookupTemplate base
     | throw s!"{base} is not a class template, in the instantiation {n}"
-  let some τ := readTy a | throw s!"the type argument {a} of {n} is not one this subset instantiates"
+  let some τ := readTy a | throw s!"the type argument {a} of {n} is not one Core C++ instantiates"
   return substClass param τ cd
 
 /-- Adds one class per instantiation the program mentions, to a fixed point.
