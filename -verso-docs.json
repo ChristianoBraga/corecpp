@@ -657,7 +657,7 @@
  "653":
  "<code>String.startsWith {ρ : Type} (s : String) (pat : ρ) [String.Slice.Pattern.ForwardPattern pat] : Bool</code><span class=\"sep\"></span><code class=\"docstring\">Checks whether the first string \\(`s`\\) begins with the pattern \\(`pat`\\).\n\n`String.isPrefixOf` is a version that takes the\npotential prefix before the string.\n\nExamples:\n\n* `\"red green blue\".startsWith \"red\" = true`\n\n* `\"red green blue\".startsWith \"green\" = false`\n\n* `\"red green blue\".startsWith \"\" = true`\n\n* `\"red green blue\".startsWith 'r' = true`\n\n* `\"red green blue\".startsWith Char.isLower = true`\n</code>",
  "652":
- "<code>∀ (m : CoreCpp.Method), m ∈ c.methods → m.name.startsWith \"operator\" = true → m.params.length = 1</code><span class=\"sep\"></span><code class=\"docstring\">Every operator of the subset is binary, the receiver and one parameter. </code>",
+ "<code>∀ (m : CoreCpp.Method), m ∈ c.methods → m.name.startsWith \"operator\" = true → m.params.length = 1</code><span class=\"sep\"></span><code class=\"docstring\">Every operator of Core C++ is binary, the receiver and one parameter. </code>",
  "651":
  "<code>∀ (f : CoreCpp.Field), f ∈ c.fields → CoreCpp.Semantics.WF p f.ty</code><span class=\"sep\"></span><code class=\"docstring\">Each field type is well formed. </code>",
  "650":
@@ -1638,7 +1638,7 @@
  "<code>CoreCpp.Expr.lambda (params : List CoreCpp.Param) (ret : CoreCpp.Ty) (body : List CoreCpp.Cmd) : CoreCpp.Expr</code>",
  "130": "<code>CoreCpp.Expr.index (e i : CoreCpp.Expr) : CoreCpp.Expr</code>",
  "13":
- "<code>CoreCpp.keywords : List String</code><span class=\"sep\"></span><code class=\"docstring\">Reserved words of the subset handled by this parser. </code>",
+ "<code>CoreCpp.keywords : List String</code><span class=\"sep\"></span><code class=\"docstring\">Reserved words of Core C++. </code>",
  "129": "<code>CoreCpp.Expr.deref (e : CoreCpp.Expr) : CoreCpp.Expr</code>",
  "128":
  "<code>CoreCpp.Expr.arrow (e : CoreCpp.Expr) (f : String) : CoreCpp.Expr</code>",
@@ -2030,7 +2030,7 @@
  "1001010":
  "<code>CoreCpp.lambda : CoreCpp.P CoreCpp.Expr</code><span class=\"sep\"></span><code class=\"docstring\">The parameters of a lambda are by value.\n\n```\nLambda = \"[=]\" Params \"-&gt;\" Type Block ;\n```\n</code>",
  "1001009":
- "<code>CoreCpp.keywords : List String</code><span class=\"sep\"></span><code class=\"docstring\">Reserved words of the subset handled by this parser. </code>",
+ "<code>CoreCpp.keywords : List String</code><span class=\"sep\"></span><code class=\"docstring\">Reserved words of Core C++. </code>",
  "1001008":
  "<code>CoreCpp.isTypeStart : CoreCpp.Token → Bool</code><span class=\"sep\"></span><code class=\"docstring\">The tokens that open a `Type`, and therefore a declaration. No expression\nstarts with one of them. </code>",
  "1001007":
@@ -3067,7 +3067,7 @@
  "1000418":
  "<code>String.startsWith {ρ : Type} (s : String) (pat : ρ) [String.Slice.Pattern.ForwardPattern pat] : Bool</code><span class=\"sep\"></span><code class=\"docstring\">Checks whether the first string \\(`s`\\) begins with the pattern \\(`pat`\\).\n\n`String.isPrefixOf` is a version that takes the\npotential prefix before the string.\n\nExamples:\n\n* `\"red green blue\".startsWith \"red\" = true`\n\n* `\"red green blue\".startsWith \"green\" = false`\n\n* `\"red green blue\".startsWith \"\" = true`\n\n* `\"red green blue\".startsWith 'r' = true`\n\n* `\"red green blue\".startsWith Char.isLower = true`\n</code>",
  "1000417":
- "<code>∀ (m : CoreCpp.Method), m ∈ c.methods → m.name.startsWith \"operator\" = true → m.params.length = 1</code><span class=\"sep\"></span><code class=\"docstring\">Every operator of the subset is binary, the receiver and one parameter. </code>",
+ "<code>∀ (m : CoreCpp.Method), m ∈ c.methods → m.name.startsWith \"operator\" = true → m.params.length = 1</code><span class=\"sep\"></span><code class=\"docstring\">Every operator of Core C++ is binary, the receiver and one parameter. </code>",
  "1000416":
  "<code>∀ (f : CoreCpp.Field), f ∈ c.fields → CoreCpp.Semantics.WF p f.ty</code><span class=\"sep\"></span><code class=\"docstring\">Each field type is well formed. </code>",
  "1000415":
