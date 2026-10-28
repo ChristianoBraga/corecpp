@@ -158,8 +158,10 @@ The restriction expands every template before the type check, {bpref "tmpl_inst"
 
 # Constructs left out
 
-:::definition "design_out" (parent := "design") (uses := "dom_ctrl, pp_language")
-Core C++ leaves out exceptions, function templates, partial specialisation, objects by value, copy constructors, RAII, multiple inheritance and separate compilation.
+:::definition "design_out" (parent := "design") (uses := "dom_ctrl, pp_language, std_vector")
+Core C++ leaves out exceptions, function templates, partial specialisation, objects by value, copy constructors, RAII, multiple inheritance, arrays and separate compilation.
+
+Arrays violate the type completeness principle of Watt, "No operation should be arbitrarily restricted in the types of its operands" (2004, §2.5.3, p. 43). Watt counts assignment, argument passing and function results among the operations a language should not restrict. Arrays of C are not first class values in his account (§11.3, p. 270), and arrays of C++17 carry the same restrictions. An array is not assignable. A parameter of array type is adjusted to a pointer (N4659 §11.3.5 ¶5), and no function returns an array (N4659 §11.3.5 ¶10). An array converts to a pointer to its first element (N4659 §7.2). The subscript `a[i]` is `*(a + i)` (N4659 §8.2.1 ¶1), and an index outside the array is undefined (N4659 §8.7 ¶4). The library type `std::vector` takes the place of arrays, {bpref "std_vector"}[]. A program creates a vector with `new`, as any object, and an index outside the vector has no derivation.
 
 Without exceptions, the control result of a command is `normal` or `ret v`, {bpref "dom_ctrl"}[]. No program catches `error`. Without separate compilation, a program is one translation unit that the type checker sees whole. The preprocessor of Core C++ is a language of its own that runs before the compiler, {bpref "pp_language"}[].
 :::
