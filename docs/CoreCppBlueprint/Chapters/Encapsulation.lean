@@ -147,7 +147,7 @@ The program runs annotated. An ill typed program, which `check` rejects, runs as
 :::
 
 :::definition "cls_namespace" (parent := "encapsulation") (lean := "CoreCpp.declaration, CoreCpp.classType, CoreCpp.P.qualify") (uses := "parse_program")
-A `namespace N { … }` holds classes and namespaces, and the parser flattens it. Every class declared inside is named `N::C`, and the parser reads every unqualified class name in a type or in `new` inside the namespace as `N::C`. Outside the namespace the class has its qualified name, `N::C`, in types and in `new`. Namespaces add no rule of typing or of evaluation.
+A `namespace N { … }` holds classes, class templates and namespaces, and the parser flattens it. Every class and class template declared inside is named `N::C`, and the parser reads every unqualified class name in a type or in `new` inside the namespace as `N::C`. The type parameter of a class template is the exception. Its name belongs to the template declaration, not to the namespace (N4659 §6.3.9 ¶2), so `T` inside `namespace N { template<typename T> class C { … }; }` stays `T`. Outside the namespace the class has its qualified name, `N::C`, in types and in `new`. Namespaces add no rule of typing or of evaluation.
 :::
 
 # Rules of the chapter

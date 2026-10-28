@@ -537,3 +537,8 @@ int main() { Point* a = new Point(); a->x = twice(3); Point* c = *a + *a; return
 #eval (parseUnit [("namespace std { template <typename T> class vector; }", true),
                   ("int main() { std", false),
                   ("::vector<int>* v = new std::vector<int>(3); delete v; return 0; }", false)]).map run
+
+/-! ## A class template inside a namespace -/
+
+-- the type parameter `T` belongs to the template, not to `Store` (N4659 §6.3.9 ¶2), so `ok 7`
+#eval prog "namespace Store { template<typename T> class Box { public: T item; }; } int main() { Store::Box<int>* b = new Store::Box<int>(); b->item = 7; int r = b->item; delete b; return r; }"

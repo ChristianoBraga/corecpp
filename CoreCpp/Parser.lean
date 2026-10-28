@@ -45,6 +45,9 @@ structure PState where
   pos  : Nat := 0
   /-- The prefix of the enclosing namespaces, `N::M::`, empty at top level. -/
   ns   : String := ""
+  /-- The type parameters of the enclosing class template, which no namespace
+  qualifies (N4659 §6.3.9 ¶2). -/
+  tparams : List String := []
   /-- Whether each token comes from a header of Core C++. -/
   hdr  : Array Bool := #[]
 
@@ -66,10 +69,11 @@ def peekAt (k : Nat) : P Token := do
 def advance : P Unit := modify fun s => { s with pos := s.pos + 1 }
 
 /-- A class name as written, qualified by the enclosing namespaces when it
-carries no `::` of its own. -/
+carries no `::` of its own and is not a type parameter of the enclosing class
+template. -/
 def qualify (n : String) : P String := do
   let s ← get
-  return if (n.splitOn "::").length > 1 then n else s.ns ++ n
+  return if (n.splitOn "::").length > 1 || s.tparams.contains n then n else s.ns ++ n
 
 /-- Whether the next token comes from a header of Core C++. -/
 def inHeader : P Bool := do
@@ -825,7 +829,11 @@ partial def declaration : P (List Decl) := do
       return [.libTmpl (← qualify n) ps]
     | _ =>
       if ps.length != 1 then fail "a class template of Core C++ has one type parameter"
-      return [.tmpl ps.head! (← classRest (← qualify (← typeId)))]
+      let n ← qualify (← typeId)
+      modify fun s => { s with tparams := ps }
+      let c ← classRest n
+      modify fun s => { s with tparams := [] }
+      return [.tmpl ps.head! c]
   | .kw "namespace" =>
     let h ← inHeader
     advance
