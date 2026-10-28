@@ -5471,17 +5471,17 @@ window.onload = async () => {
                         </div>
                       </div>
                     </span><span class="bp_extra_slot bp_extra_slot_uses"><div class="bp_relation_wrap">
-                      <button type="button" class="bp_relation_chip" title="Statement dependencies used by design_out" aria-expanded="false">uses 2</button><div class="bp_relation_panel">
+                      <button type="button" class="bp_relation_chip" title="Statement dependencies used by design_out" aria-expanded="false">uses 3</button><div class="bp_relation_panel">
                         <div class="bp_relation_panel_header">
                           <div class="bp_relation_panel_title">
-                            Statement uses 2</div>
+                            Statement uses 3</div>
                           <div class="bp_relation_panel_meta">
                             Statement dependency previews</div>
                           </div>
                         <div class="bp_relation_panel_body">
                           <ul class="bp_relation_list">
                             <script type="application/json" class="bp-relation-entries">
-                              [["Definition 1.4.1","pp_language--statement","pp_language","Lexer-and-grammar/Preprocessor/#--informal-preview-pp_language--statement",["s"],true],["Definition 2.1.7","dom_ctrl--statement","dom_ctrl","Judgments-and-domains/Domains/#--informal-preview-dom_ctrl--statement",["s"],false]]</script>
+                              [["Definition 1.4.1","pp_language--statement","pp_language","Lexer-and-grammar/Preprocessor/#--informal-preview-pp_language--statement",["s"],true],["Definition 2.1.7","dom_ctrl--statement","dom_ctrl","Judgments-and-domains/Domains/#--informal-preview-dom_ctrl--statement",["s"],false],["Definition 8.2.1","std_vector--statement","std_vector","The-standard-library/Headers/#--informal-preview-std_vector--statement",["s"],false]]</script>
                             </ul>
                           <div class="bp_relation_preview_surface">
                             <div class="bp_relation_preview_header">
@@ -5520,7 +5520,9 @@ window.onload = async () => {
                 </div>
               <div class="bp_content bp_kind_definition_content definition_thmcontent">
                 <p>
-                  Core C++ leaves out exceptions, function templates, partial specialisation, objects by value, copy constructors, RAII, multiple inheritance and separate compilation.</p>
+                  Core C++ leaves out exceptions, function templates, partial specialisation, objects by value, copy constructors, RAII, multiple inheritance, arrays and separate compilation.</p>
+                <p>
+                  Arrays violate the type completeness principle of Watt, "No operation should be arbitrarily restricted in the types of its operands" (2004, §2.5.3, p. 43). Watt counts assignment, argument passing and function results among the operations a language should not restrict. Arrays of C are not first class values in his account (§11.3, p. 270), and arrays of C++17 carry the same restrictions. An array is not assignable. A parameter of array type is adjusted to a pointer (N4659 §11.3.5 ¶5), and no function returns an array (N4659 §11.3.5 ¶10). An array converts to a pointer to its first element (N4659 §7.2). The subscript <code>a[i]</code> is <code>*(a + i)</code> (N4659 §8.2.1 ¶1), and an index outside the array is undefined (N4659 §8.7 ¶4). The library type <code>std::vector</code> takes the place of arrays, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-std-005Fvector-statement" data-bp-preview-title="Definition 8.2.1" data-bp-preview-key="std_vector--statement"><a href="The-standard-library/Headers/#--informal-preview-std_vector--statement" title="std_vector">Definition 8.2.1</a></span></span>. A program creates a vector with <code>new</code>, as any object, and an index outside the vector has no derivation.</p>
                 <p>
                   Without exceptions, the control result of a command is <code>normal</code> or <code>ret v</code>, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-dom-005Fctrl-statement" data-bp-preview-title="Definition 2.1.7" data-bp-preview-key="dom_ctrl--statement"><a href="Judgments-and-domains/Domains/#--informal-preview-dom_ctrl--statement" title="dom_ctrl">Definition 2.1.7</a></span></span>. No program catches <code>error</code>. Without separate compilation, a program is one translation unit that the type checker sees whole. The preprocessor of Core C++ is a language of its own that runs before the compiler, <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-pp-005Flanguage-statement" data-bp-preview-title="Definition 1.4.1" data-bp-preview-key="pp_language--statement"><a href="Lexer-and-grammar/Preprocessor/#--informal-preview-pp_language--statement" title="pp_language">Definition 1.4.1</a></span></span>.</p>
                 </div>
