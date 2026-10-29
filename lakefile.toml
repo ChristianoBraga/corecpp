@@ -26,3 +26,8 @@ srcDir = "preproc"
 name = "ccpp-pre"
 srcDir = "preproc"
 root = "PreprocMain"
+
+[[lean_exe]]
+name = "benchfuel"
+srcDir = "benchmark"
+root = "Fuel"
