@@ -29,6 +29,14 @@ theorem lookupSig_lookup {p : Program} (h : FunEnv.lookupSig p f sig = some fn) 
     exact ⟨fn, hm.1, hm.2⟩
   · simp [h]
 
+/-- A function with a chosen signature is a function of the program by its name. -/
+theorem lookupSig_funsNamed {p : Program} (h : FunEnv.lookupSig p f sig = some fn) : p.funsNamed f ≠ [] := by
+  have := lookupSig_lookup h
+  simp only [FunEnv.lookup, List.find?_isSome] at this
+  obtain ⟨g, hg, hn⟩ := this
+  simp only [Program.funsNamed, ne_eq, List.filter_eq_nil_iff]
+  exact fun hall => hall g hg hn
+
 /-- A name the headers declare has an entry in `libDecls`. -/
 theorem libDecls_lookup {l : List (String × Nat)} (h : (f, k) ∈ l) : l.lookup f ≠ none := by
   induction l with
@@ -265,7 +273,7 @@ theorem Eval.det : Eval p ρ σ e v₁ σ₁ → Eval p ρ σ e v₂ σ₂ → v
       rw [Returns.det hr hr']; exact ⟨rfl, rfl⟩
     | callVar hρ' => rw [hρ] at hρ'; cases hρ'
     | callThis _ hf' => have := lookupSig_lookup hf; rw [hf'] at this; cases this
-    | callLib _ hf' => rw [hf] at hf'; cases hf'
+    | callLib _ hf' => exact absurd hf' (lookupSig_funsNamed hf)
     | read hp => simp [Expr.isPlace] at hp
   | .callVar hρ hv ht ha, h₂ => by
     cases h₂ with
@@ -286,7 +294,7 @@ theorem Eval.det : Eval p ρ σ e v₁ σ₁ → Eval p ρ σ e v₂ σ₂ → v
     | read hp => simp [Expr.isPlace] at hp
   | .callLib hρ hf hd hM ha hc, h₂ => by
     cases h₂ with
-    | call _ hf' => rw [hf] at hf'; cases hf'
+    | call _ hf' => exact absurd hf (lookupSig_funsNamed hf')
     | callVar hρ' => rw [hρ] at hρ'; cases hρ'
     | callThis _ _ hl => exact absurd hl (libDecls_lookup hd)
     | callLib _ _ _ hM' ha' hc' =>

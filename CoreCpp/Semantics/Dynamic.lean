@@ -328,7 +328,7 @@ inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop
   /-- The last premise is the relation `call` of the module of f. -/
   | callLib
       (hρ : ρ.lookup f = none)
-      (hf : FunEnv.lookupSig p f sig = none)
+      (hf : p.funsNamed f = [])
       (hd : (f, es.length) ∈ p.libDecls)
       (hM : moduleOf f = some M)
       (ha : Args p ρ σ es vs σ₁)

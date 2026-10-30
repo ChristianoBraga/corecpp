@@ -331,10 +331,10 @@ theorem Exec.while_env (h : Exec p ρ σ (.while e b) r ρ' σ') : ρ' = ρ := b
 
 theorem LEval.var_store (h : LEval p ρ σ (.var x) l σ') : σ' = σ := by cases h <;> rfl
 
-theorem lookupSig_none {p : Program} (h : FunEnv.lookup p f = none) : FunEnv.lookupSig p f sig = none := by
-  cases hs : FunEnv.lookupSig p f sig with
-  | none => rfl
-  | some fn => have := lookupSig_lookup hs; simp [h] at this
+theorem funsNamed_nil {p : Program} (h : FunEnv.lookup p f = none) : p.funsNamed f = [] := by
+  simp only [FunEnv.lookup, List.find?_eq_none] at h
+  simp only [Program.funsNamed, List.filter_eq_nil_iff]
+  exact h
 
 theorem lookup_none_of_any {l : List (String × Nat)} (h : (l.any (·.1 == f)) = false) : l.lookup f = none := by
   induction l with
@@ -874,7 +874,7 @@ theorem Sound.expr : ∀ p ρ σ e, Ok (expr (n + 1) p ρ σ e) fun r => Eval p 
         · rename_i hd
           refine ok_bind (hA _ _ _ _) fun ⟨vs, σ₁⟩ ha => ok_bind ok_fnsOf fun F hF => ok_mono ok_libStep fun ⟨v, σ₂⟩ ⟨r, hk⟩ => ?_
           obtain ⟨M, hM, hc⟩ := lib_call hF hk
-          exact .callLib hρ (lookupSig_none hlib.1) (by simpa using hd) hM ha hc
+          exact .callLib hρ (funsNamed_nil hlib.1) (by simpa using hd) hM ha hc
         · exact ok_throw_bind
       · rename_i hlib
         split

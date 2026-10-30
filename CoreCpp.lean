@@ -17,3 +17,4 @@ import CoreCpp.Semantics.Determinism
 import CoreCpp.Semantics.Progress
 import CoreCpp.Semantics.FuelMono
 import CoreCpp.Semantics.InterpSound
+import CoreCpp.Semantics.InterpComplete
