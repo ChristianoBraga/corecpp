@@ -15,3 +15,4 @@ import CoreCpp.Semantics.Dynamic
 import CoreCpp.Semantics.Static
 import CoreCpp.Semantics.Determinism
 import CoreCpp.Semantics.Progress
+import CoreCpp.Semantics.FuelMono
