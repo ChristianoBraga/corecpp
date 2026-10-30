@@ -3,7 +3,7 @@ import CoreCpp.Semantics.Dynamic
 /-!
 # Determinism of the dynamic semantics
 
-The theorem `determinism` of the blueprint. Two derivations of one judgement,
+The theorem `det` of the blueprint. Two derivations of one judgement,
 from the same configuration and the same subject, give the same result. The
 proof is one mutual structural recursion on the first derivation, with a case
 analysis of the second. The rules of one subject have mutually exclusive
@@ -587,7 +587,7 @@ termination_by structural h => h
 
 end
 
-/-- The theorem `determinism` of the blueprint. A Core C++ program has at
+/-- The theorem `det` of the blueprint. A Core C++ program has at
 most one result. -/
 theorem Runs.det (h₁ : Runs p v₁) (h₂ : Runs p v₂) : v₁ = v₂ := by
   obtain ⟨_, h₁⟩ := h₁

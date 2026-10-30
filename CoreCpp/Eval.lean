@@ -494,13 +494,14 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
         applyClosure fuel fs ρ σ₁ (← target σ₁ v) es
       | none =>
         if (fs.lookup f).isNone && fs.libDecls.any (·.1 == f) then
-          /-  f ∉ ρ    f declared without a body    ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ
+          /-  f ∉ ρ    f declared without a body, with k parameters    ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ
               σₖ ⊢_f f(v₁, …, vₖ) ⇒ v, σ′
               ──────────────────────────────────────────────────────────────────── (CallLib)
               ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ′
 
               The last premise is the relation call of the module of f, A-True for assert. -/
           traced "CallLib" (confE e ρ σ) showV do
+            unless fs.libDecls.contains (f, es.length) do throw (.arity f)
             let (vs, σ₁) ← args fuel fs ρ σ es
             let F ← fnsOf f
             libStep ρ σ₁ s!"{f}({", ".intercalate (vs.map toString)})" showV (F.call vs σ₁)

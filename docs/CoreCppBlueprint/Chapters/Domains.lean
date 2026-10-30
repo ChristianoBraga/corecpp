@@ -7,6 +7,7 @@ import CoreCpp.Eval
 import CoreCpp.Semantics.Static
 import CoreCpp.Semantics.Dynamic
 import CoreCpp.Semantics.FuelMono
+import CoreCpp.Semantics.InterpSound
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -228,7 +229,7 @@ The semantics is a set of inductive propositions, one per judgment, with one con
 
 The judgments $`\Gamma \vdash e \lhd \tau` and $`\Gamma \vdash c \dashv \Gamma'` differ in subject and in output. Acceptance judges an expression at a type its context expects, so $`\tau` is an input. It extends $`\Gamma \vdash e : \tau` by the compatibility of types and by lambdas. The judgment on commands judges a command under the result type $`\tau_r` of the enclosing body. Its output is the context $`\Gamma'` the command extends $`\Gamma` to, as a declaration does.
 
-Lean writes the configuration $`\langle\rho, \sigma\rangle` in angle brackets, and $`\langle\Gamma, \tau_r\rangle` for a command with the result type of its body. A sequence takes a starred arrow. Both are concessions to the parser of Lean. The relation is the specification and the function its interpreter. Every recursive function of the type checker and of the evaluator takes as first argument the fuel, a bound on the depth of a derivation, and recurses on it. The constant `typingFuel` and the function `runWith` set it to $`10^6`, and its exhaustion is the error `outOfFuel`. The fuel makes two theorems expressible, soundness, that a result of the function is a derivation of the relation, and completeness, that the function reaches every derivation with enough fuel. Neither has a proof yet. A larger fuel keeps every result that does not exhaust it, {bpref "fuel_mono"}[]. The structure follows Radix, the language of the tutorial of de Moura at ETAPS 2026.
+Lean writes the configuration $`\langle\rho, \sigma\rangle` in angle brackets, and $`\langle\Gamma, \tau_r\rangle` for a command with the result type of its body. A sequence takes a starred arrow. Both are concessions to the parser of Lean. The relation is the specification and the function its interpreter. Every recursive function of the type checker and of the evaluator takes as first argument the fuel, a bound on the depth of a derivation, and recurses on it. The constant `typingFuel` and the function `runWith` set it to $`10^6`, and its exhaustion is the error `outOfFuel`. The fuel makes two theorems expressible, soundness, that a result of the function is a derivation of the relation, and completeness, that the function reaches every derivation with enough fuel. Soundness holds, {bpref "interp_sound"}[]. Completeness has no proof yet. A larger fuel keeps every result that does not exhaust it, {bpref "interp_fuel_mono"}[]. The structure follows Radix, the language of the tutorial of de Moura at ETAPS 2026, and the theorems take the names of their counterparts in Radix.
 
 The judgments on declarations, $`\vdash f`, $`\vdash C` and $`\vdash p`, are structures of named conditions rather than relations with one constructor. Their conditions are side conditions on the declarations and not premises on subterms. The selection of an overload, {bpref "overload_pick"}[], is the work of the type checker, which writes its choice into the call, and the relation reads it.
 ::::
@@ -271,20 +272,30 @@ The function `renderTrace` rebuilds the tree from the log. It lays the tree out 
 A legend names the environments $`\rho_i`, the stores $`\sigma_j` and the subjects longer than 40 characters, so every judgment fits one line. The function writes a subtree wider than 100 columns apart, under a name $`\mathcal{D}_k`.
 :::
 
-:::theorem "fuel_mono" (parent := "judgments") (lean := "CoreCpp.run_fuel_mono, CoreCpp.runWith_fuel_mono, CoreCpp.Eval.mono, CoreCpp.Eval.Mono, CoreCpp.Eval.LeP") (uses := "judg_ev_expr, judg_ev_lval, judg_ev_cmd, judg_trace")
+:::theorem "interp_fuel_mono" (parent := "judgments") (lean := "CoreCpp.interp_fuel_mono, CoreCpp.runWith_fuel_mono, CoreCpp.Eval.mono, CoreCpp.Eval.Mono, CoreCpp.Eval.LeP") (uses := "judg_ev_expr, judg_ev_lval, judg_ev_cmd, judg_trace")
 Let $`n \le m`. A result of a function of the evaluator with fuel $`n` that is not the error `outOfFuel` is its result with fuel $`m`, from the same arguments and the same state of the monad $`M`. The value or the error, the trace and the state after the run coincide. In particular `run p n` $`\neq` `outOfFuel` implies `run p m = run p n`.
 :::
 
-:::proof "fuel_mono"
-The proof is by induction on $`n`, for all the functions of the evaluator at once, in `CoreCpp/Semantics/FuelMono.lean`. The relation `LeP` compares two runs, and its congruence lemmas cover sequencing, the caught errors, `traced`, `tracedLib`, `tracedCases`, the conditional and the loops of `for`. With fuel 0 every function gives `outOfFuel`, and the statement holds vacuously. With fuel $`n + 1` and $`m + 1` the two bodies coincide except for the fuel of the recursive calls, where the induction hypothesis applies. A run that does not end in `outOfFuel` has no recursive call that ends in it, because every error that a body catches, in `traced` and in the cases of `tracedCases`, the body throws again. The theorem of Radix, `interp_fuel_mono`, covers the successful results only. This one covers the errors too, which the search for the least fuel of {bpref "fuel_least"}[] needs.
+:::proof "interp_fuel_mono"
+The proof is by induction on $`n`, for all the functions of the evaluator at once, in `CoreCpp/Semantics/FuelMono.lean`. The relation `LeP` compares two runs, and its congruence lemmas cover sequencing, the caught errors, `traced`, `tracedLib`, `tracedCases`, the conditional and the loops of `for`. With fuel 0 every function gives `outOfFuel`, and the statement holds vacuously. With fuel $`n + 1` and $`m + 1` the two bodies coincide except for the fuel of the recursive calls, where the induction hypothesis applies. A run that does not end in `outOfFuel` has no recursive call that ends in it, because every error that a body catches, in `traced` and in the cases of `tracedCases`, the body throws again. The theorem of Radix, `Stmt.interp_fuel_mono`, covers the successful results only. This one covers the errors too, which the search for the least fuel of {bpref "fuel_least"}[] needs.
 :::
 
-:::theorem "fuel_least" (parent := "judgments") (lean := "CoreCpp.leastFuel_spec, CoreCpp.leastFuel, CoreCpp.grow, CoreCpp.search, CoreCpp.exhausted, CoreCpp.exhausted_of_le") (uses := "fuel_mono")
+:::theorem "interp_sound" (parent := "judgments") (lean := "CoreCpp.interp_sound, CoreCpp.run_sound, CoreCpp.runMain, CoreCpp.Eval.expr_sound, CoreCpp.Eval.lval_sound, CoreCpp.Eval.cmd_sound, CoreCpp.Eval.sound, CoreCpp.Eval.Sound, CoreCpp.Eval.Ok") (uses := "judg_ev_expr, judg_ev_lval, judg_ev_cmd, judg_relations, judg_trace")
+A value of a function of the evaluator has a derivation in the relation of its judgement, for every fuel and every state of the monad $`M`. A value $`(v, \sigma')` of `expr` on $`\rho`, $`\sigma` and $`e` gives a derivation of $`\rho, \sigma \vdash e \Rightarrow v, \sigma'`. The same holds for `lval`, `cmd`, `cmds` and the auxiliary functions. In particular `runMain p n = ok v` implies $`p \Rightarrow v`. The statement holds for every program, well typed or not. Radix states it for its commands as `Stmt.interp_sound`.
+:::
+
+:::proof "interp_sound"
+The proof is by induction on $`n`, for all the functions of the evaluator at once, in `CoreCpp/Semantics/InterpSound.lean`. The predicate `Ok c P` states that every value of the computation $`c` satisfies $`P`. Its lemmas cover sequencing, the caught errors, `traced`, `tracedLib`, `tracedCases` and the loops of `for`. Each case of a function builds the rule its comment names from the induction hypothesis on the premises. The loops of Call and Member build `Bind` from the last parameter back, and the loops of `applyVals` give the allocations of Apply. A function of `CoreCpp.Std` gives a derivation in the relation of its module. The evaluator collects the owned locations in reverse order, and $`\sigma \setminus L` depends only on the elements of $`L`.
+
+The proof exposed one divergence of the evaluator from CallLib. The rule requires $`(f, k)` in `libDecls` for a call with $`k` arguments, and the evaluator checked the name alone. A header that declared `assert` with two parameters thus let `assert(true)` give a value with no derivation. The evaluator now checks the arity and gives the guard `arity` otherwise.
+:::
+
+:::theorem "fuel_least" (parent := "judgments") (lean := "CoreCpp.leastFuel_spec, CoreCpp.leastFuel, CoreCpp.grow, CoreCpp.search, CoreCpp.exhausted, CoreCpp.exhausted_of_le") (uses := "interp_fuel_mono")
 Let `run p b` $`\neq` `outOfFuel`. The search `leastFuel p b` gives the least fuel $`d` with `run p d` $`\neq` `outOfFuel`. So $`d \le b`, `run p d` $`\neq` `outOfFuel`, and `run p j = outOfFuel` for every $`j < d`.
 :::
 
 :::proof "fuel_least"
-The search doubles an upper bound from 1 until the program does not exhaust it, capped at $`b`, and then halves the interval between the last exhausted fuel and that bound. Both phases keep two invariants. The lower end exhausts the fuel and the upper end does not. Fuel 0 exhausts it, since every function of the evaluator gives `outOfFuel` with fuel 0. The binary search stops at an interval $`(d - 1, d]`. By {bpref "fuel_mono"}[], a fuel that exhausts the evaluator makes every smaller fuel exhaust it too, so every $`j \le d - 1` exhausts it.
+The search doubles an upper bound from 1 until the program does not exhaust it, capped at $`b`, and then halves the interval between the last exhausted fuel and that bound. Both phases keep two invariants. The lower end exhausts the fuel and the upper end does not. Fuel 0 exhausts it, since every function of the evaluator gives `outOfFuel` with fuel 0. The binary search stops at an interval $`(d - 1, d]`. By {bpref "interp_fuel_mono"}[], a fuel that exhausts the evaluator makes every smaller fuel exhaust it too, so every $`j \le d - 1` exhausts it.
 :::
 
 # Rules of the chapter

@@ -3,7 +3,7 @@ import CoreCpp.Eval
 /-!
 # Fuel monotonicity
 
-The theorem `fuel_mono` of the blueprint. A result of the evaluator with fuel
+The theorem `interp_fuel_mono` of the blueprint. A result of the evaluator with fuel
 n that is not `outOfFuel` is its result with any fuel m ≥ n, the trace and the
 state of the monad included.
 
@@ -311,7 +311,7 @@ end CoreCpp.Eval
 
 namespace CoreCpp
 
-/-- The theorem `fuel_mono` of the blueprint. A run of a program that does not
+/-- The theorem `interp_fuel_mono` of the blueprint. A run of a program that does not
 exhaust the fuel n gives the same result with any fuel m ≥ n, the trace
 included. -/
 theorem runWith_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
@@ -327,7 +327,7 @@ theorem runWith_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
   rw [this]
 
 /-- `run` with fuel n that does not exhaust it gives its result with any fuel m ≥ n. -/
-theorem run_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
+theorem interp_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
     (h : run p n ≠ .error .outOfFuel) : run p m = run p n := by
   unfold run at h ⊢
   rw [runWith_fuel_mono hnm h]
@@ -350,7 +350,7 @@ theorem exhausted_zero (p : Program) : exhausted p 0 = true := by
 /-- A fuel that exhausts a program makes every smaller fuel exhaust it. -/
 theorem exhausted_of_le (h : exhausted p m = true) (hnm : n ≤ m) : exhausted p n = true := by
   rw [exhausted_iff] at h ⊢
-  exact Classical.byContradiction fun hn => by rw [run_fuel_mono hnm hn] at h; exact hn h
+  exact Classical.byContradiction fun hn => by rw [interp_fuel_mono hnm hn] at h; exact hn h
 
 /-- The doubling phase. From an interval (lo, hi] whose lower end exhausts p,
 the upper end doubles until it does not exhaust p or reaches the cap b. -/
