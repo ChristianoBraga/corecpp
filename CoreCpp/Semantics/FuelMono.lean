@@ -332,4 +332,89 @@ theorem run_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
   unfold run at h ⊢
   rw [runWith_fuel_mono hnm h]
 
+/-! ## The least fuel -/
+
+/-- Whether `run p n` exhausts the fuel. -/
+def exhausted (p : Program) (n : Nat) : Bool :=
+  match run p n with
+  | .error .outOfFuel => true
+  | _ => false
+
+theorem exhausted_iff : exhausted p n = true ↔ run p n = .error .outOfFuel := by
+  unfold exhausted; split <;> simp_all
+
+/-- Fuel 0 exhausts every program. -/
+theorem exhausted_zero (p : Program) : exhausted p 0 = true := by
+  rw [exhausted_iff]; unfold run runWith; unfold Eval.expr; rfl
+
+/-- A fuel that exhausts a program makes every smaller fuel exhaust it. -/
+theorem exhausted_of_le (h : exhausted p m = true) (hnm : n ≤ m) : exhausted p n = true := by
+  rw [exhausted_iff] at h ⊢
+  exact Classical.byContradiction fun hn => by rw [run_fuel_mono hnm hn] at h; exact hn h
+
+/-- The doubling phase. From an interval (lo, hi] whose lower end exhausts p,
+the upper end doubles until it does not exhaust p or reaches the cap b. -/
+def grow (p : Program) (b lo hi : Nat) : Nat × Nat :=
+  if b ≤ hi then (lo, b)
+  else if exhausted p hi then grow p b hi (2 * hi + 1) else (lo, hi)
+termination_by b - hi
+
+/-- The binary search in (lo, hi], whose lower end exhausts p and whose upper
+end does not. -/
+def search (p : Program) (lo hi : Nat) : Nat :=
+  if hi ≤ lo + 1 then hi
+  else if exhausted p ((lo + hi) / 2) then search p ((lo + hi) / 2) hi
+  else search p lo ((lo + hi) / 2)
+termination_by hi - lo
+
+/-- The least fuel under which `run p` does not exhaust it, searched up to the
+cap b. -/
+def leastFuel (p : Program) (b : Nat) : Nat :=
+  search p (grow p b 0 1).1 (grow p b 0 1).2
+
+theorem grow_spec (hb : exhausted p b = false) (hlo : exhausted p lo = true) (hlt : lo < b) (hhi : lo < hi) :
+    let r := grow p b lo hi
+    exhausted p r.1 = true ∧ r.1 < r.2 ∧ r.2 ≤ b ∧ exhausted p r.2 = false := by
+  induction lo, hi using grow.induct p b with
+  | case1 lo hi h => rw [grow, if_pos h]; exact ⟨hlo, hlt, Nat.le_refl _, hb⟩
+  | case2 lo hi h hex ih =>
+    rw [grow, if_neg h, if_pos hex]; exact ih hex (by omega) (by omega)
+  | case3 lo hi h hex =>
+    rw [grow, if_neg h, if_neg hex]; exact ⟨hlo, hhi, by omega, by simpa using hex⟩
+
+theorem search_spec (hlo : exhausted p lo = true) (hhi : exhausted p hi = false) (hlt : lo < hi) :
+    let d := search p lo hi
+    lo < d ∧ d ≤ hi ∧ exhausted p d = false ∧ exhausted p (d - 1) = true := by
+  induction lo, hi using search.induct p with
+  | case1 lo hi h =>
+    rw [search, if_pos h]; exact ⟨hlt, Nat.le_refl _, hhi, by rwa [show hi - 1 = lo by omega]⟩
+  | case2 lo hi h hex ih =>
+    rw [search, if_neg h, if_pos hex]
+    have := ih hex hhi (by omega); exact ⟨by omega, this.2.1, this.2.2⟩
+  | case3 lo hi h hex ih =>
+    rw [search, if_neg h, if_neg hex]
+    have := ih hlo (by simpa using hex) (by omega); exact ⟨this.1, by omega, this.2.2⟩
+
+/-- The theorem `fuel_least` of the blueprint. When the cap b does not exhaust
+p, `leastFuel p b` is the least fuel that does not exhaust it. -/
+theorem leastFuel_spec (h : run p b ≠ .error .outOfFuel) :
+    let d := leastFuel p b
+    d ≤ b ∧ run p d ≠ .error .outOfFuel ∧ ∀ j < d, run p j = .error .outOfFuel := by
+  have hb : exhausted p b = false := by
+    cases hx : exhausted p b
+    · rfl
+    · exact absurd (exhausted_iff.mp hx) h
+  have hb0 : 0 < b := by
+    rcases Nat.eq_zero_or_pos b with rfl | hpos
+    · rw [exhausted_zero] at hb; cases hb
+    · exact hpos
+  obtain ⟨g₁, g₂, g₃, g₄⟩ := grow_spec (hi := 1) hb (exhausted_zero p) hb0 (by omega)
+  obtain ⟨s₁, s₂, s₃, s₄⟩ := search_spec g₁ g₄ g₂
+  refine ⟨by unfold leastFuel; omega, ?_, ?_⟩
+  · intro hd; unfold leastFuel at hd; rw [← exhausted_iff] at hd; simp_all
+  · intro j hj
+    rw [← exhausted_iff]
+    unfold leastFuel at hj
+    exact exhausted_of_le s₄ (by omega)
+
 end CoreCpp

@@ -276,7 +276,15 @@ Let $`n \le m`. A result of a function of the evaluator with fuel $`n` that is n
 :::
 
 :::proof "fuel_mono"
-The proof is by induction on $`n`, for all the functions of the evaluator at once, in `CoreCpp/Semantics/FuelMono.lean`. The relation `LeP` compares two runs, and its congruence lemmas cover sequencing, the caught errors, `traced`, `tracedLib`, `tracedCases`, the conditional and the loops of `for`. With fuel 0 every function gives `outOfFuel`, and the statement holds vacuously. With fuel $`n + 1` and $`m + 1` the two bodies coincide except for the fuel of the recursive calls, where the induction hypothesis applies. A run that does not end in `outOfFuel` has no recursive call that ends in it, because every error that a body catches, in `traced` and in the cases of `tracedCases`, the body throws again. The theorem of Radix, `interp_fuel_mono`, covers the successful results only. This one covers the errors too, which the search for the least fuel of `benchmark/Fuel.lean` needs.
+The proof is by induction on $`n`, for all the functions of the evaluator at once, in `CoreCpp/Semantics/FuelMono.lean`. The relation `LeP` compares two runs, and its congruence lemmas cover sequencing, the caught errors, `traced`, `tracedLib`, `tracedCases`, the conditional and the loops of `for`. With fuel 0 every function gives `outOfFuel`, and the statement holds vacuously. With fuel $`n + 1` and $`m + 1` the two bodies coincide except for the fuel of the recursive calls, where the induction hypothesis applies. A run that does not end in `outOfFuel` has no recursive call that ends in it, because every error that a body catches, in `traced` and in the cases of `tracedCases`, the body throws again. The theorem of Radix, `interp_fuel_mono`, covers the successful results only. This one covers the errors too, which the search for the least fuel of {bpref "fuel_least"}[] needs.
+:::
+
+:::theorem "fuel_least" (parent := "judgments") (lean := "CoreCpp.leastFuel_spec, CoreCpp.leastFuel, CoreCpp.grow, CoreCpp.search, CoreCpp.exhausted, CoreCpp.exhausted_of_le") (uses := "fuel_mono")
+Let `run p b` $`\neq` `outOfFuel`. The search `leastFuel p b` gives the least fuel $`d` with `run p d` $`\neq` `outOfFuel`. So $`d \le b`, `run p d` $`\neq` `outOfFuel`, and `run p j = outOfFuel` for every $`j < d`.
+:::
+
+:::proof "fuel_least"
+The search doubles an upper bound from 1 until the program does not exhaust it, capped at $`b`, and then halves the interval between the last exhausted fuel and that bound. Both phases keep two invariants. The lower end exhausts the fuel and the upper end does not. Fuel 0 exhausts it, since every function of the evaluator gives `outOfFuel` with fuel 0. The binary search stops at an interval $`(d - 1, d]`. By {bpref "fuel_mono"}[], a fuel that exhausts the evaluator makes every smaller fuel exhaust it too, so every $`j \le d - 1` exhausts it.
 :::
 
 # Rules of the chapter
