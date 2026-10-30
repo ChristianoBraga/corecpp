@@ -916,4 +916,31 @@ theorem run_complete (h : Semantics.Runs ((Typing.annotate p).toOption.getD p) v
   obtain ⟨n, hn⟩ := interp_complete h
   exact ⟨n, fun m hm => by rw [run_eq_runMain]; exact hn m hm⟩
 
+/-- `runMain` with fuel n that does not exhaust it gives its result with any
+fuel m ≥ n. -/
+theorem runMain_fuel_mono (hnm : n ≤ m) (h : runMain p n ≠ .error .outOfFuel) : runMain p m = runMain p n := by
+  unfold runMain at h ⊢
+  have hle := (Eval.mono n m hnm).1 p [] {} (.call "main" [] none)
+  have := hle {} ⟨by
+    intro he; apply h
+    show Except.map _ (Eval.res _ _).1 = _
+    rw [he]; rfl, fun _ _ h => h⟩
+  simp only [Eval.res] at this
+  rw [this]
+
+/-- The theorem `interp_error_sound` of the blueprint. An error of the
+evaluator of `main()` other than the exhaustion of the fuel means that p ⇒ v
+has no derivation for any v. -/
+theorem interp_error_sound (h : runMain p n = .error e) (he : e ≠ .outOfFuel) : ¬ ∃ v, Semantics.Runs p v := by
+  rintro ⟨v, hv⟩
+  obtain ⟨m, hm⟩ := interp_complete hv
+  have h₁ := hm (max n m) (Nat.le_max_right n m)
+  rw [runMain_fuel_mono (Nat.le_max_left n m) (by rw [h]; intro h'; cases h'; exact he rfl), h] at h₁
+  cases h₁
+
+/-- `interp_error_sound` for `run`, whose subject is the annotated program. -/
+theorem run_error_sound (h : run p n = .error e) (he : e ≠ .outOfFuel) :
+    ¬ ∃ v, Semantics.Runs ((Typing.annotate p).toOption.getD p) v :=
+  interp_error_sound (run_eq_runMain ▸ h) he
+
 end CoreCpp

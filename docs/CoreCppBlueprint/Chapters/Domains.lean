@@ -301,6 +301,14 @@ The proof is one mutual structural recursion on the derivation, in `CoreCpp/Sema
 The proof exposed one divergence of the relation from CallLib. The rule requires that $`f` is no function of the program, and the relation required only that no function named $`f` has the chosen signature. A program with a function and a header declaration of one name thus had a derivation that the evaluator did not reach. The relation now requires `p.funsNamed f = []`, as T-CallLib does.
 :::
 
+:::theorem "interp_error_sound" (parent := "judgments") (lean := "CoreCpp.interp_error_sound, CoreCpp.run_error_sound, CoreCpp.runMain_fuel_mono") (uses := "interp_complete, interp_fuel_mono")
+An error of the evaluator other than `outOfFuel` means that the program has no result. If `runMain p n = error e` with $`e \neq` `outOfFuel`, then $`p \Rightarrow v` has no derivation for any $`v`. Radix has no counterpart.
+:::
+
+:::proof "interp_error_sound"
+Let $`p \Rightarrow v`. By {bpref "interp_complete"}[], `runMain p m = ok v` for every $`m` from some bound $`k` on. By {bpref "interp_fuel_mono"}[], `runMain p (max n k)` is `runMain p n`, which is `error e`. The two results differ.
+:::
+
 :::theorem "fuel_least" (parent := "judgments") (lean := "CoreCpp.leastFuel_spec, CoreCpp.leastFuel, CoreCpp.grow, CoreCpp.search, CoreCpp.exhausted, CoreCpp.exhausted_of_le") (uses := "interp_fuel_mono")
 Let `run p b` $`\neq` `outOfFuel`. The search `leastFuel p b` gives the least fuel $`d` with `run p d` $`\neq` `outOfFuel`. So $`d \le b`, `run p d` $`\neq` `outOfFuel`, and `run p j = outOfFuel` for every $`j < d`.
 :::
