@@ -311,13 +311,12 @@ end CoreCpp.Eval
 
 namespace CoreCpp
 
-/-- The theorem `interp_fuel_mono` of the blueprint. A run of a program that does not
-exhaust the fuel n gives the same result with any fuel m ≥ n, the trace
-included. -/
-theorem runWith_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
-    (h : (runWith trace p n).1 ≠ .error .outOfFuel) : runWith trace p m = runWith trace p n := by
-  unfold runWith at h ⊢
-  have hle := (Eval.mono n m hnm).1 ((Typing.annotate p).toOption.getD p) [] {} (.call "main" [] none)
+/-- `evalMain` with fuel n that does not exhaust it gives its result with any
+fuel m ≥ n, the trace included. -/
+theorem evalMain_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
+    (h : (evalMain trace p n).1 ≠ .error .outOfFuel) : evalMain trace p m = evalMain trace p n := by
+  unfold evalMain at h ⊢
+  have hle := (Eval.mono n m hnm).1 p [] {} (.call "main" [] none)
   have := hle { enabled := trace } ⟨by
     intro he; apply h
     show Except.map _ (Eval.res _ _).1 = _
@@ -326,10 +325,34 @@ theorem runWith_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
   simp only [StateT.run, ExceptT.run] at this ⊢
   rw [this]
 
-/-- `run` with fuel n that does not exhaust it gives its result with any fuel m ≥ n. -/
+/-- `runMain` with fuel n that does not exhaust it gives its result with any
+fuel m ≥ n. -/
+theorem runMain_fuel_mono (hnm : n ≤ m) (h : runMain p n ≠ .error .outOfFuel) : runMain p m = runMain p n := by
+  unfold runMain at h ⊢
+  rw [evalMain_fuel_mono hnm h]
+
+/-- A run of a program that does not exhaust the fuel n gives the same result
+with any fuel m ≥ n, the trace included. A program that `prepare` rejects
+gives its rejection with every fuel. -/
+theorem runWith_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
+    (h : (runWith trace p n).1 ≠ .error .outOfFuel) : runWith trace p m = runWith trace p n := by
+  unfold runWith at h ⊢
+  cases hp : prepare p with
+  | error e => rfl
+  | ok q =>
+    rw [hp] at h
+    have h' : (evalMain trace q n).1 ≠ .error .outOfFuel := fun he => h (by
+      show Outcome.ofResult (evalMain trace q n).1 = _
+      rw [he]; rfl)
+    show (Outcome.ofResult (evalMain trace q m).1, (evalMain trace q m).2) =
+      (Outcome.ofResult (evalMain trace q n).1, (evalMain trace q n).2)
+    rw [evalMain_fuel_mono hnm h']
+
+/-- The theorem `interp_fuel_mono` of the blueprint. `run` with fuel n that
+does not exhaust it gives its result with any fuel m ≥ n. -/
 theorem interp_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
     (h : run p n ≠ .error .outOfFuel) : run p m = run p n := by
-  unfold run at h ⊢
+  unfold run
   rw [runWith_fuel_mono hnm h]
 
 /-! ## The least fuel -/
@@ -343,9 +366,9 @@ def exhausted (p : Program) (n : Nat) : Bool :=
 theorem exhausted_iff : exhausted p n = true ↔ run p n = .error .outOfFuel := by
   unfold exhausted; split <;> simp_all
 
-/-- Fuel 0 exhausts every program. -/
-theorem exhausted_zero (p : Program) : exhausted p 0 = true := by
-  rw [exhausted_iff]; unfold run runWith; unfold Eval.expr; rfl
+/-- Fuel 0 exhausts every program that `prepare` accepts. -/
+theorem exhausted_zero (hp : prepare p = .ok q) : exhausted p 0 = true := by
+  rw [exhausted_iff]; unfold run runWith; rw [hp]; unfold evalMain; unfold Eval.expr; rfl
 
 /-- A fuel that exhausts a program makes every smaller fuel exhaust it. -/
 theorem exhausted_of_le (h : exhausted p m = true) (hnm : n ≤ m) : exhausted p n = true := by
@@ -395,9 +418,10 @@ theorem search_spec (hlo : exhausted p lo = true) (hhi : exhausted p hi = false)
     rw [search, if_neg h, if_neg hex]
     have := ih hlo (by simpa using hex) (by omega); exact ⟨this.1, by omega, this.2.2⟩
 
-/-- The theorem `fuel_least` of the blueprint. When the cap b does not exhaust
-p, `leastFuel p b` is the least fuel that does not exhaust it. -/
-theorem leastFuel_spec (h : run p b ≠ .error .outOfFuel) :
+/-- The theorem `fuel_least` of the blueprint. When p passes `prepare` and the
+cap b does not exhaust p, `leastFuel p b` is the least fuel that does not
+exhaust it. -/
+theorem leastFuel_spec (hp : prepare p = .ok q) (h : run p b ≠ .error .outOfFuel) :
     let d := leastFuel p b
     d ≤ b ∧ run p d ≠ .error .outOfFuel ∧ ∀ j < d, run p j = .error .outOfFuel := by
   have hb : exhausted p b = false := by
@@ -406,9 +430,9 @@ theorem leastFuel_spec (h : run p b ≠ .error .outOfFuel) :
     · exact absurd (exhausted_iff.mp hx) h
   have hb0 : 0 < b := by
     rcases Nat.eq_zero_or_pos b with rfl | hpos
-    · rw [exhausted_zero] at hb; cases hb
+    · rw [exhausted_zero hp] at hb; cases hb
     · exact hpos
-  obtain ⟨g₁, g₂, g₃, g₄⟩ := grow_spec (hi := 1) hb (exhausted_zero p) hb0 (by omega)
+  obtain ⟨g₁, g₂, g₃, g₄⟩ := grow_spec (hi := 1) hb (exhausted_zero hp) hb0 (by omega)
   obtain ⟨s₁, s₂, s₃, s₄⟩ := search_spec g₁ g₄ g₂
   refine ⟨by unfold leastFuel; omega, ?_, ?_⟩
   · intro hd; unfold leastFuel at hd; rw [← exhausted_iff] at hd; simp_all

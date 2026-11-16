@@ -904,29 +904,20 @@ theorem interp_complete (h : Semantics.Runs p v) : ∃ n, ∀ m, n ≤ m → run
   obtain ⟨σ, hd⟩ := h
   obtain ⟨n, hn⟩ := Eval.Eval.complete hd
   refine ⟨n, fun m hm => ?_⟩
-  unfold runMain
-  have := hn m hm {}
+  unfold runMain evalMain
+  have := hn m hm { enabled := false }
   simp only [Eval.res] at this
-  rw [this]
+  rcases hr : StateT.run (ExceptT.run (Eval.expr m p [] {} (.call "main" [] none))) { enabled := false } with ⟨r, s⟩
+  rw [hr] at this
+  simp only at this
+  subst this
   rfl
 
-/-- `interp_complete` for `run`, whose subject is the annotated program. -/
-theorem run_complete (h : Semantics.Runs ((Typing.annotate p).toOption.getD p) v) :
-    ∃ n, ∀ m, n ≤ m → run p m = .ok v := by
+/-- `interp_complete` for `run`, whose subject is the program `prepare` gives. -/
+theorem run_complete (hp : prepare p = .ok q) (h : Semantics.Runs q v) :
+    ∃ n, ∀ m, n ≤ m → run p m = .value v := by
   obtain ⟨n, hn⟩ := interp_complete h
-  exact ⟨n, fun m hm => by rw [run_eq_runMain]; exact hn m hm⟩
-
-/-- `runMain` with fuel n that does not exhaust it gives its result with any
-fuel m ≥ n. -/
-theorem runMain_fuel_mono (hnm : n ≤ m) (h : runMain p n ≠ .error .outOfFuel) : runMain p m = runMain p n := by
-  unfold runMain at h ⊢
-  have hle := (Eval.mono n m hnm).1 p [] {} (.call "main" [] none)
-  have := hle {} ⟨by
-    intro he; apply h
-    show Except.map _ (Eval.res _ _).1 = _
-    rw [he]; rfl, fun _ _ h => h⟩
-  simp only [Eval.res] at this
-  rw [this]
+  exact ⟨n, fun m hm => by rw [run_eq, hp]; exact Outcome.ofResult_eq_value.mpr (hn m hm)⟩
 
 /-- The theorem `interp_error_sound` of the blueprint. An error of the
 evaluator of `main()` other than the exhaustion of the fuel means that p ⇒ v
@@ -938,9 +929,10 @@ theorem interp_error_sound (h : runMain p n = .error e) (he : e ≠ .outOfFuel) 
   rw [runMain_fuel_mono (Nat.le_max_left n m) (by rw [h]; intro h'; cases h'; exact he rfl), h] at h₁
   cases h₁
 
-/-- `interp_error_sound` for `run`, whose subject is the annotated program. -/
-theorem run_error_sound (h : run p n = .error e) (he : e ≠ .outOfFuel) :
-    ¬ ∃ v, Semantics.Runs ((Typing.annotate p).toOption.getD p) v :=
-  interp_error_sound (run_eq_runMain ▸ h) he
+/-- `interp_error_sound` for `run`, whose subject is the program `prepare` gives. -/
+theorem run_error_sound (hp : prepare p = .ok q) (h : run p n = .error e) (he : e ≠ .outOfFuel) :
+    ¬ ∃ v, Semantics.Runs q v := by
+  rw [run_eq, hp] at h
+  exact interp_error_sound (Outcome.ofResult_eq_error.mp h) he
 
 end CoreCpp

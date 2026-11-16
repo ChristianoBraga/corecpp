@@ -273,7 +273,7 @@ The function `renderTrace` rebuilds the tree from the log. It lays the tree out 
 A legend names the environments $`\rho_i`, the stores $`\sigma_j` and the subjects longer than 40 characters, so every judgment fits one line. The function writes a subtree wider than 100 columns apart, under a name $`\mathcal{D}_k`.
 :::
 
-:::theorem "interp_fuel_mono" (parent := "judgments") (lean := "CoreCpp.interp_fuel_mono, CoreCpp.runWith_fuel_mono, CoreCpp.Eval.mono, CoreCpp.Eval.Mono, CoreCpp.Eval.LeP") (uses := "judg_ev_expr, judg_ev_lval, judg_ev_cmd, judg_trace")
+:::theorem "interp_fuel_mono" (parent := "judgments") (lean := "CoreCpp.interp_fuel_mono, CoreCpp.runWith_fuel_mono, CoreCpp.evalMain_fuel_mono, CoreCpp.runMain_fuel_mono, CoreCpp.Eval.mono, CoreCpp.Eval.Mono, CoreCpp.Eval.LeP") (uses := "judg_ev_expr, judg_ev_lval, judg_ev_cmd, judg_trace")
 Let $`n \le m`. A result of a function of the evaluator with fuel $`n` that is not the error `outOfFuel` is its result with fuel $`m`, from the same arguments and the same state of the monad $`M`. The value or the error, the trace and the state after the run coincide. In particular `run p n` $`\neq` `outOfFuel` implies `run p m = run p n`.
 :::
 
@@ -310,7 +310,7 @@ Let $`p \Rightarrow v`. By {bpref "interp_complete"}[], `runMain p m = ok v` for
 :::
 
 :::theorem "fuel_least" (parent := "judgments") (lean := "CoreCpp.leastFuel_spec, CoreCpp.leastFuel, CoreCpp.grow, CoreCpp.search, CoreCpp.exhausted, CoreCpp.exhausted_of_le") (uses := "interp_fuel_mono")
-Let `run p b` $`\neq` `outOfFuel`. The search `leastFuel p b` gives the least fuel $`d` with `run p d` $`\neq` `outOfFuel`. So $`d \le b`, `run p d` $`\neq` `outOfFuel`, and `run p j = outOfFuel` for every $`j < d`.
+Let $`p` pass `prepare` and `run p b` $`\neq` `outOfFuel`. The search `leastFuel p b` gives the least fuel $`d` with `run p d` $`\neq` `outOfFuel`. So $`d \le b`, `run p d` $`\neq` `outOfFuel`, and `run p j = outOfFuel` for every $`j < d`.
 :::
 
 :::proof "fuel_least"

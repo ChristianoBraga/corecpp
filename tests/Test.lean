@@ -40,8 +40,8 @@ int main() {
 
 /-! ## Evaluator -/
 
-def prog (s : String) : Except String (Except Error Val) :=
-  (parseStd s).map run
+def prog (s : String) : Except String Outcome := do
+  return run (← parseStd s)
 
 #eval prog "int factorial(int n) {
   int acc = 1;

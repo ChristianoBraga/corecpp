@@ -111,8 +111,8 @@ A function is well typed when its body is well typed under the context of its pa
 $$`\dfrac{\begin{array}{c} \tau = \mathsf{void} \lor \mathsf{Storable}(\tau) \qquad \mathsf{Bindable}_{r_i}(\tau_i) \qquad \tau, \tau_i \text{ well formed} \\ [x_1 \mapsto \tau_1, \ldots, x_k \mapsto \tau_k] \vdash c \dashv \Gamma' \text{ with result type } \tau \end{array}}{\vdash \tau\ f(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \{c\}}\;\textsf{(T-Fun)}`
 :::
 
-:::definition "program" (parent := "abstraction") (lean := "CoreCpp.Program, CoreCpp.check, CoreCpp.runWith, CoreCpp.run, CoreCpp.Semantics.ProgramOk, CoreCpp.Semantics.Runs") (uses := "fun_decl, fun_call, cls_decl, overload_set, std_library")
-A program is a list of declarations of classes and functions with a function `int main()`. The initial store is empty, because there are no global variables, and the result is the value of `main()`.
+:::definition "program" (parent := "abstraction") (lean := "CoreCpp.Program, CoreCpp.check, CoreCpp.prepare, CoreCpp.runWith, CoreCpp.run, CoreCpp.Semantics.ProgramOk, CoreCpp.Semantics.Runs") (uses := "fun_decl, fun_call, cls_decl, overload_set, std_library")
+A program is a list of declarations of classes and functions with a function `int main()`. The initial store is empty, because there are no global variables, and the result is the value of `main()`. A program runs only when it parses, type checks and annotates, {bpref "cls_annotate"}[].
 
 Two functions of one name have distinct and distinguishable signatures, {bpref "overload_set"}[]. Each class $`C` is well formed, $`\vdash C` of {bpref "cls_decl"}[]. Each class template a header declares has a module of {bpref "std_library"}[], and each function it declares has one that agrees with the declaration.
 

@@ -947,20 +947,19 @@ end CoreCpp.Eval
 
 namespace CoreCpp
 
-/-- The result of `main()` in the annotated program p with the given fuel. -/
-def runMain (p : Program) (fuel : Nat) : Except Error Val :=
-  (((Eval.expr fuel p [] {} (.call "main" [] none)).run.run {}).1).map (·.1)
-
-/-- The function `run` evaluates `main()` in the program as `Typing.annotate`
-leaves it. -/
-theorem run_eq_runMain : run p n = runMain ((Typing.annotate p).toOption.getD p) n := rfl
+/-- The function `run` evaluates `main()` in the program `prepare` gives. -/
+theorem run_eq : run p n = match prepare p with
+    | .error r => .rejected r
+    | .ok q => .ofResult (runMain q n) := by
+  unfold run runWith runMain
+  cases prepare p <;> rfl
 
 /-- The theorem `interp_sound` of the blueprint, after `Stmt.interp_sound` of
 Radix. A value of `main()` from the evaluator, with any fuel, is the result of
 a derivation of p ⇒ v. -/
 theorem interp_sound (h : runMain p n = .ok v) : Semantics.Runs p v := by
-  unfold runMain at h
-  rcases hr : (Eval.expr n p [] {} (.call "main" [] none)).run.run {} with ⟨r, s'⟩
+  unfold runMain evalMain at h
+  rcases hr : (Eval.expr n p [] {} (.call "main" [] none)).run.run { enabled := false } with ⟨r, s'⟩
   rw [hr] at h
   cases r with
   | error e => cases h
@@ -969,8 +968,9 @@ theorem interp_sound (h : runMain p n = .ok v) : Semantics.Runs p v := by
     cases h
     exact ⟨σ', Eval.expr_sound hr⟩
 
-/-- `interp_sound` for `run`, whose subject is the annotated program. -/
-theorem run_sound (h : run p n = .ok v) : Semantics.Runs ((Typing.annotate p).toOption.getD p) v :=
-  interp_sound (run_eq_runMain ▸ h)
+/-- `interp_sound` for `run`, whose subject is the program `prepare` gives. -/
+theorem run_sound (hp : prepare p = .ok q) (h : run p n = .value v) : Semantics.Runs q v := by
+  rw [run_eq, hp] at h
+  exact interp_sound (Outcome.ofResult_eq_value.mp h)
 
 end CoreCpp

@@ -97,15 +97,17 @@ def typed (p : Program) : IO Bool := do
   | .error e => IO.eprintln s!"type error: {e}"; return false
 
 /-- Exit code of a program result, as the operating system would compute it. -/
-def exitCode : Except Error Val → UInt32
-  | .ok (.int n) => (n % 256).toNat.toUInt32
-  | .ok _        => 0
-  | .error _     => 134
+def exitCode : Outcome → UInt32
+  | .value (.int n) => (n % 256).toNat.toUInt32
+  | .value _        => 0
+  | .error _        => 134
+  | .rejected _     => 1
 
-def report (r : Except Error Val) : IO UInt32 := do
+def report (r : Outcome) : IO UInt32 := do
   match r with
-  | .ok v    => IO.println s!"main() ⇒ {v}"
-  | .error e => IO.eprintln s!"main() ⇒ error ({e})"
+  | .value v    => IO.println s!"main() ⇒ {v}"
+  | .error e    => IO.eprintln s!"main() ⇒ error ({e})"
+  | .rejected r => IO.eprintln r
   return exitCode r
 
 def dispatch (cmd : String) (flags : List String) (path : String) : IO UInt32 := do
@@ -119,15 +121,15 @@ def dispatch (cmd : String) (flags : List String) (path : String) : IO UInt32 :=
     if ← typed p then IO.println "well typed"; return 0 else return 1
   | "run" =>
     let some p ← load flags path | return 1
-    if !(← typed p) then return 1
     report (run p)
   | "trace" =>
     let some p ← load flags path | return 1
-    if !(← typed p) then return 1
-    let (r, log) := runWith true p
-    IO.println (renderTrace log)
-    IO.println ""
-    report r
+    match runWith true p with
+    | (r@(.rejected _), _) => report r
+    | (r, log) =>
+      IO.println (renderTrace log)
+      IO.println ""
+      report r
   | _ => IO.eprintln usage; return 64
 
 /-- The flags of the options `-D CCPP_X=` or `-DCCPP_X=`, and the other arguments. -/

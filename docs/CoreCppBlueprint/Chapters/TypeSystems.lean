@@ -44,7 +44,7 @@ With no candidate of the arity the error is an arity error, measured on the firs
 :::
 
 :::definition "overload_sig" (parent := "type_systems") (lean := "CoreCpp.FunEnv.lookupSig, CoreCpp.Eval.resolve, CoreCpp.Typing.annotate, CoreCpp.Program.resolve") (uses := "overload_pick, judg_ev_expr")
-Overloading adds no evaluation rule. The type checker writes the signature of the chosen candidate into the field `sig` of the call. The evaluator looks a function or a method up by name and signature instead of by name alone. A program that was not annotated, which the checker rejects first, runs with the first candidate of the name.
+Overloading adds no evaluation rule. The type checker writes the signature of the chosen candidate into the field `sig` of the call. The evaluator looks a function or a method up by name and signature instead of by name alone. The evaluator applied to a program that was not annotated takes the first candidate of the name. The function `run` never applies it so, since it evaluates annotated programs only, {bpref "cls_annotate"}[].
 :::
 
 # Operator members

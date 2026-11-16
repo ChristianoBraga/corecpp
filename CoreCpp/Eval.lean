@@ -38,7 +38,7 @@ member body, a method call runs the method of the static class of the
 receiver, or of the class tag when the method is virtual, and `delete` runs
 the destructors from the tag up and removes the locations of the object from
 the store. The static classes come from `Typing.annotate`, applied by
-`runWith` before the evaluation starts.
+`prepare` before the evaluation starts.
 
 The evaluator runs in the monad `M`, which carries the derivation trace. When
 tracing is enabled, every rule application records the instance of the rule it
@@ -558,7 +558,6 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
     | .locOf e₁ => traced "LocOf" (confE e ρ σ) showV do
       let (l, σ') ← lval fuel fs ρ σ e₁
       return (.loc l, σ')
-
   /-- The method m of class s with the signature the type checker chose, the
   nearest in the chain of s, dispatched by the tag t when that method is
   virtual. The signature picks one member of an overload set, and without it,
@@ -981,6 +980,56 @@ end
 
 end Eval
 
+/-- Why `run` does not evaluate a program. -/
+inductive Rejection where
+  /-- The type error that `check` reports. -/
+  | illTyped (e : TypeError)
+  /-- An error of `annotate` on a program that `check` accepts, an error of
+  the implementation. -/
+  | implementationError (e : TypeError)
+  deriving Repr
+
+def Rejection.toString : Rejection → String
+  | .illTyped e => s!"type error: {e}"
+  | .implementationError e => s!"implementation error, annotate failed on a well typed program: {e}"
+
+instance : ToString Rejection := ⟨Rejection.toString⟩
+
+/-- The program that runs, p type checked and then annotated with the static
+classes of method calls and deletes and the chosen overloads. A program that
+fails either step does not run. -/
+def prepare (p : Program) : Except Rejection Program := do
+  (check p).mapError .illTyped
+  (Typing.annotate p).mapError .implementationError
+
+/-- The result of `main()` in p as given, with the trace when `trace` is set. -/
+def evalMain (trace : Bool) (p : Program) (fuel : Nat) : Except Error Val × Array TraceEntry :=
+  let (r, s) := (Eval.expr fuel p [] {} (.call "main" [] none)).run.run { enabled := trace }
+  (r.map (·.1), s.log)
+
+/-- The result of `main()` in p as given, without the trace. -/
+def runMain (p : Program) (fuel : Nat) : Except Error Val := (evalMain false p fuel).1
+
+/-- The outcome of a program. -/
+inductive Outcome where
+  /-- The program does not pass `prepare`. -/
+  | rejected (r : Rejection)
+  /-- The program runs and `main()` returns the value v. -/
+  | value (v : Val)
+  /-- The program runs and ends in the runtime error e, `outOfFuel` included. -/
+  | error (e : Error)
+  deriving Repr
+
+def Outcome.ofResult : Except Error Val → Outcome
+  | .ok v => .value v
+  | .error e => .error e
+
+@[simp] theorem Outcome.ofResult_eq_value : Outcome.ofResult r = .value v ↔ r = .ok v := by
+  cases r <;> simp [Outcome.ofResult]
+
+@[simp] theorem Outcome.ofResult_eq_error : Outcome.ofResult r = .error e ↔ r = .error e := by
+  cases r <;> simp [Outcome.ofResult]
+
 /--Program execution. The initial store is empty, because there are no global
 variables, and the result is the value returned by `main()`.
 
@@ -992,16 +1041,16 @@ p ⇒ v
 
 The objects created with new stay in σ until delete or the end of the
 program. The locals of main leave σ with the return of the call, so the
-final store holds objects only. The program is annotated with the static
-classes of method calls and deletes before it runs, when it is well typed,
-and otherwise runs as parsed, with every dispatch by the class tag.
+final store holds objects only. A program runs only when it type checks and
+annotates, `prepare`, and otherwise the outcome is `rejected`. A rejected
+program has an empty trace.
 -/
-def runWith (trace : Bool) (p : Program) (fuel : Nat := 1000000) : Except Error Val × Array TraceEntry :=
-  let p := (Typing.annotate p).toOption.getD p
-  let (r, s) := (Eval.expr fuel p [] {} (.call "main" [] none)).run.run { enabled := trace }
-  (r.map (·.1), s.log)
+def runWith (trace : Bool) (p : Program) (fuel : Nat := 1000000) : Outcome × Array TraceEntry :=
+  match prepare p with
+  | .error r => (.rejected r, #[])
+  | .ok q => let (r, log) := evalMain trace q fuel; (.ofResult r, log)
 
-def run (p : Program) (fuel : Nat := 1000000) : Except Error Val := (runWith false p fuel).1
+def run (p : Program) (fuel : Nat := 1000000) : Outcome := (runWith false p fuel).1
 
 /-! ## Rendering the derivation
 

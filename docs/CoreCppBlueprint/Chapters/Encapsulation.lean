@@ -55,7 +55,7 @@ $$`\dfrac{x \notin \Gamma \qquad \Gamma(\mathtt{this}) = C* \qquad \Gamma \vdash
 
 $$`\dfrac{x \notin \Gamma \qquad \Gamma(\mathtt{this}) = C* \qquad \Gamma \vdash_{\ell} \mathtt{this}\mathtt{->}x : \tau}{\Gamma \vdash_{\ell} x : \tau}\;\textsf{(T-LocVarField)}`
 
-The same holds of a call. An unqualified name that is neither a variable nor a function of the program is a member of the receiver. The evaluator also requires that no header declares the name. The annotation of {bpref "cls_annotate"}[] rewrites such a call into `this->f(…)`, so CallThis applies only to a program that runs as parsed.
+The same holds of a call. An unqualified name that is neither a variable nor a function of the program is a member of the receiver. The evaluator also requires that no header declares the name. The annotation of {bpref "cls_annotate"}[] rewrites such a call into `this->f(…)`, so CallThis applies only when the evaluator receives a program that was not annotated, which `run` never passes it.
 
 $$`\dfrac{\begin{array}{c} f \notin \Gamma\qquad f \text{ is no function of the program}\qquad \Gamma(\mathtt{this}) = C* \\ \Gamma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) : \tau \end{array}}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallThis)}`
 
@@ -138,12 +138,12 @@ $$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{null}, \sigma_0}{\rho, \sigm
 
 # Static classes and namespaces
 
-:::definition "cls_annotate" (parent := "encapsulation") (lean := "CoreCpp.Typing.annotate, CoreCpp.Typing.staticClass, CoreCpp.Typing.annExpr, CoreCpp.Typing.annCmd, CoreCpp.Typing.annCmds, CoreCpp.runWith") (uses := "cls_method, cls_delete, judg_ty_expr")
+:::definition "cls_annotate" (parent := "encapsulation") (lean := "CoreCpp.Typing.annotate, CoreCpp.Typing.staticClass, CoreCpp.Typing.annExpr, CoreCpp.Typing.annCmd, CoreCpp.Typing.annCmds, CoreCpp.prepare, CoreCpp.Rejection, CoreCpp.runWith") (uses := "cls_method, cls_delete, judg_ty_expr")
 Neither $`\rho` nor $`\sigma` carries types, and the rules MethodCall and Delete need the static class of the receiver.
 
 After a program is checked, `annotate` walks it with the typing context. It writes into every method call and every `delete` the class the receiver has in $`\Gamma`. It also rewrites an unqualified `m(args)` inside a member body into `this->m(args)`.
 
-The program runs annotated. An ill typed program, which `check` rejects, runs as parsed, with every dispatch by the tag.
+A program runs only when it parses, type checks and annotates. The function `prepare` checks the program and annotates it. A program that `check` rejects stops with its type error. A failure of `annotate` on a program that `check` accepts is an error of the implementation, and the program stops too.
 :::
 
 :::definition "cls_namespace" (parent := "encapsulation") (lean := "CoreCpp.declaration, CoreCpp.classType, CoreCpp.P.qualify") (uses := "parse_program")
