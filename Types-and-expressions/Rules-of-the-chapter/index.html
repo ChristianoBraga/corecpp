@@ -5432,7 +5432,7 @@ window.onload = async () => {
             <h1>
               3.7. Rules of the chapter<span class="permalink-widget inline"><a href="find/?domain=Verso.Genre.Manual.section&amp;name=Core-C______--Types-and-expressions--Rules-of-the-chapter" title="Permalink">🔗</a></span></h1>
             <p>
-              Every definition, every typing rule and every evaluation rule of this chapter, in the order of its sections. The section named above each rule states it with its explanation and with the definition of its notation. The chapters on encapsulation, on type systems and on the library state the rules of the same expressions that involve classes. These are T-VarField, T-LocVarField and LocVarField for a field of <code>this</code>, T-OpBin for an operator member, T-New with a constructor and T-NewLib.</p>
+              Every definition, every typing rule and every evaluation rule of this chapter, in the order of its sections. The section named above each rule states it with its explanation and with the definition of its notation. The chapters on encapsulation, on type systems and on the library state the rules of the same expressions that involve classes. These are T-VarField, T-LocVarField and VarField for a field of <code>this</code>, T-OpBin for an operator member, T-New with a constructor and T-NewLib.</p>
             <p>
               <strong>Literals</strong></p>
             <p>
@@ -5442,9 +5442,9 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash n \Rightarrow \mathsf{int}\,n, \sigma}\;\textsf{(Lit)}</code></p>
+              <code class="bp_math display">\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash n \Rightarrow \mathsf{val}(\mathsf{int}\,n), \sigma}\;\textsf{(Lit)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{bool}\,b, \sigma}\;\textsf{(BoolLit)}</code></p>
+              <code class="bp_math display">\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{val}(\mathsf{bool}\,b), \sigma}\;\textsf{(BoolLit)}</code></p>
             <p>
               <strong>Variable</strong></p>
             <p>
@@ -5454,9 +5454,7 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho(x) = \ell}{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell, \sigma}\;\textsf{(LocVar)}</code></p>
-            <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell, \sigma \qquad \ell \in \mathrm{dom}\,\sigma}{\rho, \sigma \vdash x \Rightarrow \sigma(\ell), \sigma}\;\textsf{(Var)}</code></p>
+              <code class="bp_math display">\dfrac{\rho(x) = \ell}{\rho, \sigma \vdash x \Rightarrow \mathsf{lval}\,\ell, \sigma}\;\textsf{(Var)}</code></p>
             <p>
               <strong>Unary operators</strong></p>
             <p>
@@ -5466,9 +5464,9 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,b, \sigma'}{\rho, \sigma \vdash\, !e \Rightarrow \mathsf{bool}\,\neg b, \sigma'}\;\textsf{(Not)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{bool}\,b}{\rho, \sigma \vdash\, !e \Rightarrow \mathsf{val}(\mathsf{bool}\,\neg b), \sigma'}\;\textsf{(Not)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{int}\,n, \sigma' \qquad -n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash -e \Rightarrow \mathsf{int}(-n), \sigma'}\;\textsf{(Neg)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{int}\,n \qquad -n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash -e \Rightarrow \mathsf{val}(\mathsf{int}(-n)), \sigma'}\;\textsf{(Neg)}</code></p>
             <p>
               <strong>Binary operators</strong></p>
             <p>
@@ -5482,19 +5480,19 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow \mathsf{int}\,n_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow \mathsf{int}\,n_2, \sigma_2 \\ n_1 \oplus n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oplus e_2 \Rightarrow \mathsf{int}(n_1 \oplus n_2), \sigma_2}\;\textsf{(Arith)}, \quad \oplus \in \{+, -, *\}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{int}\,n_1 \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = \mathsf{int}\,n_2 \\ n_1 \oplus n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oplus e_2 \Rightarrow \mathsf{val}(\mathsf{int}(n_1 \oplus n_2)), \sigma_2}\;\textsf{(Arith)}, \quad \oplus \in \{+, -, *\}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow \mathsf{int}\,n_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow \mathsf{int}\,n_2, \sigma_2 \\ n_2 \neq 0 \qquad n = n_1 \oslash n_2 \qquad n,\ n_1 / n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oslash e_2 \Rightarrow \mathsf{int}\,n, \sigma_2}\;\textsf{(Div)}, \quad \oslash \in \{/, \%\}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{int}\,n_1 \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = \mathsf{int}\,n_2 \\ n_2 \neq 0 \qquad n = n_1 \oslash n_2 \qquad n,\ n_1 / n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oslash e_2 \Rightarrow \mathsf{val}(\mathsf{int}\,n), \sigma_2}\;\textsf{(Div)}, \quad \oslash \in \{/, \%\}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow v_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v_2, \sigma_2 \qquad v_1 \bowtie v_2 = b}{\rho, \sigma \vdash e_1 \bowtie e_2 \Rightarrow \mathsf{bool}\,b, \sigma_2}\;\textsf{(Rel)}, \quad \bowtie \in \{==, \mathrel{!=}, &lt;, &lt;=, &gt;, &gt;=\}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = v_1 \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v_2 \qquad v_1 \bowtie v_2 = b \end{array}}{\rho, \sigma \vdash e_1 \bowtie e_2 \Rightarrow \mathsf{val}(\mathsf{bool}\,b), \sigma_2}\;\textsf{(Rel)}, \quad \bowtie \in \{==, \mathrel{!=}, &lt;, &lt;=, &gt;, &gt;=\}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1}\;\textsf{(And-False)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{false}}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow \mathsf{val}(\mathsf{bool}\,\mathtt{false}), \sigma_1}\;\textsf{(And-False)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow v, \sigma_2}\;\textsf{(And-True)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{true} \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v \end{array}}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow \mathsf{val}\,v, \sigma_2}\;\textsf{(And-True)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1}\;\textsf{(Or-True)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{true}}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow \mathsf{val}(\mathsf{bool}\,\mathtt{true}), \sigma_1}\;\textsf{(Or-True)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow v, \sigma_2}\;\textsf{(Or-False)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{false} \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v \end{array}}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow \mathsf{val}\,v, \sigma_2}\;\textsf{(Or-False)}</code></p>
             <p>
               <strong>Conditional</strong></p>
             <p>
@@ -5508,13 +5506,9 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-T)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{true} \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow r, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow r, \sigma_2}\;\textsf{(Cond-T)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-F)}</code></p>
-            <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow_{\ell} \ell, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow_{\ell} \ell, \sigma_2}\;\textsf{(LocCond-T)}</code></p>
-            <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow_{\ell} \ell, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow_{\ell} \ell, \sigma_2}\;\textsf{(LocCond-F)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{false} \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow r, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow r, \sigma_2}\;\textsf{(Cond-F)}</code></p>
             <p>
               <strong>Objects and pointers</strong></p>
             <p>
@@ -5536,17 +5530,15 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sigma}\;\textsf{(Null)}</code></p>
+              <code class="bp_math display">\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{val}\,\mathsf{null}, \sigma}\;\textsf{(Null)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} C \in \mathrm{dom}\,p \qquad \mathrm{fields}(C) = [\tau_1\, f_1, \ldots, \tau_n\, f_n] \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \rho, \sigma' \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} C \in \mathrm{dom}\,p \qquad \mathrm{fields}(C) = [\tau_1\, f_1, \ldots, \tau_n\, f_n] \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \rho, \sigma' \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{val}(\mathsf{loc}\,\ell), \sigma''}\;\textsf{(New)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma'}{\rho, \sigma \vdash {*e} \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocDeref)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{loc}\,\ell}{\rho, \sigma \vdash {*e} \Rightarrow \mathsf{lval}\,\ell, \sigma'}\;\textsf{(Deref)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e.f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocField)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{lval}\,\ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e.f \Rightarrow \mathsf{lval}\,\ell_f, \sigma'}\;\textsf{(Field)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e\mathtt{-&gt;}f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocArrow)}</code></p>
-            <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in \mathrm{dom}\,\sigma'}{\rho, \sigma \vdash e \Rightarrow \sigma'(\ell), \sigma'}\;\textsf{(Read)}, \quad e \in \{{*e'},\ e'.f,\ e'\mathtt{-&gt;}f,\ e'[i]\}</code>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{loc}\,\ell \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e\mathtt{-&gt;}f \Rightarrow \mathsf{lval}\,\ell_f, \sigma'}\;\textsf{(Arrow)}</code>
 </p>
             </section>
           <nav class="prev-next-buttons">

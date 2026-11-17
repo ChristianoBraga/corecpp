@@ -5442,9 +5442,9 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma' \qquad (\ell, \sigma'') = \mathrm{alloc}(\sigma', v)}{\rho, \sigma \vdash \tau\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma''}\;\textsf{(Decl)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r_e, \sigma' \qquad \mathrm{rd}(\sigma', r_e) = v \qquad (\ell, \sigma'') = \mathrm{alloc}(\sigma', v)}{\rho, \sigma \vdash \tau\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma''}\;\textsf{(Decl)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma' \qquad (\ell, \sigma'') = \mathrm{alloc}(\sigma', v)}{\rho, \sigma \vdash \mathtt{auto}\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma''}\;\textsf{(Decl)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r_e, \sigma' \qquad \mathrm{rd}(\sigma', r_e) = v \qquad (\ell, \sigma'') = \mathrm{alloc}(\sigma', v)}{\rho, \sigma \vdash \mathtt{auto}\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto \ell], \sigma''}\;\textsf{(Decl)}</code></p>
             <p>
               <strong>Local reference</strong></p>
             <p>
@@ -5452,7 +5452,7 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \tau\mathtt{\&}\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto_{\mathsf{a}} \ell], \sigma'}\;\textsf{(DeclRef)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{lval}\,\ell, \sigma'}{\rho, \sigma \vdash \tau\mathtt{\&}\ x = e \Rightarrow \mathsf{normal}, \rho[x \mapsto_{\mathsf{a}} \ell], \sigma'}\;\textsf{(DeclRef)}</code></p>
             <p>
               <strong>Assignment</strong></p>
             <p>
@@ -5460,7 +5460,7 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e_2 \Rightarrow v, \sigma_1 \qquad \rho, \sigma_1 \vdash e_1 \Rightarrow_{\ell} \ell, \sigma_2 \\ \ell \in \mathrm{dom}\,\sigma_2 \end{array}}{\rho, \sigma \vdash e_1 = e_2 \Rightarrow \mathsf{normal}, \rho, \sigma_2[\ell \mapsto v]}\;\textsf{(Assign)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e_2 \Rightarrow r_e, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_e) = v \\ \rho, \sigma_1 \vdash e_1 \Rightarrow \mathsf{lval}\,\ell, \sigma_2 \qquad \ell \in \mathrm{dom}\,\sigma_2 \end{array}}{\rho, \sigma \vdash e_1 = e_2 \Rightarrow \mathsf{normal}, \rho, \sigma_2[\ell \mapsto v]}\;\textsf{(Assign)}</code></p>
             <p>
               <strong>Sequence and block</strong></p>
             <p>
@@ -5476,7 +5476,7 @@ window.onload = async () => {
             <p>
               <code class="bp_math display">\dfrac{\rho, \sigma \vdash c \Rightarrow \mathsf{normal}, \rho_1, \sigma_1 \qquad \rho_1, \sigma_1 \vdash cs \Rightarrow r, \rho_2, \sigma_2}{\rho, \sigma \vdash c\ cs \Rightarrow r, \rho_2, \sigma_2}\;\textsf{(Seq)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash c \Rightarrow \mathsf{ret}\,v, \rho_1, \sigma_1}{\rho, \sigma \vdash c\ cs \Rightarrow \mathsf{ret}\,v, \rho_1, \sigma_1}\;\textsf{(Seq-Ret)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash c \Rightarrow \mathsf{ret}\,r, \rho_1, \sigma_1}{\rho, \sigma \vdash c\ cs \Rightarrow \mathsf{ret}\,r, \rho_1, \sigma_1}\;\textsf{(Seq-Ret)}</code></p>
             <p>
               <code class="bp_math display">\dfrac{\rho, \sigma \vdash c_1 \ldots c_n \Rightarrow r, \rho', \sigma'}{\rho, \sigma \vdash \{\, c_1 \ldots c_n \,\} \Rightarrow r, \rho, \sigma' \setminus \mathrm{fresh}(\rho, \rho')}\;\textsf{(Block)}</code></p>
             <p>
@@ -5486,9 +5486,9 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c_1\} \Rightarrow r, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{if}\ (e)\ \{c_1\}\ \mathtt{else}\ \{c_2\} \Rightarrow r, \rho, \sigma_2}\;\textsf{(If-T)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r_e, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_e) = \mathsf{bool}\,\mathtt{true} \qquad \rho, \sigma_1 \vdash \{c_1\} \Rightarrow r, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{if}\ (e)\ \{c_1\}\ \mathtt{else}\ \{c_2\} \Rightarrow r, \rho, \sigma_2}\;\textsf{(If-T)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c_2\} \Rightarrow r, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{if}\ (e)\ \{c_1\}\ \mathtt{else}\ \{c_2\} \Rightarrow r, \rho, \sigma_2}\;\textsf{(If-F)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r_e, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_e) = \mathsf{bool}\,\mathtt{false} \qquad \rho, \sigma_1 \vdash \{c_2\} \Rightarrow r, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{if}\ (e)\ \{c_1\}\ \mathtt{else}\ \{c_2\} \Rightarrow r, \rho, \sigma_2}\;\textsf{(If-F)}</code></p>
             <p>
               <strong>Loops</strong></p>
             <p>
@@ -5498,11 +5498,11 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow \mathsf{normal}, \rho, \sigma_1}\;\textsf{(While-F)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r_e, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_e) = \mathsf{bool}\,\mathtt{false}}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow \mathsf{normal}, \rho, \sigma_1}\;\textsf{(While-F)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c\} \Rightarrow \mathsf{normal}, \rho, \sigma_2 \\ \rho, \sigma_2 \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow r, \rho, \sigma_3 \end{array}}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow r, \rho, \sigma_3}\;\textsf{(While-T)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r_e, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_e) = \mathsf{bool}\,\mathtt{true} \qquad \rho, \sigma_1 \vdash \{c\} \Rightarrow \mathsf{normal}, \rho, \sigma_2 \\ \rho, \sigma_2 \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow r, \rho, \sigma_3 \end{array}}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow r, \rho, \sigma_3}\;\textsf{(While-T)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash \{c\} \Rightarrow \mathsf{ret}\,v, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow \mathsf{ret}\,v, \rho, \sigma_2}\;\textsf{(While-Ret)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r_e, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_e) = \mathsf{bool}\,\mathtt{true} \qquad \rho, \sigma_1 \vdash \{c\} \Rightarrow \mathsf{ret}\,r, \rho, \sigma_2}{\rho, \sigma \vdash \mathtt{while}\ (e)\ \{c\} \Rightarrow \mathsf{ret}\,r, \rho, \sigma_2}\;\textsf{(While-Ret)}</code></p>
             <p>
               <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash c_0 \Rightarrow \mathsf{normal}, \rho_0, \sigma_0 \\ \rho_0, \sigma_0 \vdash \mathtt{while}\ (e)\ \{\, \{c\}\ c_s \,\} \Rightarrow r, \rho_0, \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{for}\ (c_0;\, e;\, c_s)\ \{c\} \Rightarrow r, \rho, \sigma_1 \setminus \mathrm{fresh}(\rho, \rho_0)}\;\textsf{(For)}</code></p>
             <p>
@@ -5512,7 +5512,7 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash e; \Rightarrow \mathsf{normal}, \rho, \sigma'}\;\textsf{(ExprStmt)}</code>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r_e, \sigma'}{\rho, \sigma \vdash e; \Rightarrow \mathsf{normal}, \rho, \sigma'}\;\textsf{(ExprStmt)}</code>
 </p>
             </section>
           <nav class="prev-next-buttons">

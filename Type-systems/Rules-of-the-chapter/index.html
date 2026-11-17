@@ -5452,15 +5452,9 @@ window.onload = async () => {
             <p>
               <code class="bp_math display">\dfrac{m \text{ selected as in T-Method, returning } \tau\&}{\Gamma \vdash_{\ell} e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-LocMethod)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \&e : \tau}\;\textsf{(T-LocOf)}</code></p>
-            <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \&e \Rightarrow \mathsf{loc}\ \ell, \sigma'}\;\textsf{(LocOf)}</code></p>
-            <p>
-              <code class="bp_math display">\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell'}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell', \sigma'}\;\textsf{(MethodLoc)}</code></p>
-            <p>
-              <code class="bp_math display">\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell' \qquad \sigma'(\ell') = w}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow w, \sigma'}\;\textsf{(MethodCallRef)}</code></p>
+              <code class="bp_math display">\dfrac{}{\mathsf{Returns}(\sigma, \mathsf{ret}(\mathsf{lval}\,\ell), \tau\&, \mathsf{lval}\,\ell)}\;\textsf{(Returns-Ref)}</code></p>
             <p>
               <strong>Parametric polymorphism</strong></p>
             <p>

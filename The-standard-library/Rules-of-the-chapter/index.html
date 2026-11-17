@@ -5448,13 +5448,13 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'}{\rho, \sigma_0 \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(NewLib)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'}{\rho, \sigma_0 \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) \Rightarrow \mathsf{val}\,v, \sigma'}\;\textsf{(NewLib)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} f \notin \rho \qquad f \text{ no function of the program, declared by a header} \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_f f(v_1, \ldots, v_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma_0 \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(CallLib)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} f \notin \rho \qquad f \text{ no function of the program, declared by a header} \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_f f(v_1, \ldots, v_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma_0 \vdash f(e_1, \ldots, e_k) \Rightarrow \mathsf{val}\,v, \sigma'}\;\textsf{(CallLib)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{lib}\,L\,\bar{\ell}, \sigma_1 \qquad \rho, \sigma_1 \vdash i \Rightarrow v, \sigma_2 \qquad \sigma_2 \vdash_L (\mathsf{lib}\,L\,\bar{\ell})[v] \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash e[i] \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocIndex)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{lib}\,L\,\bar{\ell} \qquad \rho, \sigma_1 \vdash i \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v \\ \sigma_2 \vdash_L (\mathsf{lib}\,L\,\bar{\ell})[v] \Rightarrow \ell, \sigma' \end{array}}{\rho, \sigma \vdash e[i] \Rightarrow \mathsf{lval}\,\ell, \sigma'}\;\textsf{(Index)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \\ \sigma_0 \vdash_L \mathtt{delete}\ (\mathsf{lib}\,L\,\bar{\ell}) \Rightarrow \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{loc}\,\ell\qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \\ \sigma_0 \vdash_L \mathtt{delete}\ (\mathsf{lib}\,L\,\bar{\ell}) \Rightarrow \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}</code></p>
             <p>
               <strong>Headers</strong></p>
             <p>
@@ -5480,7 +5480,7 @@ window.onload = async () => {
             <p>
               <code class="bp_math display">\dfrac{\begin{array}{c} k \ge 0\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau)\ (1 \le i \le k) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_k, \mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_1, \ldots, \ell_k]) \end{array}}{\sigma_0 \vdash_{\mathit{vector}} \mathtt{new}\langle\tau\rangle(k) \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(V-New)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{0 \le i &lt; n}{\sigma \vdash_{\mathit{vector}} (\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}])[i] \Rightarrow_{\ell} \ell_i, \sigma}\;\textsf{(V-Index)}</code></p>
+              <code class="bp_math display">\dfrac{0 \le i &lt; n}{\sigma \vdash_{\mathit{vector}} (\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}])[i] \Rightarrow \ell_i, \sigma}\;\textsf{(V-Index)}</code></p>
             <p>
               <code class="bp_math display">\dfrac{}{\sigma \vdash_{\mathit{vector}} \mathtt{delete}\ (\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}]) \Rightarrow \sigma \setminus \{\ell_0, \ldots, \ell_{n-1}\}}\;\textsf{(V-Delete)}</code></p>
             <p>

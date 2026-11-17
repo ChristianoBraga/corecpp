@@ -5440,11 +5440,11 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} f \notin \rho \qquad \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma) \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \qquad \mathsf{Returns}(r, \tau, v) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} f \notin \rho \qquad \rho, \sigma'_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma) \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow \kappa, \rho', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, r) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow r, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{}{\mathsf{Returns}(\mathsf{ret}\,v, \tau, v)}\;\textsf{(Returns-Ret)}</code></p>
+              <code class="bp_math display">\dfrac{\mathrm{rd}(\sigma, r) = v}{\mathsf{Returns}(\sigma, \mathsf{ret}\,r, \tau, \mathsf{val}\,v)}\;\textsf{(Returns-Ret)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{}{\mathsf{Returns}(\mathsf{normal}, \mathsf{void}, \mathsf{void})}\;\textsf{(Returns-Void)}</code></p>
+              <code class="bp_math display">\dfrac{}{\mathsf{Returns}(\sigma, \mathsf{normal}, \mathsf{void}, \mathsf{val}\,\mathsf{void})}\;\textsf{(Returns-Void)}</code></p>
             <p>
               <strong>Parameters by reference</strong></p>
             <p>
@@ -5452,7 +5452,7 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} f \notin \rho \qquad \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \qquad \mathsf{Returns}(r, \tau, v) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} f \notin \rho \qquad \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow \mathsf{lval}\,\ell_i, \sigma'_i \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow \kappa, \rho', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, r) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow r, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}</code></p>
             <p>
               <strong>Lambdas and function values</strong></p>
             <p>
@@ -5464,11 +5464,11 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{variables of } c \text{ bound in } \rho, \text{ minus the } x_i\qquad \rho(y_j) = \ell_j \\ \ell_j \in \mathrm{dom}\,\sigma\qquad w_j = \sigma(\ell_j) \end{array}}{\begin{array}{c} \rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{-&gt;}\ \tau\ \{c\} \\ \Rightarrow \mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma \end{array}}\;\textsf{(Lambda)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{variables of } c \text{ bound in } \rho, \text{ minus the } x_i\qquad \rho(y_j) = \ell_j \\ \ell_j \in \mathrm{dom}\,\sigma\qquad w_j = \sigma(\ell_j) \end{array}}{\begin{array}{c} \rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{-&gt;}\ \tau\ \{c\} \\ \Rightarrow \mathsf{val}\,\mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma \end{array}}\;\textsf{(Lambda)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{lib}\ \mathtt{std{:}{:}function}\,[\ell_t], \sigma_0\qquad \sigma_0(\ell_t) = w \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k)\qquad \mathrm{apply}(\sigma_k, w, (v_1, \ldots, v_k)) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(CallFn)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{lib}\ \mathtt{std{:}{:}function}\,[\ell_t] \qquad \sigma_0(\ell_t) = w \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (1 \le i \le k)\qquad \mathrm{apply}(\sigma_k, w, (v_1, \ldots, v_k)) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow \mathsf{val}\,v, \sigma'}\;\textsf{(CallFn)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\begin{array}{c} v = \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]) \\ (\ell'_1 \ldots \ell'_m\, \ell_1 \ldots \ell_k, \sigma_1) = \mathrm{allocMany}(\sigma, w_1 \ldots w_m\, v_1 \ldots v_k) \\ \rho_c = [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \\ \rho_c, \sigma_1 \vdash c \Rightarrow r, \rho'', \sigma'' \qquad \mathsf{Returns}(r, \tau, v') \end{array}}{\mathrm{apply}(\sigma, v, (v_1, \ldots, v_k)) \Rightarrow v', \sigma'' \setminus (\{\ell'_1, \ldots, \ell'_m, \ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_c, \rho''))}\;\textsf{(Apply)}</code></p>
+              <code class="bp_math display">\dfrac{\begin{array}{c} v = \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]) \\ (\ell'_1 \ldots \ell'_m\, \ell_1 \ldots \ell_k, \sigma_1) = \mathrm{allocMany}(\sigma, w_1 \ldots w_m\, v_1 \ldots v_k) \\ \rho_c = [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \\ \rho_c, \sigma_1 \vdash c \Rightarrow \kappa, \rho'', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, \mathsf{val}\,v') \end{array}}{\mathrm{apply}(\sigma, v, (v_1, \ldots, v_k)) \Rightarrow v', \sigma'' \setminus (\{\ell'_1, \ldots, \ell'_m, \ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_c, \rho''))}\;\textsf{(Apply)}</code></p>
             <p>
               <strong>Return</strong></p>
             <p>
@@ -5478,9 +5478,9 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{}{\rho, \sigma \vdash \mathtt{return} \Rightarrow \mathsf{ret}\,\mathsf{void}, \rho, \sigma}\;\textsf{(ReturnVoid)}</code></p>
+              <code class="bp_math display">\dfrac{}{\rho, \sigma \vdash \mathtt{return} \Rightarrow \mathsf{ret}(\mathsf{val}\,\mathsf{void}), \rho, \sigma}\;\textsf{(ReturnVoid)}</code></p>
             <p>
-              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash \mathtt{return}\ e \Rightarrow \mathsf{ret}\,v, \rho, \sigma'}\;\textsf{(Return)}</code></p>
+              <code class="bp_math display">\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma'}{\rho, \sigma \vdash \mathtt{return}\ e \Rightarrow \mathsf{ret}\,r, \rho, \sigma'}\;\textsf{(Return)}</code></p>
             <p>
               <strong>Function and program</strong></p>
             <p>
@@ -5490,7 +5490,7 @@ window.onload = async () => {
             <p>
                </p>
             <p>
-              <code class="bp_math display">\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow v, \sigma}{p \Rightarrow v}\;\textsf{(Program)}</code>
+              <code class="bp_math display">\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow \mathsf{val}\,v, \sigma}{p \Rightarrow v}\;\textsf{(Program)}</code>
 </p>
             </section>
           <nav class="prev-next-buttons">
