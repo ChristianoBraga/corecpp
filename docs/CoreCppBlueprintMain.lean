@@ -25,6 +25,16 @@ def katexZoomFixJs : JS := ⟨"(function(){
     .observe(document.documentElement,{childList:true,subtree:true});
 })();"⟩
 
+/-- The site theme, `theme.css` and `theme.js` in this directory, copied to the
+site root by `extraFilesHtml`. The head of every page links them last, after
+the styles of Verso and of Verso Blueprint, so the theme overrides them. The
+script loads without `defer`, so the stored colour theme applies before the
+first paint. -/
+def themeHead : Array Verso.Output.Html := #[
+  .tag "link" #[("rel", "stylesheet"), ("href", "theme.css")] .empty,
+  .tag "script" #[("src", "theme.js")] .empty
+]
+
 def main (args : List String) : IO UInt32 :=
   Informal.PreviewManifest.blueprintMainWithPreviewData
     (%doc CoreCppBlueprint.Blueprint)
@@ -33,4 +43,7 @@ def main (args : List String) : IO UInt32 :=
     (config := { extraCss := {katexZoomFixCss}, extraJs := {katexZoomFixJs},
                  logo := some "logo.svg",
                  logoLink := some "https://github.com/ChristianoBraga/corecpp",
-                 extraFilesHtml := [("logo.svg", "logo.svg")] })
+                 sourceLink := some "https://github.com/ChristianoBraga/corecpp",
+                 extraHead := themeHead,
+                 extraFilesHtml := [("logo.svg", "logo.svg"), ("theme.css", "theme.css"),
+                                    ("theme.js", "theme.js")] })
