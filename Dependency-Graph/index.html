@@ -5390,6 +5390,8 @@ window.onload = async () => {
     if(n.nodeType===1&&(n.matches('.katex')||n.querySelector('.katex'))){requestAnimationFrame(function(){fix(n);});}});});})
     .observe(document.documentElement,{childList:true,subtree:true});
 })();</script>
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
     <script type="module" src="-verso-data/blueprint-page-runtime.mjs"></script>
     </head>
   <body>
@@ -5418,7 +5420,12 @@ window.onload = async () => {
               </div>
             </div>
           </div>
-        <div class="last"></div>
+        <div class="last">
+          <ul id="meta-links">
+            <li>
+              <a href="https://github.com/ChristianoBraga/corecpp">Source Code</a></li>
+            </ul>
+          </div>
         </nav>
       <div class="toc-resize-handle"></div>
       <main><div class="content-wrapper">
