@@ -1,8 +1,11 @@
 # Plan. One expression judgment, an lvalue yields its location
 
-Agreed on 2026-11-16. It replaces the rewrite of `return e` into
+Agreed and applied on 2026-11-16. It replaces the rewrite of `return e` into
 `return locOf e` and the earlier plan of a return mode in the command
-judgment, which the user rejected.
+judgment, which the user rejected. The open choices took their defaults,
+`val` and `lval`, and Γ ⊢ₗ e : τ stays a second static judgment. The library
+judgment of a module keeps its own arrow, σ ⊢_L v[i] ⇒ ℓ, σ′, since it is
+not a judgment on expressions.
 
 ## Problem
 

@@ -28,27 +28,27 @@ Each argument is checked at the type of its parameter by the judgment $`\Gamma \
 
 $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Call)}`
 
-$$`\dfrac{\begin{array}{c} f \notin \rho \qquad \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma) \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \qquad \mathsf{Returns}(r, \tau, v) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}`
+$$`\dfrac{\begin{array}{c} f \notin \rho \qquad \rho, \sigma'_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma) \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow \kappa, \rho', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, r) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow r, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}`
 
-The return frees the copies of the arguments and the locals the body declared, $`\mathrm{fresh}(\rho_f, \rho')` of {bpref "dom_env"}[]. After a call the store holds only what existed before it and the objects created with `new`.
+The control of the body is $`\kappa`. The return frees the copies of the arguments and the locals the body declared, $`\mathrm{fresh}(\rho_f, \rho')` of {bpref "dom_env"}[]. After a call the store holds only what existed before it and the objects created with `new`.
 
-The predicate $`\mathsf{Returns}(r, \tau, v)` gives the result $`v` of a body with result type $`\tau` that ends with the control $`r`. A `return e` gives the value of `e`. A body that ends with $`\mathsf{normal}` gives $`\mathsf{void}` if $`\tau = \mathsf{void}`, and otherwise there is no derivation. A missing `return` in a non `void` function is an `error` of the evaluator, not a type error. C++17 leaves it undefined in a function other than `main` (N4659 §9.6.3 paragraph 2). For `main` the rule departs from C++17, where the end of `main` is a `return 0` (N4659 §6.6.1 paragraph 5).
+The predicate $`\mathsf{Returns}(\sigma, \kappa, \tau, r)` gives the result $`r` of a call whose body ends with the control $`\kappa` in the store $`\sigma`, for a callee declared with the result type $`\tau`. The operand of `return` initialises the result of the call by the declared return type (N4659 §9.6.3 paragraph 2). For a callee declared $`\tau` the result is the value of the operand, read in $`\sigma` before the locals leave the store, the order of N4659 §9.6.3 paragraph 3. For a method declared $`\tau\&` the result is the location of the operand, rule Returns-Ref of {bpref "op_refret"}[]. A body that ends with $`\mathsf{normal}` gives $`\mathsf{void}` if $`\tau = \mathsf{void}`, and otherwise there is no derivation. A missing `return` in a non `void` function is an `error` of the evaluator, not a type error. C++17 leaves it undefined in a function other than `main` (N4659 §9.6.3 paragraph 2). For `main` the rule departs from C++17, where the end of `main` is a `return 0` (N4659 §6.6.1 paragraph 5).
 
-$$`\dfrac{}{\mathsf{Returns}(\mathsf{ret}\,v, \tau, v)}\;\textsf{(Returns-Ret)}`
+$$`\dfrac{\mathrm{rd}(\sigma, r) = v}{\mathsf{Returns}(\sigma, \mathsf{ret}\,r, \tau, \mathsf{val}\,v)}\;\textsf{(Returns-Ret)}`
 
-$$`\dfrac{}{\mathsf{Returns}(\mathsf{normal}, \mathsf{void}, \mathsf{void})}\;\textsf{(Returns-Void)}`
+$$`\dfrac{}{\mathsf{Returns}(\sigma, \mathsf{normal}, \mathsf{void}, \mathsf{val}\,\mathsf{void})}\;\textsf{(Returns-Void)}`
 
 The rule above is the case in which every parameter is by value, and {bpref "param_ref"}[] gives the case of a parameter by reference.
 :::
 
 # Parameters by reference
 
-:::definition "param_ref" (parent := "abstraction") (lean := "CoreCpp.Param, CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Env.alias, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval, CoreCpp.Semantics.CheckArgs, CoreCpp.Semantics.Bind") (uses := "fun_call, judg_ty_lval, judg_ev_lval, dom_env")
-A parameter $`\tau_j\&\ x_j` receives the location of its argument, which must denote a location of exactly the type $`\tau_j`. The binding of $`x_j` in the function environment is an alias, as in a local reference, and the return does not free it. In $`\Gamma` the parameter has the type of its referent.
+:::definition "param_ref" (parent := "abstraction") (lean := "CoreCpp.Param, CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Env.alias, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval, CoreCpp.Semantics.CheckArgs, CoreCpp.Semantics.Bind") (uses := "fun_call, judg_ty_lval, judg_ev_expr, dom_env")
+A parameter $`\tau_j\&\ x_j` receives the location of its argument, which must be an lvalue of exactly the type $`\tau_j`, so its result is $`\mathsf{lval}\,\ell_j`. The binding of $`x_j` in the function environment is an alias, as in a local reference, and the return does not free it. In $`\Gamma` the parameter has the type of its referent.
 
 $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \ \text{for each } p_i = \tau_i \qquad \Gamma \vdash_{\ell} e_j : \tau_j \ \text{for each } p_j = \tau_j\&}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Call)}`
 
-$$`\dfrac{\begin{array}{c} f \notin \rho \qquad \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \qquad \mathsf{Returns}(r, \tau, v) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}`
+$$`\dfrac{\begin{array}{c} f \notin \rho \qquad \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow \mathsf{lval}\,\ell_i, \sigma'_i \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow \kappa, \rho', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, r) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow r, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}`
 
 Two reference parameters bound to the same argument alias each other, and a write through one is read through the other, as in C++.
 :::
@@ -72,7 +72,7 @@ Anywhere else a lambda is a syntax error, since the grammar admits it only as an
 :::definition "lambda" (parent := "abstraction") (lean := "CoreCpp.Eval.expr, CoreCpp.Eval.captures, CoreCpp.Expr.vars, CoreCpp.Cmd.vars, CoreCpp.Semantics.Eval, CoreCpp.captures?") (uses := "judg_ev_expr, dom_closure, fun_accept")
 A lambda evaluates to a closure with copies of the variables of its body that the environment binds, its parameters excluded, at the evaluation of the lambda. The closure holds values, not locations. A captured `int` or `bool` is a copy the body reads and never writes. A captured pointer still reaches its object in $`\sigma`, so an effect through it is visible outside the lambda.
 
-$$`\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{variables of } c \text{ bound in } \rho, \text{ minus the } x_i\qquad \rho(y_j) = \ell_j \\ \ell_j \in \mathrm{dom}\,\sigma\qquad w_j = \sigma(\ell_j) \end{array}}{\begin{array}{c} \rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \\ \Rightarrow \mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma \end{array}}\;\textsf{(Lambda)}`
+$$`\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{variables of } c \text{ bound in } \rho, \text{ minus the } x_i\qquad \rho(y_j) = \ell_j \\ \ell_j \in \mathrm{dom}\,\sigma\qquad w_j = \sigma(\ell_j) \end{array}}{\begin{array}{c} \rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \\ \Rightarrow \mathsf{val}\,\mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma \end{array}}\;\textsf{(Lambda)}`
 :::
 
 :::definition "fun_callfn" (parent := "abstraction") (lean := "CoreCpp.Typing.callValue, CoreCpp.Eval.target, CoreCpp.Eval.applyClosure, CoreCpp.Eval.applyVals, CoreCpp.Semantics.Apply, CoreCpp.Semantics.ApplyArgs") (uses := "lambda, fun_call, judg_ev_expr, dom_store")
@@ -82,25 +82,25 @@ When the callee is a reference `g` to a function object, `g(…)` is this rule a
 
 $$`\dfrac{\Gamma \vdash e : \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots, \tau_k)\rangle \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \le k)}{\Gamma \vdash e(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallFn)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{lib}\ \mathtt{std{:}{:}function}\,[\ell_t], \sigma_0\qquad \sigma_0(\ell_t) = w \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k)\qquad \mathrm{apply}(\sigma_k, w, (v_1, \ldots, v_k)) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(CallFn)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{lib}\ \mathtt{std{:}{:}function}\,[\ell_t] \qquad \sigma_0(\ell_t) = w \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (1 \le i \le k)\qquad \mathrm{apply}(\sigma_k, w, (v_1, \ldots, v_k)) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow \mathsf{val}\,v, \sigma'}\;\textsf{(CallFn)}`
 
 The target $`w` is a closure, and the function with no target, $`\mathsf{null}` at $`\ell_t`, has no derivation, so its call is `error` in the evaluator. The application of the closure to the values is a judgment of its own. It allocates the captured copies and then the arguments, `allocMany` of {bpref "dom_store"}[], and its body ends as the body of {bpref "fun_call"}[] does.
 
-$$`\dfrac{\begin{array}{c} v = \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]) \\ (\ell'_1 \ldots \ell'_m\, \ell_1 \ldots \ell_k, \sigma_1) = \mathrm{allocMany}(\sigma, w_1 \ldots w_m\, v_1 \ldots v_k) \\ \rho_c = [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \\ \rho_c, \sigma_1 \vdash c \Rightarrow r, \rho'', \sigma'' \qquad \mathsf{Returns}(r, \tau, v') \end{array}}{\mathrm{apply}(\sigma, v, (v_1, \ldots, v_k)) \Rightarrow v', \sigma'' \setminus (\{\ell'_1, \ldots, \ell'_m, \ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_c, \rho''))}\;\textsf{(Apply)}`
+$$`\dfrac{\begin{array}{c} v = \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]) \\ (\ell'_1 \ldots \ell'_m\, \ell_1 \ldots \ell_k, \sigma_1) = \mathrm{allocMany}(\sigma, w_1 \ldots w_m\, v_1 \ldots v_k) \\ \rho_c = [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \\ \rho_c, \sigma_1 \vdash c \Rightarrow \kappa, \rho'', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, \mathsf{val}\,v') \end{array}}{\mathrm{apply}(\sigma, v, (v_1, \ldots, v_k)) \Rightarrow v', \sigma'' \setminus (\{\ell'_1, \ldots, \ell'_m, \ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_c, \rho''))}\;\textsf{(Apply)}`
 :::
 
 # Return
 
 :::definition "fun_return" (parent := "abstraction") (lean := "CoreCpp.Typing.cmd, CoreCpp.Eval.cmd, CoreCpp.Semantics.Check, CoreCpp.Semantics.Exec") (uses := "judg_ty_cmd, judg_ev_cmd, dom_ctrl")
-The `return` yields the control $`\mathsf{ret}\,v`, which `Seq-Ret` and `While-Ret` propagate up to the call. The expression of `return e` is acceptable at the result type $`\tau_r` of the enclosing body.
+The `return` yields the control $`\mathsf{ret}\,r`, with the result $`r` of its operand unchanged, a location when the operand is an lvalue. `Seq-Ret` and `While-Ret` propagate it up to the call, which converts it by the declared return type, $`\mathsf{Returns}` of {bpref "fun_call"}[]. The program keeps the form `return e` that C++17 prescribes, and no rewrite of the operand takes place. The expression of `return e` is acceptable at the result type $`\tau_r` of the enclosing body.
 
 $$`\dfrac{\tau_r = \mathsf{void}}{\Gamma \vdash \mathtt{return} \dashv \Gamma}\;\textsf{(T-RetVoid)}`
 
 $$`\dfrac{\Gamma \vdash e \lhd \tau_r \qquad \tau_r \neq \mathsf{void}}{\Gamma \vdash \mathtt{return}\ e \dashv \Gamma}\;\textsf{(T-Ret)}`
 
-$$`\dfrac{}{\rho, \sigma \vdash \mathtt{return} \Rightarrow \mathsf{ret}\,\mathsf{void}, \rho, \sigma}\;\textsf{(ReturnVoid)}`
+$$`\dfrac{}{\rho, \sigma \vdash \mathtt{return} \Rightarrow \mathsf{ret}(\mathsf{val}\,\mathsf{void}), \rho, \sigma}\;\textsf{(ReturnVoid)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash \mathtt{return}\ e \Rightarrow \mathsf{ret}\,v, \rho, \sigma'}\;\textsf{(Return)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma'}{\rho, \sigma \vdash \mathtt{return}\ e \Rightarrow \mathsf{ret}\,r, \rho, \sigma'}\;\textsf{(Return)}`
 :::
 
 # Function and program
@@ -118,7 +118,7 @@ Two functions of one name have distinct and distinguishable signatures, {bpref "
 
 $$`\dfrac{\begin{array}{c} \text{overloads distinct and distinguishable} \qquad \text{distinct names of classes and class templates} \qquad \text{a module for each declaration of a header} \\ \vdash C_j \ \text{for each } j \qquad \vdash f_i \ \text{for each } i \qquad \mathtt{main} \mapsto \mathtt{int\ main()}\ \{c\} \end{array}}{\vdash p}\;\textsf{(T-Program)}`
 
-$$`\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow v, \sigma}{p \Rightarrow v}\;\textsf{(Program)}`
+$$`\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow \mathsf{val}\,v, \sigma}{p \Rightarrow v}\;\textsf{(Program)}`
 :::
 
 # Properties
@@ -127,8 +127,8 @@ $$`\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow v, \sigma}{p \Right
 A well typed program has a derivation, does not terminate, or is stuck. It is stuck at a case C++17 leaves undefined, at the end of a `main` without `return`, at the call of a `std::function` with no target, or at a failed `assert`. The evaluator reports it as `error`. C++17 defines the last two cases. The call of a `std::function` with no target throws `bad_function_call` (N4659 §23.14.13.1 ¶1), and a failed `assert` calls `abort`, {bpref "std_assert"}[]. Core C++ has no exceptions, {bpref "design_out"}[], so both end the program. A value of the evaluator has a derivation for every program, {bpref "interp_sound"}[], so the statement concerns the errors. Every well typed constructor has an evaluation rule, checked by inspection of the rule set. There is no Lean proof yet.
 :::
 
-:::theorem "det" (parent := "abstraction") (lean := "CoreCpp.Semantics.Runs.det, CoreCpp.Semantics.Eval.det, CoreCpp.Semantics.LEval.det, CoreCpp.Semantics.Exec.det, CoreCpp.Semantics.Execs.det") (uses := "judg_ev_expr, judg_ev_cmd, judg_relations")
-Every construct has rules with mutually exclusive premises, and a Core C++ program has at most one result. The evaluation order fixed left to right removes the choice C++17 leaves to the compiler. The relations of {bpref "judg_relations"}[] make the statement precise. Two derivations of $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` for the same $`e` give the same $`v` and $`\sigma'`. The same holds for `LEval`, `Exec`, `Execs` and the auxiliary dynamic relations. The proof in `CoreCpp/Semantics/Determinism.lean` is one mutual structural recursion on the first derivation. Each case either applies the rule of the second derivation or contradicts one of its premises.
+:::theorem "det" (parent := "abstraction") (lean := "CoreCpp.Semantics.Runs.det, CoreCpp.Semantics.Eval.det, CoreCpp.Semantics.Exec.det, CoreCpp.Semantics.Execs.det") (uses := "judg_ev_expr, judg_ev_cmd, judg_relations")
+Every construct has rules with mutually exclusive premises, and a Core C++ program has at most one result. The evaluation order fixed left to right removes the choice C++17 leaves to the compiler. The relations of {bpref "judg_relations"}[] make the statement precise. Two derivations of $`\rho, \sigma \vdash e \Rightarrow r, \sigma'` for the same $`e` give the same $`r` and $`\sigma'`. The same holds for `Exec`, `Execs` and the auxiliary dynamic relations. The proof in `CoreCpp/Semantics/Determinism.lean` is one mutual structural recursion on the first derivation. Each case either applies the rule of the second derivation or contradicts one of its premises.
 :::
 
 # Rules of the chapter
@@ -141,11 +141,11 @@ $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \quad (1 \le i \l
 
  
 
-$$`\dfrac{\begin{array}{c} f \notin \rho \qquad \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma) \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \qquad \mathsf{Returns}(r, \tau, v) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}`
+$$`\dfrac{\begin{array}{c} f \notin \rho \qquad \rho, \sigma'_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \quad (1 \le i \le k,\ \sigma'_0 = \sigma) \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow \kappa, \rho', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, r) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow r, \sigma'' \setminus (\{\ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}`
 
-$$`\dfrac{}{\mathsf{Returns}(\mathsf{ret}\,v, \tau, v)}\;\textsf{(Returns-Ret)}`
+$$`\dfrac{\mathrm{rd}(\sigma, r) = v}{\mathsf{Returns}(\sigma, \mathsf{ret}\,r, \tau, \mathsf{val}\,v)}\;\textsf{(Returns-Ret)}`
 
-$$`\dfrac{}{\mathsf{Returns}(\mathsf{normal}, \mathsf{void}, \mathsf{void})}\;\textsf{(Returns-Void)}`
+$$`\dfrac{}{\mathsf{Returns}(\sigma, \mathsf{normal}, \mathsf{void}, \mathsf{val}\,\mathsf{void})}\;\textsf{(Returns-Void)}`
 
 *Parameters by reference*
 
@@ -153,7 +153,7 @@ $$`\dfrac{f \notin \Gamma \qquad \Gamma \vdash e_i \lhd \tau_i \ \text{for each 
 
  
 
-$$`\dfrac{\begin{array}{c} f \notin \rho \qquad \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \qquad \mathsf{Returns}(r, \tau, v) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}`
+$$`\dfrac{\begin{array}{c} f \notin \rho \qquad \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow \mathsf{lval}\,\ell_i, \sigma'_i \\ \rho_f = [x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \qquad \rho_f, \sigma'_k \vdash c \Rightarrow \kappa, \rho', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, r) \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow r, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_f, \rho'))}\;\textsf{(Call)}`
 
 *Lambdas and function values*
 
@@ -165,11 +165,11 @@ $$`\dfrac{\Gamma \vdash e : \mathtt{std{:}{:}function}\langle\tau(\tau_1, \ldots
 
  
 
-$$`\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{variables of } c \text{ bound in } \rho, \text{ minus the } x_i\qquad \rho(y_j) = \ell_j \\ \ell_j \in \mathrm{dom}\,\sigma\qquad w_j = \sigma(\ell_j) \end{array}}{\begin{array}{c} \rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \\ \Rightarrow \mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma \end{array}}\;\textsf{(Lambda)}`
+$$`\dfrac{\begin{array}{c} \{y_1, \ldots, y_m\} = \text{variables of } c \text{ bound in } \rho, \text{ minus the } x_i\qquad \rho(y_j) = \ell_j \\ \ell_j \in \mathrm{dom}\,\sigma\qquad w_j = \sigma(\ell_j) \end{array}}{\begin{array}{c} \rho, \sigma \vdash \mathtt{[=]}(\tau_1\,x_1, \ldots, \tau_k\,x_k)\ \mathtt{->}\ \tau\ \{c\} \\ \Rightarrow \mathsf{val}\,\mathsf{closure}(\vec{x}, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]), \sigma \end{array}}\;\textsf{(Lambda)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{lib}\ \mathtt{std{:}{:}function}\,[\ell_t], \sigma_0\qquad \sigma_0(\ell_t) = w \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k)\qquad \mathrm{apply}(\sigma_k, w, (v_1, \ldots, v_k)) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(CallFn)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{lib}\ \mathtt{std{:}{:}function}\,[\ell_t] \qquad \sigma_0(\ell_t) = w \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (1 \le i \le k)\qquad \mathrm{apply}(\sigma_k, w, (v_1, \ldots, v_k)) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e(e_1, \ldots, e_k) \Rightarrow \mathsf{val}\,v, \sigma'}\;\textsf{(CallFn)}`
 
-$$`\dfrac{\begin{array}{c} v = \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]) \\ (\ell'_1 \ldots \ell'_m\, \ell_1 \ldots \ell_k, \sigma_1) = \mathrm{allocMany}(\sigma, w_1 \ldots w_m\, v_1 \ldots v_k) \\ \rho_c = [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \\ \rho_c, \sigma_1 \vdash c \Rightarrow r, \rho'', \sigma'' \qquad \mathsf{Returns}(r, \tau, v') \end{array}}{\mathrm{apply}(\sigma, v, (v_1, \ldots, v_k)) \Rightarrow v', \sigma'' \setminus (\{\ell'_1, \ldots, \ell'_m, \ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_c, \rho''))}\;\textsf{(Apply)}`
+$$`\dfrac{\begin{array}{c} v = \mathsf{closure}(x_1 \ldots x_k, \tau, c, [y_1 \mapsto w_1, \ldots, y_m \mapsto w_m]) \\ (\ell'_1 \ldots \ell'_m\, \ell_1 \ldots \ell_k, \sigma_1) = \mathrm{allocMany}(\sigma, w_1 \ldots w_m\, v_1 \ldots v_k) \\ \rho_c = [y_1 \mapsto \ell'_1, \ldots, y_m \mapsto \ell'_m, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k] \\ \rho_c, \sigma_1 \vdash c \Rightarrow \kappa, \rho'', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, \mathsf{val}\,v') \end{array}}{\mathrm{apply}(\sigma, v, (v_1, \ldots, v_k)) \Rightarrow v', \sigma'' \setminus (\{\ell'_1, \ldots, \ell'_m, \ell_1, \ldots, \ell_k\} \cup \mathrm{fresh}(\rho_c, \rho''))}\;\textsf{(Apply)}`
 
 *Return*
 
@@ -179,9 +179,9 @@ $$`\dfrac{\Gamma \vdash e \lhd \tau_r \qquad \tau_r \neq \mathsf{void}}{\Gamma \
 
  
 
-$$`\dfrac{}{\rho, \sigma \vdash \mathtt{return} \Rightarrow \mathsf{ret}\,\mathsf{void}, \rho, \sigma}\;\textsf{(ReturnVoid)}`
+$$`\dfrac{}{\rho, \sigma \vdash \mathtt{return} \Rightarrow \mathsf{ret}(\mathsf{val}\,\mathsf{void}), \rho, \sigma}\;\textsf{(ReturnVoid)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow v, \sigma'}{\rho, \sigma \vdash \mathtt{return}\ e \Rightarrow \mathsf{ret}\,v, \rho, \sigma'}\;\textsf{(Return)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma'}{\rho, \sigma \vdash \mathtt{return}\ e \Rightarrow \mathsf{ret}\,r, \rho, \sigma'}\;\textsf{(Return)}`
 
 *Function and program*
 
@@ -191,4 +191,4 @@ $$`\dfrac{\begin{array}{c} \text{overloads distinct and distinguishable} \qquad 
 
  
 
-$$`\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow v, \sigma}{p \Rightarrow v}\;\textsf{(Program)}`
+$$`\dfrac{[\,], \emptyset \vdash \mathtt{main}() \Rightarrow \mathsf{val}\,v, \sigma}{p \Rightarrow v}\;\textsf{(Program)}`

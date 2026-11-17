@@ -204,12 +204,11 @@ def Mono (n m : Nat) : Prop :=
   (∀ fs s t k sig, Le (resolve n fs s t k sig) (resolve m fs s t k sig)) ∧
   (∀ fs ρ σ recv arrow k es static sig,
     Le (callMethod n fs ρ σ recv arrow k es static sig) (callMethod m fs ρ σ recv arrow k es static sig)) ∧
-  (∀ fs ρ σ l ps body es ret who,
-    Le (runMember n fs ρ σ l ps body es ret who) (runMember m fs ρ σ l ps body es ret who)) ∧
+  (∀ fs ρ σ l ps body es ret ref who,
+    Le (runMember n fs ρ σ l ps body es ret ref who) (runMember m fs ρ σ l ps body es ret ref who)) ∧
   (∀ fs ρ σ es, Le (args n fs ρ σ es) (args m fs ρ σ es)) ∧
   (∀ fs σ v vs, Le (applyVals n fs σ v vs) (applyVals m fs σ v vs)) ∧
   (∀ fs ρ σ v es, Le (applyClosure n fs ρ σ v es) (applyClosure m fs ρ σ v es)) ∧
-  (∀ fs ρ σ e, Le (lval n fs ρ σ e) (lval m fs ρ σ e)) ∧
   (∀ σ l f, Le (fieldLoc n σ l f) (fieldLoc m σ l f)) ∧
   (∀ fs ρ σ c, Le (cmd n fs ρ σ c) (cmd m fs ρ σ c)) ∧
   (∀ fs ρ σ cs, Le (cmds n fs ρ σ cs) (cmds m fs ρ σ cs))
@@ -222,7 +221,7 @@ macro "mono_step" : tactic => `(tactic| first
   | contradiction
   | (with_reducible apply Le.toLeP
      with_reducible first | apply hE | apply hR | apply hC | apply hM | apply hA | apply hV
-                          | apply hF | apply hL | apply hFl | apply hCm | apply hCs)
+                          | apply hF | apply hFl | apply hCm | apply hCs)
   | with_reducible apply Le.traced
   | with_reducible apply Le.tracedLib
   | with_reducible apply LeP.tracedCases
@@ -240,66 +239,62 @@ variable (ih : Mono n m)
 include ih
 
 theorem Mono.expr : ∀ fs ρ σ e, Le (expr (n + 1) fs ρ σ e) (expr (m + 1) fs ρ σ e) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
   intro fs ρ σ e; unfold Eval.expr; repeat' mono_step
 
 theorem Mono.resolve : ∀ fs s t k sig, Le (resolve (n + 1) fs s t k sig) (resolve (m + 1) fs s t k sig) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
   intro fs s t k sig; unfold Eval.resolve; repeat' mono_step
 
 theorem Mono.callMethod : ∀ fs ρ σ recv arrow k es static sig,
     Le (callMethod (n + 1) fs ρ σ recv arrow k es static sig) (callMethod (m + 1) fs ρ σ recv arrow k es static sig) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
   intro fs ρ σ recv arrow k es static sig; unfold Eval.callMethod; repeat' mono_step
 
-theorem Mono.runMember : ∀ fs ρ σ l ps body es ret who,
-    Le (runMember (n + 1) fs ρ σ l ps body es ret who) (runMember (m + 1) fs ρ σ l ps body es ret who) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
-  intro fs ρ σ l ps body es ret who; unfold Eval.runMember; repeat' mono_step
+theorem Mono.runMember : ∀ fs ρ σ l ps body es ret ref who,
+    Le (runMember (n + 1) fs ρ σ l ps body es ret ref who) (runMember (m + 1) fs ρ σ l ps body es ret ref who) := by
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
+  intro fs ρ σ l ps body es ret ref who; unfold Eval.runMember; repeat' mono_step
 
 theorem Mono.args : ∀ fs ρ σ es, Le (args (n + 1) fs ρ σ es) (args (m + 1) fs ρ σ es) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
   intro fs ρ σ es; unfold Eval.args; repeat' mono_step
 
 theorem Mono.applyVals : ∀ fs σ v vs, Le (applyVals (n + 1) fs σ v vs) (applyVals (m + 1) fs σ v vs) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
   intro fs σ v vs; unfold Eval.applyVals; repeat' mono_step
 
 theorem Mono.applyClosure : ∀ fs ρ σ v es, Le (applyClosure (n + 1) fs ρ σ v es) (applyClosure (m + 1) fs ρ σ v es) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
   intro fs ρ σ v es; unfold Eval.applyClosure; repeat' mono_step
 
-theorem Mono.lval : ∀ fs ρ σ e, Le (lval (n + 1) fs ρ σ e) (lval (m + 1) fs ρ σ e) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
-  intro fs ρ σ e; unfold Eval.lval; repeat' mono_step
-
 theorem Mono.fieldLoc : ∀ σ l f, Le (fieldLoc (n + 1) σ l f) (fieldLoc (m + 1) σ l f) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
   intro σ l f; unfold Eval.fieldLoc; repeat' mono_step
 
 theorem Mono.cmd : ∀ fs ρ σ c, Le (cmd (n + 1) fs ρ σ c) (cmd (m + 1) fs ρ σ c) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
   intro fs ρ σ c; unfold Eval.cmd; repeat' mono_step
 
 theorem Mono.cmds : ∀ fs ρ σ cs, Le (cmds (n + 1) fs ρ σ cs) (cmds (m + 1) fs ρ σ cs) := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hF, hFl, hCm, hCs⟩ := ih
   intro fs ρ σ cs; unfold Eval.cmds; repeat' mono_step
 
 end
 
 theorem Mono.zero (m : Nat) : Mono 0 m := by
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> intros <;>
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> intros <;>
     first
     | (unfold Eval.expr; exact Le.outOfFuel) | (unfold Eval.resolve; exact Le.outOfFuel)
     | (unfold Eval.callMethod; exact Le.outOfFuel) | (unfold Eval.runMember; exact Le.outOfFuel)
     | (unfold Eval.args; exact Le.outOfFuel) | (unfold Eval.applyVals; exact Le.outOfFuel)
-    | (unfold Eval.applyClosure; exact Le.outOfFuel) | (unfold Eval.lval; exact Le.outOfFuel)
+    | (unfold Eval.applyClosure; exact Le.outOfFuel)
     | (unfold Eval.fieldLoc; exact Le.outOfFuel) | (unfold Eval.cmd; exact Le.outOfFuel)
     | (unfold Eval.cmds; exact Le.outOfFuel)
 
 theorem Mono.succ (ih : Mono n m) : Mono (n + 1) (m + 1) :=
   ⟨Mono.expr ih, Mono.resolve ih, Mono.callMethod ih, Mono.runMember ih, Mono.args ih,
-   Mono.applyVals ih, Mono.applyClosure ih, Mono.lval ih, Mono.fieldLoc ih, Mono.cmd ih, Mono.cmds ih⟩
+   Mono.applyVals ih, Mono.applyClosure ih, Mono.fieldLoc ih, Mono.cmd ih, Mono.cmds ih⟩
 
 /-- Every function of the evaluator with fuel n against fuel m ≥ n. -/
 theorem mono : ∀ n m, n ≤ m → Mono n m
@@ -319,7 +314,7 @@ theorem evalMain_fuel_mono {p : Program} {n m : Nat} (hnm : n ≤ m)
   have hle := (Eval.mono n m hnm).1 p [] {} (.call "main" [] none)
   have := hle { enabled := trace } ⟨by
     intro he; apply h
-    show Except.map _ (Eval.res _ _).1 = _
+    show Except.bind (Eval.res _ _).1 _ = _
     rw [he]; rfl, fun _ _ h => h⟩
   simp only [Eval.res] at this
   simp only [StateT.run, ExceptT.run] at this ⊢

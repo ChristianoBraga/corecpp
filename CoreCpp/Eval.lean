@@ -10,8 +10,8 @@ import CoreCpp.Std
 One function per judgment, with the corresponding rule in the comment of each
 case. The judgments are
 
-* ρ, σ ⊢ e ⇒ v, σ', expression evaluation,
-* ρ, σ ⊢ e ⇒ₗ ℓ, σ', location denotation,
+* ρ, σ ⊢ e ⇒ r, σ', expression evaluation, with r a value `val v` or, for
+  an lvalue, the location `lval ℓ` of the object it designates,
 * ρ, σ ⊢ c ⇒ r, ρ', σ', command execution,
 
 in the sequent style of Kahn (1987), the hypotheses ρ and σ left of ⊢, the
@@ -23,7 +23,9 @@ right where C++17 leaves it unspecified, and the C++17 order where it is fixed, 
 operand before left in assignment and function before arguments in a call. The
 store enters expressions because a call inside an expression may change it.
 Objects live in the store as records of locations with a class tag, pointers
-are locations, and the location judgment reaches fields and vector elements. A
+are locations, and an lvalue yields the location of a variable, a field or a
+vector element. A context that needs a value reads it, `rd`, the
+lvalue-to-rvalue conversion. A
 reference parameter binds its name to the location of the argument, a lambda
 evaluates to a closure with copies of the variables it uses, a `std::function`
 is an object whose one location holds the closure, its target, and a call
@@ -169,6 +171,8 @@ def confE (e : Expr) (ρ : Env) (σ : Store) : TraceAnte :=
 def confC (c : Cmd) (ρ : Env) (σ : Store) : TraceAnte :=
   { env := ρ.toString, store := σ.toString, subject := toString c, kind := "c" }
 def showV (r : Val × Store) : TraceCons :=
+  { head := toString r.1, store? := some r.2.toString }
+def showRes (r : Res × Store) : TraceCons :=
   { head := toString r.1, store? := some r.2.toString }
 def showL (r : Loc × Store) : TraceCons :=
   { head := Loc.toString r.1, store? := some r.2.toString }
@@ -333,42 +337,104 @@ def target (σ : Store) (v : Val) : M Val := do
   | .null => throw .noTarget
   | w => pure w
 
+/-- rd(σ, r), the value of a result, the lvalue-to-rvalue conversion of
+N4659 [conv.lval], §7.1. A glvalue whose location left σ is error. -/
+def rd (σ : Store) : Res → M Val
+  | .val v => pure v
+  | .lval l => readLoc σ l
+
+/-- The location of a glvalue, the premise e ⇒ lval ℓ of the contexts that
+need an object. A prvalue is error, which a well typed program never
+reaches. -/
+def lvalOf : Res → M Loc
+  | .lval l => pure l
+  | .val v => throw (.typeError s!"{v} is not an lvalue")
+
+/-- The result a call gives through the control c of its body, the premise
+`Returns`. A callee declared τ gives the value of the result, read in σ
+before the locals leave it, and a method declared τ& the location. -/
+def returns (who : String) (σ : Store) (c : Ctrl) (ret : Ty) (ref : Bool) : M Res :=
+  match c, ref, ret with
+  | .ret r, false, _   => do return .val (← rd σ r)
+  | .ret r, true, _    => do return .lval (← lvalOf r)
+  | .normal, false, .void => pure (.val .void)
+  | .normal, _, _      => throw (.missingReturn who)
+
 mutual
 
-/-- ρ, σ ⊢ e ⇒ v, σ' -/
-def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val × Store) :=
+/-- ρ, σ ⊢ e ⇒ r, σ' -/
+def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Res × Store) :=
   match fuel with
   | 0 => throw .outOfFuel
   | fuel + 1 =>
     match e with
-    /-  ───────────────────── (Lit)
-        ρ, σ ⊢ n ⇒ int32 n, σ                                                     -/
-    | .intLit n => traced "Lit" (confE e ρ σ) showV do return (← int32 n, σ)
-    /-  ────────────────────── (BoolLit)
-        ρ, σ ⊢ b ⇒ bool b, σ                                                      -/
-    | .boolLit b => traced "BoolLit" (confE e ρ σ) showV do return (.bool b, σ)
-    /-  ──────────────────────────── (Null)
-        ρ, σ ⊢ nullptr ⇒ null, σ                                                  -/
-    | .nullptr => traced "Null" (confE e ρ σ) showV do return (.null, σ)
-    /-  ρ, σ ⊢ x ⇒ₗ ℓ, σ    ℓ ∈ dom σ
-        ──────────────────────────────── (Var)       reading x is reading σ(ρ(x)), or the
-        ρ, σ ⊢ x ⇒ σ(ℓ), σ                           field x of this inside a member body -/
-    | .var x => traced "Var" (confE e ρ σ) showV do
-      let (l, σ) ← lval fuel fs ρ σ (.var x)
-      return (← readLoc σ l, σ)
+    /-  ───────────────────────────── (Lit)
+        ρ, σ ⊢ n ⇒ val (int32 n), σ                                               -/
+    | .intLit n => traced "Lit" (confE e ρ σ) showRes do return (.val (← int32 n), σ)
+    /-  ────────────────────────────── (BoolLit)
+        ρ, σ ⊢ b ⇒ val (bool b), σ                                                -/
+    | .boolLit b => traced "BoolLit" (confE e ρ σ) showRes do return (.val (.bool b), σ)
+    /-  ──────────────────────────────── (Null)
+        ρ, σ ⊢ nullptr ⇒ val null, σ                                              -/
+    | .nullptr => traced "Null" (confE e ρ σ) showRes do return (.val .null, σ)
+    /-  ρ(x) = ℓ                         x ∉ ρ    ρ(this) = ℓ    σ(ℓ) = obj C [… x ↦ ℓ_x …]
+        ───────────────────── (Var)      ─────────────────────────────────────────── (VarField)
+        ρ, σ ⊢ x ⇒ lval ℓ, σ             ρ, σ ⊢ x ⇒ lval ℓ_x, σ      an unqualified field of this
+
+        A variable designates the object at its location. A context that needs
+        its value reads it, rd(σ, lval ℓ) = σ(ℓ).                                  -/
+    | .var x =>
+      match ρ.lookup x with
+      | some l => traced "Var" (confE e ρ σ) showRes do return (.lval l, σ)
+      | none   => traced "VarField" (confE e ρ σ) showRes do
+        match ρ.lookup "this" with
+        | some lt =>
+          let (l, σ') ← fieldLoc fuel σ lt x
+          return (.lval l, σ')
+        | none => throw (.undeclaredVariable x)
     /-  ρ(this) = ℓ
-        ───────────────────────── (This)     this is the location of the receiver, bound
-        ρ, σ ⊢ this ⇒ loc ℓ, σ               by the call of the member, never a variable -/
-    | .this => traced "This" (confE e ρ σ) showV do
+        ───────────────────────────── (This)     this is a prvalue, the pointer to the
+        ρ, σ ⊢ this ⇒ val (loc ℓ), σ             receiver, bound by the call of the member -/
+    | .this => traced "This" (confE e ρ σ) showRes do
       match ρ.lookup "this" with
-      | some l => return (.loc l, σ)
+      | some l => return (.val (.loc l), σ)
       | none => throw (.typeError "this outside a member body")
-    /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'    ℓ ∈ dom σ'
-        ────────────────────────────────── (Read)     e one of *e', e'.f, e'->f, e'[i]
-        ρ, σ ⊢ e ⇒ σ'(ℓ), σ'                          reading a location is reading its content -/
-    | .deref _ | .field .. | .arrow .. | .index .. => traced "Read" (confE e ρ σ) showV do
-      let (l, σ') ← lval fuel fs ρ σ e
-      return (← readLoc σ' l, σ')
+    /-  ρ, σ ⊢ e ⇒ r, σ'    rd(σ', r) = loc ℓ
+        ───────────────────────────────────── (Deref)     nullptr is error, `pointee`
+        ρ, σ ⊢ *e ⇒ lval ℓ, σ'                                                     -/
+    | .deref e₁ => traced "Deref" (confE e ρ σ) showRes do
+      let (r, σ') ← expr fuel fs ρ σ e₁
+      return (.lval (← pointee (← rd σ' r)), σ')
+    /-  ρ, σ ⊢ e ⇒ lval ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+        ──────────────────────────────────────────────────── (Field)
+        ρ, σ ⊢ e.f ⇒ lval ℓ_f, σ'                                                  -/
+    | .field e₁ f => traced "Field" (confE e ρ σ) showRes do
+      let (r, σ') ← expr fuel fs ρ σ e₁
+      let (lf, σ'') ← fieldLoc fuel σ' (← lvalOf r) f
+      return (.lval lf, σ'')
+    /-  ρ, σ ⊢ e ⇒ r, σ'    rd(σ', r) = loc ℓ    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
+        ─────────────────────────────────────────────────────────────── (Arrow)    e->f is (*e).f
+        ρ, σ ⊢ e->f ⇒ lval ℓ_f, σ'                                                 -/
+    | .arrow e₁ f => traced "Arrow" (confE e ρ σ) showRes do
+      let (r, σ') ← expr fuel fs ρ σ e₁
+      let (lf, σ'') ← fieldLoc fuel σ' (← pointee (← rd σ' r)) f
+      return (.lval lf, σ'')
+    /-  ρ, σ ⊢ e ⇒ r₁, σ₁    rd(σ₁, r₁) = lib L ℓ̄    ρ, σ₁ ⊢ i ⇒ r₂, σ₂    rd(σ₂, r₂) = v
+        σ₂ ⊢_L (lib L ℓ̄)[v] ⇒ ℓ, σ′
+        ──────────────────────────────────────────────────────────────────── (Index)
+        ρ, σ ⊢ e[i] ⇒ lval ℓ, σ′
+
+        The last premise is the relation index of the module of L, V-Index for
+        std::vector. The receiver is evaluated before the index.                   -/
+    | .index e₁ i => traced "Index" (confE e ρ σ) showRes do
+      let (r₁, σ₁) ← expr fuel fs ρ σ e₁
+      let v ← rd σ₁ r₁
+      let .lib n _ := v | throw (.typeError s!"{e₁} is not an instance of the library")
+      let (r₂, σ₂) ← expr fuel fs ρ σ₁ i
+      let w ← rd σ₂ r₂
+      let F ← fnsOf n
+      let (l, σ₃) ← libStep ρ σ₂ s!"{n}.index({v}, {w})" showL (F.index v w σ₂)
+      return (.lval l, σ₃)
     /-  C ∈ dom p    fields(C) = [τ₁ f₁, …, τₙ fₙ]                the chain of C, the root base first
         (ℓᵢ, σᵢ) = alloc σᵢ₋₁ (default τᵢ),  σ₀ = σ            one location per field, with its default value
         (ℓ, σ') = alloc σₙ (obj C [f₁ ↦ ℓ₁, …, fₙ ↦ ℓₙ])       the record, tagged with the class
@@ -376,11 +442,11 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
                                                                down, each with this ↦ ℓ, the one of C with the
                                                                arguments as in Call, the others with none
         ────────────────────────────────────────────────────────────────────── (New)
-        ρ, σ ⊢ new C(e₁, …, eₖ) ⇒ loc ℓ, σ''
+        ρ, σ ⊢ new C(e₁, …, eₖ) ⇒ val (loc ℓ), σ''
 
         A class without a constructor is created by new C() and keeps the
         default values of its fields.                                                -/
-    | .newObj c es => traced "New" (confE e ρ σ) showV do
+    | .newObj c es => traced "New" (confE e ρ σ) showRes do
       let chain := fs.chain c
       if chain.isEmpty then throw (.typeError s!"unknown class {c}")
       let flds := fs.allFields c
@@ -390,126 +456,149 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
       for cd in chain.reverse do
         if let some k := cd.ctor then
           let args := if cd.name == c then es else []
-          let (_, σ') ← runMember fuel fs ρ σ l k.params k.body args .void s!"constructor of {cd.name}"
+          let (_, σ') ← runMember fuel fs ρ σ l k.params k.body args .void false s!"constructor of {cd.name}"
           σ := σ'
-      return (.loc l, σ)
-    /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ₀ for e.m, or ρ, σ ⊢ e ⇒ loc ℓ, σ₀ for e->m    σ₀(ℓ) = obj T […]
-        S = the static class of e, from the type checker
+      return (.val (.loc l), σ)
+    /-  ρ, σ ⊢ e ⇒ lval ℓ, σ₀ for e.m, or ρ, σ ⊢ e ⇒ r, σ₀ with rd(σ₀, r) = loc ℓ for e->m
+        σ₀(ℓ) = obj T […]    S = the static class of e, from the type checker
         m ↦ τ m(p₁ x₁, …, pₖ xₖ) { c } the method m nearest in the chain of S, or of T when that method is virtual
         arguments as in Call, this ↦ ℓ as an alias binding
-        [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ], σ'ₖ ⊢ c ⇒ ret v, ρ', σ''
+        [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ], σ'ₖ ⊢ c ⇒ ret r, ρ', σ''
         ────────────────────────────────────────────────────────────────────────── (MethodCall)
-        ρ, σ ⊢ e.m(e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))
+        ρ, σ ⊢ e.m(e₁, …, eₖ) ⇒ r', σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))
+
+        The result r' is val (rd(σ'', r)) for a method declared τ, read before
+        the locals leave σ, and r itself, a location, for a method declared τ&.
 
         Dispatch. A virtual method is chosen by the class tag T of the object,
         the one nearest T in the chain, so a call through a base pointer reaches
         the override of the derived class. A non virtual method is chosen by
         the static class S, and since Core C++ lets a derived class redefine a
         method only when the base declares it virtual, the two choices agree.
-        With normal in place of ret v the result is void if τ = void and error
+        With normal in place of ret r the result is void if τ = void and error
         (missing return) otherwise.                                                  -/
-    | .methodCall recv arrow m es static sig => traced "MethodCall" (confE e ρ σ) showV do
-      let (md, v, σ') ← callMethod fuel fs ρ σ recv arrow m es static sig
-      -- A member that returns a reference gives the location, read here
-      -- because the call stands in a position that asks for a value.
-      if md.retRef then return (← readLoc σ' (← pointee v), σ') else return (v, σ')
+    | .methodCall recv arrow m es static sig => traced "MethodCall" (confE e ρ σ) showRes do
+      let (_, r, σ') ← callMethod fuel fs ρ σ recv arrow m es static sig
+      return (r, σ')
     /-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ    σₖ ⊢_L new⟨τ̄⟩(v₁, …, vₖ) ⇒ v, σ′
         ─────────────────────────────────────────────────────────────────────── (NewLib)
-        ρ, σ ⊢ new L⟨τ̄⟩(e₁, …, eₖ) ⇒ v, σ′
+        ρ, σ ⊢ new L⟨τ̄⟩(e₁, …, eₖ) ⇒ val v, σ′
 
-        The last premise is the relation new of the module of L, V-New for
-        std::vector, F-New and F-Empty for std::function.                           -/
-    | .newLib t es => traced "NewLib" (confE e ρ σ) showV do
+        The arguments as in `args`. The last premise is the relation new of the
+        module of L, V-New for std::vector, F-New and F-Empty for std::function.    -/
+    | .newLib t es => traced "NewLib" (confE e ρ σ) showRes do
       let .lib n ts := t | throw (.typeError s!"{t} is not a type of the library")
       let (vs, σ₁) ← args fuel fs ρ σ es
       let F ← fnsOf n
-      libStep ρ σ₁ s!"{n}.new({", ".intercalate (vs.map toString)})" showV (F.new ts vs σ₁)
-    /-  ρ, σ ⊢ e ⇒ v, σ'    op v = v'
-        ─────────────────────────────── (Not), (Neg)
-        ρ, σ ⊢ op e ⇒ v', σ'
+      let (v, σ₂) ← libStep ρ σ₁ s!"{n}.new({", ".intercalate (vs.map toString)})" showV (F.new ts vs σ₁)
+      return (.val v, σ₂)
+    /-  ρ, σ ⊢ e ⇒ r, σ'    rd(σ', r) = v    op v = v'
+        ─────────────────────────────────────────────── (Not), (Neg)
+        ρ, σ ⊢ op e ⇒ val v', σ'
 
         One premise and one conclusion for the two rules, which `unop` tells
         apart. The derivation cites the rule the operator concludes, `unopRule`. -/
-    | .unop op e₁ => tracedLib (fun _ => unopRule op) (confE e ρ σ) showV do
-      let (v, σ) ← expr fuel fs ρ σ e₁
-      return (unopRule op, (← unop op v, σ))
-    /-  ρ, σ ⊢ e₁ ⇒ bool false, σ₁                     ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂
-        ─────────────────────────────── (And-False)    ────────────────────────────────────────────── (And-True)
-        ρ, σ ⊢ e₁ && e₂ ⇒ bool false, σ₁               ρ, σ ⊢ e₁ && e₂ ⇒ v, σ₂
+    | .unop op e₁ => tracedLib (fun _ => unopRule op) (confE e ρ σ) showRes do
+      let (r, σ) ← expr fuel fs ρ σ e₁
+      return (unopRule op, (.val (← unop op (← rd σ r)), σ))
+    /-  ρ, σ ⊢ e₁ ⇒ r₁, σ₁    rd(σ₁, r₁) = bool false
+        ────────────────────────────────────────────── (And-False)
+        ρ, σ ⊢ e₁ && e₂ ⇒ val (bool false), σ₁
+
+        ρ, σ ⊢ e₁ ⇒ r₁, σ₁    rd(σ₁, r₁) = bool true    ρ, σ₁ ⊢ e₂ ⇒ r₂, σ₂    rd(σ₂, r₂) = v
+        ──────────────────────────────────────────────────────────────────────────── (And-True)
+        ρ, σ ⊢ e₁ && e₂ ⇒ val v, σ₂
+
         short circuit, e₂ is evaluated only if e₁ is true                          -/
-    | .binop .and e₁ e₂ => tracedCases "And-False, And-True" (confE e ρ σ) showV do
-      let (v₁, σ₁) ← expr fuel fs ρ σ e₁
-      if ← expectBool "left operand of &&" v₁ then
-        return ("And-True", ← tryCatch (.ok <$> expr fuel fs ρ σ₁ e₂) (pure ∘ .error))
-      else return ("And-False", .ok (.bool false, σ₁))
-    /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁                      ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂
-        ─────────────────────────────── (Or-True)      ─────────────────────────────────────────────── (Or-False)
-        ρ, σ ⊢ e₁ || e₂ ⇒ bool true, σ₁                ρ, σ ⊢ e₁ || e₂ ⇒ v, σ₂                             -/
-    | .binop .or e₁ e₂ => tracedCases "Or-True, Or-False" (confE e ρ σ) showV do
-      let (v₁, σ₁) ← expr fuel fs ρ σ e₁
-      if ← expectBool "left operand of ||" v₁ then return ("Or-True", .ok (.bool true, σ₁))
-      else return ("Or-False", ← tryCatch (.ok <$> expr fuel fs ρ σ₁ e₂) (pure ∘ .error))
-    /-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v₂, σ₂    v₁ ⊕ v₂ = v
-        ──────────────────────────────────────────────────────── (Arith), (Div), (Rel)
-        ρ, σ ⊢ e₁ ⊕ e₂ ⇒ v, σ₂          left before right
+    | .binop .and e₁ e₂ => tracedCases "And-False, And-True" (confE e ρ σ) showRes do
+      let (r₁, σ₁) ← expr fuel fs ρ σ e₁
+      if ← expectBool "left operand of &&" (← rd σ₁ r₁) then
+        return ("And-True", ← tryCatch (.ok <$> do let (r₂, σ₂) ← expr fuel fs ρ σ₁ e₂; return (Res.val (← rd σ₂ r₂), σ₂)) (pure ∘ .error))
+      else return ("And-False", .ok (.val (.bool false), σ₁))
+    /-  ρ, σ ⊢ e₁ ⇒ r₁, σ₁    rd(σ₁, r₁) = bool true
+        ───────────────────────────────────────────── (Or-True)
+        ρ, σ ⊢ e₁ || e₂ ⇒ val (bool true), σ₁
+
+        ρ, σ ⊢ e₁ ⇒ r₁, σ₁    rd(σ₁, r₁) = bool false    ρ, σ₁ ⊢ e₂ ⇒ r₂, σ₂    rd(σ₂, r₂) = v
+        ───────────────────────────────────────────────────────────────────────────── (Or-False)
+        ρ, σ ⊢ e₁ || e₂ ⇒ val v, σ₂                                                 -/
+    | .binop .or e₁ e₂ => tracedCases "Or-True, Or-False" (confE e ρ σ) showRes do
+      let (r₁, σ₁) ← expr fuel fs ρ σ e₁
+      if ← expectBool "left operand of ||" (← rd σ₁ r₁) then return ("Or-True", .ok (.val (.bool true), σ₁))
+      else return ("Or-False", ← tryCatch (.ok <$> do let (r₂, σ₂) ← expr fuel fs ρ σ₁ e₂; return (Res.val (← rd σ₂ r₂), σ₂)) (pure ∘ .error))
+    /-  ρ, σ ⊢ e₁ ⇒ r₁, σ₁    rd(σ₁, r₁) = v₁    ρ, σ₁ ⊢ e₂ ⇒ r₂, σ₂    rd(σ₂, r₂) = v₂    v₁ ⊕ v₂ = v
+        ──────────────────────────────────────────────────────────────────────────────── (Arith), (Div), (Rel)
+        ρ, σ ⊢ e₁ ⊕ e₂ ⇒ val v, σ₂          left before right
 
         The premises of the three rules coincide, and `binop` tells them apart.
         A zero divisor has no derivation, and the trace records its error
         under Div. The derivation cites the rule the operator concludes,
         `binopRule`.                                     -/
-    | .binop op e₁ e₂ => tracedLib (binopFallback op) (confE e ρ σ) showV do
-      let (v₁, σ₁) ← expr fuel fs ρ σ e₁
-      let (v₂, σ₂) ← expr fuel fs ρ σ₁ e₂
-      return (binopRule op v₂, (← binop op v₁ v₂, σ₂))
-    /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ v, σ₂        ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₃ ⇒ v, σ₂
-        ────────────────────────────────────────────── (Cond-T)   ─────────────────────────────────────────────── (Cond-F)
-        ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                                ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ v, σ₂                     -/
-    | .cond e₁ e₂ e₃ => tracedCases "Cond-T, Cond-F" (confE e ρ σ) showV do
-      let (v₁, σ₁) ← expr fuel fs ρ σ e₁
-      if ← expectBool "condition" v₁ then
+    | .binop op e₁ e₂ => tracedLib (binopFallback op) (confE e ρ σ) showRes do
+      let (r₁, σ₁) ← expr fuel fs ρ σ e₁
+      let v₁ ← rd σ₁ r₁
+      let (r₂, σ₂) ← expr fuel fs ρ σ₁ e₂
+      let v₂ ← rd σ₂ r₂
+      return (binopRule op v₂, (.val (← binop op v₁ v₂), σ₂))
+    /-  ρ, σ ⊢ e₁ ⇒ r₁, σ₁    rd(σ₁, r₁) = bool true    ρ, σ₁ ⊢ e₂ ⇒ r, σ₂
+        ─────────────────────────────────────────────────────────────── (Cond-T)
+        ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ r, σ₂
+
+        ρ, σ ⊢ e₁ ⇒ r₁, σ₁    rd(σ₁, r₁) = bool false    ρ, σ₁ ⊢ e₃ ⇒ r, σ₂
+        ──────────────────────────────────────────────────────────────── (Cond-F)
+        ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ r, σ₂
+
+        The result of the chosen branch, a location when it is an lvalue.        -/
+    | .cond e₁ e₂ e₃ => tracedCases "Cond-T, Cond-F" (confE e ρ σ) showRes do
+      let (r₁, σ₁) ← expr fuel fs ρ σ e₁
+      if ← expectBool "condition" (← rd σ₁ r₁) then
         return ("Cond-T", ← tryCatch (.ok <$> expr fuel fs ρ σ₁ e₂) (pure ∘ .error))
       else return ("Cond-F", ← tryCatch (.ok <$> expr fuel fs ρ σ₁ e₃) (pure ∘ .error))
     /-  f ∉ ρ    f ↦ (τ f (p₁ x₁, …, pₖ xₖ) { c }) in the program
         for each i, left to right, with σ'₀ = σ,
-          pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ      call by value, a fresh location with a copy
-          pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ₗ ℓᵢ, σ'ᵢ                               call by reference, the location of the argument
-        ρ_f = [x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                                            only the parameters, the by value ones owned
-        ρ_f, σ'ₖ ⊢ c ⇒ ret v, ρ', σ''
+          pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ rᵢ, σᵢ    rd(σᵢ, rᵢ) = vᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ
+                                                       call by value, a fresh location with a copy
+          pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ lval ℓᵢ, σ'ᵢ   call by reference, the location of the argument
+        ρ_f = [x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]                    only the parameters, the by value ones owned
+        ρ_f, σ'ₖ ⊢ c ⇒ ret r, ρ', σ''    rd(σ'', r) = v
         ──────────────────────────────────────────────────────────────────── (Call)
-        ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_f))         the return frees the copies and the locals
-                                                                                  of the body, never the referents
+        ρ, σ ⊢ f(e₁, …, eₖ) ⇒ val v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_f))
+                                       the return frees the copies and the locals of the body,
+                                       never the referents, after reading the result
 
         With ρ_f, σ'ₖ ⊢ c ⇒ normal, ρ', σ'' the result is void, σ'' ∖ {ℓᵢ} if τ = void,
         and error (missing return) otherwise.
 
-        ρ(f) = ℓ    σ(ℓ) = lib std::function [ℓₜ]    the application as in CallFn
-        ───────────────────────────────────────────────────────────── (CallFn)     a variable f bound to a
-        ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ'                                                 std::function object, a
-                                                                                    reference parameter, hides
-                                                                                    the function named f  -/
+        ρ(f) = ℓ    rd(σ, lval ℓ) = lib std::function [ℓₜ]    the application as in CallFn
+        ──────────────────────────────────────────────────────────────── (CallFn)     a variable f bound to a
+        ρ, σ ⊢ f(e₁, …, eₖ) ⇒ val v, σ'                                                std::function object, a
+                                                                                       reference parameter, hides
+                                                                                       the function named f  -/
     | .call f es sig =>
       match ρ.lookup f with
-      | some _ => traced "CallFn" (confE e ρ σ) showV do
-        let (v, σ₁) ← expr fuel fs ρ σ (.var f)
-        applyClosure fuel fs ρ σ₁ (← target σ₁ v) es
+      | some _ => traced "CallFn" (confE e ρ σ) showRes do
+        let (r, σ₁) ← expr fuel fs ρ σ (.var f)
+        let (v, σ') ← applyClosure fuel fs ρ σ₁ (← target σ₁ (← rd σ₁ r)) es
+        return (.val v, σ')
       | none =>
         if (fs.lookup f).isNone && fs.libDecls.any (·.1 == f) then
-          /-  f ∉ ρ    f declared without a body, with k parameters    ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ
+          /-  f ∉ ρ    f declared without a body, with k parameters    the arguments as in `args`
               σₖ ⊢_f f(v₁, …, vₖ) ⇒ v, σ′
               ──────────────────────────────────────────────────────────────────── (CallLib)
-              ρ, σ ⊢ f(e₁, …, eₖ) ⇒ v, σ′
+              ρ, σ ⊢ f(e₁, …, eₖ) ⇒ val v, σ′
 
               The last premise is the relation call of the module of f, A-True for assert. -/
-          traced "CallLib" (confE e ρ σ) showV do
+          traced "CallLib" (confE e ρ σ) showRes do
             unless fs.libDecls.contains (f, es.length) do throw (.arity f)
             let (vs, σ₁) ← args fuel fs ρ σ es
             let F ← fnsOf f
-            libStep ρ σ₁ s!"{f}({", ".intercalate (vs.map toString)})" showV (F.call vs σ₁)
+            let (v, σ₂) ← libStep ρ σ₁ s!"{f}({", ".intercalate (vs.map toString)})" showV (F.call vs σ₁)
+            return (.val v, σ₂)
         else if (fs.lookup f).isNone && (ρ.lookup "this").isSome then
           -- an unqualified method name inside a member body is this->f(…),
           -- the form Typing.annotate produces; this case serves unannotated programs
           expr fuel fs ρ σ (.methodCall .this true f es none none)
-        else traced "Call" (confE e ρ σ) showV do
+        else traced "Call" (confE e ρ σ) showRes do
         let some fn := fs.lookupSig f sig | throw (.undeclaredFunction f)
         if fn.params.length != es.length then throw (.arity f)
         let mut σ := σ
@@ -517,47 +606,40 @@ def expr (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Val 
         let mut owned : List Loc := []
         for (p, a) in fn.params.zip es do
           if p.byRef then
-            let (l, σ') ← lval fuel fs ρ σ a
+            let (r, σ') ← expr fuel fs ρ σ a
             σ := σ'
-            ρf := ρf.alias p.name l
+            ρf := ρf.alias p.name (← lvalOf r)
           else
-            let (v, σ') ← expr fuel fs ρ σ a
-            let (l, σ'') := σ'.alloc v
+            let (r, σ') ← expr fuel fs ρ σ a
+            let (l, σ'') := σ'.alloc (← rd σ' r)
             σ := σ''
             ρf := ρf.extend p.name l
             owned := l :: owned
-        let (r, ρ', σ'') ← cmds fuel fs ρf σ fn.body
-        let σ''' := σ''.free (owned ++ fresh ρf ρ')
-        match r, fn.ret with
-        | .ret v, _      => return (v, σ''')
-        | .normal, .void => return (.void, σ''')
-        | .normal, _     => throw (.missingReturn f)
-    /-  ρ, σ ⊢ e ⇒ lib std::function [ℓₜ], σ₀    σ₀(ℓₜ) = w    the application of w as below
-        ───────────────────────────────────────────────────────────────────────── (CallFn)
-        ρ, σ ⊢ e(e₁, …, eₖ) ⇒ v, σ'
+        let (c, ρ', σ'') ← cmds fuel fs ρf σ fn.body
+        let r ← returns f σ'' c fn.ret false
+        return (r, σ''.free (owned ++ fresh ρf ρ'))
+    /-  ρ, σ ⊢ e ⇒ r, σ₀    rd(σ₀, r) = lib std::function [ℓₜ]    σ₀(ℓₜ) = w    the application of w as below
+        ─────────────────────────────────────────────────────────────────────────────── (CallFn)
+        ρ, σ ⊢ e(e₁, …, eₖ) ⇒ val v, σ'
 
         The callee is a std::function object, *f for a pointer f, and w its
         target, a closure. The function with no target, null at ℓₜ, is error.   -/
-    | .callFn fe es => traced "CallFn" (confE e ρ σ) showV do
-      let (v, σ₁) ← expr fuel fs ρ σ fe
-      applyClosure fuel fs ρ σ₁ (← target σ₁ v) es
+    | .callFn fe es => traced "CallFn" (confE e ρ σ) showRes do
+      let (r, σ₁) ← expr fuel fs ρ σ fe
+      let (v, σ') ← applyClosure fuel fs ρ σ₁ (← target σ₁ (← rd σ₁ r)) es
+      return (.val v, σ')
     /-  {y₁, …, yₘ} = the free variables of c bound in ρ, minus the xᵢ
         ρ(yⱼ) = ℓⱼ    ℓⱼ ∈ dom σ    wⱼ = σ(ℓⱼ)                             copies, taken at the lambda, read only
         ────────────────────────────────────────────────────────────────── (Lambda)
-        ρ, σ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ⇒ closure(x⃗, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ]), σ
+        ρ, σ ⊢ [=](τ₁ x₁, …, τₖ xₖ) -> τ { c } ⇒ val closure(x⃗, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ]), σ
 
         The closure holds values, not locations. A captured pointer still reaches
         its object in σ, so an effect through it is visible outside, while a
         captured int or bool is a copy that the body cannot change.              -/
-    | .lambda ps r b => traced "Lambda" (confE e ρ σ) showV do
+    | .lambda ps r b => traced "Lambda" (confE e ρ σ) showRes do
       let cap ← captures ρ σ ps b
-      return (.closure ps r b cap, σ)
-    /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'
-        ───────────────────────── (LocOf)      the location as a value, in the return
-        ρ, σ ⊢ &e ⇒ loc ℓ, σ'                  of a member that returns a reference    -/
-    | .locOf e₁ => traced "LocOf" (confE e ρ σ) showV do
-      let (l, σ') ← lval fuel fs ρ σ e₁
-      return (.loc l, σ')
+      return (.val (.closure ps r b cap), σ)
+
   /-- The method m of class s with the signature the type checker chose, the
   nearest in the chain of s, dispatched by the tag t when that method is
   virtual. The signature picks one member of an overload set, and without it,
@@ -576,40 +658,39 @@ def resolve (fuel : Nat) (fs : FunEnv) (s t m : String) (sig : Option (List Ty))
       return (md', k')
     else return (md, k)
 
-  /-- The receiver, the dispatch and the call of a method, shared by the value
-  position and the location position. The result of a member that returns a
-  reference is the location, `loc ℓ`, which the value position reads and the
-  location position takes as it is. -/
+  /-- The receiver, the dispatch and the call of a method. The receiver of
+  e.m is the object e designates and the receiver of e->m the object e points
+  to. The result of a member that returns a reference is a location and the
+  result of any other member a value. -/
 def callMethod (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (recv : Expr) (arrow : Bool) (m : String)
-    (es : List Expr) (static : Option String) (sig : Option (List Ty)) : M (Method × Val × Store) :=
+    (es : List Expr) (static : Option String) (sig : Option (List Ty)) : M (Method × Res × Store) :=
   match fuel with
   | 0 => throw .outOfFuel
   | fuel + 1 => do
-    let (l, σ₀) ← if arrow then do
-        let (v, σ') ← expr fuel fs ρ σ recv
-        pure (← pointee v, σ')
-      else lval fuel fs ρ σ recv
+    let (r₀, σ₀) ← expr fuel fs ρ σ recv
+    let l ← if arrow then do pointee (← rd σ₀ r₀) else lvalOf r₀
     let .obj tag _ ← readLoc σ₀ l | throw (.typeError s!"{recv} does not denote an object")
     let (md, k) ← resolve fuel fs (static.getD tag) tag m sig
-    let (v, σ') ← runMember fuel fs ρ σ₀ l md.params md.body es md.ret s!"{k}::{m}"
-    return (md, v, σ')
+    let (r, σ') ← runMember fuel fs ρ σ₀ l md.params md.body es md.ret md.retRef s!"{k}::{m}"
+    return (md, r, σ')
 
   /--The call of a member body, a method, a constructor or a destructor, with
   this bound to the location ℓ of the receiver and the arguments bound as in
   Call, by value with a fresh copy and by reference with an alias. The return
-  frees the copies and the locals of the body, never the receiver.
+  frees the copies and the locals of the body, never the receiver, after the
+  result is read. The flag `ref` is whether the member returns a reference.
 
   ```
   for each i, left to right, with σ'₀ = σ,
-    pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ vᵢ, σᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ
-    pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ₗ ℓᵢ, σ'ᵢ
-  ρ_m = [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]    ρ_m, σ'ₖ ⊢ c ⇒ r, ρ', σ''
-  ────────────────────────────────────────────────────────────── (Member)
-  member ℓ (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))
+    pᵢ = τᵢ      ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ rᵢ, σᵢ    rd(σᵢ, rᵢ) = vᵢ    (ℓᵢ, σ'ᵢ) = alloc σᵢ vᵢ
+    pᵢ = τᵢ&     ρ, σ'ᵢ₋₁ ⊢ eᵢ ⇒ lval ℓᵢ, σ'ᵢ
+  ρ_m = [this ↦ ℓ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]    ρ_m, σ'ₖ ⊢ c ⇒ k, ρ', σ''    returns(σ'', k) = r
+  ────────────────────────────────────────────────────────────────────────── (Member)
+  member ℓ (e₁, …, eₖ) ⇒ r, σ'' ∖ ({ℓᵢ | pᵢ by value} ∪ (ρ' ∖ ρ_m))
   ```
   -/
 def runMember (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (l : Loc) (ps : List Param) (body : List Cmd)
-    (es : List Expr) (ret : Ty) (who : String) : M (Val × Store) :=
+    (es : List Expr) (ret : Ty) (ref : Bool) (who : String) : M (Res × Store) :=
   match fuel with
   | 0 => throw .outOfFuel
   | fuel + 1 => do
@@ -619,21 +700,18 @@ def runMember (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (l : Loc) (ps :
     let mut owned : List Loc := []
     for (q, a) in ps.zip es do
       if q.byRef then
-        let (l', σ') ← lval fuel fs ρ σ a
+        let (r, σ') ← expr fuel fs ρ σ a
         σ := σ'
-        ρm := ρm.alias q.name l'
+        ρm := ρm.alias q.name (← lvalOf r)
       else
-        let (v, σ') ← expr fuel fs ρ σ a
-        let (l', σ'') := σ'.alloc v
+        let (r, σ') ← expr fuel fs ρ σ a
+        let (l', σ'') := σ'.alloc (← rd σ' r)
         σ := σ''
         ρm := ρm.extend q.name l'
         owned := l' :: owned
-    let (r, ρ', σ'') ← cmds fuel fs ρm σ body
-    let σ''' := σ''.free (owned ++ fresh ρm ρ')
-    match r, ret with
-    | .ret v, _      => return (v, σ''')
-    | .normal, .void => return (.void, σ''')
-    | .normal, _     => throw (.missingReturn who)
+    let (c, ρ', σ'') ← cmds fuel fs ρm σ body
+    let r ← returns who σ'' c ret ref
+    return (r, σ''.free (owned ++ fresh ρm ρ'))
 
   /-- The values of arguments, left to right. -/
 def args (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (es : List Expr) : M (List Val × Store) :=
@@ -643,7 +721,8 @@ def args (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (es : List Expr) : M
   match es with
     | [] => return ([], σ)
     | e :: es => do
-      let (v, σ₁) ← expr fuel fs ρ σ e
+      let (r, σ₁) ← expr fuel fs ρ σ e
+      let v ← rd σ₁ r
       let (vs, σ₂) ← args fuel fs ρ σ₁ es
       return (v :: vs, σ₂)
 
@@ -668,21 +747,18 @@ def applyVals (fuel : Nat) (fs : FunEnv) (σ : Store) (v : Val) (vs : List Val) 
       σ := σ'
       ρc := ρc.extend p.name l
       ls := l :: ls
-    let (res, ρ'', σ'') ← cmds fuel fs ρc σ b
-    let σ''' := σ''.free (ls ++ fresh ρc ρ'')
-    match res, r with
-    | .ret v, _      => return (v, σ''')
-    | .normal, .void => return (.void, σ''')
-    | .normal, _     => throw (.missingReturn "lambda")
+    let (c, ρ'', σ'') ← cmds fuel fs ρc σ b
+    let w ← rd σ'' (← returns "lambda" σ'' c r false)
+    return (w, σ''.free (ls ++ fresh ρc ρ''))
 
   /--The application of a closure to arguments.
 
   ```
   v = closure(x₁ … xₖ, τ, c, [y₁ ↦ w₁, …, yₘ ↦ wₘ])
-  ρ, σ ⊢ e₁ ⇒ v₁, σ₁  …  ρ, σₖ₋₁ ⊢ eₖ ⇒ vₖ, σₖ
+  the arguments as in `args`, values v₁ … vₖ, store σₖ
   (ℓ'ⱼ, ·) = alloc wⱼ    (ℓᵢ, ·) = alloc vᵢ
   ρ_c = [y₁ ↦ ℓ'₁, …, yₘ ↦ ℓ'ₘ, x₁ ↦ ℓ₁, …, xₖ ↦ ℓₖ]
-  ρ_c, σ' ⊢ c ⇒ ret v, ρ'', σ''
+  ρ_c, σ' ⊢ c ⇒ ret r, ρ'', σ''    rd(σ'', r) = v
   ─────────────────────────────────────────────────────────────── (Apply)
   apply v (e₁, …, eₖ) ⇒ v, σ'' ∖ ({ℓ'ⱼ, ℓᵢ} ∪ (ρ'' ∖ ρ_c))
   ```
@@ -692,7 +768,7 @@ def applyVals (fuel : Nat) (fs : FunEnv) (σ : Store) (v : Val) (vs : List Val) 
   closure environment and nothing else is visible. On the way out the copies,
   the parameters and the locals leave the store.
 
-  With normal in place of ret v the result is void if τ = void and error
+  With normal in place of ret r the result is void if τ = void and error
   (missing return) otherwise. A value that is not a closure is error.
   -/
 def applyClosure (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (es : List Expr) : M (Val × Store) :=
@@ -704,96 +780,9 @@ def applyClosure (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (v : Val) (e
     let (vs, σ₁) ← args fuel fs ρ σ es
     applyVals fuel fs σ₁ v vs
 
-  /--ρ, σ ⊢ e ⇒ₗ ℓ, σ', the expressions that denote a location. A variable, an
-  unqualified field of `this`, a dereferenced pointer, a field of an object, a
-  field through a pointer, a call of a member that returns a reference and an
-  element of a vector.
-
-  ```
-  ρ(x) = ℓ                     ρ, σ ⊢ e ⇒ loc ℓ, σ'
-  ──────────────────── (LocVar)  ────────────────────── (LocDeref)    nullptr is error
-  ρ, σ ⊢ x ⇒ₗ ℓ, σ             ρ, σ ⊢ *e ⇒ₗ ℓ, σ'
-  ```
-
-  ```
-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-  ─────────────────────────────────────────────── (LocField)
-  ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'
-  ```
-
-  ```
-  ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-  ────────────────────────────────────────────────── (LocArrow)    e->f is (*e).f
-  ρ, σ ⊢ e->f ⇒ₗ ℓ_f, σ'
-  ```
-
-  An element of a vector is a use of the library, the rule LocIndex.
-  -/
-def lval (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (e : Expr) : M (Loc × Store) :=
-  match fuel with
-  | 0 => throw .outOfFuel
-  | fuel + 1 =>
-    match e with
-    /-  ρ(x) = ℓ                      x ∉ ρ    ρ(this) = ℓ    σ(ℓ) = obj C [… x ↦ ℓ_x …]
-        ──────────────── (LocVar)     ─────────────────────────────────────────── (LocVarField)
-        ρ, σ ⊢ x ⇒ₗ ℓ, σ              ρ, σ ⊢ x ⇒ₗ ℓ_x, σ        an unqualified field of this -/
-    | .var x =>
-      match ρ.lookup x with
-      | some l => traced "LocVar" (confE e ρ σ) showL (arrow := "⇒ₗ") do return (l, σ)
-      | none   => traced "LocVarField" (confE e ρ σ) showL (arrow := "⇒ₗ") do
-        match ρ.lookup "this" with
-        | some lt => fieldLoc fuel σ lt x
-        | none => throw (.undeclaredVariable x)
-    /-  ρ, σ ⊢ e ⇒ loc ℓ, σ'
-        ──────────────────── (LocDeref)     nullptr is error, `pointee`
-        ρ, σ ⊢ *e ⇒ₗ ℓ, σ'                                                         -/
-    | .deref e₁ => traced "LocDeref" (confE e ρ σ) showL (arrow := "⇒ₗ") do
-      let (v, σ') ← expr fuel fs ρ σ e₁
-      return (← pointee v, σ')
-    /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-        ─────────────────────────────────────────────── (LocField)
-        ρ, σ ⊢ e.f ⇒ₗ ℓ_f, σ'                                                      -/
-    | .field e₁ f => traced "LocField" (confE e ρ σ) showL (arrow := "⇒ₗ") do
-      let (l, σ') ← lval fuel fs ρ σ e₁
-      fieldLoc fuel σ' l f
-    /-  ρ, σ ⊢ e ⇒ loc ℓ, σ'    σ'(ℓ) = obj C [… f ↦ ℓ_f …]
-        ────────────────────────────────────────────────── (LocArrow)    e->f is (*e).f
-        ρ, σ ⊢ e->f ⇒ₗ ℓ_f, σ'                                                     -/
-    | .arrow e₁ f => traced "LocArrow" (confE e ρ σ) showL (arrow := "⇒ₗ") do
-      let (v, σ') ← expr fuel fs ρ σ e₁
-      fieldLoc fuel σ' (← pointee v) f
-    /-  the member m of C returns τ&    member ℓ (e₁, …, eₖ) ⇒ loc ℓ', σ'
-        ──────────────────────────────────────────────────────────── (MethodLoc)
-        ρ, σ ⊢ e.m(e₁, …, eₖ) ⇒ₗ ℓ', σ'                                            -/
-    | .methodCall recv arrow m es static sig => traced "MethodLoc" (confE e ρ σ) showL (arrow := "⇒ₗ") do
-      let (md, v, σ') ← callMethod fuel fs ρ σ recv arrow m es static sig
-      if !md.retRef then throw (.typeError s!"{m} does not return a reference")
-      return (← pointee v, σ')
-    /-  ρ, σ ⊢ e ⇒ lib L ℓ̄, σ₁    ρ, σ₁ ⊢ i ⇒ v, σ₂    σ₂ ⊢_L (lib L ℓ̄)[v] ⇒ₗ ℓ, σ′
-        ──────────────────────────────────────────────────────────────────── (LocIndex)
-        ρ, σ ⊢ e[i] ⇒ₗ ℓ, σ′
-
-        The last premise is the relation index of the module of L, V-Index for
-        std::vector. The receiver is evaluated before the index.                   -/
-    | .index e₁ i => traced "LocIndex" (confE e ρ σ) showL (arrow := "⇒ₗ") do
-      let (v, σ₁) ← expr fuel fs ρ σ e₁
-      let .lib n _ := v | throw (.typeError s!"{e₁} is not an instance of the library")
-      let (w, σ₂) ← expr fuel fs ρ σ₁ i
-      let F ← fnsOf n
-      libStep ρ σ₂ s!"{n}.index({v}, {w})" showL (F.index v w σ₂)
-    /-  ρ, σ ⊢ e₁ ⇒ bool true, σ₁    ρ, σ₁ ⊢ e₂ ⇒ₗ ℓ, σ₂      ρ, σ ⊢ e₁ ⇒ bool false, σ₁    ρ, σ₁ ⊢ e₃ ⇒ₗ ℓ, σ₂
-        ──────────────────────────────────── (LocCond-T)    ───────────────────────────────────── (LocCond-F)
-        ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ₗ ℓ, σ₂                         ρ, σ ⊢ e₁ ? e₂ : e₃ ⇒ₗ ℓ, σ₂            -/
-    | .cond e₁ e₂ e₃ => tracedCases "LocCond-T, LocCond-F" (confE e ρ σ) showL (arrow := "⇒ₗ") do
-      let (v₁, σ₁) ← expr fuel fs ρ σ e₁
-      if ← expectBool "condition" v₁ then
-        return ("LocCond-T", ← tryCatch (.ok <$> lval fuel fs ρ σ₁ e₂) (pure ∘ .error))
-      else return ("LocCond-F", ← tryCatch (.ok <$> lval fuel fs ρ σ₁ e₃) (pure ∘ .error))
-    | _ => throw (.typeError s!"expression does not denote a location: {e}")
-
   /-- The location of field f of the object stored at ℓ, the premise
-  σ(ℓ) = obj C [… f ↦ ℓ_f …] of LocField and LocArrow. A location outside σ is
-  error. -/
+  σ(ℓ) = obj C [… f ↦ ℓ_f …] of VarField, Field and Arrow. A location outside
+  σ is error. -/
 def fieldLoc (fuel : Nat) (σ : Store) (l : Loc) (f : String) : M (Loc × Store) :=
   match fuel with
   | 0 => throw .outOfFuel
@@ -818,12 +807,14 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
     | .block cs => traced "Block" (confC c ρ σ) showR do
       let (r, ρ', σ') ← cmds fuel fs ρ σ cs
       return (r, ρ, σ'.free (fresh ρ ρ'))
-    /-  ρ, σ ⊢ e ⇒ bool true, σ₁    ρ, σ₁ ⊢ {c₁} ⇒ r, ρ, σ₂          ρ, σ ⊢ e ⇒ bool false, σ₁    ρ, σ₁ ⊢ {c₂} ⇒ r, ρ, σ₂
+    /-  ρ, σ ⊢ e ⇒ v, σ₁ stands for ρ, σ ⊢ e ⇒ r, σ₁ with rd(σ₁, r) = v
+
+        ρ, σ ⊢ e ⇒ bool true, σ₁    ρ, σ₁ ⊢ {c₁} ⇒ r, ρ, σ₂          ρ, σ ⊢ e ⇒ bool false, σ₁    ρ, σ₁ ⊢ {c₂} ⇒ r, ρ, σ₂
         ────────────────────────────────────────────────── (If-T)     ─────────────────────────────────────────────────── (If-F)
         ρ, σ ⊢ if (e) {c₁} else {c₂} ⇒ r, ρ, σ₂                        ρ, σ ⊢ if (e) {c₁} else {c₂} ⇒ r, ρ, σ₂             -/
     | .ite e t f => tracedCases "If-T, If-F" (confC c ρ σ) showR do
-      let (v, σ₁) ← expr fuel fs ρ σ e
-      if ← expectBool "condition of if" v then
+      let (r, σ₁) ← expr fuel fs ρ σ e
+      if ← expectBool "condition of if" (← rd σ₁ r) then
         return ("If-T", ← tryCatch (.ok <$> cmd fuel fs ρ σ₁ (.block t)) (pure ∘ .error))
       else return ("If-F", ← tryCatch (.ok <$> cmd fuel fs ρ σ₁ (.block f)) (pure ∘ .error))
     /-  ρ, σ ⊢ e ⇒ bool false, σ₁
@@ -834,18 +825,18 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
         ────────────────────────────────────────────────────────────────────────────────────── (While-T)
         ρ, σ ⊢ while (e) {c} ⇒ r, ρ, σ₃
 
-        ρ, σ ⊢ e ⇒ bool true, σ₁    ρ, σ₁ ⊢ {c} ⇒ ret v, ρ, σ₂
+        ρ, σ ⊢ e ⇒ bool true, σ₁    ρ, σ₁ ⊢ {c} ⇒ ret r, ρ, σ₂
         ────────────────────────────────────────────────────── (While-Ret)   the return interrupts the loop
-        ρ, σ ⊢ while (e) {c} ⇒ ret v, ρ, σ₂
+        ρ, σ ⊢ while (e) {c} ⇒ ret r, ρ, σ₂
 
-        The divergence of while (true) {} has no derivation, a limitation of
-        inductive big-step semantics.                                                                 -/
+        The condition is a value, as in If. The divergence of while (true) {}
+        has no derivation, a limitation of inductive big-step semantics.               -/
     | .while e b => tracedCases "While-F, While-T, While-Ret" (confC c ρ σ) showR do
-      let (v, σ₁) ← expr fuel fs ρ σ e
-      if ← expectBool "condition of while" v then
+      let (r, σ₁) ← expr fuel fs ρ σ e
+      if ← expectBool "condition of while" (← rd σ₁ r) then
         match ← tryCatch (Except.ok <$> cmd fuel fs ρ σ₁ (.block b)) (pure ∘ Except.error) with
         | .error err => return ("While-T, While-Ret", .error err)
-        | .ok (.ret v, _, σ₂) => return ("While-Ret", .ok (.ret v, ρ, σ₂))
+        | .ok (.ret r, _, σ₂) => return ("While-Ret", .ok (.ret r, ρ, σ₂))
         | .ok (.normal, _, σ₂) =>
           return ("While-T", ← tryCatch (.ok <$> cmd fuel fs ρ σ₂ (.while e b)) (pure ∘ .error))
       else return ("While-F", .ok (.normal, ρ, σ₁))
@@ -861,68 +852,77 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
       | .normal =>
         let (r, _, σ₁) ← cmd fuel fs ρ₀ σ₀ (.while e [.block b, cₛ])
         return (r, ρ, σ₁.free (fresh ρ ρ₀))
-    /-  ρ, σ ⊢ e ⇒ v, σ'
-        ─────────────────────────────── (Return)         ────────────────────────────────── (ReturnVoid)
-        ρ, σ ⊢ return e ⇒ ret v, ρ, σ'                   ρ, σ ⊢ return ⇒ ret void, ρ, σ                 -/
-    | .ret none => traced "ReturnVoid" (confC c ρ σ) showR do return (.ret .void, ρ, σ)
+    /-  ρ, σ ⊢ e ⇒ r, σ'
+        ─────────────────────────────── (Return)         ──────────────────────────────────────── (ReturnVoid)
+        ρ, σ ⊢ return e ⇒ ret r, ρ, σ'                   ρ, σ ⊢ return ⇒ ret (val void), ρ, σ
+
+        The result of the operand, unchanged, a location when it is an lvalue.
+        The call converts it by the declared return type of the callee.         -/
+    | .ret none => traced "ReturnVoid" (confC c ρ σ) showR do return (.ret (.val .void), ρ, σ)
     | .ret (some e) => traced "Return" (confC c ρ σ) showR do
-      let (v, σ') ← expr fuel fs ρ σ e
-      return (.ret v, ρ, σ')
-    /-  ρ, σ ⊢ e ⇒ v, σ'    (ℓ, σ'') = alloc(σ', v)
-        ──────────────────────────────────────────────── (Decl)
+      let (r, σ') ← expr fuel fs ρ σ e
+      return (.ret r, ρ, σ')
+    /-  ρ, σ ⊢ e ⇒ r, σ'    rd(σ', r) = v    (ℓ, σ'') = alloc(σ', v)
+        ───────────────────────────────────────────────────────────── (Decl)
         ρ, σ ⊢ τ x = e ⇒ normal, ρ[x ↦ ℓ], σ''
         the declaration allocates a fresh location and extends ρ for the following commands -/
     | .decl _ x e => traced "Decl" (confC c ρ σ) showR do
-      let (v, σ') ← expr fuel fs ρ σ e
-      let (l, σ'') := σ'.alloc v
+      let (r, σ') ← expr fuel fs ρ σ e
+      let (l, σ'') := σ'.alloc (← rd σ' r)
       return (.normal, ρ.extend x l, σ'')
-    /-  ρ, σ ⊢ e ⇒ₗ ℓ, σ'
+    /-  ρ, σ ⊢ e ⇒ lval ℓ, σ'
         ───────────────────────────────────────────── (DeclRef)
         ρ, σ ⊢ τ& x = e ⇒ normal, ρ[x ↦ₐ ℓ], σ'
         a reference binds a second name to an existing location, nothing is
         allocated and the alias binding ρ[x ↦ₐ ℓ] is not owned, so block exit
         leaves ℓ in σ                                                             -/
     | .declRef _ x e => traced "DeclRef" (confC c ρ σ) showR do
-      let (l, σ') ← lval fuel fs ρ σ e
-      return (.normal, ρ.alias x l, σ')
-    /-  ρ, σ ⊢ e ⇒ v, σ'    (ℓ, σ'') = alloc(σ', v)
-        ──────────────────────────────────────────────── (Decl)      the rule Decl for auto
+      let (r, σ') ← expr fuel fs ρ σ e
+      return (.normal, ρ.alias x (← lvalOf r), σ')
+    /-  ρ, σ ⊢ e ⇒ r, σ'    rd(σ', r) = v    (ℓ, σ'') = alloc(σ', v)
+        ───────────────────────────────────────────────────────────── (Decl)      the rule Decl for auto
         ρ, σ ⊢ auto x = e ⇒ normal, ρ[x ↦ ℓ], σ''                                  -/
     | .declAuto x e => traced "Decl" (confC c ρ σ) showR do
-      let (v, σ') ← expr fuel fs ρ σ e
-      let (l, σ'') := σ'.alloc v
+      let (r, σ') ← expr fuel fs ρ σ e
+      let (l, σ'') := σ'.alloc (← rd σ' r)
       return (.normal, ρ.extend x l, σ'')
-    /-  ρ, σ ⊢ e₂ ⇒ v, σ₁    ρ, σ₁ ⊢ e₁ ⇒ₗ ℓ, σ₂    ℓ ∈ dom σ₂
-        ──────────────────────────────────────────────────────── (Assign)
+    /-  ρ, σ ⊢ e₂ ⇒ r, σ₁    rd(σ₁, r) = v    ρ, σ₁ ⊢ e₁ ⇒ lval ℓ, σ₂    ℓ ∈ dom σ₂
+        ──────────────────────────────────────────────────────────────────────── (Assign)
         ρ, σ ⊢ e₁ = e₂ ⇒ normal, ρ, σ₂[ℓ ↦ v]
         right operand before left, the order C++17 fixes for assignment            -/
     | .assign e₁ e₂ => traced "Assign" (confC c ρ σ) showR do
-      let (v, σ₁) ← expr fuel fs ρ σ e₂
-      let (l, σ₂) ← lval fuel fs ρ σ₁ e₁
+      let (r₂, σ₁) ← expr fuel fs ρ σ e₂
+      let v ← rd σ₁ r₂
+      let (r, σ₂) ← expr fuel fs ρ σ₁ e₁
+      let l ← lvalOf r
       if (σ₂.read l).isNone then throw (.danglingLocation l)
       return (.normal, ρ, σ₂.write l v)
-    /-  ρ, σ ⊢ e ⇒ v, σ'
-        ──────────────────────────── (ExprStmt)      the value is discarded
-        ρ, σ ⊢ e; ⇒ normal, ρ, σ'                                                 -/
+    /-  ρ, σ ⊢ e ⇒ r, σ'
+        ──────────────────────────── (ExprStmt)      the result is discarded, with no
+        ρ, σ ⊢ e; ⇒ normal, ρ, σ'                     conversion (N4659 [expr], §8 paragraph 12) -/
     | .exprStmt e => traced "ExprStmt" (confC c ρ σ) showR do
       let (_, σ') ← expr fuel fs ρ σ e
       return (.normal, ρ, σ')
-    /-  ρ, σ ⊢ e ⇒ loc ℓ, σ₀    σ₀(ℓ) = obj T [f₁ ↦ ℓ₁, …, fₙ ↦ ℓₙ]    S = the static class of e
-        S = T or the chain of S has a virtual destructor
+    /-  ρ, σ ⊢ e ⇒ r, σ₀    rd(σ₀, r) = loc ℓ    σ₀(ℓ) = obj T [f₁ ↦ ℓ₁, …, fₙ ↦ ℓₙ]
+        S = the static class of e    S = T or the chain of S has a virtual destructor
         the destructors of the chain of T run from T up to the root, each with this ↦ ℓ, giving σ₁
         ───────────────────────────────────────────────────────────────────────────── (Delete)
         ρ, σ ⊢ delete e ⇒ normal, ρ, σ₁ ∖ {ℓ, ℓ₁, …, ℓₙ}
 
-        ρ, σ ⊢ e ⇒ loc ℓ, σ₀    σ₀(ℓ) = lib L ℓ̄    σ₀ ⊢_L delete(σ₀(ℓ)) ⇒ void, σ₁      ρ, σ ⊢ e ⇒ null, σ₀
-        ──────────────────────────────────────────────────────────── (DeleteLib)   ──────────────────────────── (DeleteNull)
-        ρ, σ ⊢ delete e ⇒ normal, ρ, σ₁ ∖ {ℓ}                                     ρ, σ ⊢ delete e ⇒ normal, ρ, σ₀
+        ρ, σ ⊢ e ⇒ r, σ₀    rd(σ₀, r) = loc ℓ    σ₀(ℓ) = lib L ℓ̄    σ₀ ⊢_L delete(σ₀(ℓ)) ⇒ void, σ₁
+        ───────────────────────────────────────────────────────────────────────────── (DeleteLib)
+        ρ, σ ⊢ delete e ⇒ normal, ρ, σ₁ ∖ {ℓ}
+
+        ρ, σ ⊢ e ⇒ r, σ₀    rd(σ₀, r) = null
+        ──────────────────────────────────────── (DeleteNull)
+        ρ, σ ⊢ delete e ⇒ normal, ρ, σ₀
 
         With ℓ ∉ dom σ₀ the result is error (double delete), and with S ≠ T and no
         virtual destructor in the chain of S it is error, the two cases C++17
         leaves undefined. delete nullptr does nothing, as in C++.                  -/
     | .delete e static => traced "Delete" (confC c ρ σ) showR do
-      let (v, σ₀) ← expr fuel fs ρ σ e
-      match v with
+      let (r, σ₀) ← expr fuel fs ρ σ e
+      match ← rd σ₀ r with
       | .null => return (.normal, ρ, σ₀)
       | .loc l =>
         match σ₀.read l with
@@ -937,7 +937,7 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
           let mut σ := σ₀
           for cd in fs.chain tag do
             if let some d := cd.dtor then
-              let (_, σ') ← runMember fuel fs ρ σ l [] d.body [] .void s!"destructor of {cd.name}"
+              let (_, σ') ← runMember fuel fs ρ σ l [] d.body [] .void false s!"destructor of {cd.name}"
               σ := σ'
           return (.normal, ρ, σ.free (l :: flds.map (·.2)))
         | some w => throw (.typeError s!"delete of {w}, not an object")
@@ -959,9 +959,9 @@ def cmd (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (c : Cmd) : M (Ctrl �
   The environment ρ₁ carries the binding of c to the rest of the sequence.
 
   ```
-  ρ, σ ⊢ c ⇒ ret v, ρ₁, σ₁
+  ρ, σ ⊢ c ⇒ ret r, ρ₁, σ₁
   ───────────────────────────── (Seq-Ret)   the return interrupts the sequence
-  ρ, σ ⊢ c cs ⇒ ret v, ρ₁, σ₁
+  ρ, σ ⊢ c cs ⇒ ret r, ρ₁, σ₁
   ```
   -/
 def cmds (fuel : Nat) (fs : FunEnv) (ρ : Env) (σ : Store) (cs : List Cmd) : M (Ctrl × Env × Store) :=
@@ -1002,10 +1002,16 @@ def prepare (p : Program) : Except Rejection Program := do
   (check p).mapError .illTyped
   (Typing.annotate p).mapError .implementationError
 
+/-- The value of the result of a call, `val v`, the only result a call of a
+function gives. -/
+def Res.callValue : Res × Store → Except Error Val
+  | (.val v, _) => .ok v
+  | (.lval l, _) => .error (.typeError s!"main() gave the location {Loc.toString l}")
+
 /-- The result of `main()` in p as given, with the trace when `trace` is set. -/
 def evalMain (trace : Bool) (p : Program) (fuel : Nat) : Except Error Val × Array TraceEntry :=
   let (r, s) := (Eval.expr fuel p [] {} (.call "main" [] none)).run.run { enabled := trace }
-  (r.map (·.1), s.log)
+  (r.bind Res.callValue, s.log)
 
 /-- The result of `main()` in p as given, without the trace. -/
 def runMain (p : Program) (fuel : Nat) : Except Error Val := (evalMain false p fuel).1

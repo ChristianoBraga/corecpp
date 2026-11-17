@@ -159,6 +159,23 @@ theorem ok_pointee : Ok (pointee v) fun l => v = .loc l := by
   · exact ok_throw
   · exact ok_throw
 
+theorem ok_rd : Ok (rd σ r) fun v => r.rd σ = some v := by
+  unfold rd; split
+  · exact ok_pure rfl
+  · exact ok_readLoc
+
+theorem ok_lvalOf : Ok (lvalOf r) fun l => r = .lval l := by
+  unfold lvalOf; split
+  · exact ok_pure rfl
+  · exact ok_throw
+
+theorem ok_returns : Ok (returns who σ c ret ref) fun r => Semantics.Returns σ c ret ref r := by
+  unfold returns; split
+  · exact ok_bind ok_rd fun v hv => ok_pure (.val hv)
+  · exact ok_bind ok_lvalOf fun l hl => ok_pure (by subst hl; exact .ref)
+  · exact ok_pure .void
+  · exact ok_throw
+
 theorem ok_expectBool : Ok (expectBool w v) fun b => v = .bool b := by
   unfold expectBool; split
   · exact ok_pure rfl
@@ -329,8 +346,6 @@ theorem Exec.block_env (h : Exec p ρ σ (.block cs) r ρ' σ') : ρ' = ρ := by
 
 theorem Exec.while_env (h : Exec p ρ σ (.while e b) r ρ' σ') : ρ' = ρ := by cases h <;> rfl
 
-theorem LEval.var_store (h : LEval p ρ σ (.var x) l σ') : σ' = σ := by cases h <;> rfl
-
 theorem funsNamed_nil {p : Program} (h : FunEnv.lookup p f = none) : p.funsNamed f = [] := by
   simp only [FunEnv.lookup, List.find?_eq_none] at h
   simp only [Program.funsNamed, List.filter_eq_nil_iff]
@@ -416,12 +431,11 @@ def Sound (n : Nat) : Prop :=
   (∀ p s t m sig, Ok (resolve n p s t m sig) fun r => p.resolve s t m sig = some r) ∧
   (∀ p ρ σ recv arrow m es static sig, Ok (callMethod n p ρ σ recv arrow m es static sig)
     fun r => CallMethod p ρ σ recv arrow m es static sig r.1 r.2.1 r.2.2) ∧
-  (∀ p ρ σ l ps body es ret who, Ok (runMember n p ρ σ l ps body es ret who)
-    fun r => Member p ρ σ l ps body es ret r.1 r.2) ∧
+  (∀ p ρ σ l ps body es ret ref who, Ok (runMember n p ρ σ l ps body es ret ref who)
+    fun r => Member p ρ σ l ps body es ret ref r.1 r.2) ∧
   (∀ p ρ σ es, Ok (args n p ρ σ es) fun r => Args p ρ σ es r.1 r.2) ∧
   (∀ p σ v vs, Ok (applyVals n p σ v vs) fun r => Apply p σ v vs r.1 r.2) ∧
   (∀ p ρ σ v es, Ok (applyClosure n p ρ σ v es) fun r => ApplyArgs p ρ σ v es r.1 r.2) ∧
-  (∀ p ρ σ e, Ok (lval n p ρ σ e) fun r => LEval p ρ σ e r.1 r.2) ∧
   (∀ σ l f, Ok (fieldLoc n σ l f) fun r => r.2 = σ ∧ ∃ c fs, σ.read l = some (.obj c fs) ∧ fs.lookup f = some r.1) ∧
   (∀ p ρ σ c, Ok (cmd n p ρ σ c) fun r => Exec p ρ σ c r.1 r.2.1 r.2.2) ∧
   (∀ p ρ σ cs, Ok (cmds n p ρ σ cs) fun r => Execs p ρ σ cs r.1 r.2.1 r.2.2)
@@ -429,16 +443,17 @@ def Sound (n : Nat) : Prop :=
 /-- The binding of parameters, the loop of Call and of `runMember`. -/
 theorem ok_bindLoop {p : Program}
     (hE : ∀ ρ σ e, Ok (expr n p ρ σ e) fun r => Eval p ρ σ e r.1 r.2)
-    (hL : ∀ ρ σ e, Ok (lval n p ρ σ e) fun r => LEval p ρ σ e r.1 r.2)
     (hlen : ps.length = es.length) :
     Ok (forIn (ps.zip es) (σ, ρ₀, ([] : List Loc)) fun x s =>
         if x.fst.byRef = true then do
-          let y ← lval n p ρ s.fst x.snd
-          pure (ForInStep.yield (y.snd, s.snd.fst.alias x.fst.name y.fst, s.snd.snd))
+          let y ← expr n p ρ s.fst x.snd
+          let l ← lvalOf y.fst
+          pure (ForInStep.yield (y.snd, s.snd.fst.alias x.fst.name l, s.snd.snd))
         else do
           let y ← expr n p ρ s.fst x.snd
-          pure (ForInStep.yield ((y.snd.alloc y.fst).snd, s.snd.fst.extend x.fst.name (y.snd.alloc y.fst).fst,
-            (y.snd.alloc y.fst).fst :: s.snd.snd)))
+          let v ← rd y.snd y.fst
+          pure (ForInStep.yield ((y.snd.alloc v).snd, s.snd.fst.extend x.fst.name (y.snd.alloc v).fst,
+            (y.snd.alloc v).fst :: s.snd.snd)))
       fun s => Bind p ρ σ ρ₀ ps es s.2.1 s.1 s.2.2.reverse := by
   let I : List (Param × Expr) → Store × Env × List Loc → Prop := fun rest s =>
     ∀ ρ' σ' o, Bind p ρ s.1 s.2.1 (rest.map (·.1)) (rest.map (·.2)) ρ' σ' o →
@@ -448,29 +463,36 @@ theorem ok_bindLoop {p : Program}
     dsimp only
     split
     · rename_i hq
-      refine ok_bind (hL _ _ _) fun ⟨l, σ₁⟩ hl => ok_pure ?_
+      refine ok_bind (hE _ _ _) fun ⟨r, σ₁⟩ hr => ok_bind ok_lvalOf fun l hl => ok_pure ?_
+      dsimp only at hr hl ⊢
+      subst hl
       intro ρ' σ' o hb
-      exact hI _ _ _ (Bind.byRef hq hl hb)
+      exact hI _ _ _ (Bind.byRef hq hr hb)
     · rename_i hq
-      refine ok_bind (hE _ _ _) fun ⟨v, σ₁⟩ hv => ok_pure ?_
+      refine ok_bind (hE _ _ _) fun ⟨r, σ₁⟩ hr => ok_bind ok_rd fun v hv => ok_pure ?_
       intro ρ' σ' o hb
-      have := hI _ _ _ (Bind.byVal (by simpa using hq) hv rfl hb)
+      have := hI _ _ _ (Bind.byVal (by simpa using hq) hr hv rfl hb)
       simp only [List.reverse_cons, List.append_assoc, List.singleton_append, Store.alloc] at this ⊢
       exact this
   · intro ρ' σ' o hb
     simpa [List.map_fst_zip, List.map_snd_zip, hlen] using hb
+
+/-- A result of `returns` for a callee declared by value is a value. -/
+theorem Returns.val_of_false (h : Returns σ c τ false r) : ∃ v, r = .val v := by
+  cases h <;> exact ⟨_, rfl⟩
 
 section
 variable (ih : Sound n)
 include ih
 
 theorem Sound.args : ∀ p ρ σ es, Ok (args (n + 1) p ρ σ es) fun r => Args p ρ σ es r.1 r.2 := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hFl, hCm, hCs⟩ := ih
   intro p ρ σ es
   unfold Eval.args
   split
   · exact ok_pure .nil
-  · exact ok_bind (hE _ _ _ _) fun ⟨v, σ₁⟩ h => ok_bind (hA _ _ _ _) fun ⟨vs, σ₂⟩ hs => ok_pure (.cons h hs)
+  · exact ok_bind (hE _ _ _ _) fun ⟨r, σ₁⟩ h => ok_bind ok_rd fun v hv =>
+      ok_bind (hA _ _ _ _) fun ⟨vs, σ₂⟩ hs => ok_pure (.cons h hv hs)
 
 omit ih in
 theorem Sound.fieldLoc : ∀ σ l f, Ok (fieldLoc (n + 1) σ l f)
@@ -501,7 +523,7 @@ theorem Sound.resolve : ∀ p s t m sig, Ok (resolve (n + 1) p s t m sig) fun r 
     · exact ok_throw
 
 theorem Sound.cmds : ∀ p ρ σ cs, Ok (cmds (n + 1) p ρ σ cs) fun r => Execs p ρ σ cs r.1 r.2.1 r.2.2 := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hFl, hCm, hCs⟩ := ih
   intro p ρ σ cs
   unfold Eval.cmds
   split
@@ -510,10 +532,10 @@ theorem Sound.cmds : ∀ p ρ σ cs, Ok (cmds (n + 1) p ρ σ cs) fun r => Execs
     dsimp only at h ⊢
     cases r with
     | normal => exact ok_mono (hCs _ _ _ _) fun _ hs => .cons h hs
-    | ret v => exact ok_pure (.consRet h)
+    | ret r => exact ok_pure (.consRet h)
 
 theorem Sound.applyClosure : ∀ p ρ σ v es, Ok (applyClosure (n + 1) p ρ σ v es) fun r => ApplyArgs p ρ σ v es r.1 r.2 := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hFl, hCm, hCs⟩ := ih
   intro p ρ σ v es
   unfold Eval.applyClosure
   split
@@ -525,7 +547,7 @@ theorem Sound.applyClosure : ∀ p ρ σ v es, Ok (applyClosure (n + 1) p ρ σ 
   · exact ok_throw
 
 theorem Sound.applyVals : ∀ p σ v vs, Ok (applyVals (n + 1) p σ v vs) fun r => Apply p σ v vs r.1 r.2 := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hFl, hCm, hCs⟩ := ih
   intro p σ v vs
   unfold Eval.applyVals
   split
@@ -544,7 +566,7 @@ theorem Sound.applyVals : ∀ p σ v vs, Ok (applyVals (n + 1) p σ v vs) fun r 
       rw [hv, hp]
       generalize hA : σ.allocMany (cap.map (·.2)) = A
       generalize hB : A.2.allocMany vs = B
-      refine ok_bind (hCs _ _ _ _) fun ⟨r, ρ'', σ₂⟩ hx => ?_
+      refine ok_bind (hCs _ _ _ _) fun ⟨c, ρ'', σ₂⟩ hx => ok_bind ok_returns fun r hr => ok_bind ok_rd fun w hw => ?_
       have ha : σ.allocMany (cap.map (·.2) ++ vs) = (A.1 ++ B.1, B.2) := by
         rw [allocMany_append, hA, hB]
       have hρ : Env.extendAll (Env.extendAll [] (cap.map (·.1)) A.1) (ps.map (·.name)) B.1 =
@@ -553,142 +575,91 @@ theorem Sound.applyVals : ∀ p σ v vs, Ok (applyVals (n + 1) p σ v vs) fun r 
         rw [← hA, allocMany_length]; simp
       have hfree (σ' : Store) (L : List Loc) : σ'.free (B.1.reverse ++ (A.1.reverse ++ []) ++ L) = σ'.free ((A.1 ++ B.1) ++ L) := by
         rw [← free_reverse]; simp
-      dsimp only at hx ⊢
+      dsimp only at hx hr hw ⊢
+      obtain ⟨u, rfl⟩ := Returns.val_of_false hr
+      simp only [Res.rd, Option.some.injEq] at hw
+      subst hw
       rw [hρ] at hx ⊢
-      split
-      · exact ok_pure (by rw [hfree, ← fresh_eq.symm]; exact .apply hn ha rfl hx .ret)
-      · exact ok_pure (by rw [hfree, ← fresh_eq.symm]; exact .apply hn ha rfl hx .void)
-      · exact ok_throw
+      exact ok_pure (by rw [hfree, ← fresh_eq.symm]; exact .apply hn ha rfl hx hr)
   · exact ok_throw
 
-theorem Sound.runMember : ∀ p ρ σ l ps body es ret who,
-    Ok (runMember (n + 1) p ρ σ l ps body es ret who) fun r => Member p ρ σ l ps body es ret r.1 r.2 := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hL, hFl, hCm, hCs⟩ := ih
-  intro p ρ σ l ps body es ret who
+theorem Sound.runMember : ∀ p ρ σ l ps body es ret ref who,
+    Ok (runMember (n + 1) p ρ σ l ps body es ret ref who) fun r => Member p ρ σ l ps body es ret ref r.1 r.2 := by
+  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hFl, hCm, hCs⟩ := ih
+  intro p ρ σ l ps body es ret ref who
   unfold Eval.runMember
   dsimp only
   split
   · exact ok_throw_bind
   · rename_i hn
     have hn : ps.length = es.length := by simpa using hn
-    refine ok_bind (ok_bindLoop (hE p) (hL p) hn) fun ⟨σ₁, ρm, own⟩ hb => ?_
-    refine ok_bind (hCs _ _ _ _) fun ⟨r, ρ', σ₂⟩ hx => ?_
-    dsimp only at hb hx ⊢
-    split
-    · exact ok_pure (by rw [← free_reverse, ← fresh_eq.symm]; exact .member hn hb hx .ret)
-    · exact ok_pure (by rw [← free_reverse, ← fresh_eq.symm]; exact .member hn hb hx .void)
-    · exact ok_throw
+    refine ok_bind (ok_bindLoop (hE p) hn) fun ⟨σ₁, ρm, own⟩ hb => ?_
+    refine ok_bind (hCs _ _ _ _) fun ⟨c, ρ', σ₂⟩ hx => ok_bind ok_returns fun r hr => ok_pure ?_
+    dsimp only at hb hx hr ⊢
+    rw [← free_reverse, ← fresh_eq.symm]; exact .member hn hb hx hr
 
 theorem Sound.callMethod : ∀ p ρ σ recv arrow m es static sig,
     Ok (callMethod (n + 1) p ρ σ recv arrow m es static sig)
       fun r => CallMethod p ρ σ recv arrow m es static sig r.1 r.2.1 r.2.2 := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hFl, hCm, hCs⟩ := ih
   intro p ρ σ recv arrow m es static sig
   unfold Eval.callMethod
   dsimp only
   cases arrow
-  · refine ok_bind (hL _ _ _ _) fun ⟨l, σ₀⟩ hl => ?_
-    refine ok_bind ok_readLoc fun w hw => ?_
-    split
-    · refine ok_bind (hR _ _ _ _ _) fun ⟨md, k⟩ hm => ?_
-      refine ok_bind (hM _ _ _ _ _ _ _ _ _) fun ⟨v, σ'⟩ hc => ok_pure ?_
-      exact .dot hl hw hm hc
-    · exact ok_throw
-  · simp only [↓reduceIte, pure_bind]
-    refine ok_bind (hE _ _ _ _) fun ⟨v, σ'⟩ hv => ok_bind ok_pointee fun l hl => ?_
-    refine ok_bind ok_readLoc fun w hw => ?_
-    dsimp only at hv hl hw ⊢
+  · simp only [Bool.false_eq_true, ↓reduceIte]
+    refine ok_bind (hE _ _ _ _) fun ⟨r₀, σ₀⟩ h₀ => ok_bind ok_lvalOf fun l hl => ok_bind ok_readLoc fun w hw => ?_
+    dsimp only at h₀ hl hw ⊢
     subst hl
     split
     · refine ok_bind (hR _ _ _ _ _) fun ⟨md, k⟩ hm => ?_
-      refine ok_bind (hM _ _ _ _ _ _ _ _ _) fun ⟨v, σ'⟩ hc => ok_pure ?_
-      exact .arrow hv hw hm hc
+      refine ok_bind (hM _ _ _ _ _ _ _ _ _ _) fun ⟨r, σ'⟩ hc => ok_pure ?_
+      exact .dot h₀ hw hm hc
     · exact ok_throw
-
-theorem Sound.lval : ∀ p ρ σ e, Ok (lval (n + 1) p ρ σ e) fun r => LEval p ρ σ e r.1 r.2 := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hL, hFl, hCm, hCs⟩ := ih
-  intro p ρ σ e
-  unfold Eval.lval
-  dsimp only
-  split
-  · split
-    · exact ok_traced (ok_pure (.locVar ‹_›))
-    · rename_i x hx
-      apply ok_traced
-      split
-      · rename_i lt ht
-        exact ok_mono (hFl _ _ _) fun ⟨lf, σ'⟩ ⟨hσ, c, fs, ho, hf⟩ => by
-          dsimp only at hσ hf ⊢; subst hσ; exact .locVarField hx ht ho hf
-      · exact ok_throw
-  · apply ok_traced
-    exact ok_bind (hE _ _ _ _) fun ⟨v, σ'⟩ h => ok_bind ok_pointee fun l hl => ok_pure (by
-      dsimp only at hl h ⊢; subst hl; exact .locDeref h)
-  · apply ok_traced
-    exact ok_bind (hL _ _ _ _) fun ⟨l, σ'⟩ h => ok_mono (hFl _ _ _) fun ⟨lf, σ''⟩ ⟨hσ, c, fs, ho, hf⟩ => by
-      dsimp only at hσ h hf ⊢; subst hσ; exact .locField h ho hf
-  · apply ok_traced
-    exact ok_bind (hE _ _ _ _) fun ⟨v, σ'⟩ h => ok_bind ok_pointee fun l hl =>
-      ok_mono (hFl _ _ _) fun ⟨lf, σ''⟩ ⟨hσ, c, fs, ho, hf⟩ => by
-        dsimp only at hσ h hl hf ⊢; subst hσ hl; exact .locArrow h ho hf
-  · apply ok_traced
-    refine ok_bind (hC _ _ _ _ _ _ _ _ _) fun ⟨md, v, σ'⟩ h => ?_
-    dsimp only at h ⊢
+  · simp only [↓reduceIte]
+    refine ok_bind (hE _ _ _ _) fun ⟨r₀, σ₀⟩ h₀ => ok_bind ok_rd fun v hp =>
+      ok_bind ok_pointee fun l hl => ok_bind ok_readLoc fun w hw => ?_
+    dsimp only at h₀ hp hl hw ⊢
+    subst hl
     split
-    · exact ok_throw_bind
-    · rename_i hr
-      exact ok_bind ok_pointee fun l hl => ok_pure (by
-        dsimp only at hl ⊢; subst hl; exact .methodLoc h (by simpa using hr))
-  · apply ok_traced
-    refine ok_bind (hE _ _ _ _) fun ⟨v, σ₁⟩ h₁ => ?_
-    dsimp only at h₁ ⊢
-    split
-    · refine ok_bind (hE _ _ _ _) fun ⟨w, σ₂⟩ h₂ => ok_bind ok_fnsOf fun F hF => ok_mono ok_libStep fun ⟨l, σ₃⟩ ⟨r, hk⟩ => ?_
-      obtain ⟨M, hM, hi⟩ := lib_index hF hk
-      exact .locIndex h₁ h₂ hM hi
+    · refine ok_bind (hR _ _ _ _ _) fun ⟨md, k⟩ hm => ?_
+      refine ok_bind (hM _ _ _ _ _ _ _ _ _ _) fun ⟨r, σ'⟩ hc => ok_pure ?_
+      exact .arrow h₀ hp hw hm hc
     · exact ok_throw
-  · apply ok_tracedCases
-    refine ok_bind (hE _ _ _ _) fun ⟨v₁, σ₁⟩ h₁ => ok_bind ok_expectBool fun b hb => ?_
-    dsimp only at hb h₁ ⊢
-    subst hb
-    cases b <;> simp only [Bool.false_eq_true, ↓reduceIte]
-    · exact ok_bind (ok_observe (hL _ _ _ _)) fun x hx => ok_pure fun a ha => .locCondF h₁ (hx a ha)
-    · exact ok_bind (ok_observe (hL _ _ _ _)) fun x hx => ok_pure fun a ha => .locCondT h₁ (hx a ha)
-  · exact ok_throw
 
 theorem Sound.cmd : ∀ p ρ σ c, Ok (cmd (n + 1) p ρ σ c) fun r => Exec p ρ σ c r.1 r.2.1 r.2.2 := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hFl, hCm, hCs⟩ := ih
   intro p ρ σ c
   unfold Eval.cmd
   dsimp only
   split
   · exact ok_traced (ok_bind (hCs _ _ _ _) fun ⟨r, ρ', σ'⟩ h => ok_pure (.block h))
   · apply ok_tracedCases
-    refine ok_bind (hE _ _ _ _) fun ⟨v, σ₁⟩ h₁ => ok_bind ok_expectBool fun b hb => ?_
-    dsimp only at hb h₁ ⊢
+    refine ok_bind (hE _ _ _ _) fun ⟨r, σ₁⟩ h₁ => ok_bind ok_rd fun v hv => ok_bind ok_expectBool fun b hb => ?_
+    dsimp only at hb h₁ hv ⊢
     subst hb
     cases b <;> simp only [Bool.false_eq_true, ↓reduceIte]
     · exact ok_bind (ok_observe (hCm _ _ _ _)) fun x hx => ok_pure fun ⟨r, ρ', σ'⟩ ha => by
-        have h := hx _ ha; obtain rfl := Exec.block_env h; exact .ifF h₁ h
+        have h := hx _ ha; obtain rfl := Exec.block_env h; exact .ifF h₁ hv h
     · exact ok_bind (ok_observe (hCm _ _ _ _)) fun x hx => ok_pure fun ⟨r, ρ', σ'⟩ ha => by
-        have h := hx _ ha; obtain rfl := Exec.block_env h; exact .ifT h₁ h
+        have h := hx _ ha; obtain rfl := Exec.block_env h; exact .ifT h₁ hv h
   · apply ok_tracedCases
-    refine ok_bind (hE _ _ _ _) fun ⟨v, σ₁⟩ h₁ => ok_bind ok_expectBool fun b hb => ?_
-    dsimp only at hb h₁ ⊢
+    refine ok_bind (hE _ _ _ _) fun ⟨r, σ₁⟩ h₁ => ok_bind ok_rd fun v hv => ok_bind ok_expectBool fun b hb => ?_
+    dsimp only at hb h₁ hv ⊢
     subst hb
     cases b <;> simp only [Bool.false_eq_true, ↓reduceIte]
-    · exact ok_pure fun a ha => by cases ha; exact .whileF h₁
+    · exact ok_pure fun a ha => by cases ha; exact .whileF h₁ hv
     · refine ok_bind (ok_observe (hCm _ _ _ _)) fun x hx => ?_
       split
       · exact ok_pure fun a ha => by cases ha
-      · rename_i v ρ₂ σ₂
+      · rename_i r' ρ₂ σ₂
         have hb := hx _ rfl
         obtain rfl := Exec.block_env hb
-        exact ok_pure fun a ha => by cases ha; exact .whileRet h₁ hb
+        exact ok_pure fun a ha => by cases ha; exact .whileRet h₁ hv hb
       · rename_i ρ₂ σ₂
         have hb := hx _ rfl
         obtain rfl := Exec.block_env hb
         exact ok_bind (ok_observe (hCm _ _ _ _)) fun y hy => ok_pure fun ⟨r, ρ', σ'⟩ ha => by
-          have hw := hy _ ha; obtain rfl := Exec.while_env hw; exact .whileT h₁ hb hw
+          have hw := hy _ ha; obtain rfl := Exec.while_env hw; exact .whileT h₁ hv hb hw
   · apply ok_traced
     refine ok_bind (hCm _ _ _ _) fun ⟨r₀, ρ₀, σ₀⟩ h₀ => ?_
     dsimp only at h₀ ⊢
@@ -697,53 +668,56 @@ theorem Sound.cmd : ∀ p ρ σ c, Ok (cmd (n + 1) p ρ σ c) fun r => Exec p ρ
         dsimp only at hw ⊢; obtain rfl := Exec.while_env hw; exact .forLoop h₀ hw)
     · exact ok_throw
   · exact ok_traced (ok_pure .retVoid)
-  · exact ok_traced (ok_bind (hE _ _ _ _) fun ⟨v, σ'⟩ h => ok_pure (.ret h))
-  · exact ok_traced (ok_bind (hE _ _ _ _) fun ⟨v, σ'⟩ h => ok_pure (.decl h rfl))
-  · exact ok_traced (ok_bind (hL _ _ _ _) fun ⟨l, σ'⟩ h => ok_pure (.declRef h))
-  · exact ok_traced (ok_bind (hE _ _ _ _) fun ⟨v, σ'⟩ h => ok_pure (.declAuto h rfl))
+  · exact ok_traced (ok_bind (hE _ _ _ _) fun ⟨r, σ'⟩ h => ok_pure (.ret h))
+  · exact ok_traced (ok_bind (hE _ _ _ _) fun ⟨r, σ'⟩ h => ok_bind ok_rd fun v hv => ok_pure (.decl h hv rfl))
+  · exact ok_traced (ok_bind (hE _ _ _ _) fun ⟨r, σ'⟩ h => ok_bind ok_lvalOf fun l hl => ok_pure (by
+      dsimp only at h hl ⊢; subst hl; exact .declRef h))
+  · exact ok_traced (ok_bind (hE _ _ _ _) fun ⟨r, σ'⟩ h => ok_bind ok_rd fun v hv => ok_pure (.declAuto h hv rfl))
   · apply ok_traced
-    refine ok_bind (hE _ _ _ _) fun ⟨v, σ₁⟩ hr => ok_bind (hL _ _ _ _) fun ⟨l, σ₂⟩ hl => ?_
-    dsimp only at hr hl ⊢
+    refine ok_bind (hE _ _ _ _) fun ⟨r₂, σ₁⟩ hr => ok_bind ok_rd fun v hv =>
+      ok_bind (hE _ _ _ _) fun ⟨r, σ₂⟩ hl => ok_bind ok_lvalOf fun l hlv => ?_
+    dsimp only at hr hv hl hlv ⊢
+    subst hlv
     split
     · exact ok_throw_bind
     · rename_i hd
-      exact ok_pure (.assign hr hl (by cases h : σ₂.read l <;> simp_all))
-  · exact ok_traced (ok_bind (hE _ _ _ _) fun ⟨v, σ'⟩ h => ok_pure (.exprStmt h))
+      exact ok_pure (.assign hr hv hl (by cases h : σ₂.read l <;> simp_all))
+  · exact ok_traced (ok_bind (hE _ _ _ _) fun ⟨r, σ'⟩ h => ok_pure (.exprStmt h))
   · rename_i e st
     apply ok_traced
-    refine ok_bind (hE _ _ _ _) fun ⟨v, σ₀⟩ h => ?_
-    dsimp only at h ⊢
+    refine ok_bind (hE _ _ _ _) fun ⟨r, σ₀⟩ h => ok_bind ok_rd fun v hv => ?_
+    dsimp only at h hv ⊢
     split
-    · exact ok_pure (.deleteNull h)
+    · exact ok_pure (.deleteNull h hv)
     · rename_i l
       split
       · exact ok_throw
       · rename_i L ls hread
-        refine ok_bind ok_fnsOf fun F hF => ok_bind ok_libStep fun σ₁ ⟨r, hk⟩ => ok_pure ?_
+        refine ok_bind ok_fnsOf fun F hF => ok_bind ok_libStep fun σ₁ ⟨r', hk⟩ => ok_pure ?_
         obtain ⟨M, hM, hd⟩ := lib_delete hF hk
-        exact .deleteLib h hread hM hd
+        exact .deleteLib h hv hread hM hd
       · rename_i tag flds hread
         split
         · exact ok_throw_bind
-        · rename_i hv
+        · rename_i hvd
           let I : List ClassDecl → Store → Prop := fun rest σk =>
             ∀ σ', Dtors p ρ σk l rest σ' → Dtors p ρ σ₀ l (p.chain tag) σ'
           refine ok_bind (ok_mono (ok_forIn I ?_ _ _ fun _ h => h) fun σk hk => hk _ .nil) fun σ₁ hd => ok_pure ?_
           · intro cd cds σk hI
             split
             · rename_i d hdt
-              exact ok_bind (hM _ _ _ _ _ _ _ _ _) fun ⟨v, σ'⟩ hm => ok_pure fun σ'' hs => hI _ (.run hdt hm hs)
+              exact ok_bind (hM _ _ _ _ _ _ _ _ _ _) fun ⟨r', σ'⟩ hm => ok_pure fun σ'' hs => hI _ (.run hdt hm hs)
             · rename_i hdt
               exact ok_pure fun σ'' hs => hI _ (.skip (by revert hdt; cases cd.dtor <;> simp) hs)
-          · refine .delete h hread ?_ hd
+          · refine .delete h hv hread ?_ hd
             by_cases hs : st.getD tag = tag
             · exact .inl hs
-            · right; simp at hv; exact hv hs
+            · right; simp at hvd; exact hvd hs
       · exact ok_throw
     · exact ok_throw
 
 theorem Sound.expr : ∀ p ρ σ e, Ok (expr (n + 1) p ρ σ e) fun r => Eval p ρ σ e r.1 r.2 := by
-  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hL, hFl, hCm, hCs⟩ := ih
+  obtain ⟨hE, hR, hC, hM, hA, hV, hAC, hFl, hCm, hCs⟩ := ih
   intro p ρ σ e
   unfold Eval.expr
   dsimp only
@@ -751,31 +725,44 @@ theorem Sound.expr : ∀ p ρ σ e, Ok (expr (n + 1) p ρ σ e) fun r => Eval p 
   · exact ok_traced (ok_bind ok_int32 fun _ ⟨h, hv⟩ => ok_pure (by subst hv; exact .lit h))
   · exact ok_traced (ok_pure .boolLit)
   · exact ok_traced (ok_pure .null)
-  · apply ok_traced
-    refine ok_bind (hL _ _ _ _) fun ⟨l, σ₁⟩ hl => ok_bind ok_readLoc fun v hv => ok_pure ?_
-    dsimp only at hl hv ⊢
-    obtain rfl := LEval.var_store hl
-    exact .var hl hv
+  · -- Var, VarField
+    split
+    · exact ok_traced (ok_pure (.var ‹_›))
+    · rename_i x hx
+      apply ok_traced
+      split
+      · rename_i lt ht
+        exact ok_bind (hFl _ _ _) fun ⟨lf, σ'⟩ ⟨hσ, c, fs, ho, hf⟩ => ok_pure (by
+          dsimp only at hσ hf ⊢; subst hσ; exact .varField hx ht ho hf)
+      · exact ok_throw
   · apply ok_traced
     split
     · exact ok_pure (.this ‹_›)
     · exact ok_throw
-  · apply ok_traced
-    refine ok_bind (hL _ _ _ _) fun ⟨l, σ'⟩ hl => ok_bind ok_readLoc fun v hv => ok_pure ?_
-    dsimp only at hl hv ⊢
-    exact .read rfl hl hv
-  · apply ok_traced
-    refine ok_bind (hL _ _ _ _) fun ⟨l, σ'⟩ hl => ok_bind ok_readLoc fun v hv => ok_pure ?_
-    dsimp only at hl hv ⊢
-    exact .read rfl hl hv
-  · apply ok_traced
-    refine ok_bind (hL _ _ _ _) fun ⟨l, σ'⟩ hl => ok_bind ok_readLoc fun v hv => ok_pure ?_
-    dsimp only at hl hv ⊢
-    exact .read rfl hl hv
-  · apply ok_traced
-    refine ok_bind (hL _ _ _ _) fun ⟨l, σ'⟩ hl => ok_bind ok_readLoc fun v hv => ok_pure ?_
-    dsimp only at hl hv ⊢
-    exact .read rfl hl hv
+  · -- Deref
+    apply ok_traced
+    exact ok_bind (hE _ _ _ _) fun ⟨r, σ'⟩ h => ok_bind ok_rd fun v hv => ok_bind ok_pointee fun l hl =>
+      ok_pure (by dsimp only at h hv hl ⊢; subst hl; exact .deref h hv)
+  · -- Field
+    apply ok_traced
+    exact ok_bind (hE _ _ _ _) fun ⟨r, σ'⟩ h => ok_bind ok_lvalOf fun l hl =>
+      ok_bind (hFl _ _ _) fun ⟨lf, σ''⟩ ⟨hσ, c, fs, ho, hf⟩ => ok_pure (by
+        dsimp only at h hl hσ hf ⊢; subst hl hσ; exact .field h ho hf)
+  · -- Arrow
+    apply ok_traced
+    exact ok_bind (hE _ _ _ _) fun ⟨r, σ'⟩ h => ok_bind ok_rd fun v hv => ok_bind ok_pointee fun l hl =>
+      ok_bind (hFl _ _ _) fun ⟨lf, σ''⟩ ⟨hσ, c, fs, ho, hf⟩ => ok_pure (by
+        dsimp only at h hv hl hσ hf ⊢; subst hl hσ; exact .arrow h hv ho hf)
+  · -- Index
+    apply ok_traced
+    refine ok_bind (hE _ _ _ _) fun ⟨r₁, σ₁⟩ h₁ => ok_bind ok_rd fun v hv => ?_
+    dsimp only at h₁ hv ⊢
+    split
+    · refine ok_bind (hE _ _ _ _) fun ⟨r₂, σ₂⟩ h₂ => ok_bind ok_rd fun w hw => ok_bind ok_fnsOf fun F hF =>
+        ok_bind ok_libStep fun ⟨l, σ₃⟩ ⟨r, hk⟩ => ok_pure ?_
+      obtain ⟨M, hM, hi⟩ := lib_index hF hk
+      exact .index h₁ hv h₂ hw hM hi
+    · exact ok_throw
   · -- New
     apply ok_traced
     split
@@ -794,77 +781,79 @@ theorem Sound.expr : ∀ p ρ σ e, Ok (expr (n + 1) p ρ σ e) fun r => Eval p 
       · intro cd cds σk hI
         split
         · rename_i k hk
-          exact ok_bind (hM _ _ _ _ _ _ _ _ _) fun ⟨v, σ'⟩ hm => ok_pure fun σ'' hs => hI _ (.run hk hm hs)
+          exact ok_bind (hM _ _ _ _ _ _ _ _ _ _) fun ⟨r, σ'⟩ hm => ok_pure fun σ'' hs => hI _ (.run hk hm hs)
         · rename_i hk
           exact ok_pure fun σ'' hs => hI _ (.skip (by revert hk; cases cd.ctor <;> simp) hs)
       · exact .new (by simpa using hc) rfl rfl hk
   · -- MethodCall
     apply ok_traced
-    refine ok_bind (hC _ _ _ _ _ _ _ _ _) fun ⟨md, v, σ'⟩ h => ?_
-    dsimp only at h ⊢
-    split
-    · rename_i hr
-      refine ok_bind ok_pointee fun l hl => ok_bind ok_readLoc fun w hw => ok_pure ?_
-      dsimp only at hl hw ⊢
-      subst hl
-      exact .methodCallRef h hr hw
-    · rename_i hr
-      exact ok_pure (.methodCall h (by simpa using hr))
+    exact ok_bind (hC _ _ _ _ _ _ _ _ _) fun ⟨md, r, σ'⟩ h => ok_pure (.methodCall h)
   · -- NewLib
     apply ok_traced
     split
-    · refine ok_bind (hA _ _ _ _) fun ⟨vs, σ₁⟩ ha => ok_bind ok_fnsOf fun F hF => ok_mono ok_libStep fun ⟨v, σ₂⟩ ⟨r, hk⟩ => ?_
+    · refine ok_bind (hA _ _ _ _) fun ⟨vs, σ₁⟩ ha => ok_bind ok_fnsOf fun F hF =>
+        ok_bind ok_libStep fun ⟨v, σ₂⟩ ⟨r, hk⟩ => ok_pure ?_
       obtain ⟨M, hM, hn⟩ := lib_new hF hk
       exact .newLib ha hM hn
     · exact ok_throw
   · -- Not, Neg
     apply ok_tracedLib
-    refine ok_bind (hE _ _ _ _) fun ⟨v, σ₁⟩ h => ok_bind ok_unop fun w hw => ok_pure ?_
-    dsimp only at h ⊢
+    refine ok_bind (hE _ _ _ _) fun ⟨r, σ₁⟩ h => ok_bind ok_rd fun v hv => ok_bind ok_unop fun w hw => ok_pure ?_
+    dsimp only at h hv ⊢
     rcases hw with ⟨rfl, b, rfl, rfl⟩ | ⟨rfl, k, rfl, hr, rfl⟩
-    · exact .not h
-    · exact .neg h hr
+    · exact .not h hv
+    · exact .neg h hv hr
   · -- And
     apply ok_tracedCases
-    refine ok_bind (hE _ _ _ _) fun ⟨v₁, σ₁⟩ h₁ => ok_bind ok_expectBool fun b hb => ?_
-    dsimp only at hb h₁ ⊢
+    refine ok_bind (hE _ _ _ _) fun ⟨r₁, σ₁⟩ h₁ => ok_bind ok_rd fun v hv => ok_bind ok_expectBool fun b hb => ?_
+    dsimp only at hb h₁ hv ⊢
     subst hb
     cases b <;> simp only [Bool.false_eq_true, ↓reduceIte]
-    · exact ok_pure fun a ha => by cases ha; exact .andF h₁
-    · exact ok_bind (ok_observe (hE _ _ _ _)) fun x hx => ok_pure fun a ha => .andT h₁ (hx a ha)
+    · exact ok_pure fun a ha => by cases ha; exact .andF h₁ hv
+    · refine ok_bind (ok_observe (P := fun a : Res × Store => ∃ r₂ w, Eval p ρ σ₁ _ r₂ a.2 ∧ r₂.rd a.2 = some w ∧ a.1 = .val w)
+        (ok_bind (hE _ _ _ _) fun ⟨r₂, σ₂⟩ h₂ => ok_bind ok_rd fun w hw => ok_pure ⟨r₂, w, h₂, hw, rfl⟩)) fun x hx => ?_
+      exact ok_pure fun ⟨a₁, a₂⟩ ha => by
+        obtain ⟨r₂, w, h₂, hw, h⟩ := hx _ ha
+        dsimp only at h h₂ hw ⊢; subst h; exact .andT h₁ hv h₂ hw
   · -- Or
     apply ok_tracedCases
-    refine ok_bind (hE _ _ _ _) fun ⟨v₁, σ₁⟩ h₁ => ok_bind ok_expectBool fun b hb => ?_
-    dsimp only at hb h₁ ⊢
+    refine ok_bind (hE _ _ _ _) fun ⟨r₁, σ₁⟩ h₁ => ok_bind ok_rd fun v hv => ok_bind ok_expectBool fun b hb => ?_
+    dsimp only at hb h₁ hv ⊢
     subst hb
     cases b <;> simp only [Bool.false_eq_true, ↓reduceIte]
-    · exact ok_bind (ok_observe (hE _ _ _ _)) fun x hx => ok_pure fun a ha => .orF h₁ (hx a ha)
-    · exact ok_pure fun a ha => by cases ha; exact .orT h₁
+    · refine ok_bind (ok_observe (P := fun a : Res × Store => ∃ r₂ w, Eval p ρ σ₁ _ r₂ a.2 ∧ r₂.rd a.2 = some w ∧ a.1 = .val w)
+        (ok_bind (hE _ _ _ _) fun ⟨r₂, σ₂⟩ h₂ => ok_bind ok_rd fun w hw => ok_pure ⟨r₂, w, h₂, hw, rfl⟩)) fun x hx => ?_
+      exact ok_pure fun ⟨a₁, a₂⟩ ha => by
+        obtain ⟨r₂, w, h₂, hw, h⟩ := hx _ ha
+        dsimp only at h h₂ hw ⊢; subst h; exact .orF h₁ hv h₂ hw
+    · exact ok_pure fun a ha => by cases ha; exact .orT h₁ hv
   · -- Arith, Div, Rel
     apply ok_tracedLib
-    refine ok_bind (hE _ _ _ _) fun ⟨v₁, σ₁⟩ h₁ => ok_bind (hE _ _ _ _) fun ⟨v₂, σ₂⟩ h₂ => ok_bind ok_binop fun w hw => ok_pure ?_
-    dsimp only at h₁ h₂ ⊢
+    refine ok_bind (hE _ _ _ _) fun ⟨r₁, σ₁⟩ h₁ => ok_bind ok_rd fun v₁ hv₁ =>
+      ok_bind (hE _ _ _ _) fun ⟨r₂, σ₂⟩ h₂ => ok_bind ok_rd fun v₂ hv₂ => ok_bind ok_binop fun w hw => ok_pure ?_
+    dsimp only at h₁ h₂ hv₁ hv₂ ⊢
     rcases hw with ⟨hop, n₁, n₂, rfl, rfl, hr, rfl⟩ | ⟨n₁, n₂, k, rfl, rfl, hz, hd, hr, rfl⟩ | ⟨b, hc, rfl⟩
-    · exact .arith hop h₁ h₂ hr
-    · exact .div h₁ h₂ hz hd hr
-    · exact .rel h₁ h₂ hc
+    · exact .arith hop h₁ hv₁ h₂ hv₂ hr
+    · exact .div h₁ hv₁ h₂ hv₂ hz hd hr
+    · exact .rel h₁ hv₁ h₂ hv₂ hc
   · -- Cond
     apply ok_tracedCases
-    refine ok_bind (hE _ _ _ _) fun ⟨v₁, σ₁⟩ h₁ => ok_bind ok_expectBool fun b hb => ?_
-    dsimp only at hb h₁ ⊢
+    refine ok_bind (hE _ _ _ _) fun ⟨r₁, σ₁⟩ h₁ => ok_bind ok_rd fun v hv => ok_bind ok_expectBool fun b hb => ?_
+    dsimp only at hb h₁ hv ⊢
     subst hb
     cases b <;> simp only [Bool.false_eq_true, ↓reduceIte]
-    · exact ok_bind (ok_observe (hE _ _ _ _)) fun x hx => ok_pure fun a ha => .condF h₁ (hx a ha)
-    · exact ok_bind (ok_observe (hE _ _ _ _)) fun x hx => ok_pure fun a ha => .condT h₁ (hx a ha)
+    · exact ok_bind (ok_observe (hE _ _ _ _)) fun x hx => ok_pure fun a ha => .condF h₁ hv (hx a ha)
+    · exact ok_bind (ok_observe (hE _ _ _ _)) fun x hx => ok_pure fun a ha => .condT h₁ hv (hx a ha)
   · -- CallFn on a variable, CallLib, CallThis and Call
     rename_i f es sig
     split
     · rename_i l hρ
       apply ok_traced
-      refine ok_bind (hE _ _ _ _) fun ⟨v, σ₁⟩ h₁ => ok_bind ok_target fun w ⟨lt, hv, hw⟩ => ok_mono (hAC _ _ _ _ _) fun r ha => ?_
-      dsimp only at h₁ hv ⊢
-      subst hv
-      exact .callVar hρ h₁ hw ha
+      refine ok_bind (hE _ _ _ _) fun ⟨r, σ₁⟩ h₁ => ok_bind ok_rd fun v hv => ok_bind ok_target fun w ⟨lt, hvt, hw⟩ =>
+        ok_bind (hAC _ _ _ _ _) fun ⟨u, σ'⟩ ha => ok_pure ?_
+      dsimp only at h₁ hv hvt ⊢
+      subst hvt
+      exact .callVar hρ h₁ hv hw ha
     · rename_i hρ
       split
       · rename_i hlib
@@ -872,7 +861,8 @@ theorem Sound.expr : ∀ p ρ σ e, Ok (expr (n + 1) p ρ σ e) fun r => Eval p 
         apply ok_traced
         split
         · rename_i hd
-          refine ok_bind (hA _ _ _ _) fun ⟨vs, σ₁⟩ ha => ok_bind ok_fnsOf fun F hF => ok_mono ok_libStep fun ⟨v, σ₂⟩ ⟨r, hk⟩ => ?_
+          refine ok_bind (hA _ _ _ _) fun ⟨vs, σ₁⟩ ha => ok_bind ok_fnsOf fun F hF =>
+            ok_bind ok_libStep fun ⟨v, σ₂⟩ ⟨r, hk⟩ => ok_pure ?_
           obtain ⟨M, hM, hc⟩ := lib_call hF hk
           exact .callLib hρ (funsNamed_nil hlib.1) (by simpa using hd) hM ha hc
         · exact ok_throw_bind
@@ -892,56 +882,48 @@ theorem Sound.expr : ∀ p ρ σ e, Ok (expr (n + 1) p ρ σ e) fun r => Eval p 
             · exact ok_throw_bind
             · rename_i hn
               have hn : fn.params.length = es.length := by simpa using hn
-              refine ok_bind (ok_bindLoop (hE p) (hL p) hn) fun ⟨σ₁, ρf, own⟩ hb => ?_
-              refine ok_bind (hCs _ _ _ _) fun ⟨r, ρ', σ₂⟩ hx => ?_
-              dsimp only at hb hx ⊢
-              split
-              · exact ok_pure (by rw [← free_reverse, ← fresh_eq.symm]; exact .call hρ hfn hn hb hx .ret)
-              · rename_i hret
-                exact ok_pure (by rw [← free_reverse, ← fresh_eq.symm]; exact .call hρ hfn hn hb hx (by rw [hret]; exact .void))
-              · exact ok_throw
+              refine ok_bind (ok_bindLoop (hE p) hn) fun ⟨σ₁, ρf, own⟩ hb => ?_
+              refine ok_bind (hCs _ _ _ _) fun ⟨c, ρ', σ₂⟩ hx => ok_bind ok_returns fun r hr => ok_pure ?_
+              dsimp only at hb hx hr ⊢
+              rw [← free_reverse, ← fresh_eq.symm]; exact .call hρ hfn hn hb hx hr
           · exact ok_throw
   · -- CallFn
     apply ok_traced
-    refine ok_bind (hE _ _ _ _) fun ⟨v, σ₁⟩ h₁ => ok_bind ok_target fun w ⟨lt, hv, hw⟩ => ok_mono (hAC _ _ _ _ _) fun r ha => ?_
-    dsimp only at h₁ hv ⊢
-    subst hv
-    exact .callFn h₁ hw ha
+    refine ok_bind (hE _ _ _ _) fun ⟨r, σ₁⟩ h₁ => ok_bind ok_rd fun v hv => ok_bind ok_target fun w ⟨lt, hvt, hw⟩ =>
+      ok_bind (hAC _ _ _ _ _) fun ⟨u, σ'⟩ ha => ok_pure ?_
+    dsimp only at h₁ hv hvt ⊢
+    subst hvt
+    exact .callFn h₁ hv hw ha
   · exact ok_traced (ok_bind ok_captures fun cap hc => ok_pure (.lambda hc))
-  · exact ok_traced (ok_bind (hL _ _ _ _) fun ⟨l, σ'⟩ h => ok_pure (.locOf h))
 
 end
 
 theorem Sound.zero : Sound 0 := by
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> intros <;>
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> intros <;>
     first
     | (unfold Eval.expr; exact ok_throw) | (unfold Eval.resolve; exact ok_throw)
     | (unfold Eval.callMethod; exact ok_throw) | (unfold Eval.runMember; exact ok_throw)
     | (unfold Eval.args; exact ok_throw) | (unfold Eval.applyVals; exact ok_throw)
-    | (unfold Eval.applyClosure; exact ok_throw) | (unfold Eval.lval; exact ok_throw)
+    | (unfold Eval.applyClosure; exact ok_throw)
     | (unfold Eval.fieldLoc; exact ok_throw) | (unfold Eval.cmd; exact ok_throw)
     | (unfold Eval.cmds; exact ok_throw)
 
 theorem Sound.succ (ih : Sound n) : Sound (n + 1) :=
   ⟨Sound.expr ih, Sound.resolve, Sound.callMethod ih, Sound.runMember ih, Sound.args ih,
-   Sound.applyVals ih, Sound.applyClosure ih, Sound.lval ih, Sound.fieldLoc, Sound.cmd ih, Sound.cmds ih⟩
+   Sound.applyVals ih, Sound.applyClosure ih, Sound.fieldLoc, Sound.cmd ih, Sound.cmds ih⟩
 
 /-- Soundness at every fuel. -/
 theorem sound : ∀ n, Sound n
   | 0 => Sound.zero
   | n + 1 => Sound.succ (sound n)
 
-/-- The value of an expression has a derivation of ρ, σ ⊢ e ⇒ v, σ′. -/
-theorem expr_sound (h : res (expr n p ρ σ e) s = (.ok (v, σ'), s')) : Semantics.Eval p ρ σ e v σ' :=
+/-- The result of an expression has a derivation of ρ, σ ⊢ e ⇒ r, σ′. -/
+theorem expr_sound (h : res (expr n p ρ σ e) s = (.ok (r, σ'), s')) : Semantics.Eval p ρ σ e r σ' :=
   (sound n).1 p ρ σ e s _ s' h
-
-/-- The location of an expression has a derivation of ρ, σ ⊢ e ⇒ₗ ℓ, σ′. -/
-theorem lval_sound (h : res (lval n p ρ σ e) s = (.ok (l, σ'), s')) : LEval p ρ σ e l σ' :=
-  (sound n).2.2.2.2.2.2.2.1 p ρ σ e s _ s' h
 
 /-- The result of a command has a derivation of ρ, σ ⊢ c ⇒ r, ρ′, σ′. -/
 theorem cmd_sound (h : res (cmd n p ρ σ c) s = (.ok (r, ρ', σ'), s')) : Exec p ρ σ c r ρ' σ' :=
-  (sound n).2.2.2.2.2.2.2.2.2.1 p ρ σ c s _ s' h
+  (sound n).2.2.2.2.2.2.2.2.1 p ρ σ c s _ s' h
 
 end CoreCpp.Eval
 
@@ -965,8 +947,12 @@ theorem interp_sound (h : runMain p n = .ok v) : Semantics.Runs p v := by
   | error e => cases h
   | ok a =>
     obtain ⟨w, σ'⟩ := a
-    cases h
-    exact ⟨σ', Eval.expr_sound hr⟩
+    cases w with
+    | val u =>
+      simp only [Except.bind, Res.callValue, Except.ok.injEq] at h
+      subst h
+      exact ⟨σ', Eval.expr_sound hr⟩
+    | lval l => simp [Except.bind, Res.callValue] at h
 
 /-- `interp_sound` for `run`, whose subject is the program `prepare` gives. -/
 theorem run_sound (hp : prepare p = .ok q) (h : run p n = .value v) : Semantics.Runs q v := by

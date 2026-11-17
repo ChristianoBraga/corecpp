@@ -13,10 +13,15 @@ either matches the same rule or contradicts a premise.
 
 namespace CoreCpp.Semantics
 
-/-- A body has at most one value for its control and its result type. -/
-theorem Returns.det : Returns r τ v₁ → Returns r τ v₂ → v₁ = v₂
-  | .ret, .ret => rfl
+/-- A body has at most one result for its control and its declaration. -/
+theorem Returns.det : Returns σ c τ b r₁ → Returns σ c τ b r₂ → r₁ = r₂
+  | .val h, .val h' => by rw [h] at h'; cases h'; rfl
+  | .ref, .ref => rfl
   | .void, .void => rfl
+
+/-- The conversion rd of one result gives one value. -/
+theorem rd_det (h₁ : Res.rd σ r = some v₁) (h₂ : Res.rd σ r = some v₂) : v₁ = v₂ := by
+  rw [h₁] at h₂; cases h₂; rfl
 
 /-- The function named f with a chosen signature is also found by name. -/
 theorem lookupSig_lookup {p : Program} (h : FunEnv.lookupSig p f sig = some fn) :
@@ -110,188 +115,157 @@ theorem Module.call_det (hM : moduleOf f = some M)
 
 mutual
 
-theorem Eval.det : Eval p ρ σ e v₁ σ₁ → Eval p ρ σ e v₂ σ₂ → v₁ = v₂ ∧ σ₁ = σ₂
+theorem Eval.det : Eval p ρ σ e r₁ σ₁ → Eval p ρ σ e r₂ σ₂ → r₁ = r₂ ∧ σ₁ = σ₂
   | .lit _, h₂ => by
     cases h₂ with
     | lit => exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
   | .boolLit, h₂ => by
     cases h₂ with
     | boolLit => exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
   | .null, h₂ => by
     cases h₂ with
     | null => exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
-  | .var hl hr, h₂ => by
+  | .var h, h₂ => by
     cases h₂ with
-    | var hl' hr' =>
-      obtain ⟨rfl, -⟩ := LEval.det hl hl'
-      rw [hr] at hr'; cases hr'; exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
+    | var h' => rw [h] at h'; cases h'; exact ⟨rfl, rfl⟩
+    | varField h' => rw [h] at h'; cases h'
+  | .varField h ht ho hf, h₂ => by
+    cases h₂ with
+    | var h' => rw [h] at h'; cases h'
+    | varField _ ht' ho' hf' =>
+      rw [ht] at ht'; cases ht'; rw [ho] at ho'; cases ho'; rw [hf] at hf'; cases hf'
+      exact ⟨rfl, rfl⟩
   | .this h, h₂ => by
     cases h₂ with
     | this h' => rw [h] at h'; cases h'; exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
-  | .read hp hl hr, h₂ => by
-    cases h₂ with
-    | read hp' hl' hr' =>
-      obtain ⟨rfl, rfl⟩ := LEval.det hl hl'
-      rw [hr] at hr'; cases hr'; exact ⟨rfl, rfl⟩
-    | _ => simp [Expr.isPlace] at hp
   | .new hc ha ho hk, h₂ => by
     cases h₂ with
     | new hc' ha' ho' hk' =>
       rw [ha] at ha'; cases ha'; rw [ho] at ho'; cases ho'
       exact ⟨rfl, Ctors.det hk hk'⟩
-    | read hp => simp [Expr.isPlace] at hp
-  | .methodCall h hr, h₂ => by
+  | .methodCall h, h₂ => by
     cases h₂ with
-    | methodCall h' hr' =>
+    | methodCall h' =>
       obtain ⟨rfl, rfl, rfl⟩ := CallMethod.det h h'; exact ⟨rfl, rfl⟩
-    | methodCallRef h' hr' hv' =>
-      obtain ⟨rfl, rfl, rfl⟩ := CallMethod.det h h'; rw [hr] at hr'; cases hr'
-    | read hp => simp [Expr.isPlace] at hp
-  | .methodCallRef h hr hv, h₂ => by
-    cases h₂ with
-    | methodCall h' hr' =>
-      obtain ⟨rfl, rfl, rfl⟩ := CallMethod.det h h'; rw [hr] at hr'; cases hr'
-    | methodCallRef h' hr' hv' =>
-      obtain ⟨rfl, h, rfl⟩ := CallMethod.det h h'; cases h
-      rw [hv] at hv'; cases hv'; exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
   | .newLib ha hM hn, h₂ => by
     cases h₂ with
     | newLib ha' hM' hn' =>
       obtain ⟨rfl, rfl⟩ := Args.det ha ha'
       rw [hM] at hM'; cases hM'
-      exact Module.new_det hM hn hn'
-    | read hp => simp [Expr.isPlace] at hp
-  | .not h, h₂ => by
+      obtain ⟨rfl, rfl⟩ := Module.new_det hM hn hn'; exact ⟨rfl, rfl⟩
+  | .not h hv, h₂ => by
     cases h₂ with
-    | not h' => obtain ⟨h, rfl⟩ := Eval.det h h'; cases h; exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
-  | .neg h hr, h₂ => by
+    | not h' hv' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det h h'; cases rd_det hv hv'; exact ⟨rfl, rfl⟩
+  | .neg h hv hr, h₂ => by
     cases h₂ with
-    | neg h' hr' => obtain ⟨h, rfl⟩ := Eval.det h h'; cases h; exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
-  | .arith hop a₁ a₂ hr, h₂ => by
+    | neg h' hv' hr' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det h h'; cases rd_det hv hv'; exact ⟨rfl, rfl⟩
+  | .arith hop a₁ v₁ a₂ v₂ hr, h₂ => by
     cases h₂ with
-    | arith hop' b₁ b₂ hr' =>
-      obtain ⟨h, rfl⟩ := Eval.det a₁ b₁; cases h
-      obtain ⟨h, rfl⟩ := Eval.det a₂ b₂; cases h
+    | arith hop' b₁ w₁ b₂ w₂ hr' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a₁ b₁; cases rd_det v₁ w₁
+      obtain ⟨rfl, rfl⟩ := Eval.det a₂ b₂; cases rd_det v₂ w₂
       exact ⟨rfl, rfl⟩
-    | div b₁ b₂ hz hd => rw [divide_of_isArith hop] at hd; cases hd
-    | rel b₁ b₂ hc => rw [compare_of_isArith hop] at hc; cases hc
+    | div b₁ w₁ b₂ w₂ hz hd => rw [divide_of_isArith hop] at hd; cases hd
+    | rel b₁ w₁ b₂ w₂ hc => rw [compare_of_isArith hop] at hc; cases hc
     | andF => simp [BinOp.isArith] at hop
     | andT => simp [BinOp.isArith] at hop
     | orT => simp [BinOp.isArith] at hop
     | orF => simp [BinOp.isArith] at hop
-    | read hp => simp [Expr.isPlace] at hp
-  | .div a₁ a₂ hz hd hr, h₂ => by
+  | .div a₁ v₁ a₂ v₂ hz hd hr, h₂ => by
     cases h₂ with
-    | arith hop' b₁ b₂ hr' => rw [divide_of_isArith hop'] at hd; cases hd
-    | div b₁ b₂ hz' hd' hr' =>
-      obtain ⟨h, rfl⟩ := Eval.det a₁ b₁; cases h
-      obtain ⟨h, rfl⟩ := Eval.det a₂ b₂; cases h
+    | arith hop' => rw [divide_of_isArith hop'] at hd; cases hd
+    | div b₁ w₁ b₂ w₂ hz' hd' hr' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a₁ b₁; cases rd_det v₁ w₁
+      obtain ⟨rfl, rfl⟩ := Eval.det a₂ b₂; cases rd_det v₂ w₂
       rw [hd] at hd'; cases hd'; exact ⟨rfl, rfl⟩
-    | rel b₁ b₂ hc => rw [compare_of_divide hd] at hc; cases hc
+    | rel b₁ w₁ b₂ w₂ hc => rw [compare_of_divide hd] at hc; cases hc
     | andF => simp [BinOp.divide] at hd
     | andT => simp [BinOp.divide] at hd
     | orT => simp [BinOp.divide] at hd
     | orF => simp [BinOp.divide] at hd
-    | read hp => simp [Expr.isPlace] at hp
-  | .rel a₁ a₂ hc, h₂ => by
+  | .rel a₁ v₁ a₂ v₂ hc, h₂ => by
     cases h₂ with
-    | arith hop' b₁ b₂ hr' => rw [compare_of_isArith hop'] at hc; cases hc
-    | div b₁ b₂ hz hd => rw [compare_of_divide hd] at hc; cases hc
-    | rel b₁ b₂ hc' =>
-      obtain ⟨rfl, rfl⟩ := Eval.det a₁ b₁
-      obtain ⟨rfl, rfl⟩ := Eval.det a₂ b₂
+    | arith hop' => rw [compare_of_isArith hop'] at hc; cases hc
+    | div _ _ _ _ _ hd => rw [compare_of_divide hd] at hc; cases hc
+    | rel b₁ w₁ b₂ w₂ hc' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a₁ b₁; cases rd_det v₁ w₁
+      obtain ⟨rfl, rfl⟩ := Eval.det a₂ b₂; cases rd_det v₂ w₂
       rw [hc] at hc'; cases hc'; exact ⟨rfl, rfl⟩
     | andF => simp [BinOp.compare] at hc
     | andT => simp [BinOp.compare] at hc
     | orT => simp [BinOp.compare] at hc
     | orF => simp [BinOp.compare] at hc
-    | read hp => simp [Expr.isPlace] at hp
-  | .andF a, h₂ => by
+  | .andF a v, h₂ => by
     cases h₂ with
     | arith hop => simp [BinOp.isArith] at hop
-    | div _ _ _ hd => simp [BinOp.divide] at hd
-    | rel _ _ hc => simp [BinOp.compare] at hc
-    | andF b => obtain ⟨-, rfl⟩ := Eval.det a b; exact ⟨rfl, rfl⟩
-    | andT b => obtain ⟨h, -⟩ := Eval.det a b; cases h
-    | read hp => simp [Expr.isPlace] at hp
-  | .andT a₁ a₂, h₂ => by
+    | div _ _ _ _ _ hd => simp [BinOp.divide] at hd
+    | rel _ _ _ _ hc => simp [BinOp.compare] at hc
+    | andF b w => obtain ⟨rfl, rfl⟩ := Eval.det a b; exact ⟨rfl, rfl⟩
+    | andT b w => obtain ⟨rfl, rfl⟩ := Eval.det a b; cases rd_det v w
+  | .andT a₁ v₁ a₂ v₂, h₂ => by
     cases h₂ with
     | arith hop => simp [BinOp.isArith] at hop
-    | div _ _ _ hd => simp [BinOp.divide] at hd
-    | rel _ _ hc => simp [BinOp.compare] at hc
-    | andF b => obtain ⟨h, -⟩ := Eval.det a₁ b; cases h
-    | andT b₁ b₂ =>
-      obtain ⟨-, rfl⟩ := Eval.det a₁ b₁
+    | div _ _ _ _ _ hd => simp [BinOp.divide] at hd
+    | rel _ _ _ _ hc => simp [BinOp.compare] at hc
+    | andF b w => obtain ⟨rfl, rfl⟩ := Eval.det a₁ b; cases rd_det v₁ w
+    | andT b₁ w₁ b₂ w₂ =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a₁ b₁
+      obtain ⟨rfl, rfl⟩ := Eval.det a₂ b₂; cases rd_det v₂ w₂; exact ⟨rfl, rfl⟩
+  | .orT a v, h₂ => by
+    cases h₂ with
+    | arith hop => simp [BinOp.isArith] at hop
+    | div _ _ _ _ _ hd => simp [BinOp.divide] at hd
+    | rel _ _ _ _ hc => simp [BinOp.compare] at hc
+    | orT b w => obtain ⟨rfl, rfl⟩ := Eval.det a b; exact ⟨rfl, rfl⟩
+    | orF b w => obtain ⟨rfl, rfl⟩ := Eval.det a b; cases rd_det v w
+  | .orF a₁ v₁ a₂ v₂, h₂ => by
+    cases h₂ with
+    | arith hop => simp [BinOp.isArith] at hop
+    | div _ _ _ _ _ hd => simp [BinOp.divide] at hd
+    | rel _ _ _ _ hc => simp [BinOp.compare] at hc
+    | orT b w => obtain ⟨rfl, rfl⟩ := Eval.det a₁ b; cases rd_det v₁ w
+    | orF b₁ w₁ b₂ w₂ =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a₁ b₁
+      obtain ⟨rfl, rfl⟩ := Eval.det a₂ b₂; cases rd_det v₂ w₂; exact ⟨rfl, rfl⟩
+  | .condT a₁ v a₂, h₂ => by
+    cases h₂ with
+    | condT b₁ w b₂ =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a₁ b₁
       exact Eval.det a₂ b₂
-    | read hp => simp [Expr.isPlace] at hp
-  | .orT a, h₂ => by
+    | condF b w => obtain ⟨rfl, rfl⟩ := Eval.det a₁ b; cases rd_det v w
+  | .condF a₁ v a₃, h₂ => by
     cases h₂ with
-    | arith hop => simp [BinOp.isArith] at hop
-    | div _ _ _ hd => simp [BinOp.divide] at hd
-    | rel _ _ hc => simp [BinOp.compare] at hc
-    | orT b => obtain ⟨-, rfl⟩ := Eval.det a b; exact ⟨rfl, rfl⟩
-    | orF b => obtain ⟨h, -⟩ := Eval.det a b; cases h
-    | read hp => simp [Expr.isPlace] at hp
-  | .orF a₁ a₂, h₂ => by
-    cases h₂ with
-    | arith hop => simp [BinOp.isArith] at hop
-    | div _ _ _ hd => simp [BinOp.divide] at hd
-    | rel _ _ hc => simp [BinOp.compare] at hc
-    | orT b => obtain ⟨h, -⟩ := Eval.det a₁ b; cases h
-    | orF b₁ b₂ =>
-      obtain ⟨-, rfl⟩ := Eval.det a₁ b₁
-      exact Eval.det a₂ b₂
-    | read hp => simp [Expr.isPlace] at hp
-  | .condT a₁ a₂, h₂ => by
-    cases h₂ with
-    | condT b₁ b₂ =>
-      obtain ⟨-, rfl⟩ := Eval.det a₁ b₁
-      exact Eval.det a₂ b₂
-    | condF b => obtain ⟨h, -⟩ := Eval.det a₁ b; cases h
-    | read hp => simp [Expr.isPlace] at hp
-  | .condF a₁ a₃, h₂ => by
-    cases h₂ with
-    | condT b => obtain ⟨h, -⟩ := Eval.det a₁ b; cases h
-    | condF b₁ b₃ =>
-      obtain ⟨-, rfl⟩ := Eval.det a₁ b₁
+    | condT b w => obtain ⟨rfl, rfl⟩ := Eval.det a₁ b; cases rd_det v w
+    | condF b₁ w b₃ =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a₁ b₁
       exact Eval.det a₃ b₃
-    | read hp => simp [Expr.isPlace] at hp
   | .call hρ hf hn hb hx hr, h₂ => by
     cases h₂ with
     | call hρ' hf' hn' hb' hx' hr' =>
       rw [hf] at hf'; cases hf'
       obtain ⟨rfl, rfl, rfl⟩ := Bind.det hb hb'
       obtain ⟨rfl, rfl, rfl⟩ := Execs.det hx hx'
-      rw [Returns.det hr hr']; exact ⟨rfl, rfl⟩
+      cases Returns.det hr hr'; exact ⟨rfl, rfl⟩
     | callVar hρ' => rw [hρ] at hρ'; cases hρ'
     | callThis _ hf' => have := lookupSig_lookup hf; rw [hf'] at this; cases this
     | callLib _ hf' => exact absurd hf' (lookupSig_funsNamed hf)
-    | read hp => simp [Expr.isPlace] at hp
-  | .callVar hρ hv ht ha, h₂ => by
+  | .callVar hρ hv hr ht ha, h₂ => by
     cases h₂ with
     | call hρ' => rw [hρ] at hρ'; cases hρ'
-    | callVar hρ' hv' ht' ha' =>
-      obtain ⟨h, rfl⟩ := Eval.det hv hv'; cases h
+    | callVar hρ' hv' hr' ht' ha' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det hv hv'; cases rd_det hr hr'
       rw [ht] at ht'; cases ht'
-      exact ApplyArgs.det ha ha'
+      obtain ⟨rfl, rfl⟩ := ApplyArgs.det ha ha'; exact ⟨rfl, rfl⟩
     | callThis hρ' => rw [hρ] at hρ'; cases hρ'
     | callLib hρ' => rw [hρ] at hρ'; cases hρ'
-    | read hp => simp [Expr.isPlace] at hp
   | .callThis hρ hf hl ht h, h₂ => by
     cases h₂ with
     | call _ hf' => have := lookupSig_lookup hf'; rw [hf] at this; cases this
     | callVar hρ' => rw [hρ] at hρ'; cases hρ'
     | callThis _ _ _ ht' h' => exact Eval.det h h'
     | callLib _ _ hd => exact absurd hl (libDecls_lookup hd)
-    | read hp => simp [Expr.isPlace] at hp
   | .callLib hρ hf hd hM ha hc, h₂ => by
     cases h₂ with
     | call _ hf' => exact absurd hf (lookupSig_funsNamed hf')
@@ -300,113 +274,77 @@ theorem Eval.det : Eval p ρ σ e v₁ σ₁ → Eval p ρ σ e v₂ σ₂ → v
     | callLib _ _ _ hM' ha' hc' =>
       rw [hM] at hM'; cases hM'
       obtain ⟨rfl, rfl⟩ := Args.det ha ha'
-      exact Module.call_det hM hc hc'
-    | read hp => simp [Expr.isPlace] at hp
-  | .callFn he ht ha, h₂ => by
+      obtain ⟨rfl, rfl⟩ := Module.call_det hM hc hc'; exact ⟨rfl, rfl⟩
+  | .callFn he hr ht ha, h₂ => by
     cases h₂ with
-    | callFn he' ht' ha' =>
-      obtain ⟨h, rfl⟩ := Eval.det he he'; cases h
+    | callFn he' hr' ht' ha' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det he he'; cases rd_det hr hr'
       rw [ht] at ht'; cases ht'
-      exact ApplyArgs.det ha ha'
-    | read hp => simp [Expr.isPlace] at hp
+      obtain ⟨rfl, rfl⟩ := ApplyArgs.det ha ha'; exact ⟨rfl, rfl⟩
   | .lambda hc, h₂ => by
     cases h₂ with
     | lambda hc' => rw [hc] at hc'; cases hc'; exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
-  | .locOf h, h₂ => by
+  | .deref h hv, h₂ => by
     cases h₂ with
-    | locOf h' => obtain ⟨rfl, rfl⟩ := LEval.det h h'; exact ⟨rfl, rfl⟩
-    | read hp => simp [Expr.isPlace] at hp
-termination_by structural h => h
-
-theorem LEval.det : LEval p ρ σ e ℓ₁ σ₁ → LEval p ρ σ e ℓ₂ σ₂ → ℓ₁ = ℓ₂ ∧ σ₁ = σ₂
-  | .locVar h, h₂ => by
+    | deref h' hv' => obtain ⟨rfl, rfl⟩ := Eval.det h h'; cases rd_det hv hv'; exact ⟨rfl, rfl⟩
+  | .field h ho hf, h₂ => by
     cases h₂ with
-    | locVar h' => rw [h] at h'; cases h'; exact ⟨rfl, rfl⟩
-    | locVarField h' => rw [h] at h'; cases h'
-  | .locVarField h ht ho hf, h₂ => by
-    cases h₂ with
-    | locVar h' => rw [h] at h'; cases h'
-    | locVarField _ ht' ho' hf' =>
-      rw [ht] at ht'; cases ht'; rw [ho] at ho'; cases ho'; rw [hf] at hf'; cases hf'
-      exact ⟨rfl, rfl⟩
-  | .locDeref h, h₂ => by
-    cases h₂ with
-    | locDeref h' => obtain ⟨h, rfl⟩ := Eval.det h h'; cases h; exact ⟨rfl, rfl⟩
-  | .locField h ho hf, h₂ => by
-    cases h₂ with
-    | locField h' ho' hf' =>
-      obtain ⟨rfl, rfl⟩ := LEval.det h h'
-      rw [ho] at ho'; cases ho'; rw [hf] at hf'; cases hf'; exact ⟨rfl, rfl⟩
-  | .locArrow h ho hf, h₂ => by
-    cases h₂ with
-    | locArrow h' ho' hf' =>
+    | field h' ho' hf' =>
       obtain ⟨h, rfl⟩ := Eval.det h h'; cases h
       rw [ho] at ho'; cases ho'; rw [hf] at hf'; cases hf'; exact ⟨rfl, rfl⟩
-  | .methodLoc h hr, h₂ => by
+  | .arrow h hv ho hf, h₂ => by
     cases h₂ with
-    | methodLoc h' hr' =>
-      obtain ⟨rfl, h, rfl⟩ := CallMethod.det h h'; cases h; exact ⟨rfl, rfl⟩
-  | .locIndex a₁ a₂ hM hi, h₂ => by
+    | arrow h' hv' ho' hf' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det h h'; cases rd_det hv hv'
+      rw [ho] at ho'; cases ho'; rw [hf] at hf'; cases hf'; exact ⟨rfl, rfl⟩
+  | .index a₁ v₁ a₂ v₂ hM hi, h₂ => by
     cases h₂ with
-    | locIndex b₁ b₂ hM' hi' =>
-      obtain ⟨h, rfl⟩ := Eval.det a₁ b₁; cases h
-      obtain ⟨rfl, rfl⟩ := Eval.det a₂ b₂
+    | index b₁ w₁ b₂ w₂ hM' hi' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a₁ b₁; cases rd_det v₁ w₁
+      obtain ⟨rfl, rfl⟩ := Eval.det a₂ b₂; cases rd_det v₂ w₂
       rw [hM] at hM'; cases hM'
-      exact Module.index_det hM hi hi'
-  | .locCondT a₁ a₂, h₂ => by
-    cases h₂ with
-    | locCondT b₁ b₂ =>
-      obtain ⟨-, rfl⟩ := Eval.det a₁ b₁
-      exact LEval.det a₂ b₂
-    | locCondF b => obtain ⟨h, -⟩ := Eval.det a₁ b; cases h
-  | .locCondF a₁ a₃, h₂ => by
-    cases h₂ with
-    | locCondT b => obtain ⟨h, -⟩ := Eval.det a₁ b; cases h
-    | locCondF b₁ b₃ =>
-      obtain ⟨-, rfl⟩ := Eval.det a₁ b₁
-      exact LEval.det a₃ b₃
+      obtain ⟨rfl, rfl⟩ := Module.index_det hM hi hi'; exact ⟨rfl, rfl⟩
 termination_by structural h => h
 
 theorem Exec.det : Exec p ρ σ c r₁ ρ₁ σ₁ → Exec p ρ σ c r₂ ρ₂ σ₂ → r₁ = r₂ ∧ ρ₁ = ρ₂ ∧ σ₁ = σ₂
   | .block h, h₂ => by
     cases h₂ with
     | block h' => obtain ⟨rfl, rfl, rfl⟩ := Execs.det h h'; exact ⟨rfl, rfl, rfl⟩
-  | .ifT a b, h₂ => by
+  | .ifT a v b, h₂ => by
     cases h₂ with
-    | ifT a' b' =>
-      obtain ⟨-, rfl⟩ := Eval.det a a'
+    | ifT a' v' b' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'
       obtain ⟨rfl, -, rfl⟩ := Exec.det b b'; exact ⟨rfl, rfl, rfl⟩
-    | ifF a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-  | .ifF a b, h₂ => by
+    | ifF a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+  | .ifF a v b, h₂ => by
     cases h₂ with
-    | ifT a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-    | ifF a' b' =>
-      obtain ⟨-, rfl⟩ := Eval.det a a'
+    | ifT a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+    | ifF a' v' b' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'
       obtain ⟨rfl, -, rfl⟩ := Exec.det b b'; exact ⟨rfl, rfl, rfl⟩
-  | .whileF a, h₂ => by
+  | .whileF a v, h₂ => by
     cases h₂ with
-    | whileF a' => obtain ⟨-, rfl⟩ := Eval.det a a'; exact ⟨rfl, rfl, rfl⟩
-    | whileT a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-    | whileRet a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-  | .whileT a b w, h₂ => by
+    | whileF a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; exact ⟨rfl, rfl, rfl⟩
+    | whileT a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+    | whileRet a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+  | .whileT a v b w, h₂ => by
     cases h₂ with
-    | whileF a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-    | whileT a' b' w' =>
-      obtain ⟨-, rfl⟩ := Eval.det a a'
+    | whileF a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+    | whileT a' v' b' w' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'
       obtain ⟨-, -, rfl⟩ := Exec.det b b'
       obtain ⟨rfl, -, rfl⟩ := Exec.det w w'; exact ⟨rfl, rfl, rfl⟩
-    | whileRet a' b' =>
-      obtain ⟨-, rfl⟩ := Eval.det a a'
+    | whileRet a' v' b' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'
       obtain ⟨h, -, -⟩ := Exec.det b b'; cases h
-  | .whileRet a b, h₂ => by
+  | .whileRet a v b, h₂ => by
     cases h₂ with
-    | whileF a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-    | whileT a' b' =>
-      obtain ⟨-, rfl⟩ := Eval.det a a'
+    | whileF a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+    | whileT a' v' b' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'
       obtain ⟨h, -, -⟩ := Exec.det b b'; cases h
-    | whileRet a' b' =>
-      obtain ⟨-, rfl⟩ := Eval.det a a'
+    | whileRet a' v' b' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'
       obtain ⟨h, -, rfl⟩ := Exec.det b b'; cases h; exact ⟨rfl, rfl, rfl⟩
   | .forLoop a w, h₂ => by
     cases h₂ with
@@ -419,50 +357,50 @@ theorem Exec.det : Exec p ρ σ c r₁ ρ₁ σ₁ → Exec p ρ σ c r₂ ρ₂
   | .ret a, h₂ => by
     cases h₂ with
     | ret a' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; exact ⟨rfl, rfl, rfl⟩
-  | .decl a ha, h₂ => by
+  | .decl a v ha, h₂ => by
     cases h₂ with
-    | decl a' ha' =>
-      obtain ⟨rfl, rfl⟩ := Eval.det a a'
+    | decl a' v' ha' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
       rw [ha] at ha'; cases ha'; exact ⟨rfl, rfl, rfl⟩
   | .declRef a, h₂ => by
     cases h₂ with
-    | declRef a' => obtain ⟨rfl, rfl⟩ := LEval.det a a'; exact ⟨rfl, rfl, rfl⟩
-  | .declAuto a ha, h₂ => by
+    | declRef a' => obtain ⟨h, rfl⟩ := Eval.det a a'; cases h; exact ⟨rfl, rfl, rfl⟩
+  | .declAuto a v ha, h₂ => by
     cases h₂ with
-    | declAuto a' ha' =>
-      obtain ⟨rfl, rfl⟩ := Eval.det a a'
+    | declAuto a' v' ha' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
       rw [ha] at ha'; cases ha'; exact ⟨rfl, rfl, rfl⟩
-  | .assign a l hd, h₂ => by
+  | .assign a v l hd, h₂ => by
     cases h₂ with
-    | assign a' l' hd' =>
-      obtain ⟨rfl, rfl⟩ := Eval.det a a'
-      obtain ⟨rfl, rfl⟩ := LEval.det l l'; exact ⟨rfl, rfl, rfl⟩
+    | assign a' v' l' hd' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+      obtain ⟨h, rfl⟩ := Eval.det l l'; cases h; exact ⟨rfl, rfl, rfl⟩
   | .exprStmt a, h₂ => by
     cases h₂ with
     | exprStmt a' => obtain ⟨-, rfl⟩ := Eval.det a a'; exact ⟨rfl, rfl, rfl⟩
-  | .deleteNull a, h₂ => by
+  | .deleteNull a v, h₂ => by
     cases h₂ with
-    | deleteNull a' => obtain ⟨-, rfl⟩ := Eval.det a a'; exact ⟨rfl, rfl, rfl⟩
-    | deleteLib a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-    | delete a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-  | .deleteLib a ho hM hd, h₂ => by
+    | deleteNull a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; exact ⟨rfl, rfl, rfl⟩
+    | deleteLib a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+    | delete a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+  | .deleteLib a v ho hM hd, h₂ => by
     cases h₂ with
-    | deleteNull a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-    | deleteLib a' ho' hM' hd' =>
-      obtain ⟨h, rfl⟩ := Eval.det a a'; cases h
+    | deleteNull a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+    | deleteLib a' v' ho' hM' hd' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
       rw [ho] at ho'; cases ho'; rw [hM] at hM'; cases hM'
       rw [Module.delete_det hM hd hd']; exact ⟨rfl, rfl, rfl⟩
-    | delete a' ho' =>
-      obtain ⟨h, rfl⟩ := Eval.det a a'; cases h
+    | delete a' v' ho' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
       rw [ho] at ho'; cases ho'
-  | .delete a ho hv hd, h₂ => by
+  | .delete a v ho hvd hd, h₂ => by
     cases h₂ with
-    | deleteNull a' => obtain ⟨h, -⟩ := Eval.det a a'; cases h
-    | deleteLib a' ho' =>
-      obtain ⟨h, rfl⟩ := Eval.det a a'; cases h
+    | deleteNull a' v' => obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
+    | deleteLib a' v' ho' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
       rw [ho] at ho'; cases ho'
-    | delete a' ho' hv' hd' =>
-      obtain ⟨h, rfl⟩ := Eval.det a a'; cases h
+    | delete a' v' ho' hvd' hd' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
       rw [ho] at ho'; cases ho'
       rw [Dtors.det hd hd']; exact ⟨rfl, rfl, rfl⟩
 termination_by structural h => h
@@ -487,10 +425,10 @@ theorem Args.det : Args p ρ σ es vs₁ σ₁ → Args p ρ σ es vs₂ σ₂ �
   | .nil, h₂ => by
     cases h₂ with
     | nil => exact ⟨rfl, rfl⟩
-  | .cons a s, h₂ => by
+  | .cons a v s, h₂ => by
     cases h₂ with
-    | cons a' s' =>
-      obtain ⟨rfl, rfl⟩ := Eval.det a a'
+    | cons a' v' s' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
       obtain ⟨rfl, rfl⟩ := Args.det s s'; exact ⟨rfl, rfl⟩
 termination_by structural h => h
 
@@ -502,26 +440,26 @@ theorem Bind.det : Bind p ρ σ ρ₀ qs es ρ₁ σ₁ o₁ → Bind p ρ σ ρ
   | .byRef hq l s, h₂ => by
     cases h₂ with
     | byRef _ l' s' =>
-      obtain ⟨rfl, rfl⟩ := LEval.det l l'
+      obtain ⟨h, rfl⟩ := Eval.det l l'; cases h
       exact Bind.det s s'
     | byVal hq' => rw [hq] at hq'; cases hq'
-  | .byVal hq a ha s, h₂ => by
+  | .byVal hq a v ha s, h₂ => by
     cases h₂ with
     | byRef hq' => rw [hq] at hq'; cases hq'
-    | byVal _ a' ha' s' =>
-      obtain ⟨rfl, rfl⟩ := Eval.det a a'
+    | byVal _ a' v' ha' s' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det a a'; cases rd_det v v'
       rw [ha] at ha'; cases ha'
       obtain ⟨rfl, rfl, rfl⟩ := Bind.det s s'; exact ⟨rfl, rfl, rfl⟩
 termination_by structural h => h
 
-theorem Member.det : Member p ρ σ ℓ ps body es τ v₁ σ₁ → Member p ρ σ ℓ ps body es τ v₂ σ₂ →
+theorem Member.det : Member p ρ σ ℓ ps body es τ ref v₁ σ₁ → Member p ρ σ ℓ ps body es τ ref v₂ σ₂ →
     v₁ = v₂ ∧ σ₁ = σ₂
   | .member hn hb hx hr, h₂ => by
     cases h₂ with
     | member _ hb' hx' hr' =>
       obtain ⟨rfl, rfl, rfl⟩ := Bind.det hb hb'
       obtain ⟨rfl, rfl, rfl⟩ := Execs.det hx hx'
-      rw [Returns.det hr hr']; exact ⟨rfl, rfl⟩
+      cases Returns.det hr hr'; exact ⟨rfl, rfl⟩
 termination_by structural h => h
 
 theorem CallMethod.det :
@@ -530,13 +468,13 @@ theorem CallMethod.det :
   | .dot hl ho hm hc, h₂ => by
     cases h₂ with
     | dot hl' ho' hm' hc' =>
-      obtain ⟨rfl, rfl⟩ := LEval.det hl hl'
+      obtain ⟨h, rfl⟩ := Eval.det hl hl'; cases h
       rw [ho] at ho'; cases ho'; rw [hm] at hm'; cases hm'
       obtain ⟨rfl, rfl⟩ := Member.det hc hc'; exact ⟨rfl, rfl, rfl⟩
-  | .arrow hv ho hm hc, h₂ => by
+  | .arrow hv hp ho hm hc, h₂ => by
     cases h₂ with
-    | arrow hv' ho' hm' hc' =>
-      obtain ⟨h, rfl⟩ := Eval.det hv hv'; cases h
+    | arrow hv' hp' ho' hm' hc' =>
+      obtain ⟨rfl, rfl⟩ := Eval.det hv hv'; cases rd_det hp hp'
       rw [ho] at ho'; cases ho'; rw [hm] at hm'; cases hm'
       obtain ⟨rfl, rfl⟩ := Member.det hc hc'; exact ⟨rfl, rfl, rfl⟩
 termination_by structural h => h
@@ -582,7 +520,7 @@ theorem Apply.det : Apply p σ w vs v₁ σ₁ → Apply p σ w vs v₂ σ₂ �
       rw [ha] at ha'; cases ha'
       rw [hρ', ← hρ] at hx'
       obtain ⟨rfl, rfl, rfl⟩ := Execs.det hx hx'
-      rw [Returns.det hr hr', hρ, hρ']; exact ⟨rfl, rfl⟩
+      cases Returns.det hr hr'; rw [hρ, hρ']; exact ⟨rfl, rfl⟩
 termination_by structural h => h
 
 theorem ApplyArgs.det : ApplyArgs p ρ σ w es v₁ σ₁ → ApplyArgs p ρ σ w es v₂ σ₂ → v₁ = v₂ ∧ σ₁ = σ₂
@@ -600,6 +538,6 @@ most one result. -/
 theorem Runs.det (h₁ : Runs p v₁) (h₂ : Runs p v₂) : v₁ = v₂ := by
   obtain ⟨_, h₁⟩ := h₁
   obtain ⟨_, h₂⟩ := h₂
-  exact (Eval.det h₁ h₂).1
+  obtain ⟨h, -⟩ := Eval.det h₁ h₂; cases h; rfl
 
 end CoreCpp.Semantics

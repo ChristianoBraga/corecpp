@@ -83,8 +83,18 @@ The value of a lambda is the closure $`\mathsf{closure}(x_1 \ldots x_k, \tau, c,
 A `std::function` object of {bpref "std_function"}[] holds a closure in its one location, as the target of the object, or $`\mathsf{null}` for the function with no target. No variable, field or element holds a closure directly, since a `std::function` is an object, reached by pointer or by reference. The type of a lambda is the function type $`\tau(\tau_1, \ldots, \tau_k)`, which `Ty.isFn` recognises, and it occurs only as the template argument of `std::function`.
 :::
 
-:::definition "dom_ctrl" (parent := "domains") (lean := "CoreCpp.Ctrl") (uses := "dom_val")
-The control result $`r` of a command is $`\mathsf{normal}` or $`\mathsf{ret}\,v`. A $`\mathsf{ret}` interrupts sequence, block and loop up to the call that consumes it. A call whose body ends with $`\mathsf{normal}` gives $`\mathsf{void}` when the result type is `void`, and `error` otherwise.
+:::definition "dom_res" (parent := "domains") (lean := "CoreCpp.Res, CoreCpp.Res.rd, CoreCpp.Eval.rd, CoreCpp.Eval.lvalOf") (uses := "dom_val, dom_loc, dom_store")
+The result $`r` of an expression is $`\mathsf{val}\,v` or $`\mathsf{lval}\,\ell`, after the value categories of C++17. A glvalue is an expression whose evaluation determines the identity of an object, and a prvalue is one whose evaluation computes a value (N4659 §6.10 paragraph 1). An lvalue yields the location of the object it designates, $`\mathsf{lval}\,\ell`, and every other expression yields its value, $`\mathsf{val}\,v`. The tag keeps the location of an object apart from a pointer value. The variable `p` yields $`\mathsf{lval}\,\rho(p)` and `new C()` yields $`\mathsf{val}(\mathsf{loc}\,\ell)`.
+
+The conversion $`\mathrm{rd}(\sigma, r)` gives the value of a result. A glvalue in a context where a prvalue is expected is converted to a prvalue (N4659 §6.10 paragraph 3), and the lvalue‑to‑rvalue conversion reads the object (N4659 §7.1 paragraph 1). A location outside the store has no value, so a rule with the premise $`\mathrm{rd}(\sigma, r) = v` has no derivation there and the evaluator gives `error`.
+
+$$`\mathrm{rd}(\sigma, \mathsf{val}\,v) = v \qquad\qquad \dfrac{\ell \in \mathrm{dom}\,\sigma}{\mathrm{rd}(\sigma, \mathsf{lval}\,\ell) = \sigma(\ell)}`
+
+The rules apply rd where C++17 converts. These are the operands of the operators, the conditions, the right side of an assignment, an initialiser of a variable, a by value argument, the operand of `*`, `->` and `delete`, and the index of `[]`. The left side of an assignment, the initialiser of a reference, a reference argument and the receiver of `e.m(…)` and `e.f` require $`\mathsf{lval}\,\ell`. The expression of `e;` is discarded with no conversion (N4659 §8 paragraph 12). The operand of `return` passes its result unchanged, and the call converts it by the declared return type of the callee, {bpref "fun_call"}[].
+:::
+
+:::definition "dom_ctrl" (parent := "domains") (lean := "CoreCpp.Ctrl") (uses := "dom_res")
+The control result of a command is $`\mathsf{normal}` or $`\mathsf{ret}\,r`, with $`r` the result of the operand of `return`. A $`\mathsf{ret}` interrupts sequence, block and loop up to the call that consumes it. A call whose body ends with $`\mathsf{normal}` gives $`\mathsf{void}` when the result type is `void`, and `error` otherwise.
 :::
 
 :::definition "dom_error" (parent := "domains") (lean := "CoreCpp.Error")
@@ -157,7 +167,7 @@ The type checker consults it for types, visibility and dispatch, and `new` and `
 
 # Relations and interpreters
 
-::::definition "judg_relations" (parent := "judgments") (lean := "CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Accept, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks, CoreCpp.Semantics.WF, CoreCpp.Semantics.FunOk, CoreCpp.Semantics.ClassOk, CoreCpp.Semantics.ProgramOk, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Execs, CoreCpp.Semantics.Runs, CoreCpp.Typing.wellFormed, CoreCpp.Typing.typingFuel, CoreCpp.runWith") (uses := "dom_tenv, dom_env, dom_store, dom_error")
+::::definition "judg_relations" (parent := "judgments") (lean := "CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Accept, CoreCpp.Semantics.Check, CoreCpp.Semantics.Checks, CoreCpp.Semantics.WF, CoreCpp.Semantics.FunOk, CoreCpp.Semantics.ClassOk, CoreCpp.Semantics.ProgramOk, CoreCpp.Semantics.Eval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Execs, CoreCpp.Semantics.Runs, CoreCpp.Typing.wellFormed, CoreCpp.Typing.typingFuel, CoreCpp.runWith") (uses := "dom_tenv, dom_env, dom_store, dom_error")
 The semantics is a set of inductive propositions, one per judgment, with one constructor per rule. A constructor bears the name of its rule in this blueprint. The relations of the language are in `CoreCpp/Semantics/Static.lean` and `Dynamic.lean`, and the relations of the modules of the library in `Library.lean`. A constructor follows the layout of a rule on the board, the premises one per line, the inference line with the name, and the conclusion under it. The program $`p` is a parameter of every relation, the function table and the class table.
 
 :::table +header
@@ -202,15 +212,10 @@ The semantics is a set of inductive propositions, one per judgment, with one con
   * none
   * `Typing.fn`, `Typing.cls`, `check`
 *
-  * $`\rho, \sigma \vdash e \Rightarrow v, \sigma'`
-  * `Eval p ρ σ e v σ'`
-  * `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'`
+  * $`\rho, \sigma \vdash e \Rightarrow r, \sigma'`
+  * `Eval p ρ σ e r σ'`
+  * `⟨ρ, σ⟩ ⊢ e ⇒ r, σ'`
   * `Eval.expr`
-*
-  * $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'`
-  * `LEval p ρ σ e ℓ σ'`
-  * `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'`
-  * `Eval.lval`
 *
   * $`\rho, \sigma \vdash c \Rightarrow r, \rho', \sigma'`
   * `Exec p ρ σ c r ρ' σ'`
@@ -253,12 +258,10 @@ The judgment $`\Gamma \vdash c \dashv \Gamma'` states that the command $`c` is w
 
 # Dynamic judgments
 
-:::definition "judg_ev_expr" (parent := "judgments") (lean := "CoreCpp.Eval.expr, CoreCpp.Semantics.Eval") (uses := "dom_env, dom_store, dom_val, dom_error, judg_relations")
-The judgment $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` states that the expression $`e`, under the environment $`\rho` and the store $`\sigma`, evaluates to $`v` and yields $`\sigma'`. The store enters expressions because a call or a `new` inside an expression may change it.
-:::
+:::definition "judg_ev_expr" (parent := "judgments") (lean := "CoreCpp.Eval.expr, CoreCpp.Eval.fieldLoc, CoreCpp.Semantics.Eval") (uses := "dom_env, dom_store, dom_res, dom_error, judg_relations")
+The judgment $`\rho, \sigma \vdash e \Rightarrow r, \sigma'` states that the expression $`e`, under the environment $`\rho` and the store $`\sigma`, has the result $`r` and yields $`\sigma'`. The result is $`\mathsf{lval}\,\ell` for an lvalue, the location of the object it designates, and $`\mathsf{val}\,v` for any other expression, {bpref "dom_res"}[]. The lvalues are a variable, an unqualified field of `this`, a dereferenced pointer, a field of an object, a field through a pointer, a call of a member that returns a reference, an element of a vector, and a conditional whose chosen branch is one. The store enters expressions because a call or a `new` inside an expression may change it.
 
-:::definition "judg_ev_lval" (parent := "judgments") (lean := "CoreCpp.Eval.lval, CoreCpp.Eval.fieldLoc, CoreCpp.Semantics.LEval") (uses := "dom_env, dom_store, dom_loc, judg_relations")
-The judgment $`\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'` states that the expression $`e` denotes the location $`\ell`. It holds for a variable, an unqualified field of `this`, a dereferenced pointer, a field of an object, a field through a pointer, a call of a member that returns a reference, a use of the library that gives a location, such as an element of a vector, and a conditional, which denotes the location of the chosen branch.
+One judgment serves both the value and the location of an expression, as in the L‑values and R‑values of Strachey (1967, reprinted in Higher‑Order and Symbolic Computation 13, 2000). The context decides, by the conversion rd of {bpref "dom_res"}[].
 :::
 
 :::definition "judg_ev_cmd" (parent := "judgments") (lean := "CoreCpp.Eval.cmd, CoreCpp.Eval.cmds, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Execs") (uses := "judg_ev_expr, dom_ctrl, judg_relations")
@@ -273,7 +276,7 @@ The function `renderTrace` rebuilds the tree from the log. It lays the tree out 
 A legend names the environments $`\rho_i`, the stores $`\sigma_j` and the subjects longer than 40 characters, so every judgment fits one line. The function writes a subtree wider than 100 columns apart, under a name $`\mathcal{D}_k`.
 :::
 
-:::theorem "interp_fuel_mono" (parent := "judgments") (lean := "CoreCpp.interp_fuel_mono, CoreCpp.runWith_fuel_mono, CoreCpp.evalMain_fuel_mono, CoreCpp.runMain_fuel_mono, CoreCpp.Eval.mono, CoreCpp.Eval.Mono, CoreCpp.Eval.LeP") (uses := "judg_ev_expr, judg_ev_lval, judg_ev_cmd, judg_trace")
+:::theorem "interp_fuel_mono" (parent := "judgments") (lean := "CoreCpp.interp_fuel_mono, CoreCpp.runWith_fuel_mono, CoreCpp.evalMain_fuel_mono, CoreCpp.runMain_fuel_mono, CoreCpp.Eval.mono, CoreCpp.Eval.Mono, CoreCpp.Eval.LeP") (uses := "judg_ev_expr, judg_ev_cmd, judg_trace")
 Let $`n \le m`. A result of a function of the evaluator with fuel $`n` that is not the error `outOfFuel` is its result with fuel $`m`, from the same arguments and the same state of the monad $`M`. The value or the error, the trace and the state after the run coincide. In particular `run p n` $`\neq` `outOfFuel` implies `run p m = run p n`.
 :::
 
@@ -281,8 +284,8 @@ Let $`n \le m`. A result of a function of the evaluator with fuel $`n` that is n
 The proof is by induction on $`n`, for all the functions of the evaluator at once, in `CoreCpp/Semantics/FuelMono.lean`. The relation `LeP` compares two runs, and its congruence lemmas cover sequencing, the caught errors, `traced`, `tracedLib`, `tracedCases`, the conditional and the loops of `for`. With fuel 0 every function gives `outOfFuel`, and the statement holds vacuously. With fuel $`n + 1` and $`m + 1` the two bodies coincide except for the fuel of the recursive calls, where the induction hypothesis applies. A run that does not end in `outOfFuel` has no recursive call that ends in it, because every error that a body catches, in `traced` and in the cases of `tracedCases`, the body throws again. The theorem of Radix, `Stmt.interp_fuel_mono`, covers the successful results only. This one covers the errors too, which the search for the least fuel of {bpref "fuel_least"}[] needs.
 :::
 
-:::theorem "interp_sound" (parent := "judgments") (lean := "CoreCpp.interp_sound, CoreCpp.run_sound, CoreCpp.runMain, CoreCpp.Eval.expr_sound, CoreCpp.Eval.lval_sound, CoreCpp.Eval.cmd_sound, CoreCpp.Eval.sound, CoreCpp.Eval.Sound, CoreCpp.Eval.Ok") (uses := "judg_ev_expr, judg_ev_lval, judg_ev_cmd, judg_relations, judg_trace")
-A value of a function of the evaluator has a derivation in the relation of its judgement, for every fuel and every state of the monad $`M`. A value $`(v, \sigma')` of `expr` on $`\rho`, $`\sigma` and $`e` gives a derivation of $`\rho, \sigma \vdash e \Rightarrow v, \sigma'`. The same holds for `lval`, `cmd`, `cmds` and the auxiliary functions. In particular `runMain p n = ok v` implies $`p \Rightarrow v`. The statement holds for every program, well typed or not. Radix states it for its commands as `Stmt.interp_sound`.
+:::theorem "interp_sound" (parent := "judgments") (lean := "CoreCpp.interp_sound, CoreCpp.run_sound, CoreCpp.runMain, CoreCpp.Eval.expr_sound, CoreCpp.Eval.cmd_sound, CoreCpp.Eval.sound, CoreCpp.Eval.Sound, CoreCpp.Eval.Ok") (uses := "judg_ev_expr, judg_ev_cmd, judg_relations, judg_trace")
+A value of a function of the evaluator has a derivation in the relation of its judgement, for every fuel and every state of the monad $`M`. A value $`(r, \sigma')` of `expr` on $`\rho`, $`\sigma` and $`e` gives a derivation of $`\rho, \sigma \vdash e \Rightarrow r, \sigma'`. The same holds for `cmd`, `cmds` and the auxiliary functions. In particular `runMain p n = ok v` implies $`p \Rightarrow v`. The statement holds for every program, well typed or not. Radix states it for its commands as `Stmt.interp_sound`.
 :::
 
 :::proof "interp_sound"
@@ -291,8 +294,8 @@ The proof is by induction on $`n`, for all the functions of the evaluator at onc
 The proof exposed one divergence of the evaluator from CallLib. The rule requires $`(f, k)` in `libDecls` for a call with $`k` arguments, and the evaluator checked the name alone. A header that declared `assert` with two parameters thus let `assert(true)` give a value with no derivation. The evaluator now checks the arity and gives the guard `arity` otherwise.
 :::
 
-:::theorem "interp_complete" (parent := "judgments") (lean := "CoreCpp.interp_complete, CoreCpp.run_complete, CoreCpp.Eval.Eval.complete, CoreCpp.Eval.LEval.complete, CoreCpp.Eval.Exec.complete, CoreCpp.Eval.Execs.complete, CoreCpp.Eval.Done, CoreCpp.Eval.Reach") (uses := "judg_ev_expr, judg_ev_lval, judg_ev_cmd, judg_relations, judg_trace, interp_sound")
-A derivation in a relation of the dynamic semantics is reached by the function of its judgement with enough fuel. A derivation of $`\rho, \sigma \vdash e \Rightarrow v, \sigma'` gives a fuel $`n` such that `expr` with any fuel $`m \ge n` gives $`(v, \sigma')` on $`\rho`, $`\sigma` and $`e`, from every state of the monad $`M`. The same holds for `lval`, `cmd`, `cmds` and the auxiliary functions. In particular $`p \Rightarrow v` implies `runMain p m = ok v` for every $`m` from some bound on. Radix states it for its commands as `Stmt.interp_complete`, with one fuel.
+:::theorem "interp_complete" (parent := "judgments") (lean := "CoreCpp.interp_complete, CoreCpp.run_complete, CoreCpp.Eval.Eval.complete, CoreCpp.Eval.Exec.complete, CoreCpp.Eval.Execs.complete, CoreCpp.Eval.Done, CoreCpp.Eval.Reach") (uses := "judg_ev_expr, judg_ev_cmd, judg_relations, judg_trace, interp_sound")
+A derivation in a relation of the dynamic semantics is reached by the function of its judgement with enough fuel. A derivation of $`\rho, \sigma \vdash e \Rightarrow r, \sigma'` gives a fuel $`n` such that `expr` with any fuel $`m \ge n` gives $`(r, \sigma')` on $`\rho`, $`\sigma` and $`e`, from every state of the monad $`M`. The same holds for `cmd`, `cmds` and the auxiliary functions. In particular $`p \Rightarrow v` implies `runMain p m = ok v` for every $`m` from some bound on. Radix states it for its commands as `Stmt.interp_complete`, with one fuel.
 :::
 
 :::proof "interp_complete"
@@ -324,6 +327,8 @@ Every definition and every rule of inference of this chapter, in the order of it
 *Domains*
 
 $$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\mathsf{int32}\,n = \mathsf{int}\,n}`
+
+$$`\mathrm{rd}(\sigma, \mathsf{val}\,v) = v \qquad\qquad \dfrac{\ell \in \mathrm{dom}\,\sigma}{\mathrm{rd}(\sigma, \mathsf{lval}\,\ell) = \sigma(\ell)}`
 
 $$`\begin{array}{lcl} \mathsf{IsObject}(\tau) & \iff & \tau = C \ \lor\ (\tau = L\langle\bar{\tau}\rangle \land \exists\, \bar{\tau}', \tau'.\ \Gamma \vdash_L \mathtt{new}\langle\bar{\tau}\rangle : \bar{\tau}' \to \tau') \\ \mathsf{HasValues}(\tau) & \iff & \tau \neq \mathsf{void} \land \lnot\,\mathsf{IsObject}(\tau) \\ \mathsf{Storable}(\tau) & \iff & \lnot\,\mathsf{IsObject}(\tau) \land \tau \neq \mathsf{nullptr\_t} \land \tau \neq \tau'(\tau_1, \ldots, \tau_k) \\ \mathsf{Bindable}_{r}(\tau) & \iff & (r \land \mathsf{IsObject}(\tau)) \lor \mathsf{Storable}(\tau) \end{array}`
 

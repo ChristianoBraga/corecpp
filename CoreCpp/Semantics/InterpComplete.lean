@@ -96,6 +96,19 @@ theorem done_readLoc (h : σ.read l = some v) : Done (readLoc σ l) v := by
 
 theorem done_pointee : Done (pointee (.loc l)) l := done_pure
 
+theorem done_rd (h : r.rd σ = some v) : Done (rd σ r) v := by
+  cases r with
+  | val w => cases h; exact done_pure
+  | lval l => exact done_readLoc h
+
+theorem done_lvalOf : Done (lvalOf (.lval l)) l := done_pure
+
+theorem done_returns (h : Semantics.Returns σ c τ ref r) : Done (returns who σ c τ ref) r := by
+  cases h with
+  | val h => unfold returns; exact done_bind (done_rd h) done_pure
+  | ref => unfold returns; exact done_bind done_lvalOf done_pure
+  | void => unfold returns; exact done_pure
+
 theorem done_expectBool : Done (expectBool w (.bool b)) b := done_pure
 
 theorem done_fnsOf (h : Std.fnsOf n = some F) : Done (fnsOf n) F := by
@@ -109,7 +122,7 @@ def ctorBody (n : Nat) (p : Program) (ρ : Env) (l : Loc) (c : String) (es : Lis
     M (ForInStep Store) :=
   match cd.ctor with
   | some k => do
-    let x ← runMember n p ρ s l k.params k.body (if (cd.name == c) = true then es else []) Ty.void
+    let x ← runMember n p ρ s l k.params k.body (if (cd.name == c) = true then es else []) Ty.void false
       (toString "constructor of " ++ toString cd.name)
     pure (ForInStep.yield x.snd)
   | _ => pure (ForInStep.yield s)
@@ -118,7 +131,7 @@ def ctorBody (n : Nat) (p : Program) (ρ : Env) (l : Loc) (c : String) (es : Lis
 def dtorBody (n : Nat) (p : Program) (ρ : Env) (l : Loc) (cd : ClassDecl) (s : Store) : M (ForInStep Store) :=
   match cd.dtor with
   | some d => do
-    let x ← runMember n p ρ s l [] d.body [] Ty.void (toString "destructor of " ++ toString cd.name)
+    let x ← runMember n p ρ s l [] d.body [] Ty.void false (toString "destructor of " ++ toString cd.name)
     pure (ForInStep.yield x.snd)
   | _ => pure (ForInStep.yield s)
 
@@ -126,12 +139,14 @@ def dtorBody (n : Nat) (p : Program) (ρ : Env) (l : Loc) (cd : ClassDecl) (s : 
 def bindBody (n : Nat) (p : Program) (ρ : Env) (x : Param × Expr) (s : Store × Env × List Loc) :
     M (ForInStep (Store × Env × List Loc)) :=
   if x.fst.byRef = true then do
-    let y ← lval n p ρ s.fst x.snd
-    pure (ForInStep.yield (y.snd, s.snd.fst.alias x.fst.name y.fst, s.snd.snd))
+    let y ← expr n p ρ s.fst x.snd
+    let l ← lvalOf y.fst
+    pure (ForInStep.yield (y.snd, s.snd.fst.alias x.fst.name l, s.snd.snd))
   else do
     let y ← expr n p ρ s.fst x.snd
-    pure (ForInStep.yield ((y.snd.alloc y.fst).snd, s.snd.fst.extend x.fst.name (y.snd.alloc y.fst).fst,
-      (y.snd.alloc y.fst).fst :: s.snd.snd))
+    let v ← rd y.snd y.fst
+    pure (ForInStep.yield ((y.snd.alloc v).snd, s.snd.fst.extend x.fst.name (y.snd.alloc v).fst,
+      (y.snd.alloc v).fst :: s.snd.snd))
 
 theorem done_forIn_cons {f : τ → β → M (ForInStep β)} (h : Done (f x b) (.yield b')) (hs : Done (forIn xs b' f) c) :
     Done (forIn (x :: xs) b f) c := by
@@ -303,7 +318,7 @@ theorem compare_or : BinOp.compare .or v w = none := by cases v <;> cases w <;> 
 
 mutual
 
-theorem Eval.complete : Eval p ρ σ e v σ' → Reach (fun m => expr m p ρ σ e) (v, σ')
+theorem Eval.complete : Eval p ρ σ e r σ' → Reach (fun m => expr m p ρ σ e) (r, σ')
   | .lit h => ⟨1, fun m hm => by
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr; exact done_traced (done_bind (done_int32 h) done_pure)⟩
@@ -313,22 +328,46 @@ theorem Eval.complete : Eval p ρ σ e v σ' → Reach (fun m => expr m p ρ σ 
   | .null => ⟨1, fun m hm => by
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr; exact done_traced done_pure⟩
-  | .var hl hr => by
-      obtain ⟨n₁, e₁⟩ := LEval.complete hl
-      refine ⟨n₁ + 1, fun m hm => ?_⟩
+  | .var h => ⟨1, fun m hm => by
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.expr
-      exact done_traced (done_bind (e₁ k (by omega)) (done_bind (done_readLoc hr) done_pure))
+      unfold Eval.expr; simp only [h]; exact done_traced done_pure⟩
+  | .varField h ht ho hf => ⟨2, fun m hm => by
+      obtain ⟨k, rfl⟩ : ∃ k, m = k + 2 := ⟨m - 2, by omega⟩
+      unfold Eval.expr; simp only [h, ht]; exact done_traced (done_bind (done_fieldLoc ho hf) done_pure)⟩
   | .this h => ⟨1, fun m hm => by
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr; simp only [h]; exact done_traced done_pure⟩
-  | .read (e := e) hp hl hr => by
-      obtain ⟨n₁, e₁⟩ := LEval.complete hl
+  | .deref h hv => by
+      obtain ⟨n₁, e₁⟩ := Eval.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      cases e <;> simp [Expr.isPlace] at hp <;>
-        (unfold Eval.expr
-         exact done_traced (done_bind (e₁ k (by omega)) (done_bind (done_readLoc hr) done_pure)))
+      unfold Eval.expr
+      exact done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hv) (done_bind done_pointee done_pure)))
+  | .field h ho hf => by
+      obtain ⟨n₁, e₁⟩ := Eval.complete h
+      refine ⟨n₁ + 2, fun m hm => ?_⟩
+      obtain ⟨k, rfl⟩ : ∃ k, m = k + 2 := ⟨m - 2, by omega⟩
+      unfold Eval.expr
+      exact done_traced (done_bind (e₁ (k + 1) (by omega)) (done_bind done_lvalOf
+        (done_bind (done_fieldLoc ho hf) done_pure)))
+  | .arrow h hv ho hf => by
+      obtain ⟨n₁, e₁⟩ := Eval.complete h
+      refine ⟨n₁ + 2, fun m hm => ?_⟩
+      obtain ⟨k, rfl⟩ : ∃ k, m = k + 2 := ⟨m - 2, by omega⟩
+      unfold Eval.expr
+      exact done_traced (done_bind (e₁ (k + 1) (by omega)) (done_bind (done_rd hv) (done_bind done_pointee
+        (done_bind (done_fieldLoc ho hf) done_pure))))
+  | .index h₁ hv₁ h₂ hv₂ hM hi => by
+      obtain ⟨n₁, e₁⟩ := Eval.complete h₁
+      obtain ⟨n₂, e₂⟩ := Eval.complete h₂
+      obtain ⟨F, r, hF, hk⟩ := lib_index_complete hM hi
+      refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
+      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
+      unfold Eval.expr
+      refine done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hv₁) ?_))
+      dsimp only
+      exact done_bind (e₂ k (by omega)) (done_bind (done_rd hv₂) (done_bind (done_fnsOf hF)
+        (done_bind (done_libStep hk) done_pure)))
   | .new (c := c) (ls := ls) (σ₁ := σ₁) hc ha ho hk => by
       obtain ⟨n₁, e₁⟩ := Ctors.complete hk
       refine ⟨n₁ + 1, fun m hm => ?_⟩
@@ -341,53 +380,41 @@ theorem Eval.complete : Eval p ρ σ e v σ' → Reach (fun m => expr m p ρ σ 
       dsimp only
       rw [ho]
       exact done_traced (done_bind (e₁ k (by omega)) done_pure)
-  | .methodCall h hr => by
+  | .methodCall h => by
       obtain ⟨n₁, e₁⟩ := CallMethod.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      refine done_traced (done_bind (e₁ k (by omega)) ?_)
-      dsimp only
-      rw [if_neg (by simp [hr])]
-      exact done_pure
-  | .methodCallRef h hr hv => by
-      obtain ⟨n₁, e₁⟩ := CallMethod.complete h
-      refine ⟨n₁ + 1, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.expr
-      refine done_traced (done_bind (e₁ k (by omega)) ?_)
-      dsimp only
-      rw [if_pos hr]
-      exact done_bind done_pointee (done_bind (done_readLoc hv) done_pure)
+      exact done_traced (done_bind (e₁ k (by omega)) done_pure)
   | .newLib ha hM hn => by
       obtain ⟨n₁, e₁⟩ := Args.complete ha
       obtain ⟨F, r, hF, hk⟩ := lib_new_complete hM hn
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_traced (done_bind (e₁ k (by omega)) (done_bind (done_fnsOf hF) (done_libStep hk)))
-  | .not h => by
+      exact done_traced (done_bind (e₁ k (by omega)) (done_bind (done_fnsOf hF) (done_bind (done_libStep hk) done_pure)))
+  | .not h hv => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind done_pure done_pure))
-  | .neg h hr => by
+      exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind (done_rd hv) (done_bind done_pure done_pure)))
+  | .neg h hv hr => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind (done_int32 hr) done_pure))
-  | .arith (op := op) hop h₁ h₂ hr => by
+      exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind (done_rd hv) (done_bind (done_int32 hr) done_pure)))
+  | .arith (op := op) hop h₁ hv₁ h₂ hv₂ hr => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h₁
       obtain ⟨n₂, e₂⟩ := Eval.complete h₂
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       cases op <;> simp [BinOp.isArith] at hop <;>
         (unfold Eval.expr
-         exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind (e₂ k (by omega))
-           (done_bind (done_arith rfl hr) done_pure))))
-  | .div (op := op) h₁ h₂ hz hd hr => by
+         exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind (done_rd hv₁) (done_bind (e₂ k (by omega))
+           (done_bind (done_rd hv₂) (done_bind (done_arith rfl hr) done_pure))))))
+  | .div (op := op) h₁ hv₁ h₂ hv₂ hz hd hr => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h₁
       obtain ⟨n₂, e₂⟩ := Eval.complete h₂
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
@@ -395,8 +422,9 @@ theorem Eval.complete : Eval p ρ σ e v σ' → Reach (fun m => expr m p ρ σ 
       have hw := done_divide hz hd hr
       cases op <;> simp [BinOp.divide] at hd <;>
         (unfold Eval.expr
-         exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind (e₂ k (by omega)) (done_bind hw done_pure))))
-  | .rel (op := op) h₁ h₂ hc => by
+         exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind (done_rd hv₁) (done_bind (e₂ k (by omega))
+           (done_bind (done_rd hv₂) (done_bind hw done_pure))))))
+  | .rel (op := op) h₁ hv₁ h₂ hv₂ hc => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h₁
       obtain ⟨n₂, e₂⟩ := Eval.complete h₂
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
@@ -407,51 +435,56 @@ theorem Eval.complete : Eval p ρ σ e v σ' → Reach (fun m => expr m p ρ σ 
         | (rw [compare_and] at hc; cases hc)
         | (rw [compare_or] at hc; cases hc)
         | (unfold Eval.expr
-           exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind (e₂ k (by omega)) (done_bind hw done_pure))))
-  | .andF h => by
+           exact done_tracedLib (done_bind (e₁ k (by omega)) (done_bind (done_rd hv₁) (done_bind (e₂ k (by omega))
+             (done_bind (done_rd hv₂) (done_bind hw done_pure))))))
+  | .andF h hv => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_tracedCases (r := "And-False") (done_bind (e₁ k (by omega)) (done_bind done_expectBool done_pure))
-  | .andT h₁ h₂ => by
+      exact done_tracedCases (r := "And-False") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv)
+        (done_bind done_expectBool done_pure)))
+  | .andT h₁ hv₁ h₂ hv₂ => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h₁
       obtain ⟨n₂, e₂⟩ := Eval.complete h₂
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_tracedCases (r := "And-True") (done_bind (e₁ k (by omega)) (done_bind done_expectBool
-        (done_bind (done_observe (e₂ k (by omega))) done_pure)))
-  | .orT h => by
+      exact done_tracedCases (r := "And-True") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv₁)
+        (done_bind done_expectBool (done_bind (done_observe (done_bind (e₂ k (by omega))
+          (done_bind (done_rd hv₂) done_pure))) done_pure))))
+  | .orT h hv => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_tracedCases (r := "Or-True") (done_bind (e₁ k (by omega)) (done_bind done_expectBool done_pure))
-  | .orF h₁ h₂ => by
+      exact done_tracedCases (r := "Or-True") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv)
+        (done_bind done_expectBool done_pure)))
+  | .orF h₁ hv₁ h₂ hv₂ => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h₁
       obtain ⟨n₂, e₂⟩ := Eval.complete h₂
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_tracedCases (r := "Or-False") (done_bind (e₁ k (by omega)) (done_bind done_expectBool
-        (done_bind (done_observe (e₂ k (by omega))) done_pure)))
-  | .condT h₁ h₂ => by
+      exact done_tracedCases (r := "Or-False") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv₁)
+        (done_bind done_expectBool (done_bind (done_observe (done_bind (e₂ k (by omega))
+          (done_bind (done_rd hv₂) done_pure))) done_pure))))
+  | .condT h₁ hv h₂ => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h₁
       obtain ⟨n₂, e₂⟩ := Eval.complete h₂
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_tracedCases (r := "Cond-T") (done_bind (e₁ k (by omega)) (done_bind done_expectBool
-        (done_bind (done_observe (e₂ k (by omega))) done_pure)))
-  | .condF h₁ h₃ => by
+      exact done_tracedCases (r := "Cond-T") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv)
+        (done_bind done_expectBool (done_bind (done_observe (e₂ k (by omega))) done_pure))))
+  | .condF h₁ hv h₃ => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h₁
       obtain ⟨n₂, e₂⟩ := Eval.complete h₃
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_tracedCases (r := "Cond-F") (done_bind (e₁ k (by omega)) (done_bind done_expectBool
-        (done_bind (done_observe (e₂ k (by omega))) done_pure)))
+      exact done_tracedCases (r := "Cond-F") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv)
+        (done_bind done_expectBool (done_bind (done_observe (e₂ k (by omega))) done_pure))))
   | .call (f := f) (fn := fn) hρ hf hn hb hx hr => by
       obtain ⟨n₁, e₁⟩ := Bind.complete hb
       obtain ⟨n₂, e₂⟩ := Execs.complete hx
@@ -464,12 +497,11 @@ theorem Eval.complete : Eval p ρ σ e v σ' → Reach (fun m => expr m p ρ σ 
       refine done_traced ?_
       simp only [hf]
       rw [if_neg (by simpa using hn)]
-      refine done_bind (e₁ k (by omega) []) (done_bind (e₂ k (by omega)) ?_)
+      refine done_bind (e₁ k (by omega) []) (done_bind (e₂ k (by omega)) (done_bind (done_returns hr) ?_))
       dsimp only
       rw [List.append_nil, free_reverse, fresh_eq]
-      generalize fn.ret = τ at hr ⊢
-      cases hr <;> exact done_pure
-  | .callVar (w := w) hρ hv ht ha => by
+      exact done_pure
+  | .callVar (w := w) hρ hv hr ht ha => by
       obtain ⟨n₁, e₁⟩ := Eval.complete hv
       obtain ⟨n₂, e₂⟩ := ApplyArgs.complete ha
       have hw : ∃ ps r b cap, w = Val.closure ps r b cap := by cases ha; exact ⟨_, _, _, _, ‹_›⟩
@@ -478,7 +510,8 @@ theorem Eval.complete : Eval p ρ σ e v σ' → Reach (fun m => expr m p ρ σ 
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
       simp only [hρ]
-      exact done_traced (done_bind (e₁ k (by omega)) (done_bind (done_target ht hw) (e₂ k (by omega))))
+      exact done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hr) (done_bind (done_target ht hw)
+        (done_bind (e₂ k (by omega)) done_pure))))
   | .callThis (f := f) hρ hf hl ht h => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
@@ -497,8 +530,8 @@ theorem Eval.complete : Eval p ρ σ e v σ' → Reach (fun m => expr m p ρ σ 
       simp only [hρ, lookup_none_of_funsNamed hf, hany, Option.isNone_none, Bool.and_true, ↓reduceIte]
       refine done_traced ?_
       rw [if_pos (by simpa using hd)]
-      exact done_bind (e₁ k (by omega)) (done_bind (done_fnsOf hF) (done_libStep hk))
-  | .callFn (w := w) he ht ha => by
+      exact done_bind (e₁ k (by omega)) (done_bind (done_fnsOf hF) (done_bind (done_libStep hk) done_pure))
+  | .callFn (w := w) he hr ht ha => by
       obtain ⟨n₁, e₁⟩ := Eval.complete he
       obtain ⟨n₂, e₂⟩ := ApplyArgs.complete ha
       have hw : ∃ ps r b cap, w = Val.closure ps r b cap := by cases ha; exact ⟨_, _, _, _, ‹_›⟩
@@ -506,80 +539,11 @@ theorem Eval.complete : Eval p ρ σ e v σ' → Reach (fun m => expr m p ρ σ 
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr
-      exact done_traced (done_bind (e₁ k (by omega)) (done_bind (done_target ht hw) (e₂ k (by omega))))
+      exact done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hr) (done_bind (done_target ht hw)
+        (done_bind (e₂ k (by omega)) done_pure))))
   | .lambda hc => ⟨1, fun m hm => by
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.expr; exact done_traced (done_bind (done_captures hc) done_pure)⟩
-  | .locOf h => by
-      obtain ⟨n₁, e₁⟩ := LEval.complete h
-      refine ⟨n₁ + 1, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.expr
-      exact done_traced (done_bind (e₁ k (by omega)) done_pure)
-termination_by structural h => h
-
-theorem LEval.complete : LEval p ρ σ e l σ' → Reach (fun m => lval m p ρ σ e) (l, σ')
-  | .locVar h => ⟨1, fun m hm => by
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.lval; simp only [h]; exact done_traced done_pure⟩
-  | .locVarField h ht ho hf => ⟨2, fun m hm => by
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 2 := ⟨m - 2, by omega⟩
-      unfold Eval.lval; simp only [h, ht]; exact done_traced (done_fieldLoc ho hf)⟩
-  | .locDeref h => by
-      obtain ⟨n₁, h₁⟩ := Eval.complete h
-      refine ⟨n₁ + 1, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.lval
-      exact done_traced (done_bind (h₁ k (by omega)) (done_bind done_pointee done_pure))
-  | .locField h ho hf => by
-      obtain ⟨n₁, h₁⟩ := LEval.complete h
-      refine ⟨n₁ + 2, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 2 := ⟨m - 2, by omega⟩
-      unfold Eval.lval
-      exact done_traced (done_bind (h₁ (k + 1) (by omega)) (done_fieldLoc ho hf))
-  | .locArrow h ho hf => by
-      obtain ⟨n₁, h₁⟩ := Eval.complete h
-      refine ⟨n₁ + 2, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 2 := ⟨m - 2, by omega⟩
-      unfold Eval.lval
-      exact done_traced (done_bind (h₁ (k + 1) (by omega)) (done_bind done_pointee (done_fieldLoc ho hf)))
-  | .methodLoc h hr => by
-      obtain ⟨n₁, h₁⟩ := CallMethod.complete h
-      refine ⟨n₁ + 1, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.lval
-      refine done_traced (done_bind (h₁ k (by omega)) ?_)
-      dsimp only
-      rw [if_neg (by simp [hr])]
-      exact done_bind done_pointee done_pure
-  | .locIndex h₁ h₂ hM hi => by
-      obtain ⟨n₁, e₁⟩ := Eval.complete h₁
-      obtain ⟨n₂, e₂⟩ := Eval.complete h₂
-      obtain ⟨F, r, hF, hk⟩ := lib_index_complete hM hi
-      refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.lval
-      refine done_traced (done_bind (e₁ k (by omega)) ?_)
-      dsimp only
-      exact done_bind (e₂ k (by omega)) (done_bind (done_fnsOf hF) (done_libStep hk))
-  | .locCondT h₁ h₂ => by
-      obtain ⟨n₁, e₁⟩ := Eval.complete h₁
-      obtain ⟨n₂, e₂⟩ := LEval.complete h₂
-      refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.lval
-      refine done_tracedCases (r := "LocCond-T") (done_bind (e₁ k (by omega)) (done_bind done_expectBool ?_))
-      simp only [↓reduceIte]
-      exact done_bind (done_observe (e₂ k (by omega))) done_pure
-  | .locCondF h₁ h₂ => by
-      obtain ⟨n₁, e₁⟩ := Eval.complete h₁
-      obtain ⟨n₂, e₂⟩ := LEval.complete h₂
-      refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.lval
-      refine done_tracedCases (r := "LocCond-F") (done_bind (e₁ k (by omega)) (done_bind done_expectBool ?_))
-      simp only [Bool.false_eq_true, ↓reduceIte]
-      exact done_bind (done_observe (e₂ k (by omega))) done_pure
 termination_by structural h => h
 
 theorem Exec.complete : Exec p ρ σ c r ρ' σ' → Reach (fun m => cmd m p ρ σ c) (r, ρ', σ')
@@ -589,51 +553,56 @@ theorem Exec.complete : Exec p ρ σ c r ρ' σ' → Reach (fun m => cmd m p ρ 
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
       exact done_traced (done_bind (h₁ k (by omega)) done_pure)
-  | .ifT hc h => by
+  | .ifT hc hv h => by
       obtain ⟨n₁, e₁⟩ := Eval.complete hc
       obtain ⟨n₂, e₂⟩ := Exec.complete h
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_tracedCases (r := "If-T") (done_bind (e₁ k (by omega)) (done_bind done_expectBool ?_))
+      refine done_tracedCases (r := "If-T") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv)
+        (done_bind done_expectBool ?_)))
       simp only [↓reduceIte]
       exact done_bind (done_observe (e₂ k (by omega))) done_pure
-  | .ifF hc h => by
+  | .ifF hc hv h => by
       obtain ⟨n₁, e₁⟩ := Eval.complete hc
       obtain ⟨n₂, e₂⟩ := Exec.complete h
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_tracedCases (r := "If-F") (done_bind (e₁ k (by omega)) (done_bind done_expectBool ?_))
+      refine done_tracedCases (r := "If-F") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv)
+        (done_bind done_expectBool ?_)))
       simp only [Bool.false_eq_true, ↓reduceIte]
       exact done_bind (done_observe (e₂ k (by omega))) done_pure
-  | .whileF hc => by
+  | .whileF hc hv => by
       obtain ⟨n₁, e₁⟩ := Eval.complete hc
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_tracedCases (r := "While-F") (done_bind (e₁ k (by omega)) (done_bind done_expectBool ?_))
+      refine done_tracedCases (r := "While-F") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv)
+        (done_bind done_expectBool ?_)))
       simp only [Bool.false_eq_true, ↓reduceIte]
       exact done_pure
-  | .whileT hc hb hw => by
+  | .whileT hc hv hb hw => by
       obtain ⟨n₁, e₁⟩ := Eval.complete hc
       obtain ⟨n₂, e₂⟩ := Exec.complete hb
       obtain ⟨n₃, e₃⟩ := Exec.complete hw
       refine ⟨n₁ + n₂ + n₃ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_tracedCases (r := "While-T") (done_bind (e₁ k (by omega)) (done_bind done_expectBool ?_))
+      refine done_tracedCases (r := "While-T") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv)
+        (done_bind done_expectBool ?_)))
       simp only [↓reduceIte]
       refine done_bind (done_observe (e₂ k (by omega))) ?_
       dsimp only
       exact done_bind (done_observe (e₃ k (by omega))) done_pure
-  | .whileRet hc hb => by
+  | .whileRet hc hv hb => by
       obtain ⟨n₁, e₁⟩ := Eval.complete hc
       obtain ⟨n₂, e₂⟩ := Exec.complete hb
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_tracedCases (r := "While-Ret") (done_bind (e₁ k (by omega)) (done_bind done_expectBool ?_))
+      refine done_tracedCases (r := "While-Ret") (done_bind (e₁ k (by omega)) (done_bind (done_rd hv)
+        (done_bind done_expectBool ?_)))
       simp only [↓reduceIte]
       refine done_bind (done_observe (e₂ k (by omega))) ?_
       exact done_pure
@@ -655,35 +624,36 @@ theorem Exec.complete : Exec p ρ σ c r ρ' σ' → Reach (fun m => cmd m p ρ 
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
       exact done_traced (done_bind (e₁ k (by omega)) done_pure)
-  | .decl h ha => by
+  | .decl h hv ha => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_traced (done_bind (e₁ k (by omega)) ?_)
+      refine done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hv) ?_))
       dsimp only
       rw [ha]; exact done_pure
   | .declRef h => by
-      obtain ⟨n₁, e₁⟩ := LEval.complete h
-      refine ⟨n₁ + 1, fun m hm => ?_⟩
-      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
-      unfold Eval.cmd
-      exact done_traced (done_bind (e₁ k (by omega)) done_pure)
-  | .declAuto h ha => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_traced (done_bind (e₁ k (by omega)) ?_)
+      exact done_traced (done_bind (e₁ k (by omega)) (done_bind done_lvalOf done_pure))
+  | .declAuto h hv ha => by
+      obtain ⟨n₁, e₁⟩ := Eval.complete h
+      refine ⟨n₁ + 1, fun m hm => ?_⟩
+      obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
+      unfold Eval.cmd
+      refine done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hv) ?_))
       dsimp only
       rw [ha]; exact done_pure
-  | .assign hr hl hd => by
+  | .assign hr hv hl hd => by
       obtain ⟨n₁, e₁⟩ := Eval.complete hr
-      obtain ⟨n₂, e₂⟩ := LEval.complete hl
+      obtain ⟨n₂, e₂⟩ := Eval.complete hl
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_traced (done_bind (e₁ k (by omega)) (done_bind (e₂ k (by omega)) ?_))
+      refine done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hv) (done_bind (e₂ k (by omega))
+        (done_bind done_lvalOf ?_))))
       dsimp only
       rw [if_neg (by revert hd; cases _ : Store.read _ _ <;> simp)]
       exact done_pure
@@ -693,33 +663,33 @@ theorem Exec.complete : Exec p ρ σ c r ρ' σ' → Reach (fun m => cmd m p ρ 
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
       exact done_traced (done_bind (e₁ k (by omega)) done_pure)
-  | .deleteNull h => by
+  | .deleteNull h hv => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_traced (done_bind (e₁ k (by omega)) ?_)
+      refine done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hv) ?_))
       exact done_pure
-  | .deleteLib h ho hM hd => by
+  | .deleteLib h hv ho hM hd => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       obtain ⟨F, r, hF, hk⟩ := lib_delete_complete hM hd
       refine ⟨n₁ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_traced (done_bind (e₁ k (by omega)) ?_)
+      refine done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hv) ?_))
       dsimp only
       simp only [ho]
       exact done_bind (done_fnsOf hF) (done_bind (done_libStep hk) done_pure)
-  | .delete h ho hv hd => by
+  | .delete h hv ho hvd hd => by
       obtain ⟨n₁, e₁⟩ := Eval.complete h
       obtain ⟨n₂, e₂⟩ := Dtors.complete hd
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.cmd
-      refine done_traced (done_bind (e₁ k (by omega)) ?_)
+      refine done_traced (done_bind (e₁ k (by omega)) (done_bind (done_rd hv) ?_))
       dsimp only
       simp only [ho]
-      rw [if_neg (by rcases hv with hv | hv <;> simp [hv])]
+      rw [if_neg (by rcases hvd with hvd | hvd <;> simp [hvd])]
       exact done_bind (e₂ k (by omega)) done_pure
 termination_by structural h => h
 
@@ -746,43 +716,43 @@ theorem Args.complete : Args p ρ σ es vs σ' → Reach (fun m => args m p ρ �
   | .nil => ⟨1, fun m hm => by
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.args; exact done_pure⟩
-  | .cons h hs => by
+  | .cons h hv hs => by
       obtain ⟨n₁, h₁⟩ := Eval.complete h
       obtain ⟨n₂, h₂⟩ := Args.complete hs
       refine ⟨n₁ + n₂ + 1, fun m hm => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 1 := ⟨m - 1, by omega⟩
       unfold Eval.args
-      exact done_bind (h₁ k (by omega)) (done_bind (h₂ k (by omega)) done_pure)
+      exact done_bind (h₁ k (by omega)) (done_bind (done_rd hv) (done_bind (h₂ k (by omega)) done_pure))
 termination_by structural h => h
 
 theorem Bind.complete : Bind p ρ σ ρ₀ ps es ρ' σ' owned →
     ∃ n, ∀ m, n ≤ m → ∀ acc, Done (forIn (ps.zip es) (σ, ρ₀, acc) (bindBody m p ρ)) (σ', ρ', owned.reverse ++ acc)
   | .nil => ⟨0, fun _ _ acc => by simpa using done_pure⟩
   | .byRef hq hl hs => by
-      obtain ⟨n₁, h₁⟩ := LEval.complete hl
+      obtain ⟨n₁, h₁⟩ := Eval.complete hl
       obtain ⟨n₂, h₂⟩ := Bind.complete hs
       refine ⟨n₁ + n₂, fun m hm acc => ?_⟩
       rw [List.zip_cons_cons]
       refine done_forIn_cons ?_ (h₂ m (by omega) acc)
       unfold bindBody
       rw [if_pos hq]
-      exact done_bind (h₁ m (by omega)) done_pure
-  | .byVal (q := q) (ρ₀ := ρ₀) (ℓ := ℓ) (σ₂ := σ₂) hq hv ha hs => by
-      obtain ⟨n₁, h₁⟩ := Eval.complete hv
+      exact done_bind (h₁ m (by omega)) (done_bind done_lvalOf done_pure)
+  | .byVal (q := q) (ρ₀ := ρ₀) (ℓ := ℓ) (σ₂ := σ₂) hq hr hv ha hs => by
+      obtain ⟨n₁, h₁⟩ := Eval.complete hr
       obtain ⟨n₂, h₂⟩ := Bind.complete hs
       refine ⟨n₁ + n₂, fun m hm acc => ?_⟩
       rw [List.zip_cons_cons]
       refine done_forIn_cons (b' := (σ₂, ρ₀.extend q.name ℓ, ℓ :: acc)) ?_ ?_
       · unfold bindBody
         rw [if_neg (by simp [hq])]
-        refine done_bind (h₁ m (by omega)) ?_
+        refine done_bind (h₁ m (by omega)) (done_bind (done_rd hv) ?_)
         dsimp only
         rw [ha]; exact done_pure
       · simpa using h₂ m (by omega) (ℓ :: acc)
 termination_by structural h => h
 
-theorem Member.complete : Member p ρ σ l ps body es ret v σ' →
-    ∀ who, Reach (fun m => runMember m p ρ σ l ps body es ret who) (v, σ')
+theorem Member.complete : Member p ρ σ l ps body es ret ref r σ' →
+    ∀ who, Reach (fun m => runMember m p ρ σ l ps body es ret ref who) (r, σ')
   | .member hn hb hx hr => fun who => by
       obtain ⟨n₁, h₁⟩ := Bind.complete hb
       obtain ⟨n₂, h₂⟩ := Execs.complete hx
@@ -791,32 +761,33 @@ theorem Member.complete : Member p ρ σ l ps body es ret v σ' →
       unfold Eval.runMember
       dsimp only
       rw [if_neg (by simpa using hn)]
-      refine done_bind (h₁ k (by omega) []) (done_bind (h₂ k (by omega)) ?_)
+      refine done_bind (h₁ k (by omega) []) (done_bind (h₂ k (by omega)) (done_bind (done_returns hr) ?_))
       dsimp only
       rw [List.append_nil, free_reverse, fresh_eq]
-      cases hr <;> exact done_pure
+      exact done_pure
 termination_by structural h => h
 
-theorem CallMethod.complete : CallMethod p ρ σ recv arrow k es static sig md v σ' →
-    Reach (fun m => callMethod m p ρ σ recv arrow k es static sig) (md, v, σ')
+theorem CallMethod.complete : CallMethod p ρ σ recv arrow k es static sig md r σ' →
+    Reach (fun m => callMethod m p ρ σ recv arrow k es static sig) (md, r, σ')
   | .dot (k := k') (m := m') hl ho hm hc => by
-      obtain ⟨n₁, h₁⟩ := LEval.complete hl
+      obtain ⟨n₁, h₁⟩ := Eval.complete hl
       obtain ⟨n₂, h₂⟩ := Member.complete hc (toString k' ++ toString "::" ++ toString m')
       refine ⟨n₁ + n₂ + 2, fun m hm' => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 2 := ⟨m - 2, by omega⟩
       unfold Eval.callMethod
       simp only [Bool.false_eq_true, ↓reduceIte]
-      refine done_bind (h₁ (k + 1) (by omega)) (done_bind (done_readLoc ho) ?_)
+      refine done_bind (h₁ (k + 1) (by omega)) (done_bind done_lvalOf (done_bind (done_readLoc ho) ?_))
       dsimp only
       exact done_bind (done_resolve hm) (done_bind (h₂ (k + 1) (by omega)) done_pure)
-  | .arrow (k := k') (m := m') hv ho hm hc => by
+  | .arrow (k := k') (m := m') hv hp ho hm hc => by
       obtain ⟨n₁, h₁⟩ := Eval.complete hv
       obtain ⟨n₂, h₂⟩ := Member.complete hc (toString k' ++ toString "::" ++ toString m')
       refine ⟨n₁ + n₂ + 2, fun m hm' => ?_⟩
       obtain ⟨k, rfl⟩ : ∃ k, m = k + 2 := ⟨m - 2, by omega⟩
       unfold Eval.callMethod
-      simp only [↓reduceIte, pure_bind]
-      refine done_bind (h₁ (k + 1) (by omega)) (done_bind done_pointee (done_bind (done_readLoc ho) ?_))
+      simp only [↓reduceIte]
+      refine done_bind (h₁ (k + 1) (by omega)) (done_bind (done_rd hp) (done_bind done_pointee
+        (done_bind (done_readLoc ho) ?_)))
       dsimp only
       exact done_bind (done_resolve hm) (done_bind (h₂ (k + 1) (by omega)) done_pure)
 termination_by structural h => h
@@ -870,12 +841,12 @@ theorem Apply.complete : Apply p σ w vs v σ' → Reach (fun m => applyVals m p
       obtain ⟨rfl, rfl⟩ := ha
       subst hρ
       rw [extendAll_append _ _ _ _ _ (by rw [allocMany_length]; simp)] at h₂ ⊢
-      refine done_bind (h₂ k (by omega)) ?_
+      refine done_bind (h₂ k (by omega)) (done_bind (done_returns hr) (done_bind (done_rd rfl) ?_))
       dsimp only
       have hfree (σ' : Store) (A B L : List Loc) : σ'.free (B.reverse ++ (A.reverse ++ []) ++ L) = σ'.free ((A ++ B) ++ L) := by
         rw [← free_reverse]; simp
       rw [hfree, fresh_eq]
-      cases hr <;> dsimp only <;> exact done_pure
+      exact done_pure
 termination_by structural h => h
 
 theorem ApplyArgs.complete : ApplyArgs p ρ σ w es v σ' → Reach (fun m => applyClosure m p ρ σ w es) (v, σ')

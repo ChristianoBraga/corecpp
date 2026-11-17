@@ -371,12 +371,6 @@ inductive HasType (p : Program) : TEnv → Expr → Ty → Prop where
     -- ─────────────────────── (T-CallFn)
       Γ ⊢ .callFn fe es : τ
 
-  /-- The annotation of the `return` of a member that returns a reference. -/
-  | locOf
-      (h : Γ ⊢ₗ e : τ) :
-    -- ───────────────── (T-LocOf)
-      Γ ⊢ .locOf e : τ
-
   /-- A class without a constructor is created by `new C()` alone. -/
   | newNoCtor
       (hc : p.lookupClass c = some cd)

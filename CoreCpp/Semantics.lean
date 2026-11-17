@@ -182,13 +182,34 @@ def dom (σ : Store) : List Loc := σ.mem.map (·.1)
 
 end Store
 
+/-- The result r of an expression, after the value categories of C++17. A
+glvalue determines the identity of an object and a prvalue computes a value
+(N4659 [basic.lval], §6.10 paragraph 1). An lvalue yields the location of the
+object it designates, and every other expression yields its value. The tag
+keeps the location of an object apart from a pointer value, so the variable p
+yields `lval ρ(p)` while `new C()` yields `val (loc ℓ)`. -/
+inductive Res where
+  /-- A prvalue, the value v. -/
+  | val (v : Val)
+  /-- A glvalue, the object at the location ℓ. -/
+  | lval (l : Loc)
+  deriving Repr, BEq, Inhabited
+
+/-- rd(σ, r), the value of a result, the lvalue-to-rvalue conversion of
+N4659 [conv.lval], §7.1. A prvalue is its value, and a glvalue reads the
+object at its location, nothing when the location is outside dom σ. -/
+def Res.rd (σ : Store) : Res → Option Val
+  | .val v => some v
+  | .lval l => σ.read l
+
 /-- The control result r of a command. -/
 inductive Ctrl where
   /-- The command completed, and the next command runs. -/
   | normal
-  /-- A `return` with the value v, which interrupts sequence, block and loop
-  up to the call. -/
-  | ret (v : Val)
+  /-- A `return` with the result r of its operand, which interrupts sequence,
+  block and loop up to the call. The call converts r by the declared return
+  type of the callee. -/
+  | ret (r : Res)
   deriving Repr, BEq, Inhabited
 
 /-- Function environment, the program seen as a finite map from names to

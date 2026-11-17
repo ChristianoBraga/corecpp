@@ -23,9 +23,11 @@ since 2026-09-18.
   expression followed by `;`.
 - Every semantic rule is written in natural semantics notation in the comment
   of the case that implements it, with the rule name. Judgments are
-  ρ, σ ⊢ e ⇒ v, σ', ρ, σ ⊢ e ⇒ₗ ℓ, σ', ρ, σ ⊢ c ⇒ r, ρ', σ' and, for typing,
-  Γ ⊢ e : τ and Γ ⊢ c ⊣ Γ'. Sequent style as in Kahn (1987), hypotheses left
-  of ⊢, subject right of it, result after ⇒.
+  ρ, σ ⊢ e ⇒ r, σ', with r a value `val v` or, for an lvalue, the location
+  `lval ℓ` of its object, and ρ, σ ⊢ c ⇒ r, ρ', σ' and, for typing,
+  Γ ⊢ e : τ and Γ ⊢ c ⊣ Γ'. A context that needs a value converts r by
+  rd(σ, r), the lvalue-to-rvalue conversion. Sequent style as in Kahn
+  (1987), hypotheses left of ⊢, subject right of it, result after ⇒.
 - One parser function per grammar nonterminal, one evaluator function per
   judgment. The grammar is LL(1), checked by `Grammar.isLL1_grammar`.
 

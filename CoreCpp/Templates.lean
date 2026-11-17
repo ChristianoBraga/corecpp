@@ -94,7 +94,6 @@ partial def substExpr (param : String) (τ : Ty) : Expr → Expr
   | .field e f => .field (substExpr param τ e) f
   | .arrow e f => .arrow (substExpr param τ e) f
   | .deref e => .deref (substExpr param τ e)
-  | .locOf e => .locOf (substExpr param τ e)
   | .index e i => .index (substExpr param τ e) (substExpr param τ i)
   | .lambda ps r b => .lambda (ps.map (substParam param τ)) (substTy param τ r) (b.map (substCmd param τ))
   | e => e
@@ -144,7 +143,7 @@ partial def tyNames : Ty → List String
 mutual
 
 partial def exprNames : Expr → List String
-  | .unop _ e | .field e _ | .arrow e _ | .deref e | .locOf e => exprNames e
+  | .unop _ e | .field e _ | .arrow e _ | .deref e => exprNames e
   | .binop _ a b | .index a b => exprNames a ++ exprNames b
   | .cond a b c => exprNames a ++ exprNames b ++ exprNames c
   | .call _ es _ => es.flatMap exprNames

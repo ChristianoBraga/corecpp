@@ -15,9 +15,9 @@ set_option verso.blueprint.foldCodeBlocks true
 
 #doc (Manual) "Types and expressions" =>
 
-The typing and evaluation rules of the basic constructions of `Expr`. The typing rules are constructors of `Semantics.HasType` and `Semantics.LHasType`, which `Typing.expr` and `Typing.lval` implement. The evaluation rules are constructors of `Semantics.Eval` and `Semantics.LEval`, which `Eval.expr` and `Eval.lval` implement, each rule in the comment of the case that implements it. The trace of `bin/corecpp trace` cites the rules by these names. Calls, lambdas, `this`, members and the uses of the library have their rules in the later chapters.
+The typing and evaluation rules of the basic constructions of `Expr`. The typing rules are constructors of `Semantics.HasType` and `Semantics.LHasType`, which `Typing.expr` and `Typing.lval` implement. The evaluation rules are constructors of `Semantics.Eval`, which `Eval.expr` implements, each rule in the comment of the case that implements it. An lvalue yields the location of the object it designates, $`\mathsf{lval}\,\ell`, and every other expression its value, $`\mathsf{val}\,v`. A premise $`\mathrm{rd}(\sigma, r) = v` converts a result where a value is required, {bpref "dom_res"}[]. The trace of `bin/corecpp trace` cites the rules by these names. Calls, lambdas, `this`, members and the uses of the library have their rules in the later chapters.
 
-Where C++17 leaves the evaluation order unspecified, Core C++ evaluates left to right. The last section holds the composite and recursive types, objects and pointers, whose expressions denote locations.
+Where C++17 leaves the evaluation order unspecified, Core C++ evaluates left to right. The last section holds the composite and recursive types, objects and pointers, whose expressions are lvalues.
 
 :::group "expressions"
 Values, types and expressions.
@@ -32,29 +32,27 @@ $$`\dfrac{}{\Gamma \vdash n : \mathsf{int}}\;\textsf{(T-Lit)}`
 
 $$`\dfrac{}{\Gamma \vdash b : \mathsf{bool}}\;\textsf{(T-BoolLit)}`
 
-$$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash n \Rightarrow \mathsf{int}\,n, \sigma}\;\textsf{(Lit)}`
+$$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash n \Rightarrow \mathsf{val}(\mathsf{int}\,n), \sigma}\;\textsf{(Lit)}`
 
-$$`\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{bool}\,b, \sigma}\;\textsf{(BoolLit)}`
+$$`\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{val}(\mathsf{bool}\,b), \sigma}\;\textsf{(BoolLit)}`
 :::
 
 # Variable
 
-:::definition "expr_lvar" (parent := "expressions") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.lval, CoreCpp.TEnv.isConst, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval") (uses := "judg_ty_lval, judg_ev_lval")
-The variable denotes the location the environment assigns to it, and the store does not change. A variable that a lambda captures by copy is read only in $`\Gamma`, so it denotes no location for the type checker, and no assignment reaches it. Inside a member body an unqualified field of `this` also denotes a location, rule LocVarField of {bpref "cls_this"}[], with the typing rule T-LocVarField. The other expressions that denote a location, `*e`, `e.f` and `e->f`, are the nodes of the last section. An element `v[i]` of a vector is a use of the library, {bpref "std_uses"}[].
+:::definition "expr_lvar" (parent := "expressions") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.expr, CoreCpp.TEnv.isConst, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_lval, judg_ev_expr")
+A variable is an lvalue. It yields the location the environment assigns to it, and the store does not change. A variable that a lambda captures by copy is read only in $`\Gamma`, so it denotes no location for the type checker, and no assignment reaches it. Inside a member body an unqualified field of `this` is an lvalue too, rule VarField of {bpref "cls_this"}[], with the typing rule T-LocVarField. The other lvalues, `*e`, `e.f` and `e->f`, are the nodes of the last section. An element `v[i]` of a vector is a use of the library, {bpref "std_uses"}[].
 
 The set $`\mathrm{const}(\Gamma)` holds the variables of $`\Gamma` captured by copy inside a lambda, `TEnv.isConst`.
 
 $$`\dfrac{\Gamma(x) = \tau \qquad x \notin \mathrm{const}(\Gamma)}{\Gamma \vdash_{\ell} x : \tau}\;\textsf{(T-LocVar)}`
 
-$$`\dfrac{\rho(x) = \ell}{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell, \sigma}\;\textsf{(LocVar)}`
+$$`\dfrac{\rho(x) = \ell}{\rho, \sigma \vdash x \Rightarrow \mathsf{lval}\,\ell, \sigma}\;\textsf{(Var)}`
 :::
 
-:::definition "expr_var" (parent := "expressions") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Eval.readLoc, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr, expr_lvar")
-Reading $`x` is reading $`\sigma(\rho(x))`. The premise $`\ell \in \mathrm{dom}\,\sigma` fails for a location that left the store, so that read has no derivation and the evaluator gives `error`. Inside a member body $`x` may be a field of `this`, rule T-VarField of {bpref "cls_this"}[], and the first premise of Var then holds by LocVarField.
+:::definition "expr_var" (parent := "expressions") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.rd, CoreCpp.Eval.readLoc, CoreCpp.Semantics.HasType, CoreCpp.Res.rd") (uses := "judg_ty_expr, judg_ev_expr, expr_lvar, dom_res")
+The value of $`x` is $`\mathrm{rd}(\sigma, \mathsf{lval}\,\rho(x)) = \sigma(\rho(x))`, which the context reads where it requires a value, {bpref "dom_res"}[]. The premise $`\ell \in \mathrm{dom}\,\sigma` of rd fails for a location that left the store, so that read has no derivation and the evaluator gives `error`. Inside a member body $`x` may be a field of `this`, rule T-VarField of {bpref "cls_this"}[], and the location then comes from VarField.
 
 $$`\dfrac{\Gamma(x) = \tau}{\Gamma \vdash x : \tau}\;\textsf{(T-Var)}`
-
-$$`\dfrac{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell, \sigma \qquad \ell \in \mathrm{dom}\,\sigma}{\rho, \sigma \vdash x \Rightarrow \sigma(\ell), \sigma}\;\textsf{(Var)}`
 :::
 
 # Unary operators
@@ -66,9 +64,9 @@ $$`\dfrac{\Gamma \vdash e : \mathsf{bool}}{\Gamma \vdash\, !e : \mathsf{bool}}\;
 
 $$`\dfrac{\Gamma \vdash e : \mathsf{int}}{\Gamma \vdash -e : \mathsf{int}}\;\textsf{(T-Neg)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,b, \sigma'}{\rho, \sigma \vdash\, !e \Rightarrow \mathsf{bool}\,\neg b, \sigma'}\;\textsf{(Not)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{bool}\,b}{\rho, \sigma \vdash\, !e \Rightarrow \mathsf{val}(\mathsf{bool}\,\neg b), \sigma'}\;\textsf{(Not)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{int}\,n, \sigma' \qquad -n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash -e \Rightarrow \mathsf{int}(-n), \sigma'}\;\textsf{(Neg)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{int}\,n \qquad -n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash -e \Rightarrow \mathsf{val}(\mathsf{int}(-n)), \sigma'}\;\textsf{(Neg)}`
 
 In the code, the case `unop` of `Eval.expr` evaluates the operand and calls `Eval.unop`, which applies `Eval.int32` to $`-n`.
 :::
@@ -84,9 +82,9 @@ A left operand of class type calls a member `operator⊕` instead, rule T-OpBin 
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{int} \qquad \Gamma \vdash e_2 : \mathsf{int}}{\Gamma \vdash e_1 \oplus e_2 : \mathsf{int}}\;\textsf{(T-Arith)}, \quad \oplus \in \{+, -, *, /, \%\}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow \mathsf{int}\,n_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow \mathsf{int}\,n_2, \sigma_2 \\ n_1 \oplus n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oplus e_2 \Rightarrow \mathsf{int}(n_1 \oplus n_2), \sigma_2}\;\textsf{(Arith)}, \quad \oplus \in \{+, -, *\}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{int}\,n_1 \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = \mathsf{int}\,n_2 \\ n_1 \oplus n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oplus e_2 \Rightarrow \mathsf{val}(\mathsf{int}(n_1 \oplus n_2)), \sigma_2}\;\textsf{(Arith)}, \quad \oplus \in \{+, -, *\}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow \mathsf{int}\,n_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow \mathsf{int}\,n_2, \sigma_2 \\ n_2 \neq 0 \qquad n = n_1 \oslash n_2 \qquad n,\ n_1 / n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oslash e_2 \Rightarrow \mathsf{int}\,n, \sigma_2}\;\textsf{(Div)}, \quad \oslash \in \{/, \%\}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{int}\,n_1 \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = \mathsf{int}\,n_2 \\ n_2 \neq 0 \qquad n = n_1 \oslash n_2 \qquad n,\ n_1 / n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oslash e_2 \Rightarrow \mathsf{val}(\mathsf{int}\,n), \sigma_2}\;\textsf{(Div)}, \quad \oslash \in \{/, \%\}`
 
 In the code, the case `binop` of `Eval.expr` evaluates both operands and calls `Eval.binop`.
 :::
@@ -98,7 +96,7 @@ $$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \tau_1 \qquad \Gamma \vdash e_2 :
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{int} \qquad \Gamma \vdash e_2 : \mathsf{int}}{\Gamma \vdash e_1 \bowtie e_2 : \mathsf{bool}}\;\textsf{(T-Rel)}, \quad \bowtie \in \{<, <=, >, >=\}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow v_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v_2, \sigma_2 \qquad v_1 \bowtie v_2 = b}{\rho, \sigma \vdash e_1 \bowtie e_2 \Rightarrow \mathsf{bool}\,b, \sigma_2}\;\textsf{(Rel)}, \quad \bowtie \in \{==, \mathrel{!=}, <, <=, >, >=\}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = v_1 \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v_2 \qquad v_1 \bowtie v_2 = b \end{array}}{\rho, \sigma \vdash e_1 \bowtie e_2 \Rightarrow \mathsf{val}(\mathsf{bool}\,b), \sigma_2}\;\textsf{(Rel)}, \quad \bowtie \in \{==, \mathrel{!=}, <, <=, >, >=\}`
 :::
 
 :::definition "expr_logic" (parent := "expressions") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.expectBool, CoreCpp.BinOp.isLogical, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr")
@@ -106,21 +104,21 @@ Conjunction and disjunction require `bool` and short circuit. The evaluator comp
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash e_2 : \mathsf{bool}}{\Gamma \vdash e_1 \odot e_2 : \mathsf{bool}}\;\textsf{(T-Logic)}, \quad \odot \in \{\&\&, ||\}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1}\;\textsf{(And-False)}`
+$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{false}}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow \mathsf{val}(\mathsf{bool}\,\mathtt{false}), \sigma_1}\;\textsf{(And-False)}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow v, \sigma_2}\;\textsf{(And-True)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{true} \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v \end{array}}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow \mathsf{val}\,v, \sigma_2}\;\textsf{(And-True)}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1}\;\textsf{(Or-True)}`
+$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{true}}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow \mathsf{val}(\mathsf{bool}\,\mathtt{true}), \sigma_1}\;\textsf{(Or-True)}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow v, \sigma_2}\;\textsf{(Or-False)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{false} \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v \end{array}}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow \mathsf{val}\,v, \sigma_2}\;\textsf{(Or-False)}`
 
 In the code, the cases `binop .and` and `binop .or` of `Eval.expr` implement the two pairs of rules.
 :::
 
 # Conditional
 
-:::definition "expr_cond" (parent := "expressions") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.value, CoreCpp.Typing.compat, CoreCpp.Ty.join, CoreCpp.Semantics.HasValues, CoreCpp.Eval.expr, CoreCpp.Eval.expectBool, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval, CoreCpp.Typing.lval, CoreCpp.Typing.locJoin, CoreCpp.Eval.lval, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval, CoreCpp.Semantics.IsObject") (uses := "judg_ty_expr, judg_ev_expr, judg_ty_lval, judg_ev_lval")
-The condition is `bool`. For a value, both branches have types with values, neither `void` nor an object type, and the type of the conditional is their join, `Ty.join`. The join is $`\tau_2` when the two types are equal or when $`\tau_2` is a pointer type and $`\tau_3` is $`\mathsf{nullptr\_t}`, $`\tau_3` when $`\mathsf{Compat}(\tau_2, \tau_3)`, and $`\tau_2` when $`\mathsf{Compat}(\tau_3, \tau_2)`. A pointer to a derived class and a pointer to its base thus join at the base. A pointer and `nullptr` join at the pointer type in either order, so `c ? p : nullptr` and `c ? nullptr : p` both have the type of `p`, the composite pointer type of C++ (N4659 §8.16 paragraph 7). The evaluator computes the condition and then only the chosen branch.
+:::definition "expr_cond" (parent := "expressions") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.value, CoreCpp.Typing.compat, CoreCpp.Ty.join, CoreCpp.Semantics.HasValues, CoreCpp.Eval.expr, CoreCpp.Eval.expectBool, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval, CoreCpp.Typing.lval, CoreCpp.Typing.locJoin, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.IsObject") (uses := "judg_ty_expr, judg_ev_expr, judg_ty_lval")
+The condition is `bool`. For a value, both branches have types with values, neither `void` nor an object type, and the type of the conditional is their join, `Ty.join`. The join is $`\tau_2` when the two types are equal or when $`\tau_2` is a pointer type and $`\tau_3` is $`\mathsf{nullptr\_t}`, $`\tau_3` when $`\mathsf{Compat}(\tau_2, \tau_3)`, and $`\tau_2` when $`\mathsf{Compat}(\tau_3, \tau_2)`. A pointer to a derived class and a pointer to its base thus join at the base. A pointer and `nullptr` join at the pointer type in either order, so `c ? p : nullptr` and `c ? nullptr : p` both have the type of `p`, the composite pointer type of C++ (N4659 §8.16 paragraph 7). The evaluator computes the condition and then only the chosen branch, whose result the conditional passes on unchanged.
 
 The predicates $`\mathsf{HasValues}` and $`\mathsf{IsObject}` are those of {bpref "dom_tenv"}[].
 
@@ -128,19 +126,15 @@ $$`\dfrac{\begin{array}{c} \Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdas
 
 $$`\mathrm{join}(\tau_2, \tau_3) = \begin{cases} \tau_2 & \text{if } \tau_2 = \tau_3 \text{ or } \tau_2 = \tau'* \text{ and } \tau_3 = \mathsf{nullptr\_t} \\ \tau_3 & \text{else if } \mathsf{Compat}(\tau_2, \tau_3) \\ \tau_2 & \text{else if } \mathsf{Compat}(\tau_3, \tau_2) \end{cases}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-T)}`
+$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{true} \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow r, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow r, \sigma_2}\;\textsf{(Cond-T)}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-F)}`
+$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{false} \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow r, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow r, \sigma_2}\;\textsf{(Cond-F)}`
 
-When the two branches denote locations of one type, the conditional denotes the location of the chosen branch, as C++ makes it an lvalue (N4659 §8.16 paragraph 5). So `(c ? x : y) = 7` assigns to `x` or to `y`, and `int& r = c ? x : y;` binds a reference. The access `(c ? *p : *q).value` reaches a field without copying an object. Branches of object type must denote locations, rule T-CondObj, so `c ? *p : *q` never copies. The two types must be equal, or a class and one of its bases, which join at the base, `Typing.locJoin`. The program then reaches the derived object as an object of its base, as C++ binds it (N4659 §8.16 paragraph 4). A call of a virtual method dispatches on the class of the chosen object, and a member of the derived class alone is a type error.
+When the two branches are lvalues of one type, the conditional is an lvalue and yields the location of the chosen branch (N4659 §8.16 paragraph 5). The rules Cond-T and Cond-F give that location, since they pass on the result of the branch. So `(c ? x : y) = 7` assigns to `x` or to `y`, and `int& r = c ? x : y;` binds a reference. The access `(c ? *p : *q).value` reaches a field without copying an object. Branches of object type must denote locations, rule T-CondObj, so `c ? *p : *q` never copies. The two types must be equal, or a class and one of its bases, which join at the base, `Typing.locJoin`. The program then reaches the derived object as an object of its base, as C++ binds it (N4659 §8.16 paragraph 4). A call of a virtual method dispatches on the class of the chosen object, and a member of the derived class alone is a type error.
 
 $$`\dfrac{\Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash_{\ell} e_2 : \tau_2 \qquad \Gamma \vdash_{\ell} e_3 : \tau_3 \qquad \tau = \mathrm{locJoin}(\tau_2, \tau_3)}{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-LocCond)}`
 
 $$`\dfrac{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau \qquad \mathsf{IsObject}(\tau)}{\Gamma \vdash e_1\ ?\ e_2 : e_3 \;:\; \tau}\;\textsf{(T-CondObj)}`
-
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow_{\ell} \ell, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow_{\ell} \ell, \sigma_2}\;\textsf{(LocCond-T)}`
-
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow_{\ell} \ell, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow_{\ell} \ell, \sigma_2}\;\textsf{(LocCond-F)}`
 :::
 
 # Objects and pointers
@@ -150,7 +144,7 @@ The literal `nullptr` has the internal type $`\mathsf{nullptr\_t}`, compatible w
 
 $$`\dfrac{}{\Gamma \vdash \mathtt{nullptr} : \mathsf{nullptr\_t}}\;\textsf{(T-Null)}`
 
-$$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sigma}\;\textsf{(Null)}`
+$$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{val}\,\mathsf{null}, \sigma}\;\textsf{(Null)}`
 :::
 
 :::definition "expr_new" (parent := "expressions") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Program.lookupClass, CoreCpp.Program.allFields, CoreCpp.Store.alloc, CoreCpp.Store.allocMany, CoreCpp.Ty.default, CoreCpp.Semantics.Ctors, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr, dom_classes, dom_store")
@@ -160,19 +154,19 @@ The program $`p` maps a class $`C` to its declaration $`\mathit{cd}`, `Program.l
 
 $$`\dfrac{p(C) = \mathit{cd} \qquad \mathit{cd}.\mathrm{ctor} = \bot}{\Gamma \vdash \mathtt{new}\ C() : C*}\;\textsf{(T-New)}`
 
-$$`\dfrac{\begin{array}{c} C \in \mathrm{dom}\,p \qquad \mathrm{fields}(C) = [\tau_1\, f_1, \ldots, \tau_n\, f_n] \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \rho, \sigma' \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
+$$`\dfrac{\begin{array}{c} C \in \mathrm{dom}\,p \qquad \mathrm{fields}(C) = [\tau_1\, f_1, \ldots, \tau_n\, f_n] \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \rho, \sigma' \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{val}(\mathsf{loc}\,\ell), \sigma''}\;\textsf{(New)}`
 :::
 
-:::definition "expr_deref" (parent := "expressions") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.lval, CoreCpp.Eval.pointee, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval") (uses := "judg_ty_lval, judg_ev_lval, expr_null")
-The dereference `*e` denotes the location the pointer holds, with the store the evaluation of $`e` leaves. When the pointer is $`\mathsf{null}` the premise of LocDeref fails, so there is no derivation and the evaluator gives `error`, where C++17 leaves the dereference undefined. A pointer after `delete` denotes a location outside the store, and the read of {bpref "expr_read"}[] has no derivation there.
+:::definition "expr_deref" (parent := "expressions") (lean := "CoreCpp.Typing.lval, CoreCpp.Eval.expr, CoreCpp.Eval.pointee, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_lval, judg_ev_expr, expr_null, dom_res")
+The dereference `*e` is an lvalue. It yields the location the value of $`e` holds, with the store the evaluation of $`e` leaves. When the pointer is $`\mathsf{null}` the premise of Deref fails, so there is no derivation and the evaluator gives `error`, where C++17 leaves the dereference undefined. A pointer after `delete` holds a location outside the store, and the conversion rd of {bpref "dom_res"}[] has no derivation there.
 
 $$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash_{\ell} {*e} : \tau}\;\textsf{(T-LocDeref)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma'}{\rho, \sigma \vdash {*e} \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocDeref)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{loc}\,\ell}{\rho, \sigma \vdash {*e} \Rightarrow \mathsf{lval}\,\ell, \sigma'}\;\textsf{(Deref)}`
 :::
 
-:::definition "expr_field" (parent := "expressions") (lean := "CoreCpp.Typing.lval, CoreCpp.Typing.fieldType, CoreCpp.Program.visibleField, CoreCpp.Eval.lval, CoreCpp.Eval.fieldLoc, CoreCpp.Eval.pointee, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.LEval") (uses := "judg_ty_lval, judg_ev_lval, expr_deref, dom_classes")
-The field access `e.f` denotes the location of the field $`f` in the record that $`e` denotes. The access `e->f` denotes the field of the record its pointer holds, as `(*e).f` does, so a null pointer has no derivation and the evaluator gives `error`. The record must be in the store, so an access through a pointer after `delete` has no derivation either. The premise $`C \text{ has } \tau\, f` holds of a field of $`C` or of one of its bases, and a private field must be visible from $`\Gamma`, `Program.visibleField` and {bpref "cls_visible"}[].
+:::definition "expr_field" (parent := "expressions") (lean := "CoreCpp.Typing.lval, CoreCpp.Typing.fieldType, CoreCpp.Program.visibleField, CoreCpp.Eval.expr, CoreCpp.Eval.fieldLoc, CoreCpp.Eval.pointee, CoreCpp.Eval.lvalOf, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_lval, judg_ev_expr, expr_deref, dom_classes")
+The field access `e.f` is an lvalue. It yields the location of the field $`f` in the record at the location $`e` yields. The access `e->f` yields the field of the record its pointer holds, as `(*e).f` does, so a null pointer has no derivation and the evaluator gives `error`. The record must be in the store, so an access through a pointer after `delete` has no derivation either. The premise $`C \text{ has } \tau\, f` holds of a field of $`C` or of one of its bases, and a private field must be visible from $`\Gamma`, `Program.visibleField` and {bpref "cls_visible"}[].
 
 The equation $`\mathrm{field}_{\Gamma}(C, f) = \tau` states that $`C` or one of its bases declares the field $`\tau\, f` and that $`f` is visible from $`\Gamma`, `Program.visibleField`.
 
@@ -180,26 +174,24 @@ $$`\dfrac{\Gamma \vdash e : C \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamm
 
 $$`\dfrac{\Gamma \vdash e : C* \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash_{\ell} e\mathtt{->}f : \tau}\;\textsf{(T-LocArrow)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e.f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocField)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{lval}\,\ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e.f \Rightarrow \mathsf{lval}\,\ell_f, \sigma'}\;\textsf{(Field)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e\mathtt{->}f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocArrow)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{loc}\,\ell \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e\mathtt{->}f \Rightarrow \mathsf{lval}\,\ell_f, \sigma'}\;\textsf{(Arrow)}`
 :::
 
-:::definition "expr_read" (parent := "expressions") (lean := "CoreCpp.Typing.expr, CoreCpp.Program.visibleField, CoreCpp.Eval.expr, CoreCpp.Eval.readLoc, CoreCpp.Expr.isPlace, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "expr_deref, expr_field, std_uses")
-Reading `*e`, `e.f`, `e->f` or `e[i]` as a value is reading the content of the location it denotes, one rule for the four forms. A location outside the store has no derivation, and the evaluator gives `error`. Three typing rules give the value the type of the location. The element `v[i]` of a vector takes its location from the library, rule LocIndex of {bpref "std_uses"}[].
+:::definition "expr_read" (parent := "expressions") (lean := "CoreCpp.Typing.expr, CoreCpp.Program.visibleField, CoreCpp.Eval.rd, CoreCpp.Eval.readLoc, CoreCpp.Res.rd, CoreCpp.Semantics.HasType") (uses := "expr_deref, expr_field, std_uses, dom_res")
+The value of `*e`, `e.f`, `e->f` or `e[i]` is the content of the location it yields, the conversion rd of {bpref "dom_res"}[], applied by the context that requires a value. No evaluation rule of its own reads it. A location outside the store has no value, and the evaluator gives `error`. Three typing rules give the value the type of the location. The element `v[i]` of a vector takes its location from the library, rule Index of {bpref "std_uses"}[].
 
 $$`\dfrac{\Gamma \vdash e : \tau*}{\Gamma \vdash {*e} : \tau}\;\textsf{(T-Deref)}`
 
 $$`\dfrac{\Gamma \vdash e : C \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash e.f : \tau}\;\textsf{(T-Field)}`
 
 $$`\dfrac{\Gamma \vdash e : C* \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gamma \vdash e\mathtt{->}f : \tau}\;\textsf{(T-Arrow)}`
-
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in \mathrm{dom}\,\sigma'}{\rho, \sigma \vdash e \Rightarrow \sigma'(\ell), \sigma'}\;\textsf{(Read)}, \quad e \in \{{*e'},\ e'.f,\ e'\mathtt{->}f,\ e'[i]\}`
 :::
 
 # Rules of the chapter
 
-Every definition, every typing rule and every evaluation rule of this chapter, in the order of its sections. The section named above each rule states it with its explanation and with the definition of its notation. The chapters on encapsulation, on type systems and on the library state the rules of the same expressions that involve classes. These are T-VarField, T-LocVarField and LocVarField for a field of `this`, T-OpBin for an operator member, T-New with a constructor and T-NewLib.
+Every definition, every typing rule and every evaluation rule of this chapter, in the order of its sections. The section named above each rule states it with its explanation and with the definition of its notation. The chapters on encapsulation, on type systems and on the library state the rules of the same expressions that involve classes. These are T-VarField, T-LocVarField and VarField for a field of `this`, T-OpBin for an operator member, T-New with a constructor and T-NewLib.
 
 *Literals*
 
@@ -209,9 +201,9 @@ $$`\dfrac{}{\Gamma \vdash b : \mathsf{bool}}\;\textsf{(T-BoolLit)}`
 
  
 
-$$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash n \Rightarrow \mathsf{int}\,n, \sigma}\;\textsf{(Lit)}`
+$$`\dfrac{n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash n \Rightarrow \mathsf{val}(\mathsf{int}\,n), \sigma}\;\textsf{(Lit)}`
 
-$$`\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{bool}\,b, \sigma}\;\textsf{(BoolLit)}`
+$$`\dfrac{}{\rho, \sigma \vdash b \Rightarrow \mathsf{val}(\mathsf{bool}\,b), \sigma}\;\textsf{(BoolLit)}`
 
 *Variable*
 
@@ -221,9 +213,7 @@ $$`\dfrac{\Gamma(x) = \tau}{\Gamma \vdash x : \tau}\;\textsf{(T-Var)}`
 
  
 
-$$`\dfrac{\rho(x) = \ell}{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell, \sigma}\;\textsf{(LocVar)}`
-
-$$`\dfrac{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell, \sigma \qquad \ell \in \mathrm{dom}\,\sigma}{\rho, \sigma \vdash x \Rightarrow \sigma(\ell), \sigma}\;\textsf{(Var)}`
+$$`\dfrac{\rho(x) = \ell}{\rho, \sigma \vdash x \Rightarrow \mathsf{lval}\,\ell, \sigma}\;\textsf{(Var)}`
 
 *Unary operators*
 
@@ -233,9 +223,9 @@ $$`\dfrac{\Gamma \vdash e : \mathsf{int}}{\Gamma \vdash -e : \mathsf{int}}\;\tex
 
  
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{bool}\,b, \sigma'}{\rho, \sigma \vdash\, !e \Rightarrow \mathsf{bool}\,\neg b, \sigma'}\;\textsf{(Not)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{bool}\,b}{\rho, \sigma \vdash\, !e \Rightarrow \mathsf{val}(\mathsf{bool}\,\neg b), \sigma'}\;\textsf{(Not)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{int}\,n, \sigma' \qquad -n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash -e \Rightarrow \mathsf{int}(-n), \sigma'}\;\textsf{(Neg)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{int}\,n \qquad -n \in [-2^{31},\, 2^{31}-1]}{\rho, \sigma \vdash -e \Rightarrow \mathsf{val}(\mathsf{int}(-n)), \sigma'}\;\textsf{(Neg)}`
 
 *Binary operators*
 
@@ -249,19 +239,19 @@ $$`\dfrac{\Gamma \vdash e_1 : \mathsf{bool} \qquad \Gamma \vdash e_2 : \mathsf{b
 
  
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow \mathsf{int}\,n_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow \mathsf{int}\,n_2, \sigma_2 \\ n_1 \oplus n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oplus e_2 \Rightarrow \mathsf{int}(n_1 \oplus n_2), \sigma_2}\;\textsf{(Arith)}, \quad \oplus \in \{+, -, *\}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{int}\,n_1 \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = \mathsf{int}\,n_2 \\ n_1 \oplus n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oplus e_2 \Rightarrow \mathsf{val}(\mathsf{int}(n_1 \oplus n_2)), \sigma_2}\;\textsf{(Arith)}, \quad \oplus \in \{+, -, *\}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow \mathsf{int}\,n_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow \mathsf{int}\,n_2, \sigma_2 \\ n_2 \neq 0 \qquad n = n_1 \oslash n_2 \qquad n,\ n_1 / n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oslash e_2 \Rightarrow \mathsf{int}\,n, \sigma_2}\;\textsf{(Div)}, \quad \oslash \in \{/, \%\}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{int}\,n_1 \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = \mathsf{int}\,n_2 \\ n_2 \neq 0 \qquad n = n_1 \oslash n_2 \qquad n,\ n_1 / n_2 \in [-2^{31},\, 2^{31}-1] \end{array}}{\rho, \sigma \vdash e_1 \oslash e_2 \Rightarrow \mathsf{val}(\mathsf{int}\,n), \sigma_2}\;\textsf{(Div)}, \quad \oslash \in \{/, \%\}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow v_1, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v_2, \sigma_2 \qquad v_1 \bowtie v_2 = b}{\rho, \sigma \vdash e_1 \bowtie e_2 \Rightarrow \mathsf{bool}\,b, \sigma_2}\;\textsf{(Rel)}, \quad \bowtie \in \{==, \mathrel{!=}, <, <=, >, >=\}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = v_1 \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v_2 \qquad v_1 \bowtie v_2 = b \end{array}}{\rho, \sigma \vdash e_1 \bowtie e_2 \Rightarrow \mathsf{val}(\mathsf{bool}\,b), \sigma_2}\;\textsf{(Rel)}, \quad \bowtie \in \{==, \mathrel{!=}, <, <=, >, >=\}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1}\;\textsf{(And-False)}`
+$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{false}}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow \mathsf{val}(\mathsf{bool}\,\mathtt{false}), \sigma_1}\;\textsf{(And-False)}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow v, \sigma_2}\;\textsf{(And-True)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{true} \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v \end{array}}{\rho, \sigma \vdash e_1 \mathbin{\&\&} e_2 \Rightarrow \mathsf{val}\,v, \sigma_2}\;\textsf{(And-True)}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1}\;\textsf{(Or-True)}`
+$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{true}}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow \mathsf{val}(\mathsf{bool}\,\mathtt{true}), \sigma_1}\;\textsf{(Or-True)}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow v, \sigma_2}\;\textsf{(Or-False)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{false} \\ \rho, \sigma_1 \vdash e_2 \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v \end{array}}{\rho, \sigma \vdash e_1 \mathbin{||} e_2 \Rightarrow \mathsf{val}\,v, \sigma_2}\;\textsf{(Or-False)}`
 
 *Conditional*
 
@@ -275,13 +265,9 @@ $$`\dfrac{\Gamma \vdash_{\ell} e_1\ ?\ e_2 : e_3 \;:\; \tau \qquad \mathsf{IsObj
 
  
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-T)}`
+$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{true} \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow r, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow r, \sigma_2}\;\textsf{(Cond-T)}`
 
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow v, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow v, \sigma_2}\;\textsf{(Cond-F)}`
-
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{true}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_2 \Rightarrow_{\ell} \ell, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow_{\ell} \ell, \sigma_2}\;\textsf{(LocCond-T)}`
-
-$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow \mathsf{bool}\,\mathtt{false}, \sigma_1 \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow_{\ell} \ell, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow_{\ell} \ell, \sigma_2}\;\textsf{(LocCond-F)}`
+$$`\dfrac{\rho, \sigma \vdash e_1 \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{bool}\,\mathtt{false} \qquad \rho, \sigma_1 \vdash e_3 \Rightarrow r, \sigma_2}{\rho, \sigma \vdash e_1\ ?\ e_2 : e_3 \Rightarrow r, \sigma_2}\;\textsf{(Cond-F)}`
 
 *Objects and pointers*
 
@@ -303,14 +289,12 @@ $$`\dfrac{\Gamma \vdash e : C* \qquad \mathrm{field}_{\Gamma}(C, f) = \tau}{\Gam
 
  
 
-$$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{null}, \sigma}\;\textsf{(Null)}`
+$$`\dfrac{}{\rho, \sigma \vdash \mathtt{nullptr} \Rightarrow \mathsf{val}\,\mathsf{null}, \sigma}\;\textsf{(Null)}`
 
-$$`\dfrac{\begin{array}{c} C \in \mathrm{dom}\,p \qquad \mathrm{fields}(C) = [\tau_1\, f_1, \ldots, \tau_n\, f_n] \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \rho, \sigma' \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
+$$`\dfrac{\begin{array}{c} C \in \mathrm{dom}\,p \qquad \mathrm{fields}(C) = [\tau_1\, f_1, \ldots, \tau_n\, f_n] \\ (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i),\ \sigma_0 = \sigma \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \rho, \sigma' \vdash \mathrm{ctors}(\ell, C) \Rightarrow \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C() \Rightarrow \mathsf{val}(\mathsf{loc}\,\ell), \sigma''}\;\textsf{(New)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma'}{\rho, \sigma \vdash {*e} \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocDeref)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{loc}\,\ell}{\rho, \sigma \vdash {*e} \Rightarrow \mathsf{lval}\,\ell, \sigma'}\;\textsf{(Deref)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e.f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocField)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{lval}\,\ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e.f \Rightarrow \mathsf{lval}\,\ell_f, \sigma'}\;\textsf{(Field)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma' \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e\mathtt{->}f \Rightarrow_{\ell} \ell_f, \sigma'}\;\textsf{(LocArrow)}`
-
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma' \qquad \ell \in \mathrm{dom}\,\sigma'}{\rho, \sigma \vdash e \Rightarrow \sigma'(\ell), \sigma'}\;\textsf{(Read)}, \quad e \in \{{*e'},\ e'.f,\ e'\mathtt{->}f,\ e'[i]\}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma' \qquad \mathrm{rd}(\sigma', r) = \mathsf{loc}\,\ell \qquad \sigma'(\ell) = \mathsf{obj}\,C\,[\ldots f \mapsto \ell_f \ldots]}{\rho, \sigma \vdash e\mathtt{->}f \Rightarrow \mathsf{lval}\,\ell_f, \sigma'}\;\textsf{(Arrow)}`

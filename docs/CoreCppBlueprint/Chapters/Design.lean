@@ -33,8 +33,8 @@ The restrictions of Core C++ with respect to C++17, and the properties they give
 
 # Behaviour
 
-:::definition "design_pattern" (parent := "design") (lean := "CoreCpp.Error, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Eval.cmd, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec") (uses := "dom_error, judg_ev_expr, judg_ev_cmd")
-Each syntactic class has a relation and a function of the evaluator. The expressions have `Eval` and `expr`, the expressions that denote a location `LEval` and `lval`, and the commands `Exec` and `cmd`. The relation states the cases of its class with a result. The function covers every case of the same class, and its result is that of the relation or an `error`.
+:::definition "design_pattern" (parent := "design") (lean := "CoreCpp.Error, CoreCpp.Eval.expr, CoreCpp.Eval.cmd, CoreCpp.Semantics.Eval, CoreCpp.Semantics.Exec") (uses := "dom_error, judg_ev_expr, judg_ev_cmd")
+Each syntactic class has a relation and a function of the evaluator. The expressions have `Eval` and `expr`, and the commands `Exec` and `cmd`. The relation states the cases of its class with a result. The function covers every case of the same class, and its result is that of the relation or an `error`.
 
 The rules exclude each undefined case of C++ by a premise. The rule Div requires a divisor other than zero, and Arith and Div require a result in the range of `int`. The rule Delete requires an object at ℓ, and a virtual destructor when the static class differs from the class of the object. When one of these premises fails, the subject has no derivation. The function of the same class then gives the cause of `error` that names the premise, `divisionByZero`, `overflow`, `doubleDelete` or `deleteWithoutVirtualDtor`.
 

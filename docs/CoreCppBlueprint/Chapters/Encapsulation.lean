@@ -46,7 +46,7 @@ $$`\dfrac{C \text{ has } \tau\ f \text{ declared in } K \qquad f \text{ public o
 The same premise applies to methods, {bpref "cls_method"}[].
 :::
 
-:::definition "cls_this" (parent := "encapsulation") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval") (uses := "judg_ty_expr, judg_ev_expr, judg_ev_lval, dom_env")
+:::definition "cls_this" (parent := "encapsulation") (lean := "CoreCpp.Typing.expr, CoreCpp.Eval.expr, CoreCpp.Eval.fieldLoc, CoreCpp.Semantics.HasType, CoreCpp.Semantics.Eval") (uses := "judg_ty_expr, judg_ev_expr, dom_env")
 Inside a member body `this` is the location of the receiver. The call binds it in $`\rho` as an alias, never as a variable, and it evaluates to a pointer. An unqualified name that is not a variable denotes the member of `this`, both in the type checker and in the evaluator.
 
 $$`\dfrac{\Gamma(\mathtt{this}) = C*}{\Gamma \vdash \mathtt{this} : C*}\;\textsf{(T-This)}`
@@ -59,11 +59,11 @@ The same holds of a call. An unqualified name that is neither a variable nor a f
 
 $$`\dfrac{\begin{array}{c} f \notin \Gamma\qquad f \text{ is no function of the program}\qquad \Gamma(\mathtt{this}) = C* \\ \Gamma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) : \tau \end{array}}{\Gamma \vdash f(e_1, \ldots, e_k) : \tau}\;\textsf{(T-CallThis)}`
 
-$$`\dfrac{\rho(\mathtt{this}) = \ell}{\rho, \sigma \vdash \mathtt{this} \Rightarrow \mathsf{loc}\,\ell, \sigma}\;\textsf{(This)}`
+$$`\dfrac{\rho(\mathtt{this}) = \ell}{\rho, \sigma \vdash \mathtt{this} \Rightarrow \mathsf{val}(\mathsf{loc}\,\ell), \sigma}\;\textsf{(This)}`
 
-$$`\dfrac{x \notin \rho \qquad \rho(\mathtt{this}) = \ell \qquad \sigma(\ell) = \mathsf{obj}\,C\,[\ldots x \mapsto \ell_x \ldots]}{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell_x, \sigma}\;\textsf{(LocVarField)}`
+$$`\dfrac{x \notin \rho \qquad \rho(\mathtt{this}) = \ell \qquad \sigma(\ell) = \mathsf{obj}\,C\,[\ldots x \mapsto \ell_x \ldots]}{\rho, \sigma \vdash x \Rightarrow \mathsf{lval}\,\ell_x, \sigma}\;\textsf{(VarField)}`
 
-$$`\dfrac{\begin{array}{c} f \notin \rho\qquad f \text{ is no function of the program or of a header}\qquad \rho(\mathtt{this}) = \ell \\ \rho, \sigma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(CallThis)}`
+$$`\dfrac{\begin{array}{c} f \notin \rho\qquad f \text{ is no function of the program or of a header}\qquad \rho(\mathtt{this}) = \ell \\ \rho, \sigma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) \Rightarrow r, \sigma' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow r, \sigma'}\;\textsf{(CallThis)}`
 :::
 
 # Objects
@@ -75,25 +75,25 @@ A class without a constructor is created by `new C()` and keeps the default valu
 
 $$`\dfrac{C \mapsto \mathtt{class}\ C\ \{\ldots C(p_1\,x_1, \ldots, p_k\,x_k)\ \{c\} \ldots\} \qquad \text{arguments as in T-Call}}{\Gamma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) : C*}\;\textsf{(T-New)}`
 
-$$`\dfrac{\begin{array}{c} f_1 \ldots f_n \text{ the fields of the chain of } C\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain run from the root down} \\ \text{with } \mathtt{this} \mapsto \ell \text{, giving } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
+$$`\dfrac{\begin{array}{c} f_1 \ldots f_n \text{ the fields of the chain of } C\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain run from the root down} \\ \text{with } \mathtt{this} \mapsto \ell \text{, giving } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) \Rightarrow \mathsf{val}(\mathsf{loc}\,\ell), \sigma''}\;\textsf{(New)}`
 :::
 
 :::definition "cls_member" (parent := "encapsulation") (lean := "CoreCpp.Eval.runMember, CoreCpp.Typing.checkArgs, CoreCpp.Semantics.CheckArgs, CoreCpp.Semantics.Member") (uses := "fun_call, param_ref, judg_ev_cmd, dom_env")
 The call of a member body, a method, a constructor or a destructor, binds `this` to the location $`\ell` of the receiver as an alias. It binds the parameters as the call of a function does, by value with a fresh copy and by reference with an alias. The return frees the copies and the locals of the body, never the receiver.
 
-$$`\dfrac{\begin{array}{c} \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_m = [\mathtt{this} \mapsto \ell, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k]\qquad \rho_m, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \qquad \mathsf{Returns}(r, \tau, v) \end{array}}{\rho, \sigma \vdash \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_m, \rho'))}\;\textsf{(Member)}`
+$$`\dfrac{\begin{array}{c} \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow \mathsf{lval}\,\ell_i, \sigma'_i \\ \rho_m = [\mathtt{this} \mapsto \ell, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k]\qquad \rho_m, \sigma'_k \vdash c \Rightarrow \kappa, \rho', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, r) \end{array}}{\rho, \sigma \vdash \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow r, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_m, \rho'))}\;\textsf{(Member)}`
 
-The predicate $`\mathsf{Returns}` of {bpref "fun_call"}[] gives the result. A non `void` member that ends without `return` has no derivation, an `error` of the evaluator.
+The predicate $`\mathsf{Returns}` of {bpref "fun_call"}[] gives the result, read before the locals leave the store, or for a member declared $`\tau\&` the location the operand of `return` yields, rule Returns-Ref of {bpref "op_refret"}[]. A non `void` member that ends without `return` has no derivation, an `error` of the evaluator.
 :::
 
 :::definition "cls_method" (parent := "encapsulation") (lean := "CoreCpp.Typing.methodCall, CoreCpp.Eval.expr, CoreCpp.Eval.resolve, CoreCpp.Program.findMethod, CoreCpp.Semantics.MethodSel, CoreCpp.Semantics.Eval, CoreCpp.Program.resolve, CoreCpp.Semantics.CallMethod") (uses := "cls_member, cls_visible, cls_dispatch, judg_ty_expr, judg_ev_expr")
-A method call `e.m(args)` needs a receiver of class type and `e->m(args)` a receiver of pointer type. The method is the nearest $`m` in the chain of the static class of the receiver, it must be visible, and the arguments are checked as in a call. An unqualified call `m(args)` inside a member body is `this->m(args)`. A method that returns a reference has the rules of {bpref "op_refret"}[], which read the location it returns.
+A method call `e.m(args)` needs a receiver of class type and `e->m(args)` a receiver of pointer type. The method is the nearest $`m` in the chain of the static class of the receiver, it must be visible, and the arguments are checked as in a call. An unqualified call `m(args)` inside a member body is `this->m(args)`. The result is a value for a method declared $`\tau` and a location for a method declared $`\tau\&`, {bpref "op_refret"}[]. One rule covers both, since the member gives the result its declaration prescribes.
 
 $$`\dfrac{\begin{array}{c} \Gamma \vdash e : C\qquad C \text{ has } \tau\ m(p_1\,x_1, \ldots, p_k\,x_k) \text{ visible from } \Gamma \\ \text{arguments as in T-Call} \end{array}}{\Gamma \vdash e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-Method)}`
 
 $$`\dfrac{\begin{array}{c} \Gamma \vdash e : C*\qquad C \text{ has } \tau\ m(\ldots) \text{ visible from } \Gamma \\ \text{arguments as in T-Call} \end{array}}{\Gamma \vdash e\mathtt{->}m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-MethodArrow)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma_0 \text{ or } \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[\ldots] \\ S \text{ the static class of } e \\ m \mapsto \tau\ m(\ldots)\{c\} \text{ nearest } S \text{, or nearest } T \text{ when virtual, returning no reference} \\ \rho, \sigma_0 \vdash \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(MethodCall)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{lval}\,\ell, \sigma_0 \text{ for } e.m \text{, or } \rho, \sigma \vdash e \Rightarrow r_0, \sigma_0 \text{ and } \mathrm{rd}(\sigma_0, r_0) = \mathsf{loc}\,\ell \text{ for } e\mathtt{->}m \\ \sigma_0(\ell) = \mathsf{obj}\,T\,[\ldots] \qquad S \text{ the static class of } e \\ m \mapsto \tau\ m(\ldots)\{c\} \text{ nearest } S \text{, or nearest } T \text{ when virtual} \\ \rho, \sigma_0 \vdash \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow r, \sigma' \end{array}}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow r, \sigma'}\;\textsf{(MethodCall)}`
 :::
 
 # Inheritance
@@ -131,9 +131,9 @@ $$`\dfrac{\Gamma \vdash e : C*}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\
 
 $$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle* \qquad L\langle\bar{\tau}\rangle \text{ an object type} \qquad \Gamma \vdash_L \mathtt{delete}\ \mathsf{ok}}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\;\textsf{(T-DeleteLib)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n] \\ S \text{ the static class of } e\qquad S = T \text{ or the chain of } S \text{ has a virtual destructor} \\ \text{the destructors of the chain of } T \text{ run from } T \text{ up, giving } \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell, \ell_1, \ldots, \ell_n\}}\;\textsf{(Delete)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{loc}\,\ell\qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n] \\ S \text{ the static class of } e\qquad S = T \text{ or the chain of } S \text{ has a virtual destructor} \\ \text{the destructors of the chain of } T \text{ run from } T \text{ up, giving } \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell, \ell_1, \ldots, \ell_n\}}\;\textsf{(Delete)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{null}, \sigma_0}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_0}\;\textsf{(DeleteNull)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{null}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_0}\;\textsf{(DeleteNull)}`
 :::
 
 # Static classes and namespaces
@@ -170,11 +170,11 @@ $$`\dfrac{\begin{array}{c} f \notin \Gamma\qquad f \text{ is no function of the 
 
  
 
-$$`\dfrac{\rho(\mathtt{this}) = \ell}{\rho, \sigma \vdash \mathtt{this} \Rightarrow \mathsf{loc}\,\ell, \sigma}\;\textsf{(This)}`
+$$`\dfrac{\rho(\mathtt{this}) = \ell}{\rho, \sigma \vdash \mathtt{this} \Rightarrow \mathsf{val}(\mathsf{loc}\,\ell), \sigma}\;\textsf{(This)}`
 
-$$`\dfrac{x \notin \rho \qquad \rho(\mathtt{this}) = \ell \qquad \sigma(\ell) = \mathsf{obj}\,C\,[\ldots x \mapsto \ell_x \ldots]}{\rho, \sigma \vdash x \Rightarrow_{\ell} \ell_x, \sigma}\;\textsf{(LocVarField)}`
+$$`\dfrac{x \notin \rho \qquad \rho(\mathtt{this}) = \ell \qquad \sigma(\ell) = \mathsf{obj}\,C\,[\ldots x \mapsto \ell_x \ldots]}{\rho, \sigma \vdash x \Rightarrow \mathsf{lval}\,\ell_x, \sigma}\;\textsf{(VarField)}`
 
-$$`\dfrac{\begin{array}{c} f \notin \rho\qquad f \text{ is no function of the program or of a header}\qquad \rho(\mathtt{this}) = \ell \\ \rho, \sigma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(CallThis)}`
+$$`\dfrac{\begin{array}{c} f \notin \rho\qquad f \text{ is no function of the program or of a header}\qquad \rho(\mathtt{this}) = \ell \\ \rho, \sigma \vdash \mathtt{this}\mathtt{->}f(e_1, \ldots, e_k) \Rightarrow r, \sigma' \end{array}}{\rho, \sigma \vdash f(e_1, \ldots, e_k) \Rightarrow r, \sigma'}\;\textsf{(CallThis)}`
 
 *Objects*
 
@@ -186,11 +186,11 @@ $$`\dfrac{\begin{array}{c} \Gamma \vdash e : C*\qquad C \text{ has } \tau\ m(\ld
 
  
 
-$$`\dfrac{\begin{array}{c} f_1 \ldots f_n \text{ the fields of the chain of } C\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain run from the root down} \\ \text{with } \mathtt{this} \mapsto \ell \text{, giving } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) \Rightarrow \mathsf{loc}\,\ell, \sigma''}\;\textsf{(New)}`
+$$`\dfrac{\begin{array}{c} f_1 \ldots f_n \text{ the fields of the chain of } C\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau_i) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_n, \mathsf{obj}\,C\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n]) \\ \text{the constructors of the chain run from the root down} \\ \text{with } \mathtt{this} \mapsto \ell \text{, giving } \sigma'' \end{array}}{\rho, \sigma \vdash \mathtt{new}\ C(e_1, \ldots, e_k) \Rightarrow \mathsf{val}(\mathsf{loc}\,\ell), \sigma''}\;\textsf{(New)}`
 
-$$`\dfrac{\begin{array}{c} \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow_{\ell} \ell_i, \sigma'_i \\ \rho_m = [\mathtt{this} \mapsto \ell, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k]\qquad \rho_m, \sigma'_k \vdash c \Rightarrow r, \rho', \sigma'' \qquad \mathsf{Returns}(r, \tau, v) \end{array}}{\rho, \sigma \vdash \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_m, \rho'))}\;\textsf{(Member)}`
+$$`\dfrac{\begin{array}{c} \text{for each } i \text{ left to right, } \sigma'_0 = \sigma \\ p_i = \tau_i \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (\ell_i, \sigma'_i) = \mathrm{alloc}(\sigma_i, v_i) \\ p_i = \tau_i\& \colon \ \rho, \sigma'_{i-1} \vdash e_i \Rightarrow \mathsf{lval}\,\ell_i, \sigma'_i \\ \rho_m = [\mathtt{this} \mapsto \ell, x_1 \mapsto \ell_1, \ldots, x_k \mapsto \ell_k]\qquad \rho_m, \sigma'_k \vdash c \Rightarrow \kappa, \rho', \sigma'' \qquad \mathsf{Returns}(\sigma'', \kappa, \tau, r) \end{array}}{\rho, \sigma \vdash \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow r, \sigma'' \setminus (\{\ell_i \mid p_i \text{ by value}\} \cup \mathrm{fresh}(\rho_m, \rho'))}\;\textsf{(Member)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma_0 \text{ or } \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[\ldots] \\ S \text{ the static class of } e \\ m \mapsto \tau\ m(\ldots)\{c\} \text{ nearest } S \text{, or nearest } T \text{ when virtual, returning no reference} \\ \rho, \sigma_0 \vdash \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(MethodCall)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{lval}\,\ell, \sigma_0 \text{ for } e.m \text{, or } \rho, \sigma \vdash e \Rightarrow r_0, \sigma_0 \text{ and } \mathrm{rd}(\sigma_0, r_0) = \mathsf{loc}\,\ell \text{ for } e\mathtt{->}m \\ \sigma_0(\ell) = \mathsf{obj}\,T\,[\ldots] \qquad S \text{ the static class of } e \\ m \mapsto \tau\ m(\ldots)\{c\} \text{ nearest } S \text{, or nearest } T \text{ when virtual} \\ \rho, \sigma_0 \vdash \mathrm{member}\ \ell\ (e_1, \ldots, e_k) \Rightarrow r, \sigma' \end{array}}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow r, \sigma'}\;\textsf{(MethodCall)}`
 
 *Inheritance*
 
@@ -202,6 +202,6 @@ $$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle* \qquad L\langle\bar{\tau}
 
  
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n] \\ S \text{ the static class of } e\qquad S = T \text{ or the chain of } S \text{ has a virtual destructor} \\ \text{the destructors of the chain of } T \text{ run from } T \text{ up, giving } \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell, \ell_1, \ldots, \ell_n\}}\;\textsf{(Delete)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{loc}\,\ell\qquad \sigma_0(\ell) = \mathsf{obj}\,T\,[f_1 \mapsto \ell_1, \ldots, f_n \mapsto \ell_n] \\ S \text{ the static class of } e\qquad S = T \text{ or the chain of } S \text{ has a virtual destructor} \\ \text{the destructors of the chain of } T \text{ run from } T \text{ up, giving } \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell, \ell_1, \ldots, \ell_n\}}\;\textsf{(Delete)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{null}, \sigma_0}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_0}\;\textsf{(DeleteNull)}`
+$$`\dfrac{\rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{null}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_0}\;\textsf{(DeleteNull)}`

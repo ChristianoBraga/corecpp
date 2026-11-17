@@ -8,8 +8,7 @@ in the blueprint.
 
 | Judgement | Relation | Meaning |
 | --- | --- | --- |
-| ρ, σ ⊢ e ⇒ v, σ′ | `Eval p ρ σ e v σ′` | e has the value v |
-| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `LEval p ρ σ e ℓ σ′` | e denotes the location ℓ |
+| ρ, σ ⊢ e ⇒ r, σ′ | `Eval p ρ σ e r σ′` | e has the result r, a value or a location |
 | ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `Exec p ρ σ c r ρ′ σ′` | c ends with the control r |
 | ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `Execs p ρ σ c̄ r ρ′ σ′` | the sequence c̄ ends with r |
 
@@ -19,7 +18,10 @@ every relation. The auxiliaries `Args`, `Bind`, `Member`, `CallMethod`,
 
 The relation is the specification and `CoreCpp.Eval` the implementation.
 There is no `error`. Whatever C++17 leaves undefined has no derivation, and
-the evaluator gives `error` for it. The subject is the program as
+the evaluator gives `error` for it. An lvalue yields the location of the
+object it designates, `lval ℓ`, and every other expression its value,
+`val v`. A context that needs a value applies the conversion rd(σ, r) of
+`Res.rd`, the lvalue-to-rvalue conversion of N4659 [conv.lval], §7.1. The subject is the program as
 `Typing.annotate` leaves it. A subject of the library is judged by the module
 its header declares, through the relations of `CoreCpp.Semantics.Library`,
 the premises of NewLib, LocIndex, DeleteLib and CallLib.
@@ -33,8 +35,7 @@ The judgements as the rules write them.
 
 | Judgement | Notation | Expands to |
 | --- | --- | --- |
-| ρ, σ ⊢ e ⇒ v, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'` | `Eval p ρ σ e v σ'` |
-| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'` | `LEval p ρ σ e ℓ σ'` |
+| ρ, σ ⊢ e ⇒ r, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ r, σ'` | `Eval p ρ σ e r σ'` |
 | ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'` | `Exec p ρ σ c r ρ' σ'` |
 | ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Execs p ρ σ cs r ρ' σ'` |
 
@@ -43,17 +44,13 @@ term would clash with the tuples of Lean, and the program is left out, which is 
 relations, so that the rules read as they do in the blueprint. A sequence of
 commands takes `⇒*`, since the parser cannot tell a command from a list of
 commands. The notation is declared before the relations it names, so that the
-rules use it, and hygiene is off so that `p` and the names `Eval`, `LEval`,
+rules use it, and hygiene is off so that `p` and the names `Eval`,
 `Exec` and `Execs` resolve at the use site, the latter to the relations under
 definition inside the `mutual` block. -/
 
 set_option hygiene false in
 set_option quotPrecheck false in
 scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " e:41 " ⇒ " v:41 ", " σ':41 => Eval p ρ σ e v σ'
-
-set_option hygiene false in
-set_option quotPrecheck false in
-scoped notation:40 "⟨" ρ:41 ", " σ:41 "⟩" " ⊢ " e:41 " ⇒ₗ " ℓ:41 ", " σ':41 => LEval p ρ σ e ℓ σ'
 
 set_option hygiene false in
 set_option quotPrecheck false in
@@ -118,12 +115,6 @@ def BinOp.compare : BinOp → Val → Val → Option Bool
   | .ne, .loc _, .null | .ne, .null, .loc _ => some true
   | _, _, _ => none
 
-/-- The expressions that denote a location and are read in a value position,
-`*e`, `e.f`, `e->f` and `e[i]`. -/
-def Expr.isPlace : Expr → Bool
-  | .deref _ | .field .. | .arrow .. | .index .. => true
-  | _ => false
-
 /-- The captures of `[=]`, the free variables of the body that ρ binds, each
 with its value in σ, or nothing when a captured location left σ. -/
 def captures? (ρ : Env) (σ : Store) (ps : List Param) (b : List Cmd) : Option (List (String × Val)) :=
@@ -147,49 +138,58 @@ def Program.resolve (p : Program) (s t m : String) (sig : Option (List Ty)) : Op
 
 namespace Semantics
 
-/-- The value a body with result type τ gives through its control. -/
-inductive Returns : Ctrl → Ty → Val → Prop where
-  /-- A `return e` gives the value of e. -/
-  | ret : Returns (.ret v) τ v
+/-- The result a call gives through the control of its body. The operand of
+`return` initialises the result of the call by the declared return type
+(N4659 [stmt.return], §9.6.3 paragraph 2). A callee declared `τ` gives the
+value of the result, read in σ before the locals leave it (§9.6.3
+paragraph 3). A method declared `τ&` gives the location its operand
+designates. -/
+inductive Returns : Store → Ctrl → Ty → Bool → Res → Prop where
+  /-- The callee is declared `τ`, and the result is the value of the operand. -/
+  | val (h : r.rd σ = some v) : Returns σ (.ret r) τ false (.val v)
+  /-- The method is declared `τ&`, and the result is the location of the operand. -/
+  | ref : Returns σ (.ret (.lval ℓ)) τ true (.lval ℓ)
   /-- A body of a `void` function that ends without `return` gives `void`. A
   body of another type that ends without `return` has no derivation. -/
-  | void : Returns .normal .void .void
+  | void : Returns σ .normal .void false (.val .void)
 
 mutual
 
-/-- ρ, σ ⊢ e ⇒ v, σ′ -/
-inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop where
+/-- ρ, σ ⊢ e ⇒ r, σ′ -/
+inductive Eval (p : Program) : Env → Store → Expr → Res → Store → Prop where
   | lit
       (h : Int32.inRange n) :
-    -- ────────────────────────────── (Lit)
-      ⟨ρ, σ⟩ ⊢ .intLit n ⇒ .int n, σ
+    -- ──────────────────────────────────── (Lit)
+      ⟨ρ, σ⟩ ⊢ .intLit n ⇒ .val (.int n), σ
 
   | boolLit :
-    -- ──────────────────────────────── (BoolLit)
-      ⟨ρ, σ⟩ ⊢ .boolLit b ⇒ .bool b, σ
+    -- ────────────────────────────────────── (BoolLit)
+      ⟨ρ, σ⟩ ⊢ .boolLit b ⇒ .val (.bool b), σ
 
   | null :
-    -- ──────────────────────────── (Null)
-      ⟨ρ, σ⟩ ⊢ .nullptr ⇒ .null, σ
+    -- ────────────────────────────────── (Null)
+      ⟨ρ, σ⟩ ⊢ .nullptr ⇒ .val .null, σ
 
-  /-- Reading x is reading σ(ρ(x)), or the field x of `this` inside a member. -/
+  /-- A variable designates the object at its location. -/
   | var
-      (hl : ⟨ρ, σ⟩ ⊢ .var x ⇒ₗ ℓ, σ)
-      (hr : σ.read ℓ = some v) :
+      (h : ρ.lookup x = some ℓ) :
     -- ────────────────────────────── (Var)
-      ⟨ρ, σ⟩ ⊢ .var x ⇒ v, σ
+      ⟨ρ, σ⟩ ⊢ .var x ⇒ .lval ℓ, σ
 
+  /-- An unqualified field of `this` inside a member. -/
+  | varField
+      (h : ρ.lookup x = none)
+      (ht : ρ.lookup "this" = some ℓₜ)
+      (ho : σ.read ℓₜ = some (.obj c fs))
+      (hf : fs.lookup x = some ℓ) :
+    -- ─────────────────────────────── (VarField)
+      ⟨ρ, σ⟩ ⊢ .var x ⇒ .lval ℓ, σ
+
+  /-- `this` is a prvalue, the pointer to the receiver. -/
   | this
       (h : ρ.lookup "this" = some ℓ) :
-    -- ────────────────────────────── (This)
-      ⟨ρ, σ⟩ ⊢ .this ⇒ .loc ℓ, σ
-
-  | read
-      (hp : e.isPlace)
-      (hl : ⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ')
-      (hr : σ'.read ℓ = some v) :
-    -- ────────────────────────── (Read)
-      ⟨ρ, σ⟩ ⊢ e ⇒ v, σ'
+    -- ────────────────────────────────── (This)
+      ⟨ρ, σ⟩ ⊢ .this ⇒ .val (.loc ℓ), σ
 
   /-- The constructor of C receives the arguments, the others none. -/
   | new
@@ -198,101 +198,111 @@ inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop
       (ho : σ₁.alloc (.obj c (((p.allFields c).map (·.1.name)).zip ls)) = (ℓ, σ₂))
       (hk : Ctors p ρ σ₂ ℓ c (p.chain c).reverse es σ₃) :
     -- ────────────────────────────────────────────────────────────────────── (New)
-      ⟨ρ, σ⟩ ⊢ .newObj c es ⇒ .loc ℓ, σ₃
+      ⟨ρ, σ⟩ ⊢ .newObj c es ⇒ .val (.loc ℓ), σ₃
 
-  /-- See `CallMethod`. The method returns a value. -/
+  /-- See `CallMethod`. A method declared `τ&` gives a location and one
+  declared `τ` a value. -/
   | methodCall
-      (h : CallMethod p ρ σ recv arrow m es static sig md v σ')
-      (hr : md.retRef = false) :
+      (h : CallMethod p ρ σ recv arrow m es static sig md r σ') :
     -- ───────────────────────────────────────────────────────── (MethodCall)
-      ⟨ρ, σ⟩ ⊢ .methodCall recv arrow m es static sig ⇒ v, σ'
-
-  /-- In a value position the location a member returns is read. -/
-  | methodCallRef
-      (h : CallMethod p ρ σ recv arrow m es static sig md (.loc ℓ) σ')
-      (hr : md.retRef = true)
-      (hv : σ'.read ℓ = some v) :
-    -- ──────────────────────────────────────────────────────────────── (MethodCallRef)
-      ⟨ρ, σ⟩ ⊢ .methodCall recv arrow m es static sig ⇒ v, σ'
+      ⟨ρ, σ⟩ ⊢ .methodCall recv arrow m es static sig ⇒ r, σ'
 
   /-- The last premise is the relation `new` of the module of L. -/
   | newLib
       (ha : Args p ρ σ es vs σ₁)
       (hM : moduleOf L = some M)
       (hn : M.new ts vs σ₁ v σ₂) :
-    -- ─────────────────────────────────────── (NewLib)
-      ⟨ρ, σ⟩ ⊢ .newLib (.lib L ts) es ⇒ v, σ₂
+    -- ─────────────────────────────────────────── (NewLib)
+      ⟨ρ, σ⟩ ⊢ .newLib (.lib L ts) es ⇒ .val v, σ₂
 
   | not
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ .bool b, σ') :
-    -- ──────────────────────────────────── (Not)
-      ⟨ρ, σ⟩ ⊢ .unop .not e ⇒ .bool !b, σ'
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ')
+      (hv : r.rd σ' = some (.bool b)) :
+    -- ─────────────────────────────────────────── (Not)
+      ⟨ρ, σ⟩ ⊢ .unop .not e ⇒ .val (.bool !b), σ'
 
   | neg
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ .int n, σ')
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ')
+      (hv : r.rd σ' = some (.int n))
       (hr : Int32.inRange (-n)) :
-    -- ───────────────────────────────────── (Neg)
-      ⟨ρ, σ⟩ ⊢ .unop .neg e ⇒ .int (-n), σ'
+    -- ──────────────────────────────────────────── (Neg)
+      ⟨ρ, σ⟩ ⊢ .unop .neg e ⇒ .val (.int (-n)), σ'
 
   /-- Left before right, the Core C++ order where C++17 fixes none. An overflow has no derivation. -/
   | arith
       (hop : op.isArith)
-      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .int n₁, σ₁)
-      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ .int n₂, σ₂)
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ r₁, σ₁)
+      (hv₁ : r₁.rd σ₁ = some (.int n₁))
+      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ r₂, σ₂)
+      (hv₂ : r₂.rd σ₂ = some (.int n₂))
       (hr : Int32.inRange (op.arith n₁ n₂)) :
-    -- ──────────────────────────────────────────────────── (Arith)
-      ⟨ρ, σ⟩ ⊢ .binop op e₁ e₂ ⇒ .int (op.arith n₁ n₂), σ₂
+    -- ─────────────────────────────────────────────────────────── (Arith)
+      ⟨ρ, σ⟩ ⊢ .binop op e₁ e₂ ⇒ .val (.int (op.arith n₁ n₂)), σ₂
 
   /-- A zero divisor and a result outside the range of `int` have no derivation. -/
   | div
-      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .int n₁, σ₁)
-      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ .int n₂, σ₂)
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ r₁, σ₁)
+      (hv₁ : r₁.rd σ₁ = some (.int n₁))
+      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ r₂, σ₂)
+      (hv₂ : r₂.rd σ₂ = some (.int n₂))
       (hz : n₂ ≠ 0)
       (hd : op.divide n₁ n₂ = some n)
       (hr : Int32.inRange n) :
-    -- ───────────────────────────────────── (Div)
-      ⟨ρ, σ⟩ ⊢ .binop op e₁ e₂ ⇒ .int n, σ₂
+    -- ──────────────────────────────────────────── (Div)
+      ⟨ρ, σ⟩ ⊢ .binop op e₁ e₂ ⇒ .val (.int n), σ₂
 
   | rel
-      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ v₁, σ₁)
-      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ v₂, σ₂)
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ r₁, σ₁)
+      (hv₁ : r₁.rd σ₁ = some v₁)
+      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ r₂, σ₂)
+      (hv₂ : r₂.rd σ₂ = some v₂)
       (hc : op.compare v₁ v₂ = some b) :
-    -- ────────────────────────────────────── (Rel)
-      ⟨ρ, σ⟩ ⊢ .binop op e₁ e₂ ⇒ .bool b, σ₂
+    -- ───────────────────────────────────────────── (Rel)
+      ⟨ρ, σ⟩ ⊢ .binop op e₁ e₂ ⇒ .val (.bool b), σ₂
 
   | andF
-      (h : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool false, σ₁) :
-    -- ──────────────────────────────────────────── (And-False)
-      ⟨ρ, σ⟩ ⊢ .binop .and e₁ e₂ ⇒ .bool false, σ₁
+      (h : ⟨ρ, σ⟩ ⊢ e₁ ⇒ r₁, σ₁)
+      (hv : r₁.rd σ₁ = some (.bool false)) :
+    -- ────────────────────────────────────────────────── (And-False)
+      ⟨ρ, σ⟩ ⊢ .binop .and e₁ e₂ ⇒ .val (.bool false), σ₁
 
   | andT
-      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool true, σ₁)
-      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ v, σ₂) :
-    -- ─────────────────────────────────── (And-True)
-      ⟨ρ, σ⟩ ⊢ .binop .and e₁ e₂ ⇒ v, σ₂
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ r₁, σ₁)
+      (hv₁ : r₁.rd σ₁ = some (.bool true))
+      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ r₂, σ₂)
+      (hv₂ : r₂.rd σ₂ = some v) :
+    -- ───────────────────────────────────────── (And-True)
+      ⟨ρ, σ⟩ ⊢ .binop .and e₁ e₂ ⇒ .val v, σ₂
 
   | orT
-      (h : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool true, σ₁) :
-    -- ────────────────────────────────────────── (Or-True)
-      ⟨ρ, σ⟩ ⊢ .binop .or e₁ e₂ ⇒ .bool true, σ₁
+      (h : ⟨ρ, σ⟩ ⊢ e₁ ⇒ r₁, σ₁)
+      (hv : r₁.rd σ₁ = some (.bool true)) :
+    -- ──────────────────────────────────────────────── (Or-True)
+      ⟨ρ, σ⟩ ⊢ .binop .or e₁ e₂ ⇒ .val (.bool true), σ₁
 
   | orF
-      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool false, σ₁)
-      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ v, σ₂) :
-    -- ──────────────────────────────────── (Or-False)
-      ⟨ρ, σ⟩ ⊢ .binop .or e₁ e₂ ⇒ v, σ₂
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ r₁, σ₁)
+      (hv₁ : r₁.rd σ₁ = some (.bool false))
+      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ r₂, σ₂)
+      (hv₂ : r₂.rd σ₂ = some v) :
+    -- ──────────────────────────────────────── (Or-False)
+      ⟨ρ, σ⟩ ⊢ .binop .or e₁ e₂ ⇒ .val v, σ₂
 
+  /-- The result of the chosen branch, a location when it is an lvalue
+  (N4659 [expr.cond], §8.16 paragraph 5). -/
   | condT
-      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool true, σ₁)
-      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ v, σ₂) :
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ r₁, σ₁)
+      (hv : r₁.rd σ₁ = some (.bool true))
+      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ r, σ₂) :
     -- ─────────────────────────────────── (Cond-T)
-      ⟨ρ, σ⟩ ⊢ .cond e₁ e₂ e₃ ⇒ v, σ₂
+      ⟨ρ, σ⟩ ⊢ .cond e₁ e₂ e₃ ⇒ r, σ₂
 
   | condF
-      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool false, σ₁)
-      (h₃ : ⟨ρ, σ₁⟩ ⊢ e₃ ⇒ v, σ₂) :
+      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ r₁, σ₁)
+      (hv : r₁.rd σ₁ = some (.bool false))
+      (h₃ : ⟨ρ, σ₁⟩ ⊢ e₃ ⇒ r, σ₂) :
     -- ──────────────────────────────────── (Cond-F)
-      ⟨ρ, σ⟩ ⊢ .cond e₁ e₂ e₃ ⇒ v, σ₂
+      ⟨ρ, σ⟩ ⊢ .cond e₁ e₂ e₃ ⇒ r, σ₂
 
   /-- See `Bind` and `Returns`. The return frees the copies and the locals of the body, never the referents. -/
   | call
@@ -300,20 +310,21 @@ inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop
       (hf : FunEnv.lookupSig p f sig = some fn)
       (hn : fn.params.length = es.length)
       (hb : Bind p ρ σ [] fn.params es ρf σ₁ owned)
-      (hx : ⟨ρf, σ₁⟩ ⊢ fn.body ⇒* r, ρ', σ₂)
-      (hr : Returns r fn.ret v) :
+      (hx : ⟨ρf, σ₁⟩ ⊢ fn.body ⇒* c, ρ', σ₂)
+      (hr : Returns σ₂ c fn.ret false r) :
     -- ─────────────────────────────────────────────────────────────── (Call)
-      ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ v, σ₂.free (owned ++ Env.fresh ρf ρ')
+      ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ r, σ₂.free (owned ++ Env.fresh ρf ρ')
 
   /-- A variable f bound to a `std::function` object, a reference parameter,
   hides the function named f. -/
   | callVar
       (hρ : ρ.lookup f = some ℓ)
-      (hv : ⟨ρ, σ⟩ ⊢ .var f ⇒ .lib "std::function" [ℓₜ], σ₁)
+      (hv : ⟨ρ, σ⟩ ⊢ .var f ⇒ r, σ₁)
+      (hr : r.rd σ₁ = some (.lib "std::function" [ℓₜ]))
       (ht : σ₁.read ℓₜ = some w)
       (ha : ApplyArgs p ρ σ₁ w es v σ') :
     -- ───────────────────────────────── (CallFn)
-      ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ v, σ'
+      ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ .val v, σ'
 
   /-- An unqualified method name inside a member body. -/
   | callThis
@@ -321,9 +332,9 @@ inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop
       (hf : FunEnv.lookup p f = none)
       (hl : p.libDecls.lookup f = none)
       (ht : ρ.lookup "this" = some ℓ)
-      (h : ⟨ρ, σ⟩ ⊢ .methodCall .this true f es none none ⇒ v, σ') :
+      (h : ⟨ρ, σ⟩ ⊢ .methodCall .this true f es none none ⇒ r, σ') :
     -- ──────────────────────────────────────────────────────────── (CallThis)
-      ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ v, σ'
+      ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ r, σ'
 
   /-- The last premise is the relation `call` of the module of f. -/
   | callLib
@@ -333,192 +344,169 @@ inductive Eval (p : Program) : Env → Store → Expr → Val → Store → Prop
       (hM : moduleOf f = some M)
       (ha : Args p ρ σ es vs σ₁)
       (hc : M.call vs σ₁ v σ₂) :
-    -- ────────────────────────────────────── (CallLib)
-      ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ v, σ₂
+    -- ────────────────────────────────────────── (CallLib)
+      ⟨ρ, σ⟩ ⊢ .call f es sig ⇒ .val v, σ₂
 
   /-- The callee is a `std::function` object, `*f` for a pointer f, whose
   target w is a closure. A function with no target, `null` at ℓₜ, has no
   derivation. -/
   | callFn
-      (he : ⟨ρ, σ⟩ ⊢ fe ⇒ .lib "std::function" [ℓₜ], σ₁)
+      (he : ⟨ρ, σ⟩ ⊢ fe ⇒ r, σ₁)
+      (hr : r.rd σ₁ = some (.lib "std::function" [ℓₜ]))
       (ht : σ₁.read ℓₜ = some w)
       (ha : ApplyArgs p ρ σ₁ w es v σ') :
-    -- ───────────────────────────────── (CallFn)
-      ⟨ρ, σ⟩ ⊢ .callFn fe es ⇒ v, σ'
+    -- ───────────────────────────────────── (CallFn)
+      ⟨ρ, σ⟩ ⊢ .callFn fe es ⇒ .val v, σ'
 
   /-- The closure holds values, copies taken at the lambda, read only. -/
   | lambda
       (hc : captures? ρ σ ps b = some cap) :
-    -- ──────────────────────────────────────────────── (Lambda)
-      ⟨ρ, σ⟩ ⊢ .lambda ps r b ⇒ .closure ps r b cap, σ
+    -- ────────────────────────────────────────────────────── (Lambda)
+      ⟨ρ, σ⟩ ⊢ .lambda ps r b ⇒ .val (.closure ps r b cap), σ
 
-  /-- The location as a value, in the return of a member that returns a reference. -/
-  | locOf
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ') :
-    -- ────────────────────────────── (LocOf)
-      ⟨ρ, σ⟩ ⊢ .locOf e ⇒ .loc ℓ, σ'
+  /-- The object a pointer points to. A `nullptr` has no derivation. -/
+  | deref
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ')
+      (hv : r.rd σ' = some (.loc ℓ)) :
+    -- ───────────────────────────────── (Deref)
+      ⟨ρ, σ⟩ ⊢ .deref e ⇒ .lval ℓ, σ'
 
-/-- ρ, σ ⊢ e ⇒ₗ ℓ, σ′ -/
-inductive LEval (p : Program) : Env → Store → Expr → Loc → Store → Prop where
-  | locVar
-      (h : ρ.lookup x = some ℓ) :
-    -- ───────────────────────── (LocVar)
-      ⟨ρ, σ⟩ ⊢ .var x ⇒ₗ ℓ, σ
-
-  /-- An unqualified field of `this`. -/
-  | locVarField
-      (h : ρ.lookup x = none)
-      (ht : ρ.lookup "this" = some ℓₜ)
-      (ho : σ.read ℓₜ = some (.obj c fs))
-      (hf : fs.lookup x = some ℓ) :
-    -- ─────────────────────────────────── (LocVarField)
-      ⟨ρ, σ⟩ ⊢ .var x ⇒ₗ ℓ, σ
-
-  /-- A `nullptr` has no derivation. -/
-  | locDeref
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ .loc ℓ, σ') :
-    -- ───────────────────────────── (LocDeref)
-      ⟨ρ, σ⟩ ⊢ .deref e ⇒ₗ ℓ, σ'
-
-  | locField
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ')
+  | field
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ .lval ℓ, σ')
       (ho : σ'.read ℓ = some (.obj c fs))
       (hf : fs.lookup f = some ℓf) :
-    -- ─────────────────────────────────── (LocField)
-      ⟨ρ, σ⟩ ⊢ .field e f ⇒ₗ ℓf, σ'
+    -- ─────────────────────────────────── (Field)
+      ⟨ρ, σ⟩ ⊢ .field e f ⇒ .lval ℓf, σ'
 
-  | locArrow
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ .loc ℓ, σ')
+  | arrow
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ')
+      (hv : r.rd σ' = some (.loc ℓ))
       (ho : σ'.read ℓ = some (.obj c fs))
       (hf : fs.lookup f = some ℓf) :
-    -- ─────────────────────────────────── (LocArrow)
-      ⟨ρ, σ⟩ ⊢ .arrow e f ⇒ₗ ℓf, σ'
-
-  | methodLoc
-      (h : CallMethod p ρ σ recv arrow m es static sig md (.loc ℓ) σ')
-      (hr : md.retRef = true) :
-    -- ──────────────────────────────────────────────────────────────── (MethodLoc)
-      ⟨ρ, σ⟩ ⊢ .methodCall recv arrow m es static sig ⇒ₗ ℓ, σ'
+    -- ─────────────────────────────────── (Arrow)
+      ⟨ρ, σ⟩ ⊢ .arrow e f ⇒ .lval ℓf, σ'
 
   /-- The last premise is the relation `index` of the module of L. -/
-  | locIndex
-      (h₁ : ⟨ρ, σ⟩ ⊢ e ⇒ .lib L ls, σ₁)
-      (h₂ : ⟨ρ, σ₁⟩ ⊢ i ⇒ v, σ₂)
+  | index
+      (h₁ : ⟨ρ, σ⟩ ⊢ e ⇒ r₁, σ₁)
+      (hv₁ : r₁.rd σ₁ = some (.lib L ls))
+      (h₂ : ⟨ρ, σ₁⟩ ⊢ i ⇒ r₂, σ₂)
+      (hv₂ : r₂.rd σ₂ = some v)
       (hM : moduleOf L = some M)
       (hi : M.index (.lib L ls) v σ₂ ℓ σ₃) :
-    -- ──────────────────────────────────── (LocIndex)
-      ⟨ρ, σ⟩ ⊢ .index e i ⇒ₗ ℓ, σ₃
-
-  | locCondT
-      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool true, σ₁)
-      (h₂ : ⟨ρ, σ₁⟩ ⊢ e₂ ⇒ₗ ℓ, σ₂) :
-    -- ──────────────────────────────── (LocCond-T)
-      ⟨ρ, σ⟩ ⊢ .cond e₁ e₂ e₃ ⇒ₗ ℓ, σ₂
-
-  | locCondF
-      (h₁ : ⟨ρ, σ⟩ ⊢ e₁ ⇒ .bool false, σ₁)
-      (h₃ : ⟨ρ, σ₁⟩ ⊢ e₃ ⇒ₗ ℓ, σ₂) :
-    -- ──────────────────────────────── (LocCond-F)
-      ⟨ρ, σ⟩ ⊢ .cond e₁ e₂ e₃ ⇒ₗ ℓ, σ₂
+    -- ──────────────────────────────────── (Index)
+      ⟨ρ, σ⟩ ⊢ .index e i ⇒ .lval ℓ, σ₃
 
 /-- ρ, σ ⊢ c ⇒ r, ρ′, σ′ -/
 inductive Exec (p : Program) : Env → Store → Cmd → Ctrl → Env → Store → Prop where
   /-- The block discards the extension of ρ and frees the locations it allocated, fresh(ρ, ρ′), the owned bindings of ρ′ ∖ ρ. -/
   | block
-      (h : ⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ') :
+      (h : ⟨ρ, σ⟩ ⊢ cs ⇒* c, ρ', σ') :
     -- ─────────────────────────────────────────────────── (Block)
-      ⟨ρ, σ⟩ ⊢ .block cs ⇒ r, ρ, σ'.free (Env.fresh ρ ρ')
+      ⟨ρ, σ⟩ ⊢ .block cs ⇒ c, ρ, σ'.free (Env.fresh ρ ρ')
 
   | ifT
-      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ .bool true, σ₁)
-      (h : ⟨ρ, σ₁⟩ ⊢ .block t ⇒ r, ρ, σ₂) :
+      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ₁)
+      (hv : r.rd σ₁ = some (.bool true))
+      (h : ⟨ρ, σ₁⟩ ⊢ .block t ⇒ c, ρ, σ₂) :
     -- ─────────────────────────────────── (If-T)
-      ⟨ρ, σ⟩ ⊢ .ite e t f ⇒ r, ρ, σ₂
+      ⟨ρ, σ⟩ ⊢ .ite e t f ⇒ c, ρ, σ₂
 
   | ifF
-      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ .bool false, σ₁)
-      (h : ⟨ρ, σ₁⟩ ⊢ .block f ⇒ r, ρ, σ₂) :
+      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ₁)
+      (hv : r.rd σ₁ = some (.bool false))
+      (h : ⟨ρ, σ₁⟩ ⊢ .block f ⇒ c, ρ, σ₂) :
     -- ─────────────────────────────────── (If-F)
-      ⟨ρ, σ⟩ ⊢ .ite e t f ⇒ r, ρ, σ₂
+      ⟨ρ, σ⟩ ⊢ .ite e t f ⇒ c, ρ, σ₂
 
   | whileF
-      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ .bool false, σ₁) :
+      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ₁)
+      (hv : r.rd σ₁ = some (.bool false)) :
     -- ──────────────────────────────────── (While-F)
       ⟨ρ, σ⟩ ⊢ .while e b ⇒ .normal, ρ, σ₁
 
   /-- The divergence of `while (true) {}` has no derivation. -/
   | whileT
-      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ .bool true, σ₁)
+      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ₁)
+      (hv : r.rd σ₁ = some (.bool true))
       (hb : ⟨ρ, σ₁⟩ ⊢ .block b ⇒ .normal, ρ, σ₂)
-      (hw : ⟨ρ, σ₂⟩ ⊢ .while e b ⇒ r, ρ, σ₃) :
+      (hw : ⟨ρ, σ₂⟩ ⊢ .while e b ⇒ c, ρ, σ₃) :
     -- ────────────────────────────────────────── (While-T)
-      ⟨ρ, σ⟩ ⊢ .while e b ⇒ r, ρ, σ₃
+      ⟨ρ, σ⟩ ⊢ .while e b ⇒ c, ρ, σ₃
 
   /-- The return interrupts the loop. -/
   | whileRet
-      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ .bool true, σ₁)
-      (hb : ⟨ρ, σ₁⟩ ⊢ .block b ⇒ .ret v, ρ, σ₂) :
+      (hc : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ₁)
+      (hv : r.rd σ₁ = some (.bool true))
+      (hb : ⟨ρ, σ₁⟩ ⊢ .block b ⇒ .ret r', ρ, σ₂) :
     -- ───────────────────────────────────────── (While-Ret)
-      ⟨ρ, σ⟩ ⊢ .while e b ⇒ .ret v, ρ, σ₂
+      ⟨ρ, σ⟩ ⊢ .while e b ⇒ .ret r', ρ, σ₂
 
   /-- The variable of c₀ has the loop as its scope, and the step runs after the body, outside the body's block. -/
   | forLoop
       (h₀ : ⟨ρ, σ⟩ ⊢ c₀ ⇒ .normal, ρ₀, σ₀)
-      (hw : ⟨ρ₀, σ₀⟩ ⊢ .while e [.block b, cₛ] ⇒ r, ρ₀, σ₁) :
+      (hw : ⟨ρ₀, σ₀⟩ ⊢ .while e [.block b, cₛ] ⇒ c, ρ₀, σ₁) :
     -- ──────────────────────────────────────────────────────── (For)
-      ⟨ρ, σ⟩ ⊢ .for c₀ e cₛ b ⇒ r, ρ, σ₁.free (Env.fresh ρ ρ₀)
+      ⟨ρ, σ⟩ ⊢ .for c₀ e cₛ b ⇒ c, ρ, σ₁.free (Env.fresh ρ ρ₀)
 
   | retVoid :
-    -- ───────────────────────────────────── (ReturnVoid)
-      ⟨ρ, σ⟩ ⊢ .ret none ⇒ .ret .void, ρ, σ
+    -- ─────────────────────────────────────────── (ReturnVoid)
+      ⟨ρ, σ⟩ ⊢ .ret none ⇒ .ret (.val .void), ρ, σ
 
+  /-- The result of the operand, unchanged. The call converts it by the
+  declared return type of the callee, `Returns`. -/
   | ret
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ v, σ') :
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ') :
     -- ────────────────────────────────────── (Return)
-      ⟨ρ, σ⟩ ⊢ .ret (some e) ⇒ .ret v, ρ, σ'
+      ⟨ρ, σ⟩ ⊢ .ret (some e) ⇒ .ret r, ρ, σ'
 
   | decl
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ v, σ')
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ')
+      (hv : r.rd σ' = some v)
       (ha : σ'.alloc v = (ℓ, σ'')) :
     -- ───────────────────────────────────────────────── (Decl)
       ⟨ρ, σ⟩ ⊢ .decl τ x e ⇒ .normal, ρ.extend x ℓ, σ''
 
   /-- A second name for an existing location, the alias binding ρ[x ↦ₐ ℓ], not owned, so block exit leaves ℓ in σ. -/
   | declRef
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ') :
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ .lval ℓ, σ') :
     -- ────────────────────────────────────────────────── (DeclRef)
       ⟨ρ, σ⟩ ⊢ .declRef τ x e ⇒ .normal, ρ.alias x ℓ, σ'
 
   /-- The rule Decl, with τ the type of v. -/
   | declAuto
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ v, σ')
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ')
+      (hv : r.rd σ' = some v)
       (ha : σ'.alloc v = (ℓ, σ'')) :
     -- ─────────────────────────────────────────────────── (Decl)
       ⟨ρ, σ⟩ ⊢ .declAuto x e ⇒ .normal, ρ.extend x ℓ, σ''
 
   /-- Right operand before left, the order C++17 fixes for assignment. -/
   | assign
-      (hr : ⟨ρ, σ⟩ ⊢ e₂ ⇒ v, σ₁)
-      (hl : ⟨ρ, σ₁⟩ ⊢ e₁ ⇒ₗ ℓ, σ₂)
+      (hr : ⟨ρ, σ⟩ ⊢ e₂ ⇒ r, σ₁)
+      (hv : r.rd σ₁ = some v)
+      (hl : ⟨ρ, σ₁⟩ ⊢ e₁ ⇒ .lval ℓ, σ₂)
       (hd : (σ₂.read ℓ).isSome) :
     -- ───────────────────────────────────────────────── (Assign)
       ⟨ρ, σ⟩ ⊢ .assign e₁ e₂ ⇒ .normal, ρ, σ₂.write ℓ v
 
-  /-- The value is discarded. -/
+  /-- The result is discarded, with no conversion (N4659 [expr], §8 paragraph 12). -/
   | exprStmt
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ v, σ') :
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ') :
     -- ───────────────────────────────────── (ExprStmt)
       ⟨ρ, σ⟩ ⊢ .exprStmt e ⇒ .normal, ρ, σ'
 
   /-- As in C++, `delete nullptr` does nothing. -/
   | deleteNull
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ .null, σ') :
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ')
+      (hv : r.rd σ' = some .null) :
     -- ────────────────────────────────────────── (DeleteNull)
       ⟨ρ, σ⟩ ⊢ .delete e static ⇒ .normal, ρ, σ'
 
   /-- The last premise is the relation `delete` of the module of L. -/
   | deleteLib
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ .loc ℓ, σ₀)
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ₀)
+      (hv : r.rd σ₀ = some (.loc ℓ))
       (ho : σ₀.read ℓ = some (.lib L ls))
       (hM : moduleOf L = some M)
       (hd : M.delete (.lib L ls) σ₀ σ₁) :
@@ -527,9 +515,10 @@ inductive Exec (p : Program) : Env → Store → Cmd → Ctrl → Env → Store 
 
   /-- A second `delete` of ℓ, and a `delete` through a base pointer without a virtual destructor, have no derivation. -/
   | delete
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ .loc ℓ, σ₀)
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ₀)
+      (hv : r.rd σ₀ = some (.loc ℓ))
       (ho : σ₀.read ℓ = some (.obj tag flds))
-      (hv : static.getD tag = tag ∨ p.hasVirtualDtor (static.getD tag) = true)
+      (hvd : static.getD tag = tag ∨ p.hasVirtualDtor (static.getD tag) = true)
       (hd : Dtors p ρ σ₀ ℓ (p.chain tag) σ₁) :
     -- ────────────────────────────────────────────────────────────────────── (Delete)
       ⟨ρ, σ⟩ ⊢ .delete e static ⇒ .normal, ρ, σ₁.free (ℓ :: flds.map (·.2))
@@ -543,15 +532,15 @@ inductive Execs (p : Program) : Env → Store → List Cmd → Ctrl → Env → 
   /-- The environment ρ₁ carries the binding of c to the rest. -/
   | cons
       (h : ⟨ρ, σ⟩ ⊢ c ⇒ .normal, ρ₁, σ₁)
-      (hs : ⟨ρ₁, σ₁⟩ ⊢ cs ⇒* r, ρ₂, σ₂) :
+      (hs : ⟨ρ₁, σ₁⟩ ⊢ cs ⇒* k, ρ₂, σ₂) :
     -- ────────────────────────────────── (Seq)
-      ⟨ρ, σ⟩ ⊢ c :: cs ⇒* r, ρ₂, σ₂
+      ⟨ρ, σ⟩ ⊢ c :: cs ⇒* k, ρ₂, σ₂
 
   /-- The return interrupts the sequence. -/
   | consRet
-      (h : ⟨ρ, σ⟩ ⊢ c ⇒ .ret v, ρ₁, σ₁) :
+      (h : ⟨ρ, σ⟩ ⊢ c ⇒ .ret r, ρ₁, σ₁) :
     -- ────────────────────────────────── (Seq-Ret)
-      ⟨ρ, σ⟩ ⊢ c :: cs ⇒* .ret v, ρ₁, σ₁
+      ⟨ρ, σ⟩ ⊢ c :: cs ⇒* .ret r, ρ₁, σ₁
 
 /-- The values of arguments, left to right. -/
 inductive Args (p : Program) : Env → Store → List Expr → List Val → Store → Prop where
@@ -560,7 +549,8 @@ inductive Args (p : Program) : Env → Store → List Expr → List Val → Stor
       Args p ρ σ [] [] σ
 
   | cons
-      (h : ⟨ρ, σ⟩ ⊢ e ⇒ v, σ₁)
+      (h : ⟨ρ, σ⟩ ⊢ e ⇒ r, σ₁)
+      (hv : r.rd σ₁ = some v)
       (hs : Args p ρ σ₁ es vs σ₂) :
     -- ─────────────────────────────────
       Args p ρ σ (e :: es) (v :: vs) σ₂
@@ -576,29 +566,31 @@ inductive Bind (p : Program) : Env → Store → Env → List Param → List Exp
 
   | byRef
       (hq : q.byRef = true)
-      (hl : ⟨ρ, σ⟩ ⊢ a ⇒ₗ ℓ, σ₁)
+      (hl : ⟨ρ, σ⟩ ⊢ a ⇒ .lval ℓ, σ₁)
       (hs : Bind p ρ σ₁ (ρ₀.alias q.name ℓ) qs es ρ' σ' owned) :
     -- ────────────────────────────────────────────────────────
       Bind p ρ σ ρ₀ (q :: qs) (a :: es) ρ' σ' owned
 
   | byVal
       (hq : q.byRef = false)
-      (hv : ⟨ρ, σ⟩ ⊢ a ⇒ v, σ₁)
+      (hr : ⟨ρ, σ⟩ ⊢ a ⇒ r, σ₁)
+      (hv : r.rd σ₁ = some v)
       (ha : σ₁.alloc v = (ℓ, σ₂))
       (hs : Bind p ρ σ₂ (ρ₀.extend q.name ℓ) qs es ρ' σ' owned) :
     -- ─────────────────────────────────────────────────────────
       Bind p ρ σ ρ₀ (q :: qs) (a :: es) ρ' σ' (ℓ :: owned)
 
 /-- The call of a member body, a method, a constructor or a destructor, with
-`this` bound to the location ℓ of the receiver. -/
-inductive Member (p : Program) : Env → Store → Loc → List Param → List Cmd → List Expr → Ty → Val → Store → Prop where
+`this` bound to the location ℓ of the receiver. The flag `ref` is whether the
+member is declared to return a reference. -/
+inductive Member (p : Program) : Env → Store → Loc → List Param → List Cmd → List Expr → Ty → Bool → Res → Store → Prop where
   | member
       (hn : ps.length = es.length)
       (hb : Bind p ρ σ (Env.alias [] "this" ℓ) ps es ρm σ₁ owned)
-      (hx : ⟨ρm, σ₁⟩ ⊢ body ⇒* r, ρ', σ₂)
-      (hr : Returns r ret v) :
+      (hx : ⟨ρm, σ₁⟩ ⊢ body ⇒* c, ρ', σ₂)
+      (hr : Returns σ₂ c ret ref r) :
     -- ──────────────────────────────────────────────────────────────────── (Member)
-      Member p ρ σ ℓ ps body es ret v (σ₂.free (owned ++ Env.fresh ρm ρ'))
+      Member p ρ σ ℓ ps body es ret ref r (σ₂.free (owned ++ Env.fresh ρm ρ'))
 
 /-- The receiver, the dispatch and the call of a method m. The receiver of
 `e.m(ē)` is the location e denotes and the receiver of `e->m(ē)` the location
@@ -606,22 +598,23 @@ e points to. The method is the one nearest the static class S in the chain, or
 nearest the tag T of the object when that method is virtual, so a call through
 a base pointer reaches the override. -/
 inductive CallMethod (p : Program) :
-    Env → Store → Expr → Bool → String → List Expr → Option String → Option (List Ty) → Method → Val → Store → Prop where
+    Env → Store → Expr → Bool → String → List Expr → Option String → Option (List Ty) → Method → Res → Store → Prop where
   | dot
-      (hl : ⟨ρ, σ⟩ ⊢ recv ⇒ₗ ℓ, σ₀)
+      (hl : ⟨ρ, σ⟩ ⊢ recv ⇒ .lval ℓ, σ₀)
       (ho : σ₀.read ℓ = some (.obj tag flds))
       (hm : p.resolve (static.getD tag) tag m sig = some (md, k))
-      (hc : Member p ρ σ₀ ℓ md.params md.body es md.ret v σ') :
+      (hc : Member p ρ σ₀ ℓ md.params md.body es md.ret md.retRef r σ') :
     -- ───────────────────────────────────────────────────────────
-      CallMethod p ρ σ recv false m es static sig md v σ'
+      CallMethod p ρ σ recv false m es static sig md r σ'
 
   | arrow
-      (hv : ⟨ρ, σ⟩ ⊢ recv ⇒ .loc ℓ, σ₀)
+      (hv : ⟨ρ, σ⟩ ⊢ recv ⇒ r₀, σ₀)
+      (hp : r₀.rd σ₀ = some (.loc ℓ))
       (ho : σ₀.read ℓ = some (.obj tag flds))
       (hm : p.resolve (static.getD tag) tag m sig = some (md, k))
-      (hc : Member p ρ σ₀ ℓ md.params md.body es md.ret v σ') :
+      (hc : Member p ρ σ₀ ℓ md.params md.body es md.ret md.retRef r σ') :
     -- ───────────────────────────────────────────────────────────
-      CallMethod p ρ σ recv true m es static sig md v σ'
+      CallMethod p ρ σ recv true m es static sig md r σ'
 
 /-- The constructors of a chain of classes, run in the order of the list with
 `this` bound to ℓ. The constructor of the class c being created receives the
@@ -639,7 +632,7 @@ inductive Ctors (p : Program) : Env → Store → Loc → String → List ClassD
 
   | run
       (hk : cd.ctor = some k)
-      (hm : Member p ρ σ ℓ k.params k.body (if cd.name == c then es else []) .void v σ₁)
+      (hm : Member p ρ σ ℓ k.params k.body (if cd.name == c then es else []) .void false r σ₁)
       (hs : Ctors p ρ σ₁ ℓ c cds es σ') :
     -- ──────────────────────────────────────────────────────────────────────
       Ctors p ρ σ ℓ c (cd :: cds) es σ'
@@ -659,7 +652,7 @@ inductive Dtors (p : Program) : Env → Store → Loc → List ClassDecl → Sto
 
   | run
       (hd : cd.dtor = some d)
-      (hm : Member p ρ σ ℓ [] d.body [] .void v σ₁)
+      (hm : Member p ρ σ ℓ [] d.body [] .void false r σ₁)
       (hs : Dtors p ρ σ₁ ℓ cds σ') :
     -- ─────────────────────────────────────────────
       Dtors p ρ σ ℓ (cd :: cds) σ'
@@ -672,8 +665,8 @@ inductive Apply (p : Program) : Store → Val → List Val → Val → Store →
       (hn : ps.length = vs.length)
       (ha : σ.allocMany (cap.map (·.2) ++ vs) = (ls, σ₁))
       (hρ : ρc = Env.extendAll [] (cap.map (·.1) ++ ps.map (·.name)) ls)
-      (hx : ⟨ρc, σ₁⟩ ⊢ b ⇒* r, ρ'', σ₂)
-      (hr : Returns r τ v) :
+      (hx : ⟨ρc, σ₁⟩ ⊢ b ⇒* c, ρ'', σ₂)
+      (hr : Returns σ₂ c τ false (.val v)) :
     -- ────────────────────────────────────────────────────────────────────── (Apply)
       Apply p σ (.closure ps τ b cap) vs v (σ₂.free (ls ++ Env.fresh ρc ρ''))
 
@@ -697,7 +690,7 @@ are no global variables, and the result is the value `main()` returns.
 ───────────────────── (Program)
 p ⇒ v
 ``` -/
-def Runs (p : Program) (v : Val) : Prop := ∃ σ, (⟨[], {}⟩ ⊢ .call "main" [] none ⇒ v, σ)
+def Runs (p : Program) (v : Val) : Prop := ∃ σ, (⟨[], {}⟩ ⊢ .call "main" [] none ⇒ .val v, σ)
 
 end Semantics
 

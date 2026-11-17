@@ -524,7 +524,6 @@ def expr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Ty :=
     /-  Γ ⊢ₗ e : τ
         ────────────── (T-LocOf)      internal, the annotation of the return of a
         Γ ⊢ &e : τ                    member that returns a reference              -/
-    | .locOf e => lval fuel p Γ e
     /-  p(C) = cd    cd.ctor = C(p₁ x₁, …, pₖ xₖ) { c }    arguments as in T-Call
         ──────────────────────────────────────────────────────────────── (T-New)
         Γ ⊢ new C(e₁, …, eₖ) : C*
@@ -1192,9 +1191,8 @@ that the destructor is virtual when the tag differs. A call also needs the
 signature of the overload the type checker selected, since a name may denote
 several functions or methods. Neither ρ nor σ carries types, so `annotate`
 writes the static class and the signature into the tree after the program has
-been checked, rewrites an operator on a class operand and the indexing of an
-object into the call of the member, and rewrites the `return e` of a member
-that returns a reference into `return &e`, the location as a value. -/
+been checked, and rewrites an operator on a class operand and the indexing of an
+object into the call of the member. -/
 
 /-- The class a receiver expression has, `C` for `e.m` with `e : C` and for
 `e->m` with `e : C*`, and for `delete e` with `e : C*`. -/
@@ -1245,7 +1243,6 @@ def annExpr (fuel : Nat) (p : Program) (Γ : TEnv) (e : Expr) : T Expr :=
     | .field e f => return .field (← annExpr fuel p Γ e) f
     | .arrow e f => return .arrow (← annExpr fuel p Γ e) f
     | .deref e => return .deref (← annExpr fuel p Γ e)
-    | .locOf e => return .locOf (← annExpr fuel p Γ e)
     | .index e i => do
       let e' ← annExpr fuel p Γ e
       let i' ← annExpr fuel p Γ i
@@ -1295,27 +1292,8 @@ def annCmds (fuel : Nat) (p : Program) (τᵣ : Ty) (Γ : TEnv) (cs : List Cmd) 
 
 end
 
-/-- The `return e` of a member that returns a reference becomes `return &e`,
-the location as a value, which the caller reads or uses as a location. The
-walk does not enter the body of a lambda. -/
-def refRets (fuel : Nat) (cs : List Cmd) : List Cmd :=
-  match fuel with
-  | 0 => cs
-  | fuel + 1 =>
-  match cs with
-  | [] => []
-  | c :: cs =>
-    let c' := match c with
-      | .ret (some e) => Cmd.ret (some (.locOf e))
-      | .block b => .block (refRets fuel b)
-      | .while e b => .while e (refRets fuel b)
-      | .ite e t f => .ite e (refRets fuel t) (refRets fuel f)
-      | .for i e s b => .for i e s (refRets fuel b)
-      | c => c
-    c' :: refRets fuel cs
-
-/-- The program with the static classes, the chosen overloads and the
-reference returns filled in. Fails only on an ill typed program, which
+/-- The program with the static classes and the chosen overloads filled
+in. Fails only on an ill typed program, which
 `check` rejects first. -/
 def annotate (p₀ : Program) : T Program := do
   let p ← expand p₀
@@ -1327,8 +1305,7 @@ def annotate (p₀ : Program) : T Program := do
     | d@(.libTmpl ..) | d@(.libFn ..) => return d
     | .cls c => do
       let methods ← c.methods.mapM fun m => do
-        let body ← annCmds typingFuel p m.ret (memberEnv c.name m.params) m.body
-        return { m with body := if m.retRef then refRets typingFuel body else body }
+        return { m with body := ← annCmds typingFuel p m.ret (memberEnv c.name m.params) m.body }
       let ctor ← c.ctor.mapM fun k => do
         return { k with body := ← annCmds typingFuel p .void (memberEnv c.name k.params) k.body }
       let dtor ← c.dtor.mapM fun d => do

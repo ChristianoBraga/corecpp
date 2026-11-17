@@ -41,8 +41,7 @@ The judgments follow the sequent style of Kahn (1987). The hypotheses ρ and σ
 stand left of ⊢, the subject right of it and the result after ⇒.
 
 ```
-ρ, σ ⊢ e ⇒ v, σ'          expression evaluation
-ρ, σ ⊢ e ⇒ₗ ℓ, σ'         location denotation
+ρ, σ ⊢ e ⇒ r, σ'          expression evaluation, r = val v or lval ℓ
 ρ, σ ⊢ c ⇒ r, ρ', σ'      command execution
 ```
 

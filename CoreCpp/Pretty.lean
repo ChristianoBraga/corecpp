@@ -43,7 +43,7 @@ def Expr.prec : Expr → Nat
   | .cond .. => 0
   | .binop op .. => op.prec
   | .methodCall _ _ m _ _ _ => match opOfName m with | some op => op.prec | none => 8
-  | .unop .. | .deref .. | .locOf .. => 7
+  | .unop .. | .deref .. => 7
   | _ => 8
 
 /-- Removes the trailing `;` of a command rendered inside a `for` header. -/
@@ -79,7 +79,6 @@ partial def Expr.toString (e : Expr) : String :=
   | .deref e   => s!"*{paren 7 e}"
   | .index e i => s!"{paren 8 e}[{Expr.toString i}]"
   | .lambda ps r b => s!"[=]({", ".intercalate (ps.map Param.toString)}) -> {r} {Cmd.toString (.block b)}"
-  | .locOf e   => s!"&{paren 7 e}"
 
 partial def Cmd.toString : Cmd → String
   | .block cs => s!"\{ {" ".intercalate (cs.map Cmd.toString)} }"
@@ -122,9 +121,15 @@ def Env.toString (ρ : Env) : String :=
 def Store.toString (σ : Store) : String :=
   "{" ++ ", ".intercalate (σ.mem.reverse.map fun (l, v) => s!"{Loc.toString l} ↦ {v}") ++ "}"
 
+def Res.toString : Res → String
+  | .val v  => Val.toString v
+  | .lval l => s!"lval {Loc.toString l}"
+
+instance : ToString Res := ⟨Res.toString⟩
+
 def Ctrl.toString : Ctrl → String
   | .normal => "normal"
-  | .ret v  => s!"ret {v}"
+  | .ret r  => s!"ret {r}"
 
 instance : ToString Ctrl := ⟨Ctrl.toString⟩
 

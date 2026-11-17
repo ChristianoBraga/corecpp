@@ -59,7 +59,7 @@ A module $`L` gives at most five static relations and four dynamic ones. Each re
   * the creation of an instance
   * `new`
 *
-  * $`\sigma \vdash_L v[i] \Rightarrow_{\ell} \ell, \sigma'`
+  * $`\sigma \vdash_L v[i] \Rightarrow \ell, \sigma'`
   * the location of an element
   * `index`
 *
@@ -77,7 +77,7 @@ The static relations form `StaticModule` and the dynamic ones `Module`, found by
 An object type is a class or an entity of the library whose module gives `new` a signature, `Std.isObject`. Its values live in the store and are reached by pointer or by reference, so no variable, field, parameter or result has the type by value. A vector and a `std::function` are objects.
 ::::
 
-:::definition "std_uses" (parent := "library") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.lval, CoreCpp.Typing.cmd, CoreCpp.Eval.expr, CoreCpp.Eval.lval, CoreCpp.Eval.cmd, CoreCpp.Eval.libStep, CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Eval, CoreCpp.Semantics.LEval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Check") (uses := "std_library, judg_ty_lval, judg_ev_lval, dom_store")
+:::definition "std_uses" (parent := "library") (lean := "CoreCpp.Typing.expr, CoreCpp.Typing.lval, CoreCpp.Typing.cmd, CoreCpp.Eval.expr, CoreCpp.Eval.cmd, CoreCpp.Eval.libStep, CoreCpp.Eval.rd, CoreCpp.Semantics.HasType, CoreCpp.Semantics.LHasType, CoreCpp.Semantics.Eval, CoreCpp.Semantics.Exec, CoreCpp.Semantics.Check") (uses := "std_library, judg_ty_lval, judg_ev_expr, dom_store")
 The rules of the language for a subject of the library take the relation of its module as a premise. The arguments are values, evaluated left to right, and a module premise with no derivation makes the use `error` in the evaluator.
 
 $$`\dfrac{\Gamma \vdash L\langle\bar{\tau}\rangle\ \mathsf{ok} \qquad \Gamma \vdash_L \mathtt{new} : \tau_1 \times \cdots \times \tau_k \to \tau \qquad \Gamma \vdash e_i \lhd \tau_i}{\Gamma \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) : \tau}\;\textsf{(T-NewLib)}`
@@ -90,15 +90,15 @@ $$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle \qquad \Gamma \vdash_L \ma
 
 $$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle* \qquad L\langle\bar{\tau}\rangle \text{ an object type} \qquad \Gamma \vdash_L \mathtt{delete}\ \mathsf{ok}}{\Gamma \vdash \mathtt{delete}\ e \dashv \Gamma}\;\textsf{(T-DeleteLib)}`
 
-$$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'}{\rho, \sigma_0 \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(NewLib)}`
+$$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'}{\rho, \sigma_0 \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) \Rightarrow \mathsf{val}\,v, \sigma'}\;\textsf{(NewLib)}`
 
-$$`\dfrac{\begin{array}{c} f \notin \rho \qquad f \text{ no function of the program, declared by a header} \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_f f(v_1, \ldots, v_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma_0 \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(CallLib)}`
+$$`\dfrac{\begin{array}{c} f \notin \rho \qquad f \text{ no function of the program, declared by a header} \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_f f(v_1, \ldots, v_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma_0 \vdash f(e_1, \ldots, e_k) \Rightarrow \mathsf{val}\,v, \sigma'}\;\textsf{(CallLib)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{lib}\,L\,\bar{\ell}, \sigma_1 \qquad \rho, \sigma_1 \vdash i \Rightarrow v, \sigma_2 \qquad \sigma_2 \vdash_L (\mathsf{lib}\,L\,\bar{\ell})[v] \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash e[i] \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocIndex)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{lib}\,L\,\bar{\ell} \qquad \rho, \sigma_1 \vdash i \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v \\ \sigma_2 \vdash_L (\mathsf{lib}\,L\,\bar{\ell})[v] \Rightarrow \ell, \sigma' \end{array}}{\rho, \sigma \vdash e[i] \Rightarrow \mathsf{lval}\,\ell, \sigma'}\;\textsf{(Index)}`
 
-The receiver is evaluated before the index, the order C++17 fixes for subscripting (N4659 §8.2.1 ¶1), also when `operator[]` is overloaded (N4659 §16.3.1.2 ¶2). In a value position `e[i]` is read by the rule `Read`.
+The receiver is evaluated before the index, the order C++17 fixes for subscripting (N4659 §8.2.1 ¶1), also when `operator[]` is overloaded (N4659 §16.3.1.2 ¶2). The element is an lvalue. A context that requires a value reads it by the conversion rd of {bpref "dom_res"}[].
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \\ \sigma_0 \vdash_L \mathtt{delete}\ (\mathsf{lib}\,L\,\bar{\ell}) \Rightarrow \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{loc}\,\ell\qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \\ \sigma_0 \vdash_L \mathtt{delete}\ (\mathsf{lib}\,L\,\bar{\ell}) \Rightarrow \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}`
 
 The command `delete e` on a pointer to an instance frees what the module owns and then the location of the instance.
 :::
@@ -124,7 +124,7 @@ Indexing gives a location, so `v[i]` may stand on the left of an assignment and 
 
 $$`\dfrac{\begin{array}{c} k \ge 0\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau)\ (1 \le i \le k) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_k, \mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_1, \ldots, \ell_k]) \end{array}}{\sigma_0 \vdash_{\mathit{vector}} \mathtt{new}\langle\tau\rangle(k) \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(V-New)}`
 
-$$`\dfrac{0 \le i < n}{\sigma \vdash_{\mathit{vector}} (\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}])[i] \Rightarrow_{\ell} \ell_i, \sigma}\;\textsf{(V-Index)}`
+$$`\dfrac{0 \le i < n}{\sigma \vdash_{\mathit{vector}} (\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}])[i] \Rightarrow \ell_i, \sigma}\;\textsf{(V-Index)}`
 
 $$`\dfrac{}{\sigma \vdash_{\mathit{vector}} \mathtt{delete}\ (\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}]) \Rightarrow \sigma \setminus \{\ell_0, \ldots, \ell_{n-1}\}}\;\textsf{(V-Delete)}`
 
@@ -183,13 +183,13 @@ $$`\dfrac{\Gamma \vdash e : L\langle\bar{\tau}\rangle* \qquad L\langle\bar{\tau}
 
  
 
-$$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'}{\rho, \sigma_0 \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(NewLib)}`
+$$`\dfrac{\rho, \sigma_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_L \mathtt{new}\langle\bar{\tau}\rangle(v_1, \ldots, v_k) \Rightarrow v, \sigma'}{\rho, \sigma_0 \vdash \mathtt{new}\ L\langle\bar{\tau}\rangle(e_1, \ldots, e_k) \Rightarrow \mathsf{val}\,v, \sigma'}\;\textsf{(NewLib)}`
 
-$$`\dfrac{\begin{array}{c} f \notin \rho \qquad f \text{ no function of the program, declared by a header} \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow v_i, \sigma_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_f f(v_1, \ldots, v_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma_0 \vdash f(e_1, \ldots, e_k) \Rightarrow v, \sigma'}\;\textsf{(CallLib)}`
+$$`\dfrac{\begin{array}{c} f \notin \rho \qquad f \text{ no function of the program, declared by a header} \\ \rho, \sigma_{i-1} \vdash e_i \Rightarrow r_i, \sigma_i \quad \mathrm{rd}(\sigma_i, r_i) = v_i \quad (1 \le i \le k) \qquad \sigma_k \vdash_f f(v_1, \ldots, v_k) \Rightarrow v, \sigma' \end{array}}{\rho, \sigma_0 \vdash f(e_1, \ldots, e_k) \Rightarrow \mathsf{val}\,v, \sigma'}\;\textsf{(CallLib)}`
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow \mathsf{lib}\,L\,\bar{\ell}, \sigma_1 \qquad \rho, \sigma_1 \vdash i \Rightarrow v, \sigma_2 \qquad \sigma_2 \vdash_L (\mathsf{lib}\,L\,\bar{\ell})[v] \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash e[i] \Rightarrow_{\ell} \ell, \sigma'}\;\textsf{(LocIndex)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r_1, \sigma_1 \qquad \mathrm{rd}(\sigma_1, r_1) = \mathsf{lib}\,L\,\bar{\ell} \qquad \rho, \sigma_1 \vdash i \Rightarrow r_2, \sigma_2 \qquad \mathrm{rd}(\sigma_2, r_2) = v \\ \sigma_2 \vdash_L (\mathsf{lib}\,L\,\bar{\ell})[v] \Rightarrow \ell, \sigma' \end{array}}{\rho, \sigma \vdash e[i] \Rightarrow \mathsf{lval}\,\ell, \sigma'}\;\textsf{(Index)}`
 
-$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow \mathsf{loc}\,\ell, \sigma_0\qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \\ \sigma_0 \vdash_L \mathtt{delete}\ (\mathsf{lib}\,L\,\bar{\ell}) \Rightarrow \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}`
+$$`\dfrac{\begin{array}{c} \rho, \sigma \vdash e \Rightarrow r, \sigma_0 \qquad \mathrm{rd}(\sigma_0, r) = \mathsf{loc}\,\ell\qquad \sigma_0(\ell) = \mathsf{lib}\,L\,\bar{\ell} \\ \sigma_0 \vdash_L \mathtt{delete}\ (\mathsf{lib}\,L\,\bar{\ell}) \Rightarrow \sigma_1 \end{array}}{\rho, \sigma \vdash \mathtt{delete}\ e \Rightarrow \mathsf{normal}, \rho, \sigma_1 \setminus \{\ell\}}\;\textsf{(DeleteLib)}`
 
 *Headers*
 
@@ -215,7 +215,7 @@ $$`\dfrac{}{\Gamma \vdash_{\mathit{assert}} \mathtt{assert} : \mathsf{bool} \to 
 
 $$`\dfrac{\begin{array}{c} k \ge 0\qquad (\ell_i, \sigma_i) = \mathrm{alloc}(\sigma_{i-1}, \mathrm{default}\,\tau)\ (1 \le i \le k) \\ (\ell, \sigma') = \mathrm{alloc}(\sigma_k, \mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_1, \ldots, \ell_k]) \end{array}}{\sigma_0 \vdash_{\mathit{vector}} \mathtt{new}\langle\tau\rangle(k) \Rightarrow \mathsf{loc}\,\ell, \sigma'}\;\textsf{(V-New)}`
 
-$$`\dfrac{0 \le i < n}{\sigma \vdash_{\mathit{vector}} (\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}])[i] \Rightarrow_{\ell} \ell_i, \sigma}\;\textsf{(V-Index)}`
+$$`\dfrac{0 \le i < n}{\sigma \vdash_{\mathit{vector}} (\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}])[i] \Rightarrow \ell_i, \sigma}\;\textsf{(V-Index)}`
 
 $$`\dfrac{}{\sigma \vdash_{\mathit{vector}} \mathtt{delete}\ (\mathsf{lib}\ \mathtt{std{:}{:}vector}\,[\ell_0, \ldots, \ell_{n-1}]) \Rightarrow \sigma \setminus \{\ell_0, \ldots, \ell_{n-1}\}}\;\textsf{(V-Delete)}`
 

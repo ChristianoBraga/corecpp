@@ -134,11 +134,7 @@ checker sees it, which tells a dispatched call from a static one.
 The field `sig` of `call` and of `methodCall` is the parameter type list of
 the overload it chose, which picks one function or method out of an overload
 set. Both fields are `none` as the parser leaves them, and `Typing.annotate`
-fills them.
-
-One form no program writes, introduced by `Typing.annotate`. `locOf e` is the
-location of `e` as a value, which it puts on the `return` of a member that
-returns a reference. -/
+fills them. -/
 inductive Expr where
   | intLit  (n : Int)
   | boolLit (b : Bool)
@@ -158,7 +154,6 @@ inductive Expr where
   | index   (e i : Expr)
   | lambda  (params : List Param) (ret : Ty) (body : List Cmd)
   | callFn  (f : Expr) (args : List Expr)
-  | locOf   (e : Expr)
   deriving Repr, BEq, Inhabited
 
 /-- Commands. A block is a list of commands. `exprStmt` is the statement that
@@ -190,7 +185,7 @@ excluded. -/
 partial def Expr.vars : Expr → List String
   | .var x => [x]
   | .this => ["this"]
-  | .unop _ e | .deref e | .field e _ | .arrow e _ | .locOf e => e.vars
+  | .unop _ e | .deref e | .field e _ | .arrow e _ => e.vars
   | .binop _ a b | .index a b => a.vars ++ b.vars
   | .cond a b c => a.vars ++ b.vars ++ c.vars
   | .call _ es _ | .newObj _ es | .newLib _ es => es.flatMap Expr.vars

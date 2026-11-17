@@ -6,8 +6,7 @@ Counts, for every construction, the programs that use it, and exits with 1
 when a construction has no program. A construction of the abstract syntax,
 CoreCpp/Syntax.lean, is found in the output of `corecpp ast`. A construction
 the abstract syntax records as a flag or a name is found by a pattern on the
-same output. Two forms are left out, `Ty.nullT` and `Expr.locOf`, which no
-program writes.
+same output. One form is left out, `Ty.nullT`, which no program writes.
 """
 import pathlib
 import re

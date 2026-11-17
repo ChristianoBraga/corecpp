@@ -59,7 +59,7 @@ $$`\dfrac{\begin{array}{c} \Gamma \vdash e : C\qquad C \text{ has } \mathtt{oper
 The type checker rewrites both forms into the call of the member, and from there they are ordinary method calls, with the visibility, the overload resolution and the dispatch of a method. The trace shows the rule `MethodCall` under the infix form.
 :::
 
-:::definition "op_refret" (parent := "type_systems") (lean := "CoreCpp.Method, CoreCpp.Typing.refReturns, CoreCpp.Typing.refRets, CoreCpp.Eval.callMethod, CoreCpp.Semantics.RefReturns, CoreCpp.Semantics.CallMethod") (uses := "op_member, judg_ev_lval")
+:::definition "op_refret" (parent := "type_systems") (lean := "CoreCpp.Method, CoreCpp.Typing.refReturns, CoreCpp.Eval.callMethod, CoreCpp.Eval.returns, CoreCpp.Semantics.RefReturns, CoreCpp.Semantics.CallMethod, CoreCpp.Semantics.Returns") (uses := "op_member, judg_ev_expr")
 A member may return $`\tau\&`, with $`\tau` not `void`. Every `return e` of its body then has an operand that denotes a location under $`\Gamma_m`, the context of `this` and of the parameters, without the locals of the body. The walk does not enter the body of a lambda, because the `return` of a lambda is the lambda's. The rule T-Ret of the body then requires $`\Gamma \vdash e \lhd \tau`.
 
 $$`\dfrac{\tau \neq \mathsf{void} \qquad \text{every } \mathtt{return}\ e \text{ of } c \text{ has } \Gamma_m \vdash_{\ell} e : \tau' \text{ for some } \tau'}{\vdash \tau\&\ m(\ldots)\ \{c\} \text{ in } C}\;\textsf{(T-RetRef)}`
@@ -70,15 +70,9 @@ $$`\dfrac{m \text{ selected as in T-Method, returning } \tau\&}{\Gamma \vdash_{\
 
 The rule T-LocMethod also covers `e->m(…)`, with the selection of T-MethodArrow.
 
-The annotation rewrites the `return e` of such a member as `return &e`, the location as a value, an expression no program writes. Its type is the type of the location it denotes.
+The program keeps the form `return e` that C++17 prescribes, and no rewrite of the operand takes place. The operand initialises the result of the call by the declared return type (N4659 §9.6.3 paragraph 2), and for $`\tau\&` it binds the reference to the lvalue the operand designates (N4659 §11.6.3 paragraph 5). By T-RetRef the operand is an lvalue, so the rule Return of {bpref "fun_return"}[] yields $`\mathsf{ret}(\mathsf{lval}\,\ell)`. The call of a member declared $`\tau\&` keeps that location, rule Returns-Ref, and MethodCall yields $`\mathsf{lval}\,\ell`. A context that requires a location takes it as it is, as the left side of `(*v)[0] = 10` does, and a context that requires a value reads it by rd.
 
-$$`\dfrac{\Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \&e : \tau}\;\textsf{(T-LocOf)}`
-
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \&e \Rightarrow \mathsf{loc}\ \ell, \sigma'}\;\textsf{(LocOf)}`
-
-$$`\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell'}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell', \sigma'}\;\textsf{(MethodLoc)}`
-
-$$`\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell' \qquad \sigma'(\ell') = w}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow w, \sigma'}\;\textsf{(MethodCallRef)}`
+$$`\dfrac{}{\mathsf{Returns}(\sigma, \mathsf{ret}(\mathsf{lval}\,\ell), \tau\&, \mathsf{lval}\,\ell)}\;\textsf{(Returns-Ref)}`
 
 Since the locals of the body are outside $`\Gamma_m`, a member never returns the location of one of them. The return frees the location of a parameter by value, so a member that returns it returns a freed location. Reading that location has no derivation, an `error` of the evaluator by the general rule of locations outside $`\sigma`.
 :::
@@ -139,15 +133,9 @@ $$`\dfrac{\Gamma \vdash e : C \qquad \mathtt{operator[]} \text{ selected as in T
 
 $$`\dfrac{m \text{ selected as in T-Method, returning } \tau\&}{\Gamma \vdash_{\ell} e.m(e_1, \ldots, e_k) : \tau}\;\textsf{(T-LocMethod)}`
 
-$$`\dfrac{\Gamma \vdash_{\ell} e : \tau}{\Gamma \vdash \&e : \tau}\;\textsf{(T-LocOf)}`
-
  
 
-$$`\dfrac{\rho, \sigma \vdash e \Rightarrow_{\ell} \ell, \sigma'}{\rho, \sigma \vdash \&e \Rightarrow \mathsf{loc}\ \ell, \sigma'}\;\textsf{(LocOf)}`
-
-$$`\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell'}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow_{\ell} \ell', \sigma'}\;\textsf{(MethodLoc)}`
-
-$$`\dfrac{\text{the premises of MethodCall, except that } m \text{ returns } \tau\the premises of MethodCall, with } m \text{ returning } \tau\& \text{ and } \text{, with } v = \mathsf{loc}\,\ell' \qquad \sigma'(\ell') = w}{\rho, \sigma \vdash e.m(e_1, \ldots, e_k) \Rightarrow w, \sigma'}\;\textsf{(MethodCallRef)}`
+$$`\dfrac{}{\mathsf{Returns}(\sigma, \mathsf{ret}(\mathsf{lval}\,\ell), \tau\&, \mathsf{lval}\,\ell)}\;\textsf{(Returns-Ref)}`
 
 *Parametric polymorphism*
 

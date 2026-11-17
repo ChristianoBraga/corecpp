@@ -431,6 +431,24 @@ int main() { Pair* a = new Pair(); a->k = 1; Pair* b = new Pair(); b->k = 2; ret
 int& operator[](int i) { return (*d)[i]; } };
 int main() { V* v = new V(2); (*v)[0] = 40; (*v)[1] = (*v)[0] + 2; return (*v)[1]; }"
 
+-- a reference return inside a loop and a conditional, the operand of return
+-- an lvalue whose location the call keeps
+#eval prog "class Pair { public: int a; int b;
+int& pick(bool first) { int i = 0; while (i < 3) { i = i + 1; if (i == 2) { if (first) { return a; } else { return b; } } } return a; } };
+int main() { Pair* x = new Pair(); x->pick(false) = 5; x->pick(true) = 2; return x->a * 10 + x->b; }"
+
+-- one function returns an lvalue and a prvalue, both read before the locals leave
+#eval prog "int f(bool c) { int x = 1; if (c) { return x; } return x + 1; }
+int main() { return f(true) * 10 + f(false); }"
+
+-- the trace of a reference return, Return of an lvalue and MethodCall giving its location
+#eval do
+  let p ← parseStd "class V { private: std::vector<int>* d; public: V(int n) { this->d = new std::vector<int>(n); }
+int& operator[](int i) { return (*d)[i]; } };
+int main() { V* v = new V(1); (*v)[0] = 7; return (*v)[0]; }"
+  let (r, log) := runWith true p
+  return (r, renderTrace log)
+
 -- a class template instantiated at two types
 #eval prog "template<typename T> class Box { private: T v; public: Box(T x) { this->v = x; } T get() { return v; } };
 int main() { Box<int>* a = new Box<int>(40); Box<bool>* b = new Box<bool>(true);

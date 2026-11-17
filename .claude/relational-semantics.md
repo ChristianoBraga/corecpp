@@ -21,8 +21,7 @@ ground truth".
 
 | Judgement | Lean relation | Interpreter |
 | --- | --- | --- |
-| ρ, σ ⊢ e ⇒ v, σ′ | `Semantics.Eval p ρ σ e v σ′` | `Eval.expr` |
-| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `Semantics.LEval p ρ σ e ℓ σ′` | `Eval.lval` |
+| ρ, σ ⊢ e ⇒ r, σ′ | `Semantics.Eval p ρ σ e r σ′` | `Eval.expr` |
 | ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `Semantics.Exec p ρ σ c r ρ′ σ′` | `Eval.cmd` |
 | ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `Semantics.Execs p ρ σ c̄ r ρ′ σ′` | `Eval.cmds` |
 | Γ ⊢ e : τ | `Semantics.HasType p Γ e τ` | `Typing.expr` |
@@ -69,8 +68,7 @@ The notation is the one of the judgements.
 
 | Judgement | Notation | Expands to |
 | --- | --- | --- |
-| ρ, σ ⊢ e ⇒ v, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ v, σ'` | `Eval p ρ σ e v σ'` |
-| ρ, σ ⊢ e ⇒ₗ ℓ, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ₗ ℓ, σ'` | `LEval p ρ σ e ℓ σ'` |
+| ρ, σ ⊢ e ⇒ r, σ′ | `⟨ρ, σ⟩ ⊢ e ⇒ r, σ'` | `Eval p ρ σ e r σ'` |
 | ρ, σ ⊢ c ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ c ⇒ r, ρ', σ'` | `Exec p ρ σ c r ρ' σ'` |
 | ρ, σ ⊢ c̄ ⇒ r, ρ′, σ′ | `⟨ρ, σ⟩ ⊢ cs ⇒* r, ρ', σ'` | `Execs p ρ σ cs r ρ' σ'` |
 | Γ ⊢ e : τ | `Γ ⊢ e : τ` | `HasType p Γ e τ` |
@@ -86,7 +84,7 @@ of Lean. A sequence of commands takes `⇒*` and `⊣*`, since the parser cannot
 tell a command from a list of commands. The program is the `p`
 in scope, the parameter of the relations, so that no rule names it, as in the
 blueprint. The notation is declared before the relations and with
-`hygiene false`, so that `p` and the names `Eval`, `LEval`, `Exec` and
+`hygiene false`, so that `p` and the names `Eval`, `Exec` and
 `Execs` resolve at the use site, the latter to the relations under definition
 inside the `mutual` block. The name of a constructor must lead in the syntax
 of `inductive`, so the rule name appears twice, as the constructor and on the
@@ -204,7 +202,7 @@ of the same name gives the rules, and the link between them is the name.
 | --- | --- |
 | `CoreCpp/Semantics.lean` | the domains, ℓ, v, ρ, σ, r |
 | `CoreCpp/Semantics/Library.lean` | the relations of the modules and `moduleOf` |
-| `CoreCpp/Semantics/Dynamic.lean` | the dynamic judgements, `Eval`, `LEval`, `Exec`, `Execs` and the auxiliaries |
+| `CoreCpp/Semantics/Dynamic.lean` | the dynamic judgements, `Eval`, `Exec`, `Execs` and the auxiliaries |
 | `CoreCpp/Semantics/Static.lean` | the static judgements, `HasType`, `LHasType`, `Accept`, `Check`, `Checks`, `WF`, `FunOk`, `ClassOk`, `ProgramOk` |
 | `CoreCpp/Eval.lean`, `CoreCpp/Typing.lean` | the interpreters, on fuel |
 | `CoreCpp/Std/` | the functions of the modules |
@@ -214,8 +212,7 @@ of the same name gives the rules, and the link between them is the name.
 
 `Eval.lean` keeps its monad and its trace. The trace it prints is a derivation
 of the relation. Since step 4 every function of its `mutual` block, and every
-function of the two blocks of `Typing.lean`, with `wellFormed`, `refReturns`
-and `refRets`, takes a first argument `fuel : Nat` and recurses on it
+function of the two blocks of `Typing.lean`, with `wellFormed` and `refReturns`, takes a first argument `fuel : Nat` and recurses on it
 structurally, as in Radix, so that theorems about them are possible. No
 `partial def` remains in the two files. Fuel exhaustion is `Error.outOfFuel`
 and `TypeError.outOfFuel`, and `runWith`, `run` and `typingFuel` give a bound
@@ -301,8 +298,11 @@ checker knows. `sig` on `call` and `methodCall` is the parameter type list of
 the overload resolution chose, read by `FunEnv.lookupSig` and
 `Program.resolve`. `static` on `methodCall` is the class of the receiver, the
 start of dispatch. `static` on `delete` is the class of the pointer, read by
-the premise on a virtual destructor. `locOf e`, a form no program writes,
-wraps each `return e` of a member that returns a reference.
+the premise on a virtual destructor. The fourth, `locOf e` on each
+`return e` of a member that returns a reference, was removed on 2026-11-16.
+The single expression judgment of `.claude/return-ref-plan.md` yields the
+location of an lvalue operand, and the call keeps it for a member declared
+`τ&`.
 
 Radix, in `leodemoura/RadixExperiment`, has no such annotations. Its
 evaluation never needs a static fact. A call finds its function by name, an
@@ -313,13 +313,6 @@ rule, and `Stmt.inline_correct` states that the pass keeps the derivations.
 That works because `scope` is a constructor of its own, the source form
 `callStmt` has a rule too, the pass is syntactic, and its correctness is a
 theorem about `BigStep` alone.
-
-`locOf` meets all four conditions. It is a constructor with its own rule,
-`ret (some e)` has a rule, and `Typing.refRets` reads only `m.retRef`, no
-type. Its theorem is not preservation, since the pass changes a value into a
-location, but it involves the dynamic relation alone. A call of a member that
-returns a reference denotes the location the body returns, the meaning of
-T-RetRef. So `locOf` can stay as Radix keeps `scope`.
 
 `sig` and `static` meet none. They are optional fields of existing
 constructors. Left empty, they give a wrong derivation rather than none.
@@ -381,7 +374,7 @@ The consequences for Core C++.
   to a divergence result. That would lift the limitation of `CLAUDE.md` that
   divergence has no derivation.
 - The intermediate terms, `binop₁ op v e`, `call₁ f v̄ ē` and the like, are
-  constructors no program writes, as `locOf` is, in `Expr` or in a separate
+  constructors no program writes, in `Expr` or in a separate
   type of extended terms.
 - The rules stop reading as the textbook rules of natural semantics, and the
   derivations `trace` prints grow one unfolding step per subterm. That
