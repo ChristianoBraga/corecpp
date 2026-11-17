@@ -6,6 +6,8 @@ import CoreCpp.Parser
 import CoreCpp.Templates
 import CoreCpp.Typing
 import CoreCpp.Eval
+import CoreCpp.Semantics.Static
+import CoreCpp.Semantics.Dynamic
 
 open Verso.Genre
 open Verso.Genre.Manual

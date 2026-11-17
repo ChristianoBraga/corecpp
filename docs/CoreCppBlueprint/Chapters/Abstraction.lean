@@ -4,6 +4,9 @@ import VersoBlueprint
 import CoreCpp.Syntax
 import CoreCpp.Typing
 import CoreCpp.Eval
+import CoreCpp.Semantics.Static
+import CoreCpp.Semantics.Dynamic
+import CoreCpp.Semantics.Determinism
 
 open Verso.Genre
 open Verso.Genre.Manual

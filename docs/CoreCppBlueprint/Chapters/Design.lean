@@ -4,6 +4,7 @@ import VersoBlueprint
 import CoreCpp.Syntax
 import CoreCpp.Typing
 import CoreCpp.Eval
+import CoreCpp.Semantics.Dynamic
 import CoreCpp.Templates
 import CoreCpp.Grammar
 
